@@ -4,6 +4,31 @@ Config.Cams = {}
 Config.CurrentSkin = {}
 Config.ClothesPrice = 25
 
+-- // Features ported from illenium-appearance \\ --
+Config.OutfitCodeLength = 10          -- Length of shareable outfit codes.
+Config.ReloadSkinCooldown = 5000      -- ms between /reloadskin and /clearstuckprops uses.
+
+-- Job outfits (boss managed). Bosses save their current clothes as a job uniform from a changing room,
+-- employees with a high enough grade can wear it. A "boss" is the highest grade of the job,
+-- anyone with the `ishighcommand` metadata, or an admin.
+Config.JobOutfits = {
+    Enabled = true,
+    OnDutyOnly = true,                -- Only show job outfits while on duty.
+    Jobs = { 'police', 'ems', 'doc' }, -- Jobs that may use job outfits. Set to false to allow every job.
+}
+
+-- Clothing pieces a job outfit overwrites. Face, hair, tattoos and makeup are always kept.
+Config.OutfitComponents = {
+    'Jacket', 'Undershirt', 'Arms', 'Pants', 'Shoes', 'Decals', 'Masks', 'Scarfs', 'Vest', 'Bags',
+    'Hat', 'Glasses', 'Earrings', 'Watches', 'Bracelets',
+}
+
+-- Components a client may change for free outside of a shop (props, items, /h0 /m0, hair dye).
+Config.FreeComponents = {
+    Hat = true, Masks = true, Glasses = true, Earrings = true, Watches = true, Bracelets = true,
+    Bags = true, Vest = true, Shoes = true,
+}
+
 Config.CameraSettings = {
     { Fov = 20.0, AttachZ =  0.65, AttachOffset = 1.5, WidthOffset = 0.15 },
     { Fov = 30.0, AttachZ =  0.40, AttachOffset = 2.0, WidthOffset = 0.30 },

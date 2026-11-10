@@ -42,6 +42,7 @@ FW.Functions.CreateCallback("fw-character:Server:CreateCharacter", function(Sour
         end
 
         FW.Commands.Refresh(Source)
+        exports['fw-clothes']:GrantFreeEdit(Source) -- First outfit of a new character is free.
         TriggerClientEvent('fw-apartments:Client:CreateCharacter', Source)
         TriggerEvent("fw-logs:Server:Log", 'joinleave', "Character Created", ("User: [%s] - %s\nData: ```json\n%s```"):format(Source, GetPlayerName(Source), json.encode(CharInfo, {indent=4})), "green")
 	end

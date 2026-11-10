@@ -31,6 +31,8 @@ RegisterNUICallback('Input/OnButtonClick', function(Data, Cb)
 end)
 
 RegisterNUICallback('Input/Close', function(Data, Cb)
+    -- Resolve so scripts awaiting CreateInput don't hang forever when the player presses ESC.
+    if InputPromise then InputPromise:resolve(false) end
     exports['fw-ui']:HideInput()
     Cb('Ok')
 end)

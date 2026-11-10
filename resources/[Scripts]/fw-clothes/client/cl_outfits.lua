@@ -28,8 +28,51 @@ AddEventHandler("fw-clothes:Client:OpenOutfits", function(Forced, IsCommand)
                 Title = "Outfit Opslaan",
                 Icon = "plus",
                 Data = { Event = "fw-clothes:Client:SaveOutfitPrompt", Forced = Forced }
-            }
+            },
+            {
+                Title = "Outfit Importeren",
+                Desc = "Voeg een outfit toe met een deelcode",
+                Icon = "file-import",
+                Data = { Event = "fw-clothes:Client:ImportOutfitPrompt" }
+            },
         }
+
+        -- Job outfits (managed by the boss of the job).
+        local JobData = FW.SendCallback("fw-clothes:Server:GetJobOutfits")
+        if JobData and JobData.Allowed and (#JobData.Outfits > 0 or JobData.IsBoss) then
+            local JobMenu = {}
+            for _, v in pairs(JobData.Outfits) do
+                local Entry = {
+                    Title = v.Title,
+                    Desc = ("Vanaf rang %s"):format(v.MinRank),
+                    Icon = "user-tie",
+                    Data = { Event = "fw-clothes:Client:WearJobOutfit", OutfitId = v.Id },
+                }
+                if JobData.IsBoss then
+                    Entry.SecondMenu = {
+                        { Title = "Aantrekken", Icon = "check", Data = { Event = "fw-clothes:Client:WearJobOutfit", OutfitId = v.Id } },
+                        { Title = "Verwijderen", Icon = "trash", Data = { Event = "fw-clothes:Server:DeleteJobOutfit", OutfitId = v.Id } },
+                    }
+                    Entry.Data = nil
+                end
+                JobMenu[#JobMenu + 1] = Entry
+            end
+
+            if JobData.IsBoss then
+                JobMenu[#JobMenu + 1] = {
+                    Title = "Huidige kleding opslaan als werk outfit",
+                    Icon = "plus",
+                    Data = { Event = "fw-clothes:Client:SaveJobOutfitPrompt" },
+                }
+            end
+
+            table.insert(ContextMenu, {
+                Title = "Werk Outfits",
+                Desc = PlayerData.job.label,
+                Icon = "briefcase",
+                SecondMenu = JobMenu,
+            })
+        end
 
         for k, v in pairs(Outfits) do
             table.insert(ContextMenu, {
@@ -41,7 +84,12 @@ AddEventHandler("fw-clothes:Client:OpenOutfits", function(Forced, IsCommand)
                     {
                         Title = "Aantrekken",
                         Icon = "check",
-                        Data = { Event = "fw-clothes:Client:LoadOutfit", Outfit = v.Outfit, IsPreview = false }
+                        Data = { Event = "fw-clothes:Client:LoadOutfit", Outfit = v.Outfit, OutfitId = v.Id, IsPreview = false }
+                    },
+                    {
+                        Title = "Deelcode",
+                        Icon = "share-alt",
+                        Data = { Event = "fw-clothes:Client:ShareOutfit", OutfitId = v.Id }
                     },
                     {
                         Title = "Overschrijven",
@@ -82,11 +130,20 @@ end)
 RegisterNetEvent("fw-clothes:Client:LoadOutfit")
 AddEventHandler("fw-clothes:Client:LoadOutfit", function(Data)
     if not Data.IsPreview then
-        Config.CurrentSkin.Model = Data.Outfit.Model
-        Config.CurrentSkin.Clothes = Data.Outfit.Clothes
-        FW.TriggerServer("fw-clothes:Server:SetOutfit", Config.CurrentSkin)
-        TriggerEvent('fw-misc:Client:Play:Audio', 'change-clothes')
+        -- The server loads the outfit from the database and sets it, the client only applies the result.
+        local NewSkin = FW.SendCallback("fw-clothes:Server:WearOutfit", Data.OutfitId)
         CreateClothingCamera(false)
+        if not NewSkin then
+            LoadPedModel(Config.CurrentSkin.Model)
+            LoadOutfit(PlayerPedId(), Config.CurrentSkin.Clothes)
+            return
+        end
+
+        Config.CurrentSkin = NewSkin
+        TriggerEvent('fw-misc:Client:Play:Audio', 'change-clothes')
+        LoadPedModel(NewSkin.Model)
+        LoadOutfit(PlayerPedId(), NewSkin.Clothes)
+        return
     end
 
     LoadPedModel(Data.Outfit.Model)
@@ -111,6 +168,91 @@ AddEventHandler("fw-clothes:Client:SaveOutfitPrompt", function(Data)
     if Result and Result.Name then
         FW.TriggerServer("fw-clothes:Server:SavePlayerOutfit", Result.Name, Config.CurrentSkin)
     end
+end)
+
+-- Outfit codes
+RegisterNetEvent("fw-clothes:Client:ShareOutfit")
+AddEventHandler("fw-clothes:Client:ShareOutfit", function(Data)
+    CreateClothingCamera(false)
+    LoadPedModel(Config.CurrentSkin.Model)
+    LoadOutfit(PlayerPedId(), Config.CurrentSkin.Clothes)
+
+    local Code = FW.SendCallback("fw-clothes:Server:GenerateOutfitCode", Data.OutfitId)
+    if not Code then
+        return FW.Functions.Notify("Kon geen deelcode maken..", "error")
+    end
+
+    Citizen.Wait(10)
+    exports['fw-ui']:CreateInput({
+        { Name = "Code", Label = "Deelcode (Ctrl+C om te kopieren)", Icon = "fas fa-share-alt", Value = Code },
+    })
+end)
+
+RegisterNetEvent("fw-clothes:Client:ImportOutfitPrompt")
+AddEventHandler("fw-clothes:Client:ImportOutfitPrompt", function()
+    CreateClothingCamera(false)
+    LoadPedModel(Config.CurrentSkin.Model)
+    LoadOutfit(PlayerPedId(), Config.CurrentSkin.Clothes)
+    Citizen.Wait(10)
+
+    local Result = exports['fw-ui']:CreateInput({
+        { Name = "Name", Label = "Outfit Naam", Icon = "fas fa-tshirt" },
+        { Name = "Code", Label = "Deelcode", Icon = "fas fa-key" },
+    })
+
+    if not Result or not Result.Name or #Result.Name == 0 or not Result.Code or #Result.Code == 0 then return end
+
+    local Response = FW.SendCallback("fw-clothes:Server:ImportOutfitCode", Result.Name, Result.Code)
+    if Response and Response.Success then
+        FW.Functions.Notify("Outfit geimporteerd.", "success")
+    else
+        FW.Functions.Notify(Response and Response.Msg or "Importeren mislukt..", "error")
+    end
+end)
+
+-- Job outfits
+RegisterNetEvent("fw-clothes:Client:WearJobOutfit")
+AddEventHandler("fw-clothes:Client:WearJobOutfit", function(Data)
+    CreateClothingCamera(false)
+
+    local NewSkin = FW.SendCallback("fw-clothes:Server:WearJobOutfit", Data.OutfitId)
+    if not NewSkin then
+        LoadPedModel(Config.CurrentSkin.Model)
+        LoadOutfit(PlayerPedId(), Config.CurrentSkin.Clothes)
+        return FW.Functions.Notify("Je kan dit outfit niet aantrekken..", "error")
+    end
+
+    Config.CurrentSkin = NewSkin
+    TriggerEvent('fw-misc:Client:Play:Audio', 'change-clothes')
+    LoadOutfit(PlayerPedId(), NewSkin.Clothes)
+end)
+
+RegisterNetEvent("fw-clothes:Client:SaveJobOutfitPrompt")
+AddEventHandler("fw-clothes:Client:SaveJobOutfitPrompt", function()
+    CreateClothingCamera(false)
+    LoadPedModel(Config.CurrentSkin.Model)
+    LoadOutfit(PlayerPedId(), Config.CurrentSkin.Clothes)
+    Citizen.Wait(10)
+
+    local PlayerData = FW.Functions.GetPlayerData()
+    local Job = FW.Shared.Jobs[PlayerData.job.name]
+    local RankChoices = {}
+    if Job then
+        local Grades = {}
+        for Grade in pairs(Job.grades) do Grades[#Grades + 1] = tonumber(Grade) end
+        table.sort(Grades)
+        for _, Grade in ipairs(Grades) do
+            RankChoices[#RankChoices + 1] = { Icon = false, Text = Job.grades[tostring(Grade)].name, Value = tostring(Grade) }
+        end
+    end
+
+    local Result = exports['fw-ui']:CreateInput({
+        { Name = "Name", Label = "Outfit Naam", Icon = "fas fa-tshirt" },
+        { Name = "Rank", Label = "Minimale rang", Icon = "fas fa-tag", Choices = RankChoices },
+    })
+
+    if not Result or not Result.Name or #Result.Name == 0 then return end
+    FW.SendCallback("fw-clothes:Server:SaveJobOutfit", Result.Name, Result.Rank)
 end)
 
 -- Facewear

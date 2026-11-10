@@ -11,6 +11,11 @@ AddEventHandler("fw-clothes:Server:DeleteOutfit", function(Data)
         Player.PlayerData.citizenid,
     })
 
+    -- Remove the share code once the outfit itself is gone.
+    exports['ghmattimysql']:executeSync("DELETE FROM `player_outfit_codes` WHERE `outfitid` = ? AND NOT EXISTS (SELECT 1 FROM `player_outfits` WHERE `id` = ?)", {
+        Data.OutfitId, Data.OutfitId
+    })
+
     TriggerClientEvent("fw-clothes:Client:CloseOutfits", Source, {}, true)
     Citizen.Wait(5)
     TriggerClientEvent("fw-clothes:Client:LoadSkin", Source, nil)
@@ -24,7 +29,10 @@ AddEventHandler("fw-clothes:Server:StealShoes", function(TargetSrc, NewShoes)
     if Player == nil then return end
 
     local Target = FW.Functions.GetPlayer(TargetSrc)
-    if Target == nil then return end
+    if Target == nil or type(NewShoes) ~= "number" then return end
+
+    local Distance = #(GetEntityCoords(GetPlayerPed(Source)) - GetEntityCoords(GetPlayerPed(TargetSrc)))
+    if Distance > 3.0 then return end
 
     TriggerClientEvent("fw-clothes:Client:ToggleFacewear", TargetSrc, 'Shoes', NewShoes)
     Player.Functions.AddItem('weapon_shoe', 1, false, nil, true)
@@ -59,9 +67,19 @@ FW.Functions.CreateCallback("fw-clothes:Server:GetPlayerOutfits", function(Sourc
     Cb(Retval)
 end)
 
-FW.Functions.CreateCallback("fw-clothes:Server:PurchaseClothes", function(Source, Cb, PaymentType, Price, NewSkin)
+FW.Functions.CreateCallback("fw-clothes:Server:PurchaseClothes", function(Source, Cb, PaymentType, _ClientPrice, NewSkin)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
+
+    local Valid, Msg = ValidateSkin(Source, NewSkin)
+    if not Valid then return Cb({Success = false, Msg = Msg}) end
+
+    -- Never trust the price the client sends.
+    local Price = ConsumeFreeEdit(Source) and 0 or CalculateClothesPrice(Player.PlayerData.skin, NewSkin)
+
+    if Price > 0 and PaymentType ~= "Cash" and PaymentType ~= "Bank" then
+        return Cb({Success = false, Msg = "Ongeldige betaalmethode.."})
+    end
 
     local BankBalance = exports['fw-financials']:GetAccountBalance(Player.PlayerData.charinfo.account)
     if PaymentType == "Cash" and Price > 0 and not Player.Functions.RemoveMoney('Cash', Price) then
@@ -74,16 +92,23 @@ FW.Functions.CreateCallback("fw-clothes:Server:PurchaseClothes", function(Source
         exports['fw-financials']:RemoveMoneyFromAccount(Player.PlayerData.citizenid, Player.PlayerData.charinfo.account, Player.PlayerData.charinfo.account, Price, 'PURCHASE', "Kleding gekocht", false)
     end
 
-    Player.Functions.SetSkin(NewSkin)
+    Player.Functions.SetSkin({ Model = NewSkin.Model, Clothes = NewSkin.Clothes })
 
     Cb({Success = true})
 end)
 
 FW.RegisterServer("fw-clothes:Server:SetOutfit", function(Source, NewSkin)
     local Player = FW.Functions.GetPlayer(Source)
-    if Player == nil then return end
+    if Player == nil or type(NewSkin) ~= "table" or type(NewSkin.Clothes) ~= "table" then return end
 
-    Player.Functions.SetSkin(NewSkin)
+    local IsFree, Component = IsFreeSkinChange(Player.PlayerData.skin, NewSkin)
+    if not IsFree then
+        TriggerEvent('fw-logs:Server:Log', 'anticheat', 'Clothes', ('%s (%s) tried to change `%s` without paying.'):format(GetPlayerName(Source), Player.PlayerData.citizenid, tostring(Component or "Model")), 'red')
+        TriggerClientEvent("fw-clothes:Client:LoadSkin", Source, nil)
+        return
+    end
+
+    Player.Functions.SetSkin({ Model = NewSkin.Model, Clothes = NewSkin.Clothes })
 end)
 
 FW.RegisterServer("fw-clothes:Server:SavePlayerOutfit", function(Source, Name, Outfit, OverwriteId)
@@ -91,17 +116,23 @@ FW.RegisterServer("fw-clothes:Server:SavePlayerOutfit", function(Source, Name, O
     if Player == nil then return end
 
     if OverwriteId then
-        exports['ghmattimysql']:executeSync("UPDATE `player_outfits` SET `outfit` = ? WHERE `id` = ?", {
-            json.encode({ Model = Outfit.Model, Clothes = Outfit.Clothes }),
-            OverwriteId
+        -- Store the skin the server knows about, not whatever the client sends.
+        local Skin = Player.PlayerData.skin
+        exports['ghmattimysql']:executeSync("UPDATE `player_outfits` SET `outfit` = ? WHERE `id` = ? AND `citizenid` = ?", {
+            json.encode({ Model = Skin.Model, Clothes = Skin.Clothes }),
+            OverwriteId,
+            Player.PlayerData.citizenid
         })
 
         Player.Functions.Notify("Outfit overschreven.")
     else
+        if type(Name) ~= "string" or #Name == 0 or #Name > 50 then return end
+
+        local Skin = Player.PlayerData.skin
         exports['ghmattimysql']:executeSync("INSERT INTO `player_outfits` (`citizenid`, `name`, `outfit`) VALUES (?, ?, ?)", {
             Player.PlayerData.citizenid,
             Name,
-            json.encode({ Model = Outfit.Model, Clothes = Outfit.Clothes })
+            json.encode({ Model = Skin.Model, Clothes = Skin.Clothes })
         })
 
         Player.Functions.Notify("Outfit opgeslagen.")
@@ -155,6 +186,14 @@ local function TakeOffAccessory(Source, ComponentId)
     end
     TriggerClientEvent('fw-clothes:Client:ToggleFacewear', Source, ComponentId, false, true)
 end
+
+FW.Commands.Add("reloadskin", "Herlaad je kleding/ped (fixt onzichtbare kleding)", {}, false, function(Source, Args)
+    TriggerClientEvent('fw-clothes:Client:ReloadSkin', Source)
+end)
+
+FW.Commands.Add("clearstuckprops", "Verwijder objecten die aan je vast zitten", {}, false, function(Source, Args)
+    TriggerClientEvent('fw-clothes:Client:ClearStuckProps', Source)
+end)
 
 FW.Commands.Add("h0", "Zet je helm af", {}, false, function(Source, Args)
     TakeOffAccessory(Source, 'Hat')
