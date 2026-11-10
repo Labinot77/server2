@@ -32,7 +32,7 @@
     let favourites = [];       // array of item indices (same format the old UI stored)
     let enabled = {};          // toggle state per item index
     let formState = {};        // { [index]: { [optionId]: value } }
-    let currentTarget = '';    // shared 'player' target across commands (old UI behaviour)
+    let currentTarget = false; // shared 'player' target across commands (old UI behaviour)
     let bindable = [];
     let bindValues = {};
     let bindCount = BIND_COUNT_DEFAULT;
@@ -98,7 +98,7 @@
         const rows = items
             .map((item, idx) => ({ item, idx }))
             .filter(r => activeCategory === 'all' || r.item.Category === activeCategory)
-            .filter(r => !q || String(r.item.Name).toLowerCase().includes(q) || itemDesc(r.item).toLowerCase().includes(q));
+            .filter(r => !q || String(r.item.Name).toLowerCase().includes(q));
 
         // Favourites first, otherwise keep config order
         return rows.sort((a, b) => {
@@ -125,17 +125,15 @@
 
     // ---- Field rendering ----
     function fieldValue(idx, opt) {
-        if (opt.Id === 'player') return currentTarget;
+        if (opt.Id === 'player') return currentTarget === false ? '' : currentTarget;
         const s = formState[idx];
         if (s && s[opt.Id] !== undefined) return s[opt.Id];
         return opt.Value !== undefined ? opt.Value : '';
     }
 
     function playerOptions() {
-        return players
-            .slice()
-            .sort((a, b) => a.ServerId - b.ServerId)
-            .map(p => `<option value="${esc(p.ServerId)}">${esc(`(${p.ServerId}) ${p.Name} ${p.Steam || ''}`)}</option>`)
+        return '<option value=""></option>' + players
+            .map(p => `<option value="${esc(p.ServerId)}">${esc(`(${p.ServerId}) ${p.Name} ${p.Steam}`)}</option>`)
             .join('');
     }
 
@@ -145,26 +143,21 @@
         return item.Options.map(opt => {
             const label = String(opt.Name || opt.Id).replace(/:\s*$/, '');
             const value = fieldValue(idx, opt);
-            const optional = /not required/i.test(label);
 
             if (isChoice(opt)) {
-                const listId = `dl_${idx}_${opt.Id}`;
                 const choices = opt.Id === 'player'
                     ? playerOptions()
-                    : (opt.Choices || []).map(c => `<option value="${esc(c.Val)}">${esc(c.Text)}</option>`).join('');
-                const placeholder = opt.Id === 'player' ? (optional ? 'Yourself' : 'Select a player…') : 'Search or type…';
+                    : '<option value=""></option>' + (opt.Choices || []).map(c => `<option value="${esc(c.Val)}">${esc(c.Text)}</option>`).join('');
 
                 return `<div class="field">
                     <label>${esc(label)}</label>
-                    <input type="text" list="${esc(listId)}" data-key="${esc(opt.Id)}" value="${esc(value)}" placeholder="${esc(placeholder)}" autocomplete="off" />
-                    <datalist id="${esc(listId)}">${choices}</datalist>
+                    <select class="ui search selection dropdown" data-choice="${esc(opt.Id)}" data-value="${esc(value)}">${choices}</select>
                 </div>`;
             }
 
-            const type = String(opt.Type).toLowerCase() === 'number' ? 'number' : 'text';
             return `<div class="field">
                 <label>${esc(label)}</label>
-                <input type="${type}" data-key="${esc(opt.Id)}" value="${esc(value)}" autocomplete="off" />
+                <input type="text" data-key="${esc(opt.Id)}" value="${esc(value)}" autocomplete="off" />
             </div>`;
         }).join('');
     }
@@ -197,6 +190,7 @@
         if (selectedIndex < 0) selectedIndex = 0;
 
         listEl.innerHTML = rows.map((row, i) => view === 'players' ? playerRowHTML(row, i) : commandRowHTML(row, i)).join('');
+        initDropdowns();
 
         const sel = listEl.querySelector('.row.is-selected');
         if (sel) sel.scrollIntoView({ block: 'nearest' });
@@ -207,7 +201,7 @@
         const isFav = favourites.includes(idx);
         const classes = ['row', i === selectedIndex ? 'is-selected' : '', openRowKey === key ? 'is-open' : ''].join(' ');
         const panel = item.Collapse ? `<div class="row__panel">
-                ${fieldsHTML(item, idx)}
+                ${openRowKey === key ? fieldsHTML(item, idx) : ''}
                 <button class="run-btn" data-run="${idx}">${esc(item.Name)}</button>
             </div>` : '';
         const state = item.Toggle && !item.Collapse
@@ -262,6 +256,38 @@
         </div>`;
     }
 
+    function initDropdowns() {
+        if (!window.jQuery || !jQuery.fn.dropdown) return;
+
+        jQuery(listEl).find('select[data-choice]').each(function () {
+            const $sel = jQuery(this);
+            const optId = $sel.attr('data-choice');
+            const idx = Number($sel.closest('.row').attr('data-idx'));
+            const value = $sel.attr('data-value');
+
+            $sel.dropdown({
+                allowAdditions: true,
+                fullTextSearch: true,
+                onChange: (val) => {
+                    if (optId === 'player') {
+                        currentTarget = val;
+                    } else {
+                        formState[idx] = formState[idx] || {};
+                        formState[idx][optId] = val;
+                    }
+                },
+            });
+            if (value !== '') $sel.dropdown('set selected', value);
+        });
+
+        jQuery(listEl).find('select[data-bind]').each(function () {
+            const $sel = jQuery(this);
+            const v = bindValues[$sel.attr('data-bind')];
+            $sel.dropdown({ fullTextSearch: true });
+            if (v !== undefined && v !== null && v !== '') $sel.dropdown('set selected', String(v));
+        });
+    }
+
     function renderSettings() {
         const options = `<option value="0">None</option>` +
             bindable.map(b => `<option value="${esc(b.Key)}">${esc(b.Label)}</option>`).join('');
@@ -270,17 +296,14 @@
         for (let i = 1; i <= bindCount; i++) {
             html += `<div class="field">
                 <label>Bind ${i}</label>
-                <select data-bind="bind_${i}">${options}</select>
+                <p class="field__hint">Select option for Bind ${i}</p>
+                <select class="ui search selection dropdown" data-bind="bind_${i}">${options}</select>
             </div>`;
         }
         html += `<button class="run-btn" id="saveBinds">Save</button></div>`;
         listEl.innerHTML = html;
 
-        listEl.querySelectorAll('[data-bind]').forEach(sel => {
-            const v = bindValues[sel.getAttribute('data-bind')];
-            sel.value = v === undefined || v === null || v === '' ? '0' : String(v);
-            if (sel.selectedIndex < 0) sel.value = '0';
-        });
+        initDropdowns();
     }
 
     // ---- Actions ----
@@ -311,12 +334,14 @@
         if (!item) return;
 
         const result = {};
-        (item.Options || []).forEach(opt => { result[opt.Id] = fieldValue(idx, opt); });
-
-        const target = hasPlayerOption(item) && result.player !== '' ? result.player : false;
+        const rowEl = listEl.querySelector(`.row[data-idx="${idx}"]`);
+        if (rowEl) {
+            rowEl.querySelectorAll('input[data-key]').forEach(inp => { result[inp.getAttribute('data-key')] = inp.value; });
+            rowEl.querySelectorAll('select[data-choice]').forEach(sel => { result[sel.getAttribute('data-choice')] = sel.value; });
+        }
 
         post('Trigger/Button', {
-            Player: target,
+            Player: currentTarget,
             Event: item.Event,
             EventType: item.EventType,
             Result: result,
@@ -377,7 +402,7 @@
 
         if (e.target.id === 'saveBinds') {
             const data = {};
-            listEl.querySelectorAll('[data-bind]').forEach(sel => { data[sel.getAttribute('data-bind')] = sel.value; });
+            listEl.querySelectorAll('select[data-bind]').forEach(sel => { data[sel.getAttribute('data-bind')] = sel.value; });
             bindValues = data;
             post('SaveBinds', data);
             return;
@@ -448,11 +473,7 @@
         }
 
         if (e.key === 'Enter') {
-            if (inPanel) {
-                const rowEl = document.activeElement.closest('.row[data-idx]');
-                if (rowEl) runCommand(Number(rowEl.getAttribute('data-idx')));
-                return;
-            }
+            if (inPanel || view === 'settings') return;
             const row = currentRows()[selectedIndex];
             if (row) onHeadActivate(row.key);
             return;
