@@ -388,7 +388,7 @@ const BuildInventory = (InvContainer, InvType, Items, MaxSlots) => {
     if (InvContainer == 'player') return BuildPlayerInventory();
 
     const Inventory = GetContainerBox('other');
-    const Grid = Inventory.find('.inventory-box-slots').empty().removeClass('is-player inventory-craft-slots');
+    const Grid = Inventory.find('.inventory-box-slots').empty().removeClass('is-player inventory-craft-slots is-crafting');
 
     const Names = { 'Player': 'Player', 'Store': 'Store', 'Drop': 'Ground', 'Other Player': 'Player', 'None': 'Ground' };
     Inventory.find('.inventory-box-header-name').text(OtherInvData.Label || Names[InvType] || InvType);
@@ -415,31 +415,7 @@ const BuildInventory = (InvContainer, InvType, Items, MaxSlots) => {
 
     UpdateInventoryWeights('other');
 
-    if (IsCrafting) {
-        Grid.addClass('inventory-craft-slots');
-        for (let i = 1; i <= MaxSlots; i++) {
-            const Item = Items[i];
-            if (!Item) continue;
-            const ItemData = GetItemData(Item.Item, Item.CustomType);
-
-            let RequirementsHtml = ``;
-            for (let j = 0; j < ItemData.Craft.length; j++) {
-                const Craftable = ItemData.Craft[j];
-                const CraftableItem = GetItemData(Craftable.Item, Craftable.CustomType)
-                RequirementsHtml += `<div class="inventory-craft-slot-requirements">
-                    <img src="./img/items/${CraftableItem.Image}" class="inventory-craft-requirement"></img>
-                    <span>${CraftableItem.Label}:</span>
-                    <span>${Craftable.Amount}</span>
-                </div>`;
-            };
-
-            Grid.append(`<div class="inventory-craft-slot">
-                <div data-slot="${i}" class="inventory-box-slot has-item">${BuildSlotHtml('other', i, Item)}</div>
-                <div class="inventory-craft-requirements">${RequirementsHtml}</div>
-            </div>`);
-        }
-        return;
-    }
+    if (IsCrafting) return BuildCraftingPanel(Grid);
 
     for (let i = 1; i <= MaxSlots; i++) {
         Grid.append(SlotElementHtml(i));

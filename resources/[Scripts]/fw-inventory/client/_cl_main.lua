@@ -288,6 +288,8 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
     SetNuiFocus(true, true)
     SetCursorLocation(0.5, 0.5)
 
+    if OtherData then PlayOpenSound(OtherData.Type) end
+
     local PlyInventory = PlayerData.inventory
     -- local PlyInventory = FW.SendCallback("fw-inventory:Server:GetPlyItems") -- To test live requests, if it starts lagging again, revert this.
 
@@ -344,6 +346,13 @@ AddEventHandler("fw-inventory:Client:UpdateInvSlot", function(Slot)
         SlotId = Slot,
         Data = FW.Functions.GetPlayerData().inventory[Slot]
     })
+end)
+
+RegisterNetEvent("fw-inventory:Client:RefreshPlayerInventory")
+AddEventHandler("fw-inventory:Client:RefreshPlayerInventory", function()
+    if not CurrentInventory then return end
+    Citizen.Wait(100) -- let the player data update land first
+    SendNUIMessage({ Action = "RefreshPlayer", Inventory = FW.Functions.GetPlayerData().inventory })
 end)
 
 RegisterNetEvent("fw-inventory:Client:ForceClose")
@@ -647,6 +656,20 @@ RegisterNUICallback("InsertItem", function(Data)
     TriggerServerEvent("fw-inventory:Server:OnItemInsert", Data.IsReversed and ToItem or FromItem, Data.IsReversed and FromItem or ToItem)
 end)
 -- Opens another player's inventory through the normal server flow (used by /inventory:testrob).
+-- // Open sounds \\ --
+-- Remember when another script played a sound, so we don't double it.
+local LastSoundAt = {}
+AddEventHandler("fw-misc:Client:PlaySound", function(SoundId)
+    LastSoundAt[SoundId] = GetGameTimer()
+end)
+
+function PlayOpenSound(InvType)
+    local SoundId = Config.OpenSounds and Config.OpenSounds[InvType]
+    if not SoundId then return end
+    if LastSoundAt[SoundId] and GetGameTimer() - LastSoundAt[SoundId] < 2000 then return end
+    TriggerEvent("fw-misc:Client:PlaySound", SoundId)
+end
+
 RegisterNetEvent("fw-inventory:Client:OpenOtherPlayer")
 AddEventHandler("fw-inventory:Client:OpenOtherPlayer", function(InvName)
     if IsInventoryBusy or IsHoldingItem or CurrentInventory then return end

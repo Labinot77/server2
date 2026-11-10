@@ -12,6 +12,13 @@ local NETWORKED_ENTITIES = {}
 
 local api = {}
 
+-- Monotonic ids: `#interactions + 1` breaks (overwrites live interactions) once something was removed.
+local lastId = 0
+local function nextId()
+    lastId += 1
+    return lastId
+end
+
 AddEventHandler('interactions:groupsChanged', function(newgroups)
     -- Use this event handler to loop through all current interactions and remove any that are not in the new groups that way we limit the amount of iterations needed
 end)
@@ -117,7 +124,7 @@ function api.addInteraction(data)
         data.coords = vec3(data.coords.x + 0.0, data.coords.y + 0.0, data.coords.z + 0.0)
     end
 
-    local id = #interactions + 1
+    local id = nextId()
     interactions[id] = {
         id = id,
         name = data.name or 'interaction:'..id,
@@ -145,7 +152,7 @@ function api.addLocalEntityInteraction(data)
         end
         return
     end
-    local id = #interactions + 1
+    local id = nextId()
     -- If then entity not registered yet, add it
     if not ENTITIES[entity] then
         log:debug('Adding entity %s to interactions', entity)
@@ -235,7 +242,7 @@ function api.addEntityInteraction(data)
         return api.addLocalEntityInteraction(data)
     end
     netId = utils.getNet(entity)
-    local id = #interactions + 1
+    local id = nextId()
     -- If then netId not registered yet, add it
     if not NETWORKED_ENTITIES[netId] then
         log:debug('Adding networkID %s to interactions', netId)
@@ -396,6 +403,16 @@ end exports('AddModelInteraction', api.addModelInteraction)
 ---@param id number : The id of the interaction to remove
 -- Remove an interaction point by id.
 function api.removeInteraction(id)
+    local interaction = interactions[id]
+    if interaction then
+        -- Clear the entity caches too, otherwise a re-used entity handle is treated as an "update".
+        if interaction.entity and ENTITIES[interaction.entity] and ENTITIES[interaction.entity].id == id then
+            ENTITIES[interaction.entity] = nil
+        end
+        if interaction.netId and NETWORKED_ENTITIES[interaction.netId] and NETWORKED_ENTITIES[interaction.netId].id == id then
+            NETWORKED_ENTITIES[interaction.netId] = nil
+        end
+    end
     interactions[id] = nil
     log:debug('Removed interaction %s', id)
     filterInteractions()
@@ -405,13 +422,12 @@ exports('RemoveInteraction', api.removeInteraction)
 ---@param entity number : The entity to remove the interaction from
 -- Remove an interaction point by entity.
 function api.removeInteractionByEntity(entity)
-    for i = #interactions, 1, -1 do
-        local interaction = interactions[i]
-
+    for id, interaction in pairs(interactions) do
         if interaction.entity == entity then
-            api.removeInteraction(i)
+            api.removeInteraction(id)
         end
     end
+    ENTITIES[entity] = nil
 end exports('RemoveInteractionByEntity', api.removeInteractionByEntity)
 
 ---@param id number : The id of the interaction to remove the option from
@@ -580,11 +596,9 @@ function api.disable(state)
 end exports('Disable', api.disable)
 
 AddEventHandler('onClientResourceStop', function(resource)
-    for i = #interactions, 1, -1 do
-        local interaction = interactions[i]
-
+    for id, interaction in pairs(interactions) do
         if interaction.resource == resource then
-            api.removeInteraction(interaction.id)
+            api.removeInteraction(id)
         end
     end
 end)

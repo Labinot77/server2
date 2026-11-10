@@ -345,7 +345,8 @@ on('PolyZone:OnEnter', (PolyData: {
     if (PolyData.name == 'bennys') {
         CurrentBennyZone = PolyData
         IsInBennysZone = true
-        
+        if (Tick !== undefined) clearTick(Tick);
+
         if (CurrentBennyZone.data.Secret) return;
 
         let ShowingInteraction = false;
@@ -369,7 +370,10 @@ on('PolyZone:OnEnter', (PolyData: {
 
 on('PolyZone:OnExit', (PolyData: {name: string}) => {
     if (PolyData.name == 'bennys') {
-        clearTick(Tick);
+        if (Tick !== undefined) clearTick(Tick);
+        Tick = undefined as any;
+        CurrentBennyZone = false;
+        IsInBennysZone = false;
         exp['fw-ui'].HideInteraction();
     }
 });

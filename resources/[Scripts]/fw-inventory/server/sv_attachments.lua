@@ -22,7 +22,8 @@ end
 
 local function GetWeapon(Player, Slot)
     local Item = Player.PlayerData.inventory[tonumber(Slot)]
-    if not Item or not Shared.Items[Item.Item] or not Shared.Items[Item.Item].Weapon then return false end
+    -- Real guns only (attachment items like the silencer are flagged Weapon too).
+    if not Item or not Shared.Items[Item.Item] or not Shared.Items[Item.Item].Weapon or Item.Item:sub(1, 7) ~= 'weapon_' then return false end
     Item.Info = Item.Info or {}
     return Item
 end
@@ -54,8 +55,9 @@ local function ResolveTargetSlot(Player, ToSlot, ItemName, CustomType, Amount)
     return Found
 end
 
-local function WeaponChanged(Player, WeaponSlot)
-    TriggerClientEvent("fw-inventory:Client:WeaponModified", Player.PlayerData.source, WeaponSlot)
+-- Action: 'MagIn' | 'MagOut' | 'Attach' | 'Detach' (client plays the reload for magazine changes)
+local function WeaponChanged(Player, WeaponSlot, Action)
+    TriggerClientEvent("fw-inventory:Client:WeaponModified", Player.PlayerData.source, WeaponSlot, Action)
 end
 
 -- // Put something into / onto the weapon \\ --
@@ -89,8 +91,10 @@ FW.RegisterServer("fw-inventory:Server:AttachToWeapon", function(Source, WeaponS
         Player.Functions.SetItemKV(Weapon.Item, Weapon.Slot, 'Ammo', NewAmmo)
         Player.Functions.SetItemKV(Weapon.Item, Weapon.Slot, 'Mag', MagType)
     else
+        -- Only "is this an attachment" can be checked here; whether the weapon physically takes
+        -- it is checked in the NUI/client (DoesWeaponTakeWeaponComponent needs the game).
         local Attachment = GetWeaponAttachment(Item.Item, Weapon.Item)
-        if not Attachment then return Notify(Player, "Dit past niet op dit wapen.") end
+        if not Attachment then return Notify(Player, "Dit is geen attachment.") end
 
         local Attachments = CopyAttachments(Weapon)
         local Old = Attachments[Attachment.Kind]
@@ -105,7 +109,7 @@ FW.RegisterServer("fw-inventory:Server:AttachToWeapon", function(Source, WeaponS
     end
 
     RefreshSlots(Player, { Item.Slot, Weapon.Slot })
-    WeaponChanged(Player, Weapon.Slot)
+    WeaponChanged(Player, Weapon.Slot, Item.Item == 'magazine' and 'MagIn' or 'Attach')
 end)
 
 -- // Take something out of / off the weapon \\ --
@@ -144,7 +148,7 @@ FW.RegisterServer("fw-inventory:Server:DetachFromWeapon", function(Source, Weapo
         RefreshSlots(Player, { Target, Weapon.Slot })
     end
 
-    WeaponChanged(Player, Weapon.Slot)
+    WeaponChanged(Player, Weapon.Slot, Kind == 'Magazine' and 'MagOut' or 'Detach')
 end)
 
 exports("GetWeaponMagType", GetWeaponMagType)

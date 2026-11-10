@@ -16,9 +16,22 @@ AddEventHandler("fw-clothes:Server:DeleteOutfit", function(Data)
         Data.OutfitId, Data.OutfitId
     })
 
+    -- Deleting from inside the clothing menu must not reset what the player is trying on.
+    if Data.KeepMenu then return end
+
     TriggerClientEvent("fw-clothes:Client:CloseOutfits", Source, {}, true)
     Citizen.Wait(5)
     TriggerClientEvent("fw-clothes:Client:LoadSkin", Source, nil)
+end)
+
+FW.Functions.CreateCallback("fw-clothes:Server:GetMoney", function(Source, Cb)
+    local Player = FW.Functions.GetPlayer(Source)
+    if Player == nil then return Cb(false) end
+
+    Cb({
+        Cash = Player.PlayerData.money.cash or 0,
+        Bank = exports['fw-financials']:GetAccountBalance(Player.PlayerData.charinfo.account) or 0,
+    })
 end)
 
 RegisterNetEvent("fw-clothes:Server:StealShoes")

@@ -1,25 +1,29 @@
 fx_version 'cerulean'
 game 'gta5'
-
 lua54 'yes'
 
-ui_page 'html/index.html'
+author 'Robijn'
+description "Benny's Motorworks"
 
-client_script {
-    '@fw-assets/client/cl_errorlog.lua',
+shared_scripts {
     'config/sh_*.lua',
-    'client/*.lua',
 }
 
-server_script {
+client_scripts {
+    '@fw-assets/client/cl_errorlog.lua',
+    'client/cl_legacy.lua',
+    'client/cl_orders.lua',
+    'client/cl_laptop.lua',
+    'dist/client.js',
+}
+
+server_scripts {
     '@fw-assets/server/sv_errorlog.lua',
-    'config/*.lua',
-    'server/*.lua',
+    'server/sv_legacy.lua',
+    'server/sv_orders.lua',
+    'dist/server.js',
 }
 
 files {
-    'html/index.html',
-    'html/images/*.png',
-    'html/css/*.css',
-    'html/js/*.js',
+    'html/laptop.html',
 }

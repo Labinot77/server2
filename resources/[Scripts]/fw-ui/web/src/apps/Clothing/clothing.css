@@ -1,0 +1,125 @@
+/* illenium-appearance (Codera UI) look, scoped to the fw-ui clothing app. Sizes are 1080p pixels, App.svelte scales them. */
+.fwc {
+    --accent: #1de9e6;
+    --accent-2: #3ad7ff;
+    --cyan: #2de1ec;
+    --bank: #00c8ff;
+    --cash: #14e8c8;
+    --card: rgba(20, 22, 27, 0.9);
+    --card-2: rgba(24, 26, 32, 0.92);
+    --card-3: rgba(22, 24, 31, 0.95);
+    --tile: rgba(20, 27, 36, 0.75);
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1080px;
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+}
+
+.fwc * { box-sizing: border-box; }
+.fwc button { font-family: inherit; border: none; color: inherit; cursor: pointer; padding: 0; background: none; }
+.fwc input { font-family: inherit; }
+
+.fwc .bebas { font-family: 'Bebas Neue', sans-serif; }
+.fwc .oswald { font-family: 'Oswald', sans-serif; }
+.fwc .barlow { font-family: 'Barlow Condensed', sans-serif; }
+.fwc .italic { font-style: italic; }
+.fwc .upper { text-transform: uppercase; }
+
+.fwc .scroll { overflow-y: auto; }
+.fwc .scroll::-webkit-scrollbar { width: 4px; }
+.fwc .scroll::-webkit-scrollbar-track { background: #111; }
+.fwc .scroll::-webkit-scrollbar-thumb { background: #333; }
+.fwc .scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Left column: header with back button and breadcrumb */
+.fwc .column { position: absolute; top: 96px; left: 48px; display: flex; flex-direction: column; }
+.fwc .header { display: flex; align-items: center; gap: 14px; height: 48px; margin-bottom: 16px; white-space: nowrap; }
+.fwc .back-btn {
+    width: 48px; height: 48px; flex-shrink: 0; background: white; color: black;
+    font-weight: 700; font-size: 24px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3); transition: background .15s;
+}
+.fwc .back-btn:hover { background: #e4e4e7; }
+.fwc .crumbs { display: flex; align-items: baseline; gap: 12px; font-family: 'Bebas Neue', sans-serif; font-style: italic; letter-spacing: 0.05em; line-height: 1; padding-top: 4px; }
+.fwc .crumb { transition: color .15s; text-transform: uppercase; }
+.fwc .crumb.link { cursor: pointer; }
+.fwc .crumb.link:hover { color: white !important; }
+
+/* Icon rails next to the grid */
+.fwc .rail { width: 52px; display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.fwc .rail-btn {
+    width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
+    background: var(--card-2); color: rgba(255, 255, 255, 0.4); transition: all .15s;
+}
+.fwc .rail-btn:hover { color: white; background: #27272a; }
+.fwc .rail-btn.folder.active { background: rgba(255, 255, 255, 0.2); color: white; border-left: 2px solid white; }
+.fwc .rail-btn.active:not(.folder) { background: white; color: black; box-shadow: 0 0 0 1px white; }
+
+/* Titled boxes (sliders, colour panel) */
+.fwc .box-title {
+    background: white; color: black; font-weight: 700; padding: 4px 12px; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;
+}
+.fwc .box-body { background: var(--card-3); border: 1px solid rgba(255, 255, 255, 0.05); }
+
+/* Range sliders */
+.fwc input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; flex: 1; cursor: pointer; outline: none; border-radius: 0; }
+.fwc input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 9999px;
+    background: #fff; cursor: pointer; box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Grid tiles */
+.fwc .tile {
+    position: relative; display: flex; flex-direction: column; aspect-ratio: 4 / 5; background: var(--tile);
+    border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; transition: all .15s;
+}
+.fwc .tile:hover { border-color: white; box-shadow: 0 0 0 1px white; z-index: 10; }
+.fwc .tile.active { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan); z-index: 10; }
+.fwc .tile-img { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px; }
+.fwc .tile-img img { width: 100%; height: 100%; object-fit: contain; }
+.fwc .tile-foot {
+    width: 100%; background: #0d0e12; padding: 6px 8px; min-height: 30px;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+}
+.fwc .tile-name { font-size: 11px; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.fwc .tile-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: rgba(255, 255, 255, 0.6); }
+.fwc .badge-free { background: #34d399; color: black; padding: 2px 6px; font-size: 11px; font-weight: 700; line-height: 1; flex-shrink: 0; }
+.fwc .price { display: flex; align-items: center; gap: 4px; line-height: 1; flex-shrink: 0; }
+.fwc .price .dollar { background: #19e0d0; color: #04201f; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.fwc .price .amount { font-style: italic; font-size: 15px; font-weight: 700; }
+
+/* Square tool buttons (filter, remove, ...) */
+.fwc .tool-btn {
+    width: 40px; height: 40px; flex-shrink: 0; background: #181a20; border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    display: flex; align-items: center; justify-content: center; color: #a1a1aa; transition: all .15s;
+}
+.fwc .tool-btn:hover { color: white; background: #27272a; }
+
+.fwc .search {
+    flex: 1; background: #181a20; display: flex; align-items: center; padding: 6px 12px; gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05); color: #a1a1aa;
+}
+.fwc .search:focus-within { border-color: white; }
+.fwc .search input { background: transparent; border: none; outline: none; font-size: 14px; color: white; width: 100%; }
+.fwc .search input::placeholder { color: #71717a; }
+
+/* Buttons used in modals / outfits */
+.fwc .btn-accent { background: #00f0ff; color: black; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; transition: background .15s; }
+.fwc .btn-accent:hover { background: #38f6ff; }
+.fwc .btn-dark { background: #1a1c23; color: white; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid rgba(255, 255, 255, 0.1) !important; transition: background .15s; }
+.fwc .btn-dark:hover { background: #27272a; }
+.fwc .text-input {
+    width: 100%; background: #181a20; border: 1px solid rgba(255, 255, 255, 0.1); outline: none; color: white;
+    padding: 10px 12px; font-size: 14px; letter-spacing: 0.03em;
+}
+.fwc .text-input:focus { border-color: #00f0ff; }
+
+@keyframes fwc-enter { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+.fwc .enter { animation: fwc-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1); }

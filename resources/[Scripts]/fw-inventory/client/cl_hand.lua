@@ -1,11 +1,16 @@
 -- // Hand mode (ported from ox_inventory startPlaceMode) \\ --
 -- "Give" in the inventory context menu puts the item in your hand:
 --   [N]  aim mode -> place it exactly where you look ([Enter]/[LMB] confirm, scroll to rotate, [Shift] fine rotate)
---   [E]  throw it
+--   [E]  throw it, or - when you're looking at a player - give it to them (interact prompt)
 --   [Esc]/[Backspace] cancel (item stays in your inventory)
 -- The item only leaves the inventory once it's placed / has landed (server: fw-inventory:Server:PlaceItem).
 
 Config.PlaceMaxDistance = 5.0
+Config.GiveDistance = 2.5        -- max distance between you and the player you give to
+Config.GiveAimDistance = 6.0     -- how far the camera ray looks for a player
+
+local GiveTarget, GiveRequest = false, false   -- ped currently aimed at / ped chosen via interact
+local GiveInteractions = {}                    -- [ped] = interaction id
 
 IsHoldingItem = false
 
@@ -32,6 +37,84 @@ local function RayFromCamera(Distance)
     until Retval ~= 1
 
     if Hit == true or Hit == 1 then return EndCoords end
+end
+
+-- // Give: find the player you're looking at \\ --
+-- 1) camera ray (world, vehicles, peds, objects) -> first thing hit must be a player ped
+-- 2) head-to-head ray (world + objects only) -> nothing between you and them (no giving through walls/doors)
+local function ShapeTest(From, To, Flags, Ignore)
+    local Handle = StartExpensiveSynchronousShapeTestLosProbe(From.x, From.y, From.z, To.x, To.y, To.z, Flags, Ignore, 7)
+    local _, Hit, HitCoords, _, Entity = GetShapeTestResult(Handle)
+    return (Hit == 1 or Hit == true), HitCoords, Entity
+end
+
+local function GetCameraDirection()
+    local Rot = GetGameplayCamRot(2)
+    local Rx, Rz = math.rad(Rot.x), math.rad(Rot.z)
+    return vector3(-math.sin(Rz) * math.abs(math.cos(Rx)), math.cos(Rz) * math.abs(math.cos(Rx)), math.sin(Rx))
+end
+
+local function FindGiveTarget(Ped)
+    local From = GetGameplayCamCoord()
+    local To = From + GetCameraDirection() * Config.GiveAimDistance
+    local Hit, _, Entity = ShapeTest(From, To, 1 | 2 | 4 | 8 | 16, Ped)
+    if not Hit or not Entity or Entity == 0 or GetEntityType(Entity) ~= 1 then return false end
+    if Entity == Ped or not IsPedAPlayer(Entity) or IsEntityDead(Entity) then return false end
+
+    if #(GetEntityCoords(Ped) - GetEntityCoords(Entity)) > Config.GiveDistance then return false end
+
+    local MyHead = GetPedBoneCoords(Ped, 31086, 0.0, 0.0, 0.0)
+    local TheirHead = GetPedBoneCoords(Entity, 31086, 0.0, 0.0, 0.0)
+    local Blocked, BlockCoords = ShapeTest(MyHead, TheirHead, 1 | 16, Ped)
+    if Blocked and #(BlockCoords - TheirHead) > 0.35 then return false end
+
+    return Entity
+end
+
+local function ClearGiveInteractions()
+    for TargetPed, Id in pairs(GiveInteractions) do
+        pcall(function() exports.interact:RemoveInteraction(Id) end)
+    end
+    GiveInteractions = {}
+end
+
+-- One interact point on every nearby player; it only shows on the one you're aiming at.
+local function RefreshGiveInteractions(Ped, Label)
+    local MyCoords = GetEntityCoords(Ped)
+    local Nearby = {}
+
+    for _, PlayerIdx in ipairs(GetActivePlayers()) do
+        local TargetPed = GetPlayerPed(PlayerIdx)
+        if TargetPed ~= Ped and DoesEntityExist(TargetPed) and #(MyCoords - GetEntityCoords(TargetPed)) < 12.0 then
+            Nearby[TargetPed] = true
+            if not GiveInteractions[TargetPed] then
+                local Ok, Id = pcall(function()
+                    return exports.interact:AddLocalEntityInteraction({
+                        entity = TargetPed,
+                        offset = vec3(0.0, 0.0, 0.25),
+                        distance = Config.GiveDistance + 1.5,
+                        interactDst = Config.GiveDistance,
+                        name = 'fw-inventory:give',
+                        options = {
+                            {
+                                label = ('Geef %s'):format(Label),
+                                action = function(Entity) GiveRequest = Entity or TargetPed end,
+                                canInteract = function(Entity) return IsHoldingItem and GiveTarget ~= false and GiveTarget == (Entity or TargetPed) end,
+                            },
+                        },
+                    })
+                end)
+                if Ok and Id then GiveInteractions[TargetPed] = Id end
+            end
+        end
+    end
+
+    for TargetPed, Id in pairs(GiveInteractions) do
+        if not Nearby[TargetPed] then
+            pcall(function() exports.interact:RemoveInteraction(Id) end)
+            GiveInteractions[TargetPed] = nil
+        end
+    end
 end
 
 local BlockedControls = { 14, 15, 16, 17, 24, 25, 37, 44, 81, 99, 140, 141, 142, 177, 200, 241, 242, 174, 175 }
@@ -87,7 +170,11 @@ function StartHoldMode(Slot, Amount)
 
     local Mode, Target, Valid = 'hand', nil, false
     local Heading = GetEntityHeading(Ped)
-    local Result
+    local Result, GivePed
+    local ItemData = Shared.Items[Item.Item]
+    local GiveLabel = (ItemData and ItemData.Label or Item.Item) .. (Amount > 1 and (' (%sx)'):format(Amount) or '')
+    local NextInteractRefresh = 0
+    GiveTarget, GiveRequest = false, false
     Hint(Mode)
 
     while IsHoldingItem do
@@ -105,11 +192,37 @@ function StartHoldMode(Slot, Amount)
         if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then break end
 
         if Mode == 'hand' then
-            if IsControlJustReleased(0, 38) then -- E
+            -- Who are we looking at? Interact (and its [E] prompt) is only on while aiming at a player,
+            -- so [E] gives instead of throws and no other prompt can steal the key meanwhile.
+            if GetGameTimer() > NextInteractRefresh then
+                RefreshGiveInteractions(Ped, GiveLabel)
+                NextInteractRefresh = GetGameTimer() + 1000
+            end
+
+            local NewTarget = FindGiveTarget(Ped)
+            if NewTarget ~= GiveTarget then
+                GiveTarget = NewTarget
+                SetInteractDisabled(GiveTarget == false)
+                Hint(GiveTarget and 'give' or 'hand')
+            end
+
+            if GiveRequest then
+                -- Re-check at the moment of giving.
+                if FindGiveTarget(Ped) == GiveRequest then
+                    GivePed = GiveRequest
+                    Result = 'give'
+                    break
+                end
+                GiveRequest = false
+            end
+
+            if not GiveTarget and IsControlJustReleased(0, 38) then -- E
                 Result = 'throw'
                 break
             elseif IsControlJustReleased(0, 306) then -- N
                 Mode = 'place'
+                GiveTarget = false
+                SetInteractDisabled(true)
                 DetachEntity(Prop, true, true)
                 SetEntityCollision(Prop, false, false)
                 SetEntityAlpha(Prop, 190, false)
@@ -146,6 +259,23 @@ function StartHoldMode(Slot, Amount)
 
     IsHoldingItem = false
     Hint(false)
+    ClearGiveInteractions()
+    GiveTarget, GiveRequest = false, false
+
+    if Result == 'give' and GivePed then
+        local ServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(GivePed))
+        TaskTurnPedToFaceEntity(Ped, GivePed, 500)
+        if LoadAnimDictTimeout('mp_common') then
+            TaskPlayAnim(Ped, 'mp_common', 'givetake1_a', 8.0, -8.0, 1600, 49, 0, false, false, false)
+        end
+        Citizen.Wait(900)
+        if DoesEntityExist(Prop) then DeleteEntity(Prop) end
+        ClearPedTasks(Ped)
+        SetInteractDisabled(false)
+        Citizen.SetTimeout(250, function() IsInventoryBusy = false end)
+        FW.TriggerServer('fw-inventory:Server:GiveHeldItem', ServerId, Slot, Amount)
+        return
+    end
 
     local DropCoords, DropHeading, Thrown
 
@@ -218,4 +348,18 @@ RegisterNUICallback("HoldItem", function(Data, Cb)
         Citizen.Wait(150)
         StartHoldMode(Data.Slot, Data.Amount)
     end)
+end)
+
+-- Receiving end of a give: short take animation facing the giver.
+RegisterNetEvent("fw-inventory:Client:ReceiveGiveAnim")
+AddEventHandler("fw-inventory:Client:ReceiveGiveAnim", function(FromSource)
+    local Ped = PlayerPedId()
+    if IsPedInAnyVehicle(Ped, false) then return end
+
+    local FromPlayer = GetPlayerFromServerId(FromSource)
+    if FromPlayer ~= -1 then TaskTurnPedToFaceEntity(Ped, GetPlayerPed(FromPlayer), 500) end
+
+    if LoadAnimDictTimeout('mp_common') then
+        TaskPlayAnim(Ped, 'mp_common', 'givetake1_b', 8.0, -8.0, 1600, 49, 0, false, false, false)
+    end
 end)

@@ -4,6 +4,43 @@ Config.Cams = {}
 Config.CurrentSkin = {}
 Config.ClothesPrice = 25
 
+-- // Clothing menu UI (fw-ui, illenium style) \\ --
+-- Thumbnails in the clothing grid. UseCdn loads the public GTA5-Cloth-Assets pictures for freemode peds.
+-- BaseUrl points to your own pictures instead, e.g. "https://cfx-nui-my-images/clothing".
+-- Expected layout: {BaseUrl}/{male|female}/{component|prop}_{id}_{drawable}_{texture}.webp
+-- Leave both off to only show icons and numbers.
+Config.ClothingImages = {
+    UseCdn = true,
+    BaseUrl = false,
+}
+
+-- Part of the screen (0.0 - 1.0 of the width) where dragging the mouse turns the ped / camera.
+-- Matches the empty space between the menu on the left and the panels on the right.
+Config.CameraDragArea = { 0.36, 0.70 }
+
+-- Camera stage (see Config.CameraSettings) the menu jumps to per body part.
+Config.CameraFocus = { head = 1, body = 2, character = 4, legs = 4, shoes = 5 }
+
+-- // Shared helpers (client + server) \\ --
+TattooZoneKeys = { TattoosTorso = true, TattoosHead = true, TattoosLArm = true, TattoosRArm = true, TattoosLLeg = true, TattoosRLeg = true }
+
+-- Set of tattoo indexes worn in a zone, ignoring which layer they are on (layers may have number or string keys).
+function GetTattooSet(Zone)
+    local Retval = {}
+    for _, Value in pairs(type(Zone) == "table" and Zone or {}) do
+        Value = tonumber(Value)
+        if Value and Value ~= 0 then Retval[Value] = true end
+    end
+    return Retval
+end
+
+function CountTattooChanges(Old, New)
+    local A, B, Count = GetTattooSet(Old), GetTattooSet(New), 0
+    for k in pairs(A) do if not B[k] then Count = Count + 1 end end
+    for k in pairs(B) do if not A[k] then Count = Count + 1 end end
+    return Count
+end
+
 -- // Features ported from illenium-appearance \\ --
 Config.OutfitCodeLength = 10          -- Length of shareable outfit codes.
 Config.ReloadSkinCooldown = 5000      -- ms between /reloadskin and /clearstuckprops uses.

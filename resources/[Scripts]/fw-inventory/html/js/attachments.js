@@ -12,24 +12,29 @@ const GetWeaponMagType = (WeaponName) => (Layout.WeaponMagTypes || {})[WeaponNam
 
 const GetAttachmentData = (ItemName) => (Layout.WeaponAttachments || []).find(v => v.Item == ItemName);
 
-const AttachmentFits = (ItemName, WeaponName) => {
+// What fits the open weapon: { Kinds: { Muzzle: true }, Items: { silencer: true } }, asked from Lua
+// (DoesWeaponTakeWeaponComponent needs the game, the NUI can't check it).
+const AttachmentFits = (ItemName) => {
     const Data = GetAttachmentData(ItemName);
-    return Data && Data.Weapons.includes(WeaponName) ? Data : false;
+    const Fits = AttachmentPanel && AttachmentPanel.Fits;
+    return Data && Fits && Fits.Items && Fits.Items[ItemName] ? Data : false;
 };
 
-// Slots this weapon has: Magazine (magazine guns) + every kind that has a fitting attachment.
+const KindFits = (Kind) => {
+    const Fits = AttachmentPanel && AttachmentPanel.Fits;
+    return !!(Fits && Fits.Kinds && Fits.Kinds[Kind]);
+};
+
+// Magazine (magazine guns) + every attachment slot; slots the weapon can't take render locked.
 const GetWeaponAttachmentSlots = (WeaponName) => {
     const Slots = [];
     if (GetWeaponMagType(WeaponName)) Slots.push({ Kind: 'Magazine', Label: 'Magazine', Icon: 'bolt' });
-
-    for (const Slot of (Layout.AttachmentSlots || [])) {
-        const Fits = (Layout.WeaponAttachments || []).some(v => v.Kind == Slot.Kind && v.Weapons.includes(WeaponName));
-        if (Fits) Slots.push(Slot);
-    }
+    for (const Slot of (Layout.AttachmentSlots || [])) Slots.push(Slot);
     return Slots;
 };
 
-const HasAttachmentOptions = (WeaponName) => GetWeaponAttachmentSlots(WeaponName).length > 0;
+// Firearms only (melee weapons and attachment items like the silencer are flagged Weapon too).
+const HasAttachmentOptions = (WeaponName) => String(WeaponName).startsWith('weapon_') && !!GetWeaponMagType(WeaponName);
 
 const GetPanelWeapon = () => {
     if (!AttachmentPanel) return false;
@@ -45,8 +50,18 @@ const CloseAttachmentsPanel = () => {
 
 const OpenAttachmentsPanel = (Slot) => {
     if (typeof CloseMagazinePanel == 'function') CloseMagazinePanel();
-    AttachmentPanel = { Slot: Number(Slot) };
+    const Weapon = MyInventory[Number(Slot)];
+    if (!Weapon) return;
+
+    AttachmentPanel = { Slot: Number(Slot), Fits: { Kinds: {}, Items: {} } };
     RefreshAttachmentsPanel();
+
+    $.post("https://fw-inventory/GetWeaponAttachmentFits", JSON.stringify({ Weapon: Weapon.Item }), function(Fits) {
+        if (!AttachmentPanel || AttachmentPanel.Slot != Number(Slot)) return;
+        if (typeof Fits == 'string') { try { Fits = JSON.parse(Fits); } catch (e) { Fits = false; } }
+        if (Fits && typeof Fits == 'object') AttachmentPanel.Fits = { Kinds: Fits.Kinds || {}, Items: Fits.Items || {} };
+        RefreshAttachmentsPanel();
+    });
 };
 
 const RefreshAttachmentsPanel = () => {
@@ -64,6 +79,8 @@ const RefreshAttachmentsPanel = () => {
     for (const Slot of GetWeaponAttachmentSlots(Weapon.Item)) {
         let Inner = `<span class="material-symbols-outlined emptyicon">${Slot.Icon}</span><div class="emptylabel">${Slot.Label}</div>`;
         let Empty = true;
+        const Locked = Slot.Kind != 'Magazine' && !KindFits(Slot.Kind) && !Attached[Slot.Kind];
+        if (Locked) Inner = `<span class="material-symbols-outlined emptyicon">lock</span><div class="emptylabel">${Slot.Label}</div>`;
 
         if (Slot.Kind == 'Magazine' && Info.Mag && Layout.Magazines[Info.Mag]) {
             Empty = false;
@@ -80,7 +97,7 @@ const RefreshAttachmentsPanel = () => {
                 <div class="inventory-slot-name">${GetItemData(A.Item, A.CustomType, A.Info).Label}</div>`;
         }
 
-        Row.append(`<div class="att-slot${Empty ? ' empty' : ''}" data-kind="${Slot.Kind}">${Inner}</div>`);
+        Row.append(`<div class="att-slot${Empty ? ' empty' : ''}${Locked ? ' locked' : ''}" data-kind="${Slot.Kind}" title="${Locked ? 'Dit wapen heeft hier geen plek voor' : Slot.Label}">${Inner}</div>`);
     }
 
     $('.inventory-box-slot.att-active').removeClass('att-active');
@@ -93,7 +110,7 @@ const GetTargetKind = (Item) => {
     const Weapon = GetPanelWeapon();
     if (!Weapon || !Item) return false;
     if (Item.Item == 'magazine') return Item.CustomType == GetWeaponMagType(Weapon.Item) ? 'Magazine' : false;
-    const Fits = AttachmentFits(Item.Item, Weapon.Item);
+    const Fits = AttachmentFits(Item.Item);
     return Fits ? Fits.Kind : false;
 };
 
@@ -119,6 +136,9 @@ $(document).on('mouseup', '.att-slot', function(e) {
     if (!Kind || Kind != $(this).attr('data-kind')) {
         FlashSlot(this, false);
         if (FromItem.Item == 'magazine') return InventoryLog(`[Error]: Dit wapen neemt alleen ${GetMagazineConfig(GetWeaponMagType(Weapon.Item)).Label} magazijnen.`);
+        const Data = GetAttachmentData(FromItem.Item);
+        if (Data && Data.Kind == $(this).attr('data-kind')) return InventoryLog(`[Error]: Deze ${ItemsList[FromItem.Item].Label} past niet op dit wapen.`);
+        if ($(this).hasClass('locked')) return InventoryLog('[Error]: Dit wapen heeft hier geen plek voor.');
         return InventoryLog('[Error]: Dit past hier niet.');
     }
 

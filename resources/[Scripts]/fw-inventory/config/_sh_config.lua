@@ -336,27 +336,60 @@ end
 
 -- // Weapon attachments (right-click a weapon -> Attachments) \\ --
 -- Attachments are stored ON the weapon (Info.Attachments) and travel with it, like the magazine
--- (Info.Mag + Info.Ammo). The Magazine slot is shown for every magazine gun; the other slots
--- only show when at least one attachment below fits that weapon.
+-- (Info.Mag + Info.Ammo). The panel always shows Magazine (magazine guns) + every slot below;
+-- slots the weapon can't take are shown locked.
 Config.AttachmentSlots = {
-    { Kind = 'Muzzle',     Label = 'Muzzle',     Icon = 'blur_on' },
-    { Kind = 'Flashlight', Label = 'Flashlight', Icon = 'flashlight_on' },
-    { Kind = 'Scope',      Label = 'Scope',      Icon = 'center_focus_strong' },
-    { Kind = 'Grip',       Label = 'Grip',       Icon = 'pan_tool' },
+    { Kind = 'Muzzle', Label = 'Muzzle', Icon = 'blur_on' },
+    { Kind = 'Grip',   Label = 'Grip',   Icon = 'pan_tool' },
+    { Kind = 'Sight',  Label = 'Sight',  Icon = 'center_focus_strong' },
 }
 
--- Item -> which slot it goes in + the weapon component per weapon.
+-- Item -> slot + which weapon component it becomes.
+--  Candidates : GTA components of this kind; the first one the weapon accepts
+--               (DoesWeaponTakeWeaponComponent) is used. Works for add-on weapons that use base components.
+--  Components : optional fixed component per weapon, checked first (e.g. for add-on components).
+local Suppressors = {
+    'COMPONENT_AT_PI_SUPP', 'COMPONENT_AT_PI_SUPP_02', 'COMPONENT_CERAMICPISTOL_SUPP',
+    'COMPONENT_AT_AR_SUPP', 'COMPONENT_AT_AR_SUPP_02', 'COMPONENT_AT_SR_SUPP', 'COMPONENT_AT_SR_SUPP_03',
+}
+local MuzzleBrakes = {
+    'COMPONENT_AT_PI_COMP', 'COMPONENT_AT_PI_COMP_02', 'COMPONENT_AT_PI_COMP_03',
+    'COMPONENT_AT_MUZZLE_01', 'COMPONENT_AT_MUZZLE_02', 'COMPONENT_AT_MUZZLE_03', 'COMPONENT_AT_MUZZLE_04',
+    'COMPONENT_AT_MUZZLE_05', 'COMPONENT_AT_MUZZLE_06', 'COMPONENT_AT_MUZZLE_07', 'COMPONENT_AT_MUZZLE_08', 'COMPONENT_AT_MUZZLE_09',
+}
+local Grips = { 'COMPONENT_AT_AR_AFGRIP', 'COMPONENT_AT_AR_AFGRIP_02' }
+local Sights = {
+    'COMPONENT_AT_SIGHTS', 'COMPONENT_AT_SIGHTS_SMG', 'COMPONENT_AT_PI_RAIL', 'COMPONENT_AT_PI_RAIL_02',
+    'COMPONENT_AT_SCOPE_MACRO', 'COMPONENT_AT_SCOPE_MACRO_02', 'COMPONENT_AT_SCOPE_MACRO_MK2', 'COMPONENT_AT_SCOPE_MACRO_02_SMG_MK2',
+    'COMPONENT_AT_SCOPE_SMALL', 'COMPONENT_AT_SCOPE_SMALL_02', 'COMPONENT_AT_SCOPE_SMALL_MK2', 'COMPONENT_AT_SCOPE_SMALL_SMG_MK2',
+    'COMPONENT_AT_SCOPE_MEDIUM', 'COMPONENT_AT_SCOPE_MEDIUM_MK2',
+}
+
 Config.WeaponAttachments = {
-    ['silencer']        = { Kind = 'Muzzle', Components = Config.Attachments['silencer'] },
-    ['silencer_oilcan'] = { Kind = 'Muzzle', Components = Config.Attachments['silencer_oilcan'] },
-    -- Example for more:
-    -- ['flashlight_attachment'] = { Kind = 'Flashlight', Components = { ['weapon_beretta'] = 'COMPONENT_AT_PI_FLSH' } },
+    ['silencer']        = { Kind = 'Muzzle', Candidates = Suppressors,  Components = Config.Attachments['silencer'] },
+    ['silencer_oilcan'] = { Kind = 'Muzzle', Candidates = Suppressors,  Components = Config.Attachments['silencer_oilcan'] },
+    ['att_muzzlebrake'] = { Kind = 'Muzzle', Candidates = MuzzleBrakes },
+    ['att_grip']        = { Kind = 'Grip',   Candidates = Grips },
+    ['att_sight']       = { Kind = 'Sight',  Candidates = Sights },
 }
 
+-- Server/shared check: is this item an attachment for that slot? (Whether the weapon physically
+-- takes it is checked client-side with DoesWeaponTakeWeaponComponent, the server has no natives.)
 function GetWeaponAttachment(ItemName, WeaponName)
     local Data = Config.WeaponAttachments[ItemName]
-    if Data and Data.Components and Data.Components[WeaponName] then
-        return Data, Data.Components[WeaponName]
-    end
-    return false
+    if not Data then return false end
+    local Fixed = Data.Components and Data.Components[WeaponName]
+    return Data, Fixed
 end
+
+-- // Open sounds \\ --
+-- fw-inventory plays these itself when that inventory type actually opens (fw-misc sound ids).
+-- If the script that opened it already played the same sound just before, it isn't played twice.
+Config.OpenSounds = {
+    ['Stash'] = 'general.stashOpen',
+    ['Apartment Stash'] = 'general.stashOpen',
+    ['Traphouse Opslag'] = 'general.stashOpen',
+}
+
+-- Crafting UI: also list recipes the player has not unlocked yet (greyed out with the rep they need).
+Config.ShowLockedRecipes = true

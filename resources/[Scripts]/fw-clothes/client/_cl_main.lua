@@ -53,14 +53,51 @@ function IsFreemodeModel(Model)
     return Model == "mp_m_freemode_01" or Model == "mp_f_freemode_01"
 end
 
-function OpenClothesMenu(MenuType)
-    exports['fw-ui']:SendUIMessage("Clothing", "SetComponentValues", {
+-- Everything the clothing UI needs to (re)draw itself.
+function SendSkinToUI(Extra)
+    local Payload = {
         Values = GetMaxValues(),
         BlockedValues = GetBlockedValues(),
         PedId = GetPedNumber(),
         IsCustomPed = Config.CustomPeds[Config.CurrentSkin.Model] and Config.CurrentSkin.Model or false,
         CurrentSkin = Config.CurrentSkin.Clothes,
-        CustomPeds = GetCustomPeds()
+        CustomPeds = GetCustomPeds(),
+        Model = Config.CurrentSkin.Model,
+    }
+
+    for k, v in pairs(Extra or {}) do Payload[k] = v end
+    exports['fw-ui']:SendUIMessage("Clothing", "SetComponentValues", Payload)
+end
+
+function GetTattooNames()
+    local Gender = FW.Functions.GetPlayerData().charinfo.gender == 1 and "Female" or "Male"
+    local Retval = {}
+    for Zone, List in pairs(Config.Tattoos[Gender]) do
+        Retval[Zone] = {}
+        for i = 1, #List do
+            Retval[Zone][i] = List[i].Name
+        end
+    end
+    return Retval
+end
+
+function OpenClothesMenu(MenuType)
+    SavedClothes = DeepCopyTable(Config.CurrentSkin)
+    IsFree = MenuType == "Creation"
+    InClothesMenu = true
+
+    local PlayerData = FW.Functions.GetPlayerData()
+    local Gender = PlayerData.charinfo.gender == 1 and "Female" or "Male"
+
+    SendSkinToUI({
+        PedList = Gender == "Female" and Config.FemalePeds or Config.MalePeds,
+        TattooNames = GetTattooNames(),
+        MaxTattooLayers = Config.MaxTattooLayers,
+        Gender = Gender,
+        IsFree = IsFree,
+        ItemPrice = FW.Shared.CalculateTax("Clothes", Config.ClothesPrice),
+        Images = Config.ClothingImages,
+        Money = { Cash = PlayerData.money and PlayerData.money.cash or 0, Bank = 0 },
     })
 
     exports['fw-ui']:SendUIMessage("Clothing", "SetVisibility", {
@@ -72,9 +109,13 @@ function OpenClothesMenu(MenuType)
     exports['fw-ui']:SetNuiFocus(true, true)
     exports['fw-ui']:SetNuiFocusKeepInput(true)
 
-    SavedClothes = DeepCopyTable(Config.CurrentSkin)
-    IsFree = MenuType == "Creation"
-    InClothesMenu = true
+    -- Bank balance lives in fw-financials, ask the server for it without blocking the menu.
+    Citizen.CreateThread(function()
+        local Money = FW.SendCallback("fw-clothes:Server:GetMoney")
+        if Money and InClothesMenu then
+            exports['fw-ui']:SendUIMessage("Clothing", "SetComponentValues", { Money = Money })
+        end
+    end)
 
     CurrentTattooLayer = {
         TattoosTorso = 0,
@@ -193,12 +234,9 @@ function GetClothesPrice()
     for k, v in pairs(Config.CurrentSkin.Clothes) do
         if type(v) == "table" then
             local Prev = type(Clothes[k]) == "table" and Clothes[k] or {}
-            if k == "TattoosTorso" or k == "TattoosHead" or k == "TattoosLArm" or k == "TattoosRArm" or k == "TattoosLLeg" or k == "TattoosRLeg" then
-                for Layer, Value in pairs(v) do
-                    if Prev[Layer] ~= Value then
-                        Retval = Retval + Config.ClothesPrice
-                    end
-                end
+            if TattooZoneKeys[k] then
+                -- Every tattoo added or removed costs once, no matter which layer it sits on.
+                Retval = Retval + CountTattooChanges(Prev, v) * Config.ClothesPrice
             elseif Prev[1] ~= v[1] then
                 Retval = Retval + Config.ClothesPrice
             end
@@ -526,7 +564,7 @@ RegisterNUICallback("Clothing/ProcessComponentChange", function(Data, Cb)
     if Data.componentId == "TattoosTorso" or Data.componentId == "TattoosHead" or Data.componentId == "TattoosLArm" or Data.componentId == "TattoosRArm" or Data.componentId == "TattoosLLeg" or Data.componentId == "TattoosRLeg" then
         if Data.type == "Layer" then
             CurrentTattooLayer[Data.componentId] = Data.value
-            return
+            return Cb({ Success = true })
         end
 
         Config.CurrentSkin.Clothes[Data.componentId][CurrentTattooLayer[Data.componentId]] = Data.value
@@ -589,7 +627,7 @@ RegisterNUICallback("Clothing/ProcessComponentChange", function(Data, Cb)
     elseif Data.componentId == "FaceEyeColor" then
         SetPedEyeColor(PlayerPedId(), Data.value)
         Config.CurrentSkin.Clothes.FaceEyeColor[1] = Data.value
-        return
+        return Cb({ Success = true })
     elseif Data.componentId == "FaceOne" or Data.componentId == "FaceTwo" or Data.componentId == "FaceThree" then
         if IsFreemodeModel(Config.CurrentSkin.Model) then
             local SkinData = Config.CurrentSkin.Clothes[Data.componentId]
@@ -617,7 +655,7 @@ RegisterNUICallback("Clothing/ProcessComponentChange", function(Data, Cb)
         local SkinData = Config.CurrentSkin.Clothes[Data.componentId]
         local IndexToChange = Data.type == "Drawable" and 1 or 2
         local TypeData = Config.ClothingTypes[Data.componentId]
-        if not TypeData then return end
+        if not TypeData or not SkinData then return Cb({ Success = false }) end
 
         if TypeData.Drawable ~= nil then
             SkinData[IndexToChange] = Data.value
@@ -681,6 +719,7 @@ RegisterNUICallback("Clothing/ProcessComponentChange", function(Data, Cb)
         else
             SetPedHeadOverlayColor(Ped, TypeData.Overlay, TypeData.ColorType or 0, SkinData[3], SkinData[4] or 0)
         end
+        return Cb({ Success = true })
     end
 
     Cb({Success = false})
@@ -690,23 +729,26 @@ RegisterNUICallback("Clothing/ProcessSliderChange", function(Data, Cb)
     local Ped = PlayerPedId()
     local SkinData = Config.CurrentSkin.Clothes[Data.componentId]
     if SkinData == nil then
-        return
+        return Cb({ Success = false })
     end
 
     if Data.valueId ~= nil then
-        if SkinData[Data.valueId + 1] == Data.value then return end
+        if SkinData[Data.valueId + 1] == Data.value then return Cb({ Success = true }) end
         local TypeData = Config.ClothingTypes[Data.componentId]
 
         if TypeData and TypeData.Overlay ~= nil then
             SkinData[Data.valueId + 1] = Data.value
             SetPedHeadOverlay(Ped, TypeData.Overlay, SkinData[1], (Data.value + 0.0) / 100)
         else
-            local FeatureId = Config.FaceFeatureIds[Data.componentId][Data.valueId]
-            if FeatureId and FeatureId >= 0 then
-                SetPedFaceFeature(Ped, FeatureId, (Data.value + 0.0) / 100)
-                SkinData[Data.valueId + 1] = Data.value
-            end
+            local FeatureId = Config.FaceFeatureIds[Data.componentId] and Config.FaceFeatureIds[Data.componentId][Data.valueId]
+            if not FeatureId or FeatureId < 0 then return Cb({ Success = false }) end
+
+            -- Face features run from -1.0 to 1.0, the UI sends -100 to 100.
+            local Value = math.max(-100, math.min(100, tonumber(Data.value) or 0))
+            SetPedFaceFeature(Ped, FeatureId, (Value + 0.0) / 100)
+            SkinData[Data.valueId + 1] = Value
         end
+        return Cb({ Success = true })
     elseif Data.componentId == "FaceMix" or Data.componentId == "SkinMix" or Data.componentId == "ThirdFaceMix" then
         Config.CurrentSkin.Clothes[Data.componentId] = (Data.value + 0.0)
 
@@ -714,6 +756,7 @@ RegisterNUICallback("Clothing/ProcessSliderChange", function(Data, Cb)
             local Clothes = Config.CurrentSkin.Clothes
             SetPedHeadBlendData(Ped, Clothes.FaceOne[1], Clothes.FaceTwo[1], Clothes.FaceThree[1], Clothes.FaceOne[2], Clothes.FaceTwo[2], Clothes.FaceThree[2], Clothes.FaceMix / 100, Clothes.SkinMix / 100, Clothes.ThirdFaceMix / 100, false)
         end
+        return Cb({ Success = true })
     end
 
     Cb({Success = false})

@@ -978,10 +978,55 @@ Shared.Items["silencer_oilcan"] = {
     InsertInto = {},
 }
 
+Shared.Items["att_muzzlebrake"] = {
+    Name = "att_muzzlebrake",
+    Label = "Muzzle Brake",
+    Image = "att-muzzlebrake.png",
+    Description = "Minder terugslag. Zet hem op je wapen via Attachments.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = true,
+    IsBag = false, Weight = 1.0,
+    Price = 250,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["att_grip"] = {
+    Name = "att_grip",
+    Label = "Grip",
+    Image = "att-grip.png",
+    Description = "Voorgreep voor meer controle. Zet hem op je wapen via Attachments.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = true,
+    IsBag = false, Weight = 0.8,
+    Price = 250,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["att_sight"] = {
+    Name = "att_sight",
+    Label = "Sight",
+    Image = "att-sight.png",
+    Description = "Richtkijker / holo sight. Zet hem op je wapen via Attachments.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = true,
+    IsBag = false, Weight = 0.8,
+    Price = 250,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
 Shared.Items["silencer"] = {
     Name = "silencer",
     Label = "Silencer",
-    Image = "Silencer.png",
+    Image = "silencer.png",
     Description = "High quality Dempertje wel hoor..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,

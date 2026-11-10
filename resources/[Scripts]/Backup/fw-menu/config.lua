@@ -470,7 +470,7 @@ Config.Menu = {
         Event = 'fw-bennys:Client:OpenBennys',
         Parameters = false,
         Enabled = function()
-            return not exports['fw-medical']:GetDeathStatus() and exports['fw-bennys']:GetIsInBennysZone() and IsPedInAnyVehicle(PlayerPedId()) and GetPedInVehicleSeat(GetVehiclePedIsIn(PlayerPedId()), -1) == PlayerPedId()
+            return not exports['fw-medical']:GetDeathStatus() and exports['fw-bennys_wip']:GetIsInBennysZone() and IsPedInAnyVehicle(PlayerPedId()) and GetPedInVehicleSeat(GetVehiclePedIsIn(PlayerPedId()), -1) == PlayerPedId()
         end,
     },
     {

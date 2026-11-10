@@ -3,6 +3,7 @@ FW = exports['fw-core']:GetCoreObject()
 -- Code
 
 Citizen.CreateThread(function()
+    SyncMloHouses() -- sv_mlo.lua: makes sure every MLO in config/sh_mlo.lua has a row
     LoadHouses()
 end)
 
@@ -14,6 +15,26 @@ AddEventHandler("fw-housing:Server:SetInteractLocation", function(HouseId, Inter
     if Player == nil then return end
 
     if not HasKeyToHouse(HouseId, Player.PlayerData.citizenid) and not exports['fw-businesses']:HasPlayerBusinessPermission(Config.BusinessName, Source, Config.SellPermission) then
+        return
+    end
+
+    if Config.Houses[HouseId] == nil then return end
+
+    -- MLO houses: doors are physical, garage / stash / wardrobe are validated against the zone (sv_mlo.lua).
+    if Config.Houses[HouseId].Mlo then
+        if Interaction == "Garage" then
+            SetMloGarage(Source, HouseId)
+        elseif Interaction == "Stash" or Interaction == "Wardrobe" then
+            local PedCoords = GetEntityCoords(GetPlayerPed(Source))
+            if not ValidateMloInterior(HouseId, PedCoords) then
+                return TriggerClientEvent('FW:Notify', Source, "You have to be inside the house.", "error")
+            end
+            Config.Houses[HouseId].Locations[Interaction] = PedCoords
+            TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
+            SaveHouse(HouseId)
+        else
+            TriggerClientEvent('FW:Notify', Source, "This house uses its real doors.", "error")
+        end
         return
     end
 
@@ -208,12 +229,26 @@ FW.Functions.CreateCallback('fw-housing:Server:LockProperty', function(Source, C
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
 
+    if Config.Houses[HouseId] == nil then return Cb(false) end
+
+    -- MLO doors always need keys (IsDetcord comes from the client and can't be trusted).
+    if Config.Houses[HouseId].Mlo and not HasKeyToHouse(HouseId, Player.PlayerData.citizenid) then
+        return Cb(false)
+    end
+
     if Config.Houses[HouseId].Locked and not IsDetcord and not HasKeyToHouse(HouseId, Player.PlayerData.citizenid) then
         Cb(false)
         return
     end
 
     Config.Houses[HouseId].Locked = not Config.Houses[HouseId].Locked
+
+    -- MLO: the phone / radial lock drives the physical front door.
+    if Config.Houses[HouseId].Mlo then
+        Config.Houses[HouseId].DoorLocks = Config.Houses[HouseId].DoorLocks or { Front = true, Back = true }
+        Config.Houses[HouseId].DoorLocks.Front = Config.Houses[HouseId].Locked
+        TriggerClientEvent("fw-housing:Client:Mlo:SetDoorLock", -1, HouseId, 'Front', Config.Houses[HouseId].Locked)
+    end
     TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
 
     Cb(true)
@@ -229,6 +264,14 @@ FW.Functions.CreateCallback("fw-housing:Server:SellHouse", function(Source, Cb, 
 
     if Config.Houses[HouseId].Owner ~= Player.PlayerData.citizenid then
         return Cb(false)
+    end
+
+    if Config.Houses[HouseId].Mlo then
+        local ReceiveMoney = math.floor(Config.Houses[HouseId].Price / 2)
+        exports['fw-financials']:AddMoneyToAccount('1001', "1", Player.PlayerData.charinfo.account, ReceiveMoney, 'SELL', 'Huis te koop gezet: ' .. Config.Houses[HouseId].Adress)
+        ResetMloHouse(HouseId)
+        exports['ghmattimysql']:executeSync("DELETE FROM `phone_documents` WHERE `title` = @Title", { ['@Title'] = Config.Houses[HouseId].Adress })
+        return Cb(true)
     end
 
     Config.Houses[HouseId].Owner = false
@@ -325,11 +368,11 @@ FW.Functions.CreateCallback("fw-housing:Server:HasKeys", function(Source, Cb, Ho
         ['@Name'] = HouseName
     })
 
+    if Result[1] == nil then return Cb(false) end
+
     if Result[1].citizenid == Player.PlayerData.citizenid then
         return Cb(true)
     end
-
-    if Result[1] == nil then return Cb(false) end
 
     for k, v in pairs(json.decode(Result[1].keyholders)) do
         if v == Player.PlayerData.citizenid then
@@ -367,10 +410,17 @@ function LoadHouses()
     local Houses = exports['ghmattimysql']:executeSync("SELECT * FROM `player_houses`")
     local NewHouses = {}
 
+    -- Keep MLO door states when houses are reloaded (realtor create/edit).
+    local OldByDbId = {}
+    for _, Old in pairs(Config.Houses or {}) do
+        if Old and Old.DbId then OldByDbId[Old.DbId] = Old end
+    end
+
     for k, v in pairs(Houses) do
         local Coords = json.decode(v.coords)
-        local Garage = json.decode(v.garage)
-        local Locations = json.decode(v.locations)
+        local Garage = json.decode(v.garage or '{}') or {}
+        local Locations = json.decode(v.locations or '{}') or {}
+        local IsMlo = v.mlo ~= nil and Config.MLOHouses[v.mlo] ~= nil
         local HouseId = #NewHouses + 1
 
         NewHouses[HouseId] = {
@@ -378,8 +428,8 @@ function LoadHouses()
             DbId = v.id,
             Owner = v.citizenid ~= nil and v.citizenid or false,
             Owned = v.citizenid ~= nil,
-            Keyholders = json.decode(v.keyholders),
-            Business = json.decode(v.business),
+            Keyholders = json.decode(v.keyholders or '[]') or {},
+            Business = json.decode(v.business or '[]') or {},
             Selling = v.selling == 1,
             Locked = true,
             Name = v.name,
@@ -396,8 +446,21 @@ function LoadHouses()
                 BackdoorIn = Locations.BackdoorIn and vector4(Locations.BackdoorIn.x, Locations.BackdoorIn.y, Locations.BackdoorIn.z, Locations.BackdoorIn.w) or false,
                 BackdoorOut = Locations.BackdoorOut and vector4(Locations.BackdoorOut.x, Locations.BackdoorOut.y, Locations.BackdoorOut.z, Locations.BackdoorOut.w) or false,
             },
-            Decorations = json.decode(v.decorations)
+            Decorations = EnsureDecorIds(json.decode(v.decorations or '[]') or {}),
+
+            -- MLO houses (sv_mlo.lua). Mlo = key in Config.MLOHouses, DoorLocks = physical door states.
+            Mlo = IsMlo and v.mlo or nil,
+            DoorLocks = IsMlo and { Front = true, Back = true } or nil,
         }
+
+        if IsMlo then
+            NewHouses[HouseId].Label = Config.MLOHouses[v.mlo].Label
+            local Old = OldByDbId[v.id]
+            if Old and Old.DoorLocks then
+                NewHouses[HouseId].DoorLocks = Old.DoorLocks
+                NewHouses[HouseId].Locked = Old.DoorLocks.Front
+            end
+        end
     end
 
     print("Loaded " .. #NewHouses .. " houses.")

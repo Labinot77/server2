@@ -26,6 +26,15 @@ $(document).ready(function(){
                 UpdateInventoryWeights('player');
                 RefreshMagazinePanel();
                 RefreshAttachmentsPanel();
+                RefreshCraftingPanel();
+                break;
+            case "RefreshPlayer":
+                if (!InventoryOpen) break;
+                MyInventory = event.data.Inventory || MyInventory;
+                for (let i = 1; i <= Layout.MaxPlayerSlots; i++) RenderSlot('player', i);
+                RefreshBackpackState('player');
+                UpdateInventoryWeights('player');
+                RefreshCraftingPanel();
                 break;
             case "SetPlayerLimits":
                 if (InventoryOpen) RefreshBackpackState('player');

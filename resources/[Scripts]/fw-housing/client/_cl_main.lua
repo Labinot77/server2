@@ -13,11 +13,30 @@ end)
 -- Code
 local CurrentHouse, IsInside = nil, false
 local HouseObject, HouseOffsets, HouseDecorations = nil, {}, {}
+local IsInsideMlo = false
+
+-- Called by cl_mlo.lua when the player enters / leaves an MLO house zone.
+-- Makes GetCurrentHouse() / IsInside() work for MLOs too (phone furniture, stash placing, radial menu).
+function SetMloCurrentHouse(House)
+    if House then
+        CurrentHouse, IsInside, IsInsideMlo = House, true, true
+    elseif IsInsideMlo then
+        CurrentHouse, IsInside, IsInsideMlo = nil, false, false
+    end
+end
+exports("IsInsideMlo", function() return IsInsideMlo end)
 
 -- Events
 RegisterNetEvent("fw-housing:Client:SyncHouse")
 AddEventHandler("fw-housing:Client:SyncHouse", function(HouseId, Data)
     Config.Houses[HouseId] = Data
+
+    -- MLO furniture is handled by cl_mlo.lua
+    if Data and Data.Mlo then
+        if CurrentHouse and CurrentHouse.Id == Data.Id then CurrentHouse = Data end
+        return
+    end
+
     if Data and CurrentHouse and CurrentHouse.Id == Data.Id then
 
         if IsInside and CurrentHouse.Decorations ~= Data.Decorations then
@@ -75,6 +94,7 @@ function GetClosestHouse()
 
     local Coords = GetEntityCoords(PlayerPedId())
     for k, v in pairs(Config.Houses) do
+        if v.Mlo then goto Continue end -- MLO doors use interact (cl_mlo.lua), no teleport entrance
         local FrontDistance = #(Coords - vector3(v.Coords.x, v.Coords.y, v.Coords.z))
         local BackDistance = 999.0
         if v.Locations.BackdoorOut and v.Locations.BackdoorIn then BackDistance = #(Coords - vector3(v.Locations.BackdoorOut.x, v.Locations.BackdoorOut.y, v.Locations.BackdoorOut.z)) end
@@ -84,6 +104,7 @@ function GetClosestHouse()
                 ClosestHouse, ClosestDistance = k, FrontDistance <= 1.0 and FrontDistance or BackDistance
             end
         end
+        ::Continue::
     end
 
     return ClosestHouse ~= nil and Config.Houses[ClosestHouse] or false
@@ -287,7 +308,8 @@ AddEventHandler("fw-housing:Client:LockProperty", function(HouseId, IsDetcord)
     local House = CurrentHouse
     if House == nil then House = Config.Houses[HouseId] end
 
-    if House.Locked and not IsDetcord and not HasKeyToCurrent() then return end
+    if House == nil then return end
+    if House.Locked and not IsDetcord and not HasKeyToCurrent() and not HasKeyToHouseId(House.Id) then return end
     if not IsDetcord and HasOverdueDebts(House.Adress) then
         TriggerServerEvent("fw-phone:Server:Mails:AddMail", "De Staat van Los Santos", "Kennisgeving van inbeslagname", "U heeft twee of meer onderhoudskosten openstaan voor deze woning. Als deze niet worden afbetaald, kan dit leiden tot permanente inbeslagname van eigendom aan de staat van Los Santos. Zodra openstaande onderhoudskosten zijn betaald, worden uw sleutels aan u en uw huurders geretourneerd.")
         return
@@ -307,6 +329,12 @@ AddEventHandler("fw-housing:Client:EnterProperty", function(HouseId, Forced)
     end
 
     if CurrentHouse == nil then
+        return
+    end
+
+    -- MLO: no shell. Only spawn selection (Forced) moves the player inside.
+    if CurrentHouse.Mlo then
+        if Forced then EnterMloHouse(CurrentHouse) end
         return
     end
 
@@ -369,7 +397,7 @@ end)
 
 RegisterNetEvent("fw-housing:Client:LeaveHouse")
 AddEventHandler("fw-housing:Client:LeaveHouse", function(IsBackdoor)
-    if CurrentHouse == nil then return end
+    if CurrentHouse == nil or CurrentHouse.Mlo then return end
     local Coords = GetEntityCoords(PlayerPedId())
 
     if CurrentHouse.Tier ~= 15 then
@@ -405,5 +433,10 @@ end)
 
 RegisterNetEvent("fw-housing:Client:OpenFurniture")
 AddEventHandler("fw-housing:Client:OpenFurniture", function(HouseId)
+    local House = HouseId and Config.Houses[HouseId] or CurrentHouse
+    if House and House.Mlo then
+        return OpenMloDecorateMenu(House.Id)
+    end
+
     TriggerEvent('fw-editor:Client:SetState', true, HouseDecorations)
 end)

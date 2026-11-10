@@ -37,9 +37,7 @@ function CalculateClothesPrice(OldSkin, NewSkin)
         if type(v) == "table" then
             local Prev = type(Old[k]) == "table" and Old[k] or {}
             if TattooZones[k] then
-                for Layer, Value in pairs(v) do
-                    if Prev[Layer] ~= Value then Price = Price + Config.ClothesPrice end
-                end
+                Price = Price + CountTattooChanges(Prev, v) * Config.ClothesPrice
             elseif Prev[1] ~= v[1] then
                 Price = Price + Config.ClothesPrice
             end

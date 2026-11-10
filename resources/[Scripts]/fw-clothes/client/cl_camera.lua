@@ -1,4 +1,4 @@
-local Camera, CameraActive CamHeading, CurrentCamStage, IsSwitchingStage = nil, nil, nil, 2, false
+local Camera, CameraActive, CamHeading, CurrentCamStage, IsSwitchingStage = nil, false, nil, 2, false
 
 function CreateClothingCamera(Bool, WithBlur, ForceStage)
     exports['fw-inventory']:SetBusyState(Bool)
@@ -69,13 +69,21 @@ end
 
 function UpdateCameraPosition(Ped, Upwards)
     if not Camera or IsSwitchingStage then return end
-    IsSwitchingStage = true
 
     if CurrentCamStage == #Config.CameraSettings and Upwards then
         Upwards = false
     end
 
-    CurrentCamStage = Upwards and math.min(CurrentCamStage + 1, #Config.CameraSettings) or math.max(CurrentCamStage - 1, 1)
+    SetCameraStage(Ped, Upwards and math.min(CurrentCamStage + 1, #Config.CameraSettings) or math.max(CurrentCamStage - 1, 1))
+end
+
+-- Smoothly move the clothing camera to one of Config.CameraSettings.
+function SetCameraStage(Ped, Stage)
+    Stage = math.max(1, math.min(tonumber(Stage) or 2, #Config.CameraSettings))
+    if not Camera or IsSwitchingStage or Stage == CurrentCamStage then return end
+    IsSwitchingStage = true
+
+    CurrentCamStage = Stage
     local CamSettings = Config.CameraSettings[CurrentCamStage]
 
     local TempCam = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
@@ -112,7 +120,8 @@ function CameraController()
 
             -- Camera Rotation
             local ScreenX, ScreenY = GetActiveScreenResolution()
-            if CursorX < (ScreenX * 0.72) then
+            local DragArea = Config.CameraDragArea or { 0.0, 0.72 }
+            if CursorX > (ScreenX * DragArea[1]) and CursorX < (ScreenX * DragArea[2]) then
                 if IsDisabledControlJustPressed(0, 24) or IsDisabledControlJustPressed(0, 25) then
                     IsMouseInField = true
                 end

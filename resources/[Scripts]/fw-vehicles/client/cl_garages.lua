@@ -485,7 +485,7 @@ AddEventHandler("fw-vehicles:Client:SpawnVehicle", function(Data)
                     WheelFitment = exports['fw-vehicles']:GetVehicleMeta(Vehicle, "WheelFitment")
                 end
 
-                if not exports['fw-bennys_wip']:GetIsInBennysZone() then
+                if not exports['fw-bennys']:GetIsInBennysZone() then
                     if WheelFitment.Width then SetVehicleWheelWidth(Vehicle, WheelFitment.Width) end
                     if WheelFitment.FLOffset then SetVehicleWheelXOffset(Vehicle, 0, WheelFitment.FLOffset) end
                     if WheelFitment.FROffset then SetVehicleWheelXOffset(Vehicle, 1, WheelFitment.FROffset) end

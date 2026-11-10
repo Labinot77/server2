@@ -112,13 +112,17 @@ FW.Functions.CreateCallback('fw-inventory:Server:RefreshInventory', function(Sou
     Cb(true)
 end)
 
-AddEventHandler("playerDropped", function(Reason)
-    local Source = source
+-- Frees every inventory this player still has locked (closed, reopened, or left).
+function ReleaseInventoryLocks(Source, Except)
     for k, v in pairs(OpenInventories) do
-        if v == Source then
+        if v == Source and k ~= Except then
             OpenInventories[k] = false
         end
     end
+end
+
+AddEventHandler("playerDropped", function(Reason)
+    ReleaseInventoryLocks(source)
 end)
 
 FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType, InvName, MaxSlots, MaxWeight)
@@ -178,15 +182,20 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
 
         local CraftItems = {[0] = false}
         local CraftingRep = Player.PlayerData.metadata.craftingrep
+        CraftingRep = CraftingRep or 0
         for k, v in pairs(Config.CraftingBenches[InvName]) do
-            if CraftingRep >= v.RequiredRep then
+            -- Locked recipes are sent too so the UI can show what unlocks next; the server still refuses them.
+            if CraftingRep >= (v.RequiredRep or 0) or Config.ShowLockedRecipes then
                 table.insert(CraftItems, {
+                    Locked = CraftingRep < (v.RequiredRep or 0),
+                    RequiredRep = v.RequiredRep or 0,
                     Item = v.Item,
                     CustomType = v.CustomType,
                     Amount = v.Amount,
                     Info = {},
                     CreateDate = os.time() * 1000,
-                    Slot = k,
+                    Slot = k, -- index in Config.CraftingBenches[bench] (the NUI sends this back as FromSlot)
+                    Multiplier = v.Multiplier or 1,
                 })
             end
         end
@@ -194,6 +203,7 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
         OtherData.Type = 'Crafting'
         OtherData.Name = 'Crafting'
         OtherData.Crafting = InvName
+        OtherData.CraftingRep = CraftingRep
         OtherData.Slots = #CraftItems
         OtherData.Weight = 0.0
         OtherData.Items = CraftItems
@@ -209,7 +219,8 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     --     OtherData.Weight = MaxWeight
     --     OtherData.Items = Config.Drops[tonumber(InvName:sub(6))].Items
     else
-        if OpenInventories[InvName] then
+        -- Locked by someone else -> busy. Locked by this player (e.g. pressed E twice) -> just reopen it.
+        if OpenInventories[InvName] and OpenInventories[InvName] ~= Source then
             TriggerClientEvent("fw-inventory:Client:LoadInventory", Source, { Type = 'None', Name = 'None', Slots = 0, Weight = 0, Items = {} })
             return
         end
@@ -237,6 +248,9 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
             end
         end
     end
+
+    -- Anything else this player still had open (a previous open that never got closed) is freed.
+    ReleaseInventoryLocks(Source, InvName)
 
     if InvName ~= 'Store' and InvName ~= 'Crafting' then
         OpenInventories[InvName] = Source
@@ -294,6 +308,13 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
                 end
             end
         elseif Data.FromInv == "Crafting" then
+            -- The recipe must exist on this bench, match the item, and be unlocked for this player.
+            local Bench = Config.CraftingBenches[Data.Crafting]
+            local Recipe = Bench and Bench[tonumber(Data.FromSlot)]
+            if not Recipe or Recipe.Item ~= Data.FromItem or (Recipe.CustomType or "") ~= (Data.FromType or "") then return end
+            if (Player.PlayerData.metadata.craftingrep or 0) < (Recipe.RequiredRep or 0) then return end
+            Data.Amount = math.max(1, math.min(math.floor(tonumber(Data.Amount) or 1), Recipe.Amount or 1))
+
             local ItemData = Shared.Items[Data.FromItem]
             local ItemCrafts = ItemData.Craft
             if Data.FromType and #Data.FromType > 0 and Shared.CustomTypes[Data.FromItem] and Shared.CustomTypes[Data.FromItem][Data.FromType] and Shared.CustomTypes[Data.FromItem][Data.FromType].Craft then
@@ -324,12 +345,14 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
                     Ammo = 0
                 }
             end
-            if Player.Functions.AddItem(Data.FromItem, Data.Amount * (Config.CraftingBenches[Data.Crafting][Data.FromSlot].Multiplier or 1), Data.ToSlot, ItemInfo, false, Data.FromType) then
-                if Config.CraftingBenches[Data.Crafting][Data.FromSlot].AddRep then
-                    Player.Functions.SetMetaData('craftingrep', Player.PlayerData.metadata.craftingrep + (Config.CraftingBenches[Data.Crafting][Data.FromSlot].AddRep * Data.Amount))
+            if Player.Functions.AddItem(Data.FromItem, Data.Amount * (Recipe.Multiplier or 1), Data.ToSlot, ItemInfo, false, Data.FromType) then
+                if Recipe.AddRep then
+                    Player.Functions.SetMetaData('craftingrep', Player.PlayerData.metadata.craftingrep + (Recipe.AddRep * Data.Amount))
                 end
                 TriggerEvent("fw-logs:Server:Log", 'crafting', "Item Crafted", ("User: [%s] - %s - %s %s\nItem: %s\nAmount: %sx\nTable: %s"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Data.FromItem, Data.Amount, Data.Crafting), "green")
                 TriggerClientEvent("fw-inventory:Client:UpdateInvSlot", Player.PlayerData.source, Data.ToSlot)
+                -- Materials were removed by name from any slot: refresh the whole player panel.
+                TriggerClientEvent("fw-inventory:Client:RefreshPlayerInventory", Player.PlayerData.source)
             else
                 TriggerEvent("fw-logs:Server:Log", 'crafting', "Craft Failed", ("User: [%s] - %s - %s %s\nItem: %s\nAmount: %sx\nTable: %s"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Data.FromItem, Data.Amount, Data.Crafting), "error")
             end
@@ -478,7 +501,10 @@ FW.RegisterServer("fw-inventory:Server:UpdateInventory", function(Source, InvDat
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
 
-    OpenInventories[InvData.Name] = false
+    -- Free everything this player had open, not only InvData.Name: after a double open the
+    -- client may only know about the last one (e.g. 'None'), which used to leave stashes locked.
+    if InvData and InvData.Name and OpenInventories[InvData.Name] == Source then OpenInventories[InvData.Name] = false end
+    ReleaseInventoryLocks(Source)
 
     -- lazy fix. Probably should improve/rework drops later.
     -- if string.startsWith(InvData.Name, 'Drop') then

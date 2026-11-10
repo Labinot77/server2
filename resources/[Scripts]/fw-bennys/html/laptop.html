@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Work Orders</title>
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.15.4/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700;1,800&family=Roboto+Mono:wght@500&display=swap">
+<style>
+    :root {
+        --accent: #3fd8e6;
+        --accent-dark: #1b9fb0;
+        --ink: #0b0d10;
+        --bg: #0d0f12;
+        --panel: #15181d;
+        --panel-2: #1c2027;
+        --line: rgba(255, 255, 255, 0.07);
+        --muted: #8d949d;
+        --ok: #5ee08a;
+        --warn: #f2c14e;
+        --bad: #ef5a5a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: white;
+        font-family: "Barlow Semi Condensed", sans-serif;
+        user-select: none;
+        cursor: none;
+    }
+
+    .italic { font-style: italic; text-transform: uppercase; font-weight: 800; }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+        display: flex;
+        align-items: center;
+        height: 56px;
+        padding: 0 22px;
+        background: linear-gradient(90deg, #111418, #0d0f12);
+        border-bottom: 2px solid var(--accent);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand i { font-size: 22px; color: var(--accent); }
+    .brand .title { font-size: 22px; line-height: 1; }
+    .brand .sub { font-size: 13px; color: var(--muted); font-weight: 600; font-style: italic; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .topbar .right { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 14px; font-weight: 600; }
+    .topbar .right .who { color: var(--muted); }
+    .topbar .right .who b { color: white; }
+    .topbar .clock { font-family: "Roboto Mono", monospace; font-size: 14px; }
+
+    .btn-close {
+        display: flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px;
+        font-size: 16px; color: var(--muted);
+        border: 1px solid var(--line);
+        transition: all 0.12s ease;
+    }
+    .btn-close:hover { color: var(--ink); background: var(--accent); border-color: var(--accent); }
+
+    /* ---------- Layout ---------- */
+    .body { display: flex; height: calc(100vh - 56px); }
+
+    .list-col { width: 440px; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--panel); }
+
+    .tabs { display: flex; padding: 14px 16px 0; gap: 6px; border-bottom: 1px solid var(--line); }
+    .tab {
+        padding: 9px 14px 10px;
+        font-size: 14px; font-weight: 800; font-style: italic; text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+        transition: color 0.12s ease;
+    }
+    .tab:hover { color: white; }
+    .tab.active { color: white; border-color: var(--accent); }
+    .tab .count { margin-left: 6px; padding: 1px 6px; font-size: 12px; color: var(--ink); background: var(--accent); font-style: normal; }
+    .tab:not(.active) .count { background: rgba(255,255,255,0.15); color: white; }
+
+    .orders { flex: 1; overflow-y: auto; padding: 10px; }
+
+    .order {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px 10px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        background: var(--panel-2);
+        border-left: 3px solid transparent;
+        transition: background 0.12s ease, border-color 0.12s ease;
+    }
+    .order:hover { background: #232832; }
+    .order.selected { background: linear-gradient(110deg, rgba(63,216,230,0.22), rgba(63,216,230,0.04)); border-color: var(--accent); }
+
+    .order .model { font-size: 18px; line-height: 1.1; }
+    .order .model span { color: var(--muted); font-size: 14px; margin-right: 6px; }
+    .order .meta { grid-column: 1 / 2; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .order .total { text-align: right; font-size: 16px; color: var(--accent); }
+    .order .time { text-align: right; font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .plate {
+        display: inline-block;
+        padding: 1px 7px;
+        font-family: "Roboto Mono", monospace; font-size: 12px; font-weight: 500;
+        color: var(--ink); background: #f2f2ee;
+        border: 1px solid #c9c9c2;
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 11px; font-weight: 800; font-style: italic; text-transform: uppercase;
+        color: var(--ink);
+    }
+    .pill.pending { background: var(--warn); }
+    .pill.accepted { background: var(--accent); }
+    .pill.completed { background: var(--ok); }
+    .pill.cancelled { background: var(--bad); color: white; }
+
+    .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--muted); font-size: 15px; font-weight: 700; font-style: italic; text-transform: uppercase; }
+    .empty i { font-size: 34px; opacity: 0.6; }
+
+    /* ---------- Detail ---------- */
+    .detail { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    .detail-head { padding: 22px 28px 18px; border-bottom: 1px solid var(--line); }
+    .detail-head .row { display: flex; align-items: center; gap: 12px; }
+    .detail-head .model { font-size: 32px; line-height: 1; }
+    .detail-head .id { font-size: 15px; color: var(--muted); font-weight: 700; }
+
+    .info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+    .info div { padding: 10px 12px; background: var(--panel); border-top: 2px solid var(--line); }
+    .info label { display: block; font-size: 11px; font-weight: 800; font-style: italic; text-transform: uppercase; color: var(--muted); }
+    .info p { margin-top: 2px; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .items-head { display: flex; align-items: center; gap: 12px; padding: 16px 28px 8px; }
+    .items-head h3 { font-size: 15px; }
+    .items-head .line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent); }
+    .items-head .progress-text { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+    .progress { margin: 0 28px 10px; height: 5px; background: rgba(255,255,255,0.08); }
+    .progress div { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+
+    .items { flex: 1; overflow-y: auto; padding: 0 28px 10px; }
+
+    .item {
+        display: flex; align-items: center; gap: 14px;
+        padding: 10px 14px;
+        margin-bottom: 4px;
+        background: var(--panel);
+    }
+    .item .state {
+        display: flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; flex: 0 0 26px;
+        font-size: 13px;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: var(--muted);
+    }
+    .item.done .state { background: var(--ok); border-color: var(--ok); color: var(--ink); }
+    .item .text { flex: 1; min-width: 0; }
+    .item .label { font-size: 15px; font-weight: 800; font-style: italic; text-transform: uppercase; }
+    .item .option { font-size: 13px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .item .swatch { display: inline-block; width: 11px; height: 11px; border: 1px solid rgba(255,255,255,0.6); }
+    .item .price { font-size: 15px; font-weight: 800; color: var(--accent); }
+    .item.done .label { color: rgba(255,255,255,0.7); }
+
+    .detail-foot {
+        display: flex; align-items: center; gap: 10px;
+        padding: 16px 28px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+    }
+    .detail-foot .total { flex: 0 0 auto; white-space: nowrap; margin-right: 10px; }
+    .detail-foot .total label { display: block; font-size: 12px; font-weight: 800; font-style: italic; text-transform: uppercase; color: var(--muted); }
+    .detail-foot .total p { font-size: 26px; color: var(--accent); line-height: 1; }
+    .detail-foot .total p span { font-size: 13px; color: var(--muted); }
+
+    .hint { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.3; }
+    .hint i { color: var(--accent); margin-right: 4px; }
+
+    .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        height: 42px; padding: 0 18px;
+        font-size: 14px; font-weight: 800; font-style: italic; text-transform: uppercase;
+        color: var(--ink); background: white;
+        transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+    }
+    .btn:hover { background: var(--accent); }
+    .btn.primary { background: var(--accent); }
+    .btn.primary:hover { background: white; }
+    .btn.ghost { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.25); }
+    .btn.ghost:hover { background: rgba(255,255,255,0.08); }
+    .btn.danger:hover { background: var(--bad); color: white; }
+    .btn.disabled { opacity: 0.35; pointer-events: none; }
+
+    /* ---------- Misc ---------- */
+    .toast {
+        position: absolute; left: 50%; top: 70px;
+        transform: translate(-50%, -12px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+        padding: 11px 18px;
+        font-size: 15px; font-weight: 800; font-style: italic; text-transform: uppercase;
+        color: var(--ink); background: var(--accent);
+        opacity: 0;
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { background: var(--bad); color: white; }
+
+    .cursor {
+        position: absolute; top: 0; left: 0;
+        width: 22px; height: 22px;
+        pointer-events: none;
+        z-index: 1000;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+    }
+
+    .boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); }
+    .boot i { font-size: 60px; color: var(--accent); }
+    .boot p { font-size: 30px; }
+    .boot span { font-size: 15px; color: var(--muted); font-weight: 700; font-style: italic; text-transform: uppercase; }
+
+    .calibrate { position: absolute; inset: 0; border: 6px solid var(--accent); pointer-events: none; }
+    .calibrate::before, .calibrate::after { content: ""; position: absolute; background: var(--accent); }
+    .calibrate::before { left: 50%; top: 0; bottom: 0; width: 2px; }
+    .calibrate::after { top: 50%; left: 0; right: 0; height: 2px; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: rgba(63,216,230,0.5); }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">
+            <i class="fas fa-car-mechanic"></i>
+            <div>
+                <p class="title italic" id="brand">Hayes Repairs</p>
+                <p class="sub">Work Orders</p>
+            </div>
+        </div>
+        <div class="right">
+            <p class="who">Mechanic: <b id="me">-</b></p>
+            <p class="clock" id="clock">00:00</p>
+            <div class="btn-close" data-action="refresh" title="Refresh"><i class="fas fa-sync-alt"></i></div>
+            <div class="btn-close" data-action="close" title="Close"><i class="fas fa-times"></i></div>
+        </div>
+    </div>
+
+    <div class="body">
+        <div class="list-col">
+            <div class="tabs" id="tabs"></div>
+            <div class="orders" id="orders"></div>
+        </div>
+        <div class="detail" id="detail"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="boot" id="boot"><i class="fas fa-car-mechanic"></i><p class="italic">Work Orders</p><span>Starting up...</span></div>
+    <div class="calibrate hidden" id="calibrate"></div>
+
+    <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="white" stroke="#0b0d10" stroke-width="1.4" stroke-linejoin="round"/></svg>
+
+<script>
+    const State = {
+        resource: "fw-bennys",
+        business: "",
+        me: { cid: "", name: "" },
+        orders: [],
+        tab: "open",
+        selected: null,
+    };
+
+    const $ = id => document.getElementById(id);
+    const Money = v => "$" + Math.round(v || 0).toLocaleString("en-US");
+    const Esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const TimeAgo = Unix => {
+        if (!Unix) return "";
+        const Diff = Math.max(0, Date.now() / 1000 - Unix);
+        if (Diff < 60) return "just now";
+        if (Diff < 3600) return Math.floor(Diff / 60) + "m ago";
+        if (Diff < 86400) return Math.floor(Diff / 3600) + "h ago";
+        return Math.floor(Diff / 86400) + "d ago";
+    };
+
+    const Post = (Action, Data = {}) => {
+        if (State.mock) return MockAction(Action, Data);
+        fetch(`https://${State.resource}/laptop`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json; charset=UTF-8" },
+            body: JSON.stringify({ Action, ...Data }),
+        }).catch(() => {});
+    };
+
+    // ---------- Filtering ----------
+
+    const Filters = {
+        open: o => o.Status === "pending" || o.Status === "accepted",
+        mine: o => o.Status === "accepted" && o.MechanicCid === State.me.cid,
+        history: o => o.Status === "completed" || o.Status === "cancelled",
+    };
+
+    const Visible = () => State.orders.filter(Filters[State.tab]);
+
+    // ---------- Render ----------
+
+    const RenderTabs = () => {
+        const Tabs = [["open", "Open"], ["mine", "My Jobs"], ["history", "History"]];
+        $("tabs").innerHTML = Tabs.map(([Id, Label]) => {
+            const Count = State.orders.filter(Filters[Id]).length;
+            return `<div class="tab ${State.tab === Id ? "active" : ""}" data-tab="${Id}">${Label}${Id !== "history" ? `<span class="count">${Count}</span>` : ""}</div>`;
+        }).join("");
+    };
+
+    const RenderList = () => {
+        const List = Visible();
+        if (List.length === 0) {
+            const Text = { open: "No open orders", mine: "You have no jobs", history: "No history yet" }[State.tab];
+            $("orders").innerHTML = `<div class="empty"><i class="fal fa-clipboard-list"></i>${Text}</div>`;
+            return;
+        }
+
+        $("orders").innerHTML = List.map(o => {
+            const Done = o.Items.filter(i => i.Installed).length;
+            return `
+                <div class="order ${State.selected === o.Id ? "selected" : ""}" data-order="${o.Id}">
+                    <p class="model italic"><span>#${o.Id}</span>${Esc(o.Model)}</p>
+                    <p class="total italic">${Money(o.Total)}</p>
+                    <div class="meta">
+                        <span class="plate">${Esc(o.Plate)}</span>
+                        <span>${Esc(o.CustomerName)}</span>
+                        <span><i class="fas fa-wrench"></i> ${Done}/${o.Items.length}</span>
+                    </div>
+                    <div class="time"><span class="pill ${o.Status}">${o.Status}</span></div>
+                </div>`;
+        }).join("");
+    };
+
+    const ItemOption = Item => {
+        const Swatch = typeof Item.Value === "string" && Item.Value.startsWith("#") ? `<span class="swatch" style="background:${Esc(Item.Value)}"></span>` : "";
+        return `${Swatch}${Esc(Item.Option || "")}`;
+    };
+
+    const RenderDetail = () => {
+        const o = State.orders.find(x => x.Id === State.selected);
+        if (!o) {
+            $("detail").innerHTML = `<div class="empty"><i class="fal fa-mouse-pointer"></i>Select an order</div>`;
+            return;
+        }
+
+        const Done = o.Items.filter(i => i.Installed).length;
+        const Mine = o.MechanicCid === State.me.cid;
+        const AllDone = Done === o.Items.length;
+
+        let Actions = "";
+        let Hint = "";
+        if (o.Status === "pending") {
+            Actions = `
+                <div class="btn ghost danger" data-action="decline" data-id="${o.Id}"><i class="fas fa-ban"></i>Decline</div>
+                <div class="btn primary" data-action="accept" data-id="${o.Id}"><i class="fas fa-check"></i>Accept Order</div>`;
+            Hint = `<p class="hint"><i class="fas fa-info-circle"></i>Accept the order to start working on this ${Esc(o.Model)}.</p>`;
+        } else if (o.Status === "accepted" && Mine) {
+            Actions = `
+                <div class="btn ghost" data-action="locate" data-id="${o.Id}"><i class="fas fa-map-marker-alt"></i>Locate</div>
+                <div class="btn ghost" data-action="release" data-id="${o.Id}"><i class="fas fa-undo"></i>Release</div>
+                <div class="btn primary ${AllDone ? "" : "disabled"}" data-action="complete" data-id="${o.Id}"><i class="fas fa-flag-checkered"></i>Complete</div>`;
+            Hint = `<p class="hint"><i class="fas fa-wrench"></i>Walk up to the vehicle and use the prompts to install each part.</p>`;
+        } else if (o.Status === "accepted") {
+            Hint = `<p class="hint"><i class="fas fa-user-cog"></i>Being worked on by ${Esc(o.MechanicName)}.</p>`;
+        }
+
+        $("detail").innerHTML = `
+            <div class="detail-head">
+                <div class="row">
+                    <p class="model italic">${Esc(o.Model)}</p>
+                    <span class="plate">${Esc(o.Plate)}</span>
+                    <span class="pill ${o.Status}">${o.Status}</span>
+                    <p class="id" style="margin-left:auto">ORDER #${o.Id}</p>
+                </div>
+                <div class="info">
+                    <div><label>Customer</label><p>${Esc(o.CustomerName)}</p></div>
+                    <div><label>Payment</label><p>${o.Method === "Bank" ? "Banking Card" : "Cash"}</p></div>
+                    <div><label>Placed</label><p>${TimeAgo(o.CreatedAt)}</p></div>
+                    <div><label>Mechanic</label><p>${Esc(o.MechanicName || "Unassigned")}</p></div>
+                </div>
+            </div>
+
+            <div class="items-head">
+                <h3 class="italic">Items</h3>
+                <span class="line"></span>
+                <span class="progress-text">${Done} / ${o.Items.length} installed</span>
+            </div>
+            <div class="progress"><div style="width:${o.Items.length ? (Done / o.Items.length) * 100 : 0}%"></div></div>
+
+            <div class="items">
+                ${o.Items.map(i => `
+                    <div class="item ${i.Installed ? "done" : ""}">
+                        <div class="state"><i class="fas ${i.Installed ? "fa-check" : "fa-wrench"}"></i></div>
+                        <div class="text">
+                            <p class="label">${Esc(i.Label)}</p>
+                            <p class="option">${ItemOption(i)}${i.Installed && i.InstalledBy ? ` · by ${Esc(i.InstalledBy)}` : ""}</p>
+                        </div>
+                        <p class="price">${i.Price > 0 ? Money(i.Price) : "Free"}</p>
+                    </div>`).join("")}
+            </div>
+
+            <div class="detail-foot">
+                <div class="total"><label>Total</label><p class="italic">${Money(o.Total)} <span>+ TAX</span></p></div>
+                ${Hint}
+                ${Actions}
+            </div>`;
+    };
+
+    const Render = () => {
+        // Keep a valid selection.
+        const List = Visible();
+        if (!State.orders.some(o => o.Id === State.selected && Filters[State.tab](o))) {
+            State.selected = List[0] ? List[0].Id : null;
+        }
+        RenderTabs();
+        RenderList();
+        RenderDetail();
+    };
+
+    let ToastTimer = null;
+    const Toast = (Text, Type) => {
+        const El = $("toast");
+        El.textContent = Text;
+        El.className = `toast show ${Type === "error" ? "error" : ""}`;
+        clearTimeout(ToastTimer);
+        ToastTimer = setTimeout(() => (El.className = "toast"), 2400);
+    };
+
+    // ---------- Input ----------
+
+    document.addEventListener("mousemove", E => {
+        $("cursor").style.transform = `translate(${E.clientX - 3}px, ${E.clientY - 2}px)`;
+    });
+
+    document.addEventListener("click", E => {
+        const Tab = E.target.closest("[data-tab]");
+        if (Tab) { State.tab = Tab.dataset.tab; State.selected = null; Post("sound"); return Render(); }
+
+        const Row = E.target.closest("[data-order]");
+        if (Row) { State.selected = Number(Row.dataset.order); Post("sound"); return Render(); }
+
+        const Btn = E.target.closest("[data-action]");
+        if (Btn) {
+            const Id = Btn.dataset.id ? Number(Btn.dataset.id) : undefined;
+            Post(Btn.dataset.action, { Id });
+        }
+    });
+
+    // ---------- Client -> page ----------
+
+    window.addEventListener("message", E => {
+        let Msg = E.data;
+        if (typeof Msg === "string") { try { Msg = JSON.parse(Msg); } catch { return; } }
+        if (!Msg || !Msg.action) return;
+
+        switch (Msg.action) {
+            case "init":
+                State.resource = Msg.data.resource || State.resource;
+                State.business = Msg.data.business;
+                State.me = Msg.data.me || State.me;
+                $("brand").textContent = Msg.data.label || Msg.data.business;
+                $("me").textContent = State.me.name || "-";
+                $("boot").classList.add("hidden");
+                $("calibrate").classList.toggle("hidden", !Msg.data.calibrate);
+                break;
+            case "orders":
+                State.orders = Msg.data || [];
+                Render();
+                break;
+            case "toast":
+                Toast(Msg.data.text, Msg.data.type);
+                break;
+            case "close":
+                $("calibrate").classList.add("hidden");
+                break;
+        }
+    });
+
+    const Tick = () => {
+        const D = new Date();
+        $("clock").textContent = `${String(D.getHours()).padStart(2, "0")}:${String(D.getMinutes()).padStart(2, "0")}`;
+    };
+    setInterval(Tick, 10000);
+    Tick();
+    Render();
+
+    // ---------- Browser preview (?mock) ----------
+
+    const MockAction = (Action, Data) => {
+        const o = State.orders.find(x => x.Id === Data.Id);
+        if (Action === "accept" && o) { o.Status = "accepted"; o.MechanicCid = State.me.cid; o.MechanicName = State.me.name; Toast("Order geaccepteerd"); }
+        if (Action === "decline" && o) { o.Status = "cancelled"; Toast("Order geannuleerd", "error"); }
+        if (Action === "release" && o) { o.Status = "pending"; o.MechanicCid = null; o.MechanicName = null; }
+        Render();
+    };
+
+    if (location.search.includes("mock")) {
+        State.mock = true;
+        const Now = Date.now() / 1000;
+        const Items = (...List) => List.map(([Label, Option, Price, Installed, Value]) => ({ Label, Option, Price, Installed, Value, InstalledBy: Installed ? "Jake Hayes" : undefined }));
+        window.postMessage(JSON.stringify({ action: "init", data: { resource: "fw-bennys", business: "Hayes Repairs", label: "Hayes Repairs", me: { cid: "ABC123", name: "Jake Hayes" } } }));
+        window.postMessage(JSON.stringify({ action: "orders", data: [
+            { Id: 14, Status: "pending", Model: "Elegy Retro Custom", Plate: "84KJF221", CustomerName: "Maria Lopez", Method: "Bank", Total: 4750, CreatedAt: Now - 240,
+              Items: Items(["Colors Primary", "#C00E1A", 500, false, "#c00e1a"], ["Colors Primary Type", "Metallic", 500, false], ["Spoiler", "Part 6", 750, false], ["Front Bumper", "Part 2", 600, false], ["Wheels", "Sport - Rim 12", 650, false], ["Engine", "Level 2", 5500, false]) },
+            { Id: 13, Status: "accepted", MechanicCid: "ABC123", MechanicName: "Jake Hayes", Model: "Sultan RS", Plate: "41BHT902", CustomerName: "Tom Becker", Method: "Cash", Total: 2150, CreatedAt: Now - 1500,
+              Items: Items(["Exhaust", "Part 3", 550, true], ["Skirts", "Part 1", 550, true], ["Window Tint", "Limo", 400, false], ["Spacers Front", "1.05", 850, false]) },
+            { Id: 12, Status: "accepted", MechanicCid: "XYZ", MechanicName: "Sam Ortega", Model: "Comet S2", Plate: "07PLM331", CustomerName: "Lisa Grant", Method: "Bank", Total: 1200, CreatedAt: Now - 4000,
+              Items: Items(["Hood", "Part 4", 600, false], ["Roof", "Part 1", 600, false]) },
+            { Id: 11, Status: "completed", MechanicCid: "ABC123", MechanicName: "Jake Hayes", Model: "Kuruma", Plate: "22XCV118", CustomerName: "Mo Khan", Method: "Cash", Total: 900, CreatedAt: Now - 90000, UpdatedAt: Now - 80000,
+              Items: Items(["Repair", "", 412, true], ["Plates", "Yankton", 350, true]) },
+        ] }));
+    }
+</script>
+</body>
+</html>
