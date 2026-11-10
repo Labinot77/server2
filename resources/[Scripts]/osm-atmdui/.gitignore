@@ -1,0 +1,12 @@
+# Node dependencies
+web/node_modules/
+web/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+reference_scripts/

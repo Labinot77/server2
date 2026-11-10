@@ -1,0 +1,68 @@
+{
+  "partLabels": {
+    "Engine": "Motor",
+    "Axle": "Aandrijfas",
+    "Transmission": "Transmissie",
+    "FuelInjectors": "Brandstof injectoren",
+    "Clutch": "Koppelingsplaat",
+    "Brakes": "Remschijven"
+  },
+  "zones": [
+    {
+      "name": "hayes_stash",
+      "coords": { "x": -1414.78, "y": -451.97, "z": 36.04 },
+      "options": ["stash", "craft"],
+      "data": { "Business": "Hayes Repairs", "Name": "Hayes" }
+    },
+    {
+      "name": "hayes_tray",
+      "coords": { "x": -1430.33, "y": -454.30, "z": 36.00 },
+      "options": ["tray"],
+      "data": { "Name": "hayes" }
+    },
+
+    {
+      "name": "bennys_stash",
+      "coords": { "x": -223.76, "y": -1339.93, "z": 31.70 },
+      "options": ["stash"],
+      "data": { "Business": "Bennys Motorworks", "Name": "bennys" }
+    },
+    {
+      "name": "bennys_craft_1",
+      "coords": { "x": -217.55, "y": -1333.25, "z": 31.70 },
+      "options": ["craft"],
+      "data": { "Business": "Bennys Motorworks" }
+    },
+    {
+      "name": "bennys_craft_2",
+      "coords": { "x": -211.39, "y": -1336.28, "z": 31.50 },
+      "options": ["craft"],
+      "data": { "Business": "Bennys Motorworks" }
+    },
+    {
+      "name": "bennys_craft_3",
+      "coords": { "x": -198.06, "y": -1317.23, "z": 31.50 },
+      "options": ["craft"],
+      "data": { "Business": "Bennys Motorworks" }
+    },
+    {
+      "name": "bennys_tray",
+      "coords": { "x": -200.56, "y": -1335.07, "z": 31.10 },
+      "options": ["tray"],
+      "data": { "Name": "bennys" }
+    },
+
+    {
+      "name": "harmony_stash",
+      "coords": { "x": 1179.08, "y": 2635.23, "z": 37.25 },
+      "options": ["stash", "craft"],
+      "data": { "Business": "Harmony Repairs", "Name": "harmony" }
+    },
+    {
+      "name": "harmony_tray",
+      "coords": { "x": 1187.01, "y": 2638.12, "z": 38.45 },
+      "options": ["tray"],
+      "data": { "Name": "harmony" }
+    }
+  ]
+}

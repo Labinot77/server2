@@ -1,0 +1,18 @@
+# Node.js dependencies
+# FiveM CFX
+/cfx/crashes/
+/cfx/txData/
+/cfx/server-cache/
+/cfx/server-cache-priv/
+/cfx/*.dmp
+/cfx/libnode*.dll
+
+# FiveM
+/cache/
+/txData/
+
+# Node
+**/node_modules/
+# Resources to ignore
+/resources/[[]Maps]/
+/resources/cfx-mercy-streaming/

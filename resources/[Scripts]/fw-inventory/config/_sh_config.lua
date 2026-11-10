@@ -1,0 +1,298 @@
+Config = Config or {}
+Shared = Shared or {}
+
+Config.Drops = {}
+
+Config.MaxPlayerWeight = 250.0 -- Base carry weight (pockets + body + accessories).
+Config.MaxPlayerSlots = 45
+
+-- // Player inventory layout \\ --
+-- Every section lives inside the same 'ply-<citizenid>' inventory, so all existing
+-- exports (HasEnoughOfItem, GetItemByName, RemoveItem, ...) keep working untouched.
+Config.SlotLayout = {
+    Pockets     = { 1, 15 },  -- Always available.
+    Backpack    = { 16, 35 }, -- Only usable while a backpack is equipped in the backpack body slot.
+    Body        = { 36, 40 }, -- ID card, phone, keys, wallet, backpack.
+    Accessories = { 41, 45 }, -- Clothing props, applied on the ped when equipped.
+}
+
+-- Rules per equipment slot.
+--  Items     : item names allowed in this slot.
+--  Clothing  : fw-clothes ComponentId that gets applied when equipped (accessories only).
+--  AutoPlace : when an item is given (AddItem without slot) it goes here first if empty.
+--  Icon      : Material Symbols icon shown on the empty slot.
+Config.EquipSlots = {
+    [36] = { Section = 'Body', Label = 'ID Card',  Icon = 'badge',                 Items = { 'id_card' },                AutoPlace = true },
+    [37] = { Section = 'Body', Label = 'Phone',    Icon = 'smartphone',            Items = { 'phone', 'burnerphone' },   AutoPlace = true },
+    [38] = { Section = 'Body', Label = 'Keys',     Icon = 'key',                   Items = { 'keyring' },                AutoPlace = true },
+    [39] = { Section = 'Body', Label = 'Wallet',   Icon = 'account_balance_wallet', Items = { 'wallet' },                AutoPlace = true },
+    [40] = { Section = 'Body', Label = 'Backpack', Icon = 'backpack',              Items = { 'backpack' },               AutoPlace = false, IsBackpack = true },
+
+    [41] = { Section = 'Accessories', Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
+    [42] = { Section = 'Accessories', Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
+    [43] = { Section = 'Accessories', Label = 'Glasses',  Icon = 'eyeglasses', Items = { 'glasses' },  Clothing = 'Glasses' },
+    [44] = { Section = 'Accessories', Label = 'Earrings', Icon = 'diamond',    Items = { 'earrings' }, Clothing = 'Earrings' },
+    [45] = { Section = 'Accessories', Label = 'Watch',    Icon = 'watch',      Items = { 'watch' },    Clothing = 'Watches' },
+}
+
+-- Items that can be equipped in the backpack slot.
+--  Weight : extra carry weight while equipped.
+--  Slots  : how many of the backpack slots (16-35) unlock. Max = size of Config.SlotLayout.Backpack.
+Config.Backpacks = {
+    ['backpack'] = { Weight = 100.0, Slots = 20 },
+}
+
+Config.BackpackSlot = 40
+
+-- // Layout helpers (shared client/server) \\ --
+function GetSlotSection(Slot)
+    Slot = tonumber(Slot)
+    if not Slot then return false end
+    for Section, Range in pairs(Config.SlotLayout) do
+        if Slot >= Range[1] and Slot <= Range[2] then
+            return Section
+        end
+    end
+    return false
+end
+
+function IsEquipSlot(Slot)
+    return Config.EquipSlots[tonumber(Slot)] ~= nil
+end
+
+function CanItemGoInSlot(ItemName, Slot)
+    local SlotData = Config.EquipSlots[tonumber(Slot)]
+    if not SlotData then return true end
+
+    for _, Allowed in pairs(SlotData.Items) do
+        if Allowed == ItemName then return true end
+    end
+    return false
+end
+
+-- Returns the equip slot an item belongs to, or false.
+function GetEquipSlotForItem(ItemName)
+    for Slot, SlotData in pairs(Config.EquipSlots) do
+        for _, Allowed in pairs(SlotData.Items) do
+            if Allowed == ItemName then return Slot end
+        end
+    end
+    return false
+end
+
+-- Inventory = PlayerData.inventory table (slot -> item).
+function GetEquippedBackpack(Inventory)
+    local Item = Inventory and Inventory[Config.BackpackSlot]
+    if Item and Config.Backpacks[Item.Item] then
+        return Item, Config.Backpacks[Item.Item]
+    end
+    return false, false
+end
+
+-- Number of usable backpack slots right now.
+function GetUnlockedBackpackSlots(Inventory)
+    local _, BagData = GetEquippedBackpack(Inventory)
+    if not BagData then return 0 end
+
+    local MaxBagSlots = Config.SlotLayout.Backpack[2] - Config.SlotLayout.Backpack[1] + 1
+    return math.min(BagData.Slots or MaxBagSlots, MaxBagSlots)
+end
+
+function IsBackpackSlotUnlocked(Inventory, Slot)
+    Slot = tonumber(Slot)
+    if GetSlotSection(Slot) ~= 'Backpack' then return true end
+    return Slot < Config.SlotLayout.Backpack[1] + GetUnlockedBackpackSlots(Inventory)
+end
+
+function IsBackpackEmpty(Inventory)
+    for i = Config.SlotLayout.Backpack[1], Config.SlotLayout.Backpack[2] do
+        if Inventory[i] then return false end
+    end
+    return true
+end
+
+function GetMaxPlayerWeight(Inventory)
+    local _, BagData = GetEquippedBackpack(Inventory)
+    return Config.MaxPlayerWeight + (BagData and BagData.Weight or 0.0)
+end
+
+-- Checks a single item landing in a player-inventory slot.
+-- Returns true or false + reason.
+function ValidatePlayerSlot(Inventory, Slot, ItemName, Amount)
+    Slot = tonumber(Slot)
+    if not Slot or Slot < 1 or Slot > Config.MaxPlayerSlots then
+        return false, "Ongeldige slot."
+    end
+
+    if not CanItemGoInSlot(ItemName, Slot) then
+        return false, ("Dit kan niet in het %s vak."):format(Config.EquipSlots[Slot].Label)
+    end
+
+    if IsEquipSlot(Slot) and Amount and Amount > 1 then
+        return false, "Je kan maar 1 item uitrusten."
+    end
+
+    if not IsBackpackSlotUnlocked(Inventory, Slot) then
+        return false, "Je hebt geen (grotere) rugzak om."
+    end
+
+    if GetSlotSection(Slot) == 'Backpack' and Config.Backpacks[ItemName] then
+        return false, "Je kan geen rugzak in een rugzak stoppen."
+    end
+
+    return true
+end
+
+Config.TrunkSpaces = {
+    [0]  = { 1.0, 50, 150 }, -- Compacts
+    [1]  = { 2.0, 150, 300 }, -- Sedans
+    [2]  = { 5.0, 200, 500 }, -- SUVs
+    [3]  = { 3.0, 100, 250 }, -- Coupes
+    [4]  = { 3.0, 100, 250 }, -- Muscle
+    [5]  = { 1.0, 150, 200 }, -- Sports Classics
+    [6]  = { 1.0, 150, 200 }, -- Sports
+    [7]  = { 1.0, 75, 200 }, -- Super
+    [8]  = { 0.0, 0, 0 }, -- Motorcycles
+    [9]  = { 1.0, 100, 300 }, -- Off-road
+    [10] = { 4.0, 300, 500 }, -- Industrial
+    [11] = { 5.0, 250, 500 }, -- Utility
+    [12] = { 5.0, 250, 500 }, -- Vans
+    [13] = { 0.0, 0, 0 }, -- Cycles
+    [14] = { 2.0, 100, 300 }, -- Boats
+    [15] = { 1.0, 100, 400 }, -- Helicopters
+    [16] = { 5.0, 100, 4000 }, -- Planes
+    [17] = { 10.0, 100, 600 }, -- Service
+    [18] = { 2.0, 200, 500 }, -- Emergency
+    [19] = { 5.0, 200, 500 }, -- Military
+    [20] = { 20.0, 250, 2000 }, -- Commerical
+    [21] = { 10.0, 200, 500 }, -- Trains
+}
+
+Config.Dumpsters = {
+    [GetHashKey("prop_cs_dumpster_01a")] = true,
+    [GetHashKey("p_dumpster_t")] = true,
+    [GetHashKey("prop_dumpster_01a")] = true,
+    [GetHashKey("prop_dumpster_02a")] = true,
+    [GetHashKey("prop_dumpster_02b")] = true,
+    [GetHashKey("prop_dumpster_3a")] = true,
+    [GetHashKey("prop_dumpster_4a")] = true,
+    [GetHashKey("prop_dumpster_4b")] = true,
+}
+
+Config.BackEngine = {
+    [GetHashKey("ninef")] = true,
+    [GetHashKey("adder")] = true,
+    [GetHashKey("vagner")] = true,
+    [GetHashKey("t20")] = true,
+    [GetHashKey("infernus")] = true,
+    [GetHashKey("zentorno")] = true,
+    [GetHashKey("reaper")] = true,
+    [GetHashKey("comet2")] = true,
+    [GetHashKey("comet3")] = true,
+    [GetHashKey("jester")] = true,
+    [GetHashKey("jester2")] = true,
+    [GetHashKey("cheetah")] = true,
+    [GetHashKey("cheetah2")] = true,
+    [GetHashKey("prototipo")] = true,
+    [GetHashKey("turismor")] = true,
+    [GetHashKey("pfister811")] = true,
+    [GetHashKey("ardent")] = true,
+    [GetHashKey("nero")] = true,
+    [GetHashKey("nero2")] = true,
+    [GetHashKey("tempesta")] = true,
+    [GetHashKey("vacca")] = true,
+    [GetHashKey("bullet")] = true,
+    [GetHashKey("osiris")] = true,
+    [GetHashKey("entityxf")] = true,
+    [GetHashKey("turismo2")] = true,
+    [GetHashKey("fmj")] = true,
+    [GetHashKey("re7b")] = true,
+    [GetHashKey("tyrus")] = true,
+    [GetHashKey("italigtb")] = true,
+    [GetHashKey("penetrator")] = true,
+    [GetHashKey("monroe")] = true,
+    [GetHashKey("ninef2")] = true,
+    [GetHashKey("stingergt")] = true,
+    [GetHashKey("surfer")] = true,
+    [GetHashKey("surfer2")] = true,
+    [GetHashKey("gp1")] = true,
+    [GetHashKey("autarch")] = true,
+    [GetHashKey("tyrant")] = true
+}
+
+Config.Throwables = {
+    [GetHashKey("weapon_grenade")] = true,
+    [GetHashKey("weapon_stickybomb")] = true,
+    [GetHashKey("weapon_molotov")] = true,
+    [GetHashKey("weapon_brick")] = true,
+    [GetHashKey("weapon_flare")] = true,
+    [GetHashKey("weapon_smokegrenade")] = true,
+    [GetHashKey("weapon_shoe")] = true,
+    [GetHashKey("weapon_brick")] = true,
+    [GetHashKey("weapon_banana")] = true,
+}
+
+Config.Attachments = {
+    ['silencer_oilcan'] = {
+        -- ['weapon_m70'] = 'COMPONENT_OIL_SUPP',
+        -- ['weapon_colt'] = 'COMPONENT_OIL_SUPP',
+        -- ['weapon_beretta'] = 'COMPONENT_OIL_SUPP',
+        -- ['weapon_glock18c'] = 'COMPONENT_OIL_SUPP',
+        -- ['weapon_heavypistol'] = 'COMPONENT_OIL_SUPP',
+    },
+    ['silencer'] = {
+        ['weapon_m70'] = 'COMPONENT_AT_AR_SUPP_02',
+        ['weapon_colt'] = 'COMPONENT_AT_PI_SUPP',
+        ['weapon_beretta'] = 'COMPONENT_AT_PI_SUPP',
+        ['weapon_glock18c'] = 'COMPONENT_AT_PI_SUPP',
+        ['weapon_heavypistol'] = 'COMPONENT_AT_PI_SUPP',
+    },
+}
+
+exports("GetConfig", function()
+    return Config
+end)
+
+exports("GetShared", function()
+    return Shared
+end)
+
+function DeepCopyTable(Obj)
+    if type(Obj) ~= 'table' then return Obj end
+    local res = {}
+    
+    for k, v in pairs(Obj) do
+        res[DeepCopyTable(k)] = DeepCopyTable(v)
+    end
+
+    return res
+end
+-- // Phone \\ --
+-- The phone only works while it's equipped in the BODY phone slot (see fw-phone).
+Config.PhoneItem = 'phone'
+
+function GetPhoneSlot()
+    for Slot, SlotData in pairs(Config.EquipSlots) do
+        if SlotData.Label == 'Phone' then return Slot end
+    end
+    return false
+end
+
+function IsPhoneEquipped(Inventory, ItemName)
+    local Slot = GetPhoneSlot()
+    local Item = Slot and Inventory and Inventory[Slot]
+    return Item ~= nil and Item ~= false and Item.Item == (ItemName or Config.PhoneItem), Item
+end
+
+-- // Ground items \\ --
+-- true  = every item on the ground (and its exact placed spot) is saved in the DB
+--         (table `inventory_drops`, created automatically) and comes back after a restart.
+-- false = normal drops: kept in memory only and wiped on every server restart.
+Config.PersistentDrops = true
+
+-- Saved drops that haven't been touched for this many hours are deleted on start (0 = keep forever).
+Config.DropLifetimeHours = 72
+
+-- Players can only pick up / open ground items they can actually see (raycast from their head),
+-- so nothing can be grabbed through walls, floors or doors.
+Config.DropRequireLineOfSight = true

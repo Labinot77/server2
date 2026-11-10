@@ -1,0 +1,105 @@
+{
+    "overrides": {},
+    "doors": [
+        {
+            "CanDetcord": true,
+            "IsLockpickable": false,
+            "Connected": [
+                "SKID_8547_2"
+            ],
+            "Disabled": false,
+            "Info": "SKID_8547_1",
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
+            "Locked": 1,
+            "IsGate": false,
+            "Model": -1547307588,
+            "Coords": {
+                "z": 30.82,
+                "x": 434.74,
+                "y": -983.08
+            }
+        },
+        {
+            "CanDetcord": true,
+            "IsLockpickable": false,
+            "Connected": [
+                "SKID_8547_1"
+            ],
+            "Disabled": false,
+            "Info": "SKID_8547_2",
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
+            "Locked": 1,
+            "IsGate": false,
+            "Model": -1547307588,
+            "Coords": {
+                "z": 30.82,
+                "x": 434.74,
+                "y": -980.76
+            }
+        },
+        {
+            "CanDetcord": true,
+            "IsLockpickable": true,
+            "Connected": [],
+            "Disabled": false,
+            "Info": "DIGITAL_DEN_FRONT",
+            "Access": {
+                "Business": [
+                    "Digital Den"
+                ],
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Gangs": []
+            },
+            "Locked": 0,
+            "IsGate": false,
+            "Model": 1181020301,
+            "Coords": {
+                "z": 66.91,
+                "x": 1137.34,
+                "y": -470.04
+            }
+        },
+        {
+            "Model": 224373542,
+            "Access": {
+                "CitizenId": [
+                    "2000"
+                ],
+                "Gangs": [],
+                "Business": [],
+                "Job": [
+                    "police"
+                ]
+            },
+            "IsLockpickable": false,
+            "Disabled": false,
+            "Info": "RANCHO_6009",
+            "Connected": [],
+            "Locked": 1,
+            "CanDetcord": true,
+            "IsGate": false,
+            "Coords": {
+                "z": 28.57,
+                "x": 426.55,
+                "y": -1841.95
+            }
+        }
+    ]
+}
