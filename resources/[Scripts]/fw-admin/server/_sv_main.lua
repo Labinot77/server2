@@ -119,6 +119,7 @@ AddEventHandler('fw-admin:Server:Open:Clothing', function(Target)
         if Target == source then
             TriggerClientEvent('fw-admin:Client:Force:Close', source)
         end
+        exports['fw-clothes']:GrantFreeEdit(Target)
         TriggerClientEvent('fw-clothes:Client:OpenClothesMenu', Target, "Creation")
     end
 end)

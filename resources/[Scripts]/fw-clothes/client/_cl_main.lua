@@ -189,17 +189,17 @@ function GetClothesPrice()
     local Clothes = SavedClothes.Clothes
     local Retval = 0
 
+    -- Must match CalculateClothesPrice on the server, that one is what actually gets charged.
     for k, v in pairs(Config.CurrentSkin.Clothes) do
         if type(v) == "table" then
+            local Prev = type(Clothes[k]) == "table" and Clothes[k] or {}
             if k == "TattoosTorso" or k == "TattoosHead" or k == "TattoosLArm" or k == "TattoosRArm" or k == "TattoosLLeg" or k == "TattoosRLeg" then
-                for i, j in pairs(v) do
-                    if Clothes[k][j] ~= v[j] then
+                for Layer, Value in pairs(v) do
+                    if Prev[Layer] ~= Value then
                         Retval = Retval + Config.ClothesPrice
                     end
                 end
-            end
-
-            if Clothes[k][1] ~= v[1] then
+            elseif Prev[1] ~= v[1] then
                 Retval = Retval + Config.ClothesPrice
             end
         end
@@ -223,8 +223,8 @@ function GetBlockedValues()
     return BlockedNumbers
 end
 
-function LoadPedModel(Model)
-    if GetEntityModel(PlayerPedId()) ~= GetHashKey(Model) then
+function LoadPedModel(Model, Force)
+    if Force or GetEntityModel(PlayerPedId()) ~= GetHashKey(Model) then
         RequestModel(Model)
         while not HasModelLoaded(Model) do
             Citizen.Wait(1)
@@ -723,11 +723,12 @@ RegisterNUICallback("Clothing/SetCustomPed", function(Data, Cb)
     local PlayerData = FW.Functions.GetPlayerData()
     local Cid = Config.CustomPeds[Data.Ped]
 
-    if IsPlayerAdmin() or (Cid and Cid == PlayerData.CitizenId) then
-        LoadPedModel(Data.Ped)
+    if IsPlayerAdmin() or (Cid and Cid == PlayerData.citizenid) then
+        local Model = Data.Ped
+        LoadPedModel(Model)
         SetPedDefaultComponentVariation(PlayerPedId())
 
-        Config.CurrentSkin.Model = Data.Ped
+        Config.CurrentSkin.Model = Model
 
         -- Reset values and refresh max values.
         exports['fw-ui']:SendUIMessage("Clothing", "SetComponentValues", {
