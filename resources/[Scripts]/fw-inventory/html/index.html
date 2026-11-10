@@ -111,6 +111,23 @@
               <div class="inventory-box-cash">Je hebt <span>0</span> om te spenderen</div>
               <div class="inventory-box-slots other-grid"></div>
             </div>
+
+            <!-- Magazine loader (opens when you use a magazine) -->
+            <div class="ox-sub ox-magazine">
+              <div class="ox-sub-header"><span class="ox-sub-title mag-title">Pistol Magazine</span></div>
+              <div class="mag-load-slot empty">
+                <div class="inventory-slot-image"></div>
+                <div class="inventory-slot-info"><span class="inventory-slot-quantity mag-qty"></span></div>
+                <span class="material-symbols-outlined emptyicon">add</span>
+                <div class="mag-progress"><div class="mag-progress-fill"></div></div>
+              </div>
+            </div>
+
+            <!-- Weapon attachments (right-click a weapon -> Attachments) -->
+            <div class="ox-sub ox-attachments">
+              <div class="ox-sub-header"><span class="ox-sub-title att-title">Attachments</span></div>
+              <div class="att-row"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -193,5 +210,7 @@
     <script src="./js/utils.js"></script>
     <script src="./js/draghandler.js"></script>
     <script src="./js/contextmenu.js"></script>
+    <script src="./js/magazine.js"></script>
+    <script src="./js/attachments.js"></script>
   </body>
 </html>

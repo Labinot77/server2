@@ -865,3 +865,54 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 .inventory-box-cash .material-symbols-outlined { font-size: 2.1vh; color: #3ddc97; }
 .inventory-box-cash.is-empty > span:last-child { color: rgba(255, 255, 255, 0.4); }
 #steal-money.disabled { opacity: 0.35; pointer-events: none; }
+
+/* ==========================================================================
+   Magazine loader (below GROUND)
+   ========================================================================== */
+.ox-magazine { display: none; margin-top: 2vh; }
+.mag-load-slot {
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    border: 1px dashed rgba(240, 180, 41, 0.5);
+    background-color: rgba(10, 13, 15, 0.86);
+    background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 4px);
+    overflow: hidden;
+    cursor: grab;
+}
+.mag-load-slot * { pointer-events: none; }
+.mag-load-slot:hover { border-color: #fff; }
+.mag-load-slot .emptyicon { display: none; }
+.mag-load-slot.empty .emptyicon { display: block; }
+.mag-load-slot.empty .inventory-slot-image { opacity: 0.25; }
+.mag-load-slot.full { border-style: solid; border-color: #3ddc97; }
+.mag-load-slot.loading { cursor: progress; border-style: solid; border-color: #f0b429; }
+.mag-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.5vh; background: rgba(255, 255, 255, 0.08); display: none; }
+.mag-load-slot.loading .mag-progress { display: block; }
+.mag-progress-fill { height: 100%; width: 0%; background: #f0b429; }
+.inventory-box-slot.mag-active { border-color: #f0b429 !important; box-shadow: inset 0 0 1.2vh rgba(240, 180, 41, 0.3); }
+.inventory-slot-quantity.mag-qty { color: #f0b429; }
+.inventory-slot-quantity.mag-qty.empty { color: rgba(255, 255, 255, 0.45); }
+
+/* ==========================================================================
+   Weapon attachments (below GROUND)
+   ========================================================================== */
+.ox-attachments { display: none; margin-top: 2vh; }
+.att-row { display: flex; gap: var(--gap); }
+.att-slot {
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    border: 1px solid rgba(120, 175, 185, 0.2);
+    background-color: rgba(70, 92, 94, 0.3);
+    overflow: hidden;
+    cursor: grab;
+}
+.att-slot * { pointer-events: none; }
+.att-slot:hover { border-color: #fff; }
+.att-slot.empty { cursor: default; }
+.att-slot .emptyicon, .att-slot .emptylabel { display: none; }
+.att-slot.empty .emptyicon, .att-slot.empty .emptylabel { display: block; }
+.att-slot.empty .inventory-slot-image, .att-slot.empty .inventory-slot-info, .att-slot.empty .inventory-slot-name { display: none; }
+.att-slot:not(.empty) { border-color: rgba(47, 208, 238, 0.45); }
+.inventory-box-slot.att-active { border-color: #2fd0ee !important; box-shadow: inset 0 0 1.2vh rgba(47, 208, 238, 0.3); }

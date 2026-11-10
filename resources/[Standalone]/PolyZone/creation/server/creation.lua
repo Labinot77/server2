@@ -1,35 +1,22 @@
 RegisterNetEvent("polyzone:printPoly")
 AddEventHandler("polyzone:printPoly", function(zone)
-  file = io.open('polyzone_created_zones.txt', "a")
-  io.output(file)
-  local output = parsePoly(zone)
-  io.write(output)
-  io.close(file)
+  local created_zones = LoadResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt") or ""
+  local output = created_zones .. parsePoly(zone)
+  SaveResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt", output, -1)
 end)
 
 RegisterNetEvent("polyzone:printCircle")
 AddEventHandler("polyzone:printCircle", function(zone)
-  file = io.open('polyzone_created_zones.txt', "a")
-  io.output(file)
-  local output = parseCircle(zone)
-  io.write(output)
-  io.close(file)
+  local created_zones = LoadResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt") or ""
+  local output = created_zones .. parseCircle(zone)
+  SaveResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt", output, -1)
 end)
 
 RegisterNetEvent("polyzone:printBox")
 AddEventHandler("polyzone:printBox", function(zone)
-    local file = io.open('polyzone_created_zones.txt', "a") -- open file in append mode
-    if file then
-        local output = parseBox(zone)
-        local path = GetResourcePath(GetCurrentResourceName()) .. '/polyzone_created_zones.txt'
-local file = io.open(path, 'a')
-        file:close()
-    else
-      local output = parseBox(zone)
-
-      print(output)
-        print("Failed to open file for writing.")
-    end
+  local created_zones = LoadResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt") or ""
+  local output = created_zones .. parseBox(zone)
+  SaveResourceFile(GetCurrentResourceName(), "polyzone_created_zones.txt", output, -1)
 end)
 
 function round(num, numDecimalPlaces)

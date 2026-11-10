@@ -77,6 +77,22 @@ Shared.CustomTypes = {
             Price = 45,
         }
     },
+    ["magazine"] = {
+        ["Pistol"] = { Label = "Pistol Magazijn (12)", Image = "mag-pistol.png", Price = 50 },
+        ["Smg"] = { Label = "SMG Magazijn (30)", Image = "mag-smg.png", Price = 75 },
+        ["Rifle"] = { Label = "AR Magazijn (30)", Image = "mag-rifle.png", Price = 100 },
+        ["Shotgun"] = { Label = "Shotgun Magazijn (8)", Image = "mag-shotgun.png", Price = 60 },
+        ["Sniper"] = { Label = "Sniper Magazijn (5)", Image = "mag-sniper.png", Price = 120 },
+        ["Revolver"] = { Label = "Revolver Magazijn (6)", Image = "mag-revolver.png", Price = 60 },
+    },
+    ["bullets"] = {
+        ["Pistol"] = { Label = "Pistol Kogels", Image = "bullets-pistol.png", Price = 1 },
+        ["Smg"] = { Label = "SMG Kogels", Image = "bullets-smg.png", Price = 1 },
+        ["Rifle"] = { Label = "AR Kogels", Image = "bullets-rifle.png", Price = 2 },
+        ["Shotgun"] = { Label = "Shotgun Kogels", Image = "bullets-shotgun.png", Price = 3 },
+        ["Sniper"] = { Label = "Sniper Kogels", Image = "bullets-sniper.png", Price = 5 },
+        ["Revolver"] = { Label = "Revolver Kogels", Image = "bullets-revolver.png", Price = 3 },
+    },
     ["business-bag"] = {
         ["pizzeria"] = {
             Label = "Pizza Doos",

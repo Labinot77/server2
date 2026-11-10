@@ -4,6 +4,9 @@ local FW = exports['fw-core']:GetCoreObject()
 
 FW.Functions.CreateUsableItem("ammo", function(Source, Item)
 	local Player = FW.Functions.GetPlayer(Source)
+    -- Pistol/SMG/AR/Shotgun/Sniper/Revolver use magazines now: the box turns into loose bullets.
+    if exports['fw-inventory']:ConvertAmmoBox(Source, Item.Slot) then return end
+
 	if Player.Functions.GetItemBySlot(Item.Slot) ~= nil then
         TriggerClientEvent('fw-weapons:Client:AddAmmo', Source, Config.TypeToAmmo[Item.CustomType], Item.CustomType)
     end

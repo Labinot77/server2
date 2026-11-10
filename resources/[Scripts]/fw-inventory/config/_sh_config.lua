@@ -296,3 +296,67 @@ Config.DropLifetimeHours = 72
 -- Players can only pick up / open ground items they can actually see (raycast from their head),
 -- so nothing can be grabbed through walls, floors or doors.
 Config.DropRequireLineOfSight = true
+
+-- // Magazines & bullets \\ --
+-- Guns of these ammo types no longer take ammo boxes:
+--   buy `bullets` -> use a `magazine` (opens the loader under GROUND) -> drag bullets in -> [R] reloads.
+-- The magazine's CustomType (= key below) must match the gun's ammo type.
+-- Capacity = max bullets in one magazine of that type.
+-- BoxBullets = how many loose bullets an old ammo box of that type turns into when used.
+Config.Magazines = {
+    Pistol   = { Label = 'Pistol',   Capacity = 12, AmmoType = 'AMMO_PISTOL',   BoxBullets = 50 },
+    Smg      = { Label = 'SMG',      Capacity = 30, AmmoType = 'AMMO_SMG',      BoxBullets = 50 },
+    Rifle    = { Label = 'AR',       Capacity = 30, AmmoType = 'AMMO_RIFLE',    BoxBullets = 50 },
+    Shotgun  = { Label = 'Shotgun',  Capacity = 8,  AmmoType = 'AMMO_SHOTGUN',  BoxBullets = 12 },
+    Sniper   = { Label = 'Sniper',   Capacity = 5,  AmmoType = 'AMMO_SNIPER',   BoxBullets = 12 },
+    Revolver = { Label = 'Revolver', Capacity = 6,  AmmoType = 'AMMO_REVOLVER', BoxBullets = 12 },
+}
+
+Config.ReloadTime = 1800 -- ms the reload takes / blocks a new reload.
+
+function GetMagazineTypeForAmmo(AmmoType)
+    for Type, Data in pairs(Config.Magazines) do
+        if Data.AmmoType == AmmoType then return Type end
+    end
+    return false
+end
+
+function GetMagazineCapacity(Type)
+    return Config.Magazines[Type] and Config.Magazines[Type].Capacity or 0
+end
+
+-- Loading bullets into a magazine: Base + PerBullet ms (12 pistol rounds = 0.5s + 12 x 0.3s = 4.1s).
+Config.MagazineLoadTime = { Base = 500, PerBullet = 300 }
+Config.MagazineLoadAnim = { Dict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", Anim = "machinic_loop_mechandplayer", Flag = 49 }
+
+function GetMagazineLoadTime(Bullets)
+    return math.floor(Config.MagazineLoadTime.Base + Config.MagazineLoadTime.PerBullet * Bullets)
+end
+
+
+-- // Weapon attachments (right-click a weapon -> Attachments) \\ --
+-- Attachments are stored ON the weapon (Info.Attachments) and travel with it, like the magazine
+-- (Info.Mag + Info.Ammo). The Magazine slot is shown for every magazine gun; the other slots
+-- only show when at least one attachment below fits that weapon.
+Config.AttachmentSlots = {
+    { Kind = 'Muzzle',     Label = 'Muzzle',     Icon = 'blur_on' },
+    { Kind = 'Flashlight', Label = 'Flashlight', Icon = 'flashlight_on' },
+    { Kind = 'Scope',      Label = 'Scope',      Icon = 'center_focus_strong' },
+    { Kind = 'Grip',       Label = 'Grip',       Icon = 'pan_tool' },
+}
+
+-- Item -> which slot it goes in + the weapon component per weapon.
+Config.WeaponAttachments = {
+    ['silencer']        = { Kind = 'Muzzle', Components = Config.Attachments['silencer'] },
+    ['silencer_oilcan'] = { Kind = 'Muzzle', Components = Config.Attachments['silencer_oilcan'] },
+    -- Example for more:
+    -- ['flashlight_attachment'] = { Kind = 'Flashlight', Components = { ['weapon_beretta'] = 'COMPONENT_AT_PI_FLSH' } },
+}
+
+function GetWeaponAttachment(ItemName, WeaponName)
+    local Data = Config.WeaponAttachments[ItemName]
+    if Data and Data.Components and Data.Components[WeaponName] then
+        return Data, Data.Components[WeaponName]
+    end
+    return false
+end

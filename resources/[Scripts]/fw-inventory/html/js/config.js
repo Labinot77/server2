@@ -8,6 +8,10 @@ let MaxPlayerSlots = 45;
 // Mirrors Config.SlotLayout / Config.EquipSlots / Config.Backpacks from config/_sh_config.lua.
 // Overwritten by the Lua side on load (SetItemsList -> Layout), these are just defaults.
 let Layout = {
+    Magazines: {
+        Pistol: { Label: 'Pistol', Capacity: 12 }, Smg: { Label: 'SMG', Capacity: 30 }, Rifle: { Label: 'AR', Capacity: 30 },
+        Shotgun: { Label: 'Shotgun', Capacity: 8 }, Sniper: { Label: 'Sniper', Capacity: 5 }, Revolver: { Label: 'Revolver', Capacity: 6 },
+    },
     SlotLayout: {
         Pockets: [1, 15],
         Backpack: [16, 35],
@@ -54,11 +58,14 @@ let HiddenMetadata = [
     'BuffPercentage',
     'Date',
     'Photos',
+    'Mag',          // magazine in the weapon (shown as its own line)
+    'Attachments',  // attachments on the weapon (shown as their own lines)
     'Prop',     // clothing drawable (hat/mask/...)
     'Texture',  // clothing texture
 ];
 
 let ItemI18n = {
+    'magazine': { 'Bullets': 'Kogels' },
     "id_card": {
         citizenid: "BSN",
         firstname: "Първо Име",

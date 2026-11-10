@@ -3,7 +3,6 @@ FW = exports['fw-core']:GetCoreObject()
 -- Code
 
 Citizen.CreateThread(function()
-    SyncMloHouses()
     LoadHouses()
 end)
 
@@ -17,10 +16,6 @@ AddEventHandler("fw-housing:Server:SetInteractLocation", function(HouseId, Inter
     if not HasKeyToHouse(HouseId, Player.PlayerData.citizenid) and not exports['fw-businesses']:HasPlayerBusinessPermission(Config.BusinessName, Source, Config.SellPermission) then
         return
     end
-
-    local MloKey = Config.Houses[HouseId].Mlo
-    if MloKey and Interaction == 'Backdoor' then return end
-    if MloKey and IsInside and Interaction ~= 'Garage' and not IsPointInMloZone(MloKey, Coords) then return end
 
     if Interaction == 'Backdoor' then
         if IsInside then
@@ -242,10 +237,6 @@ FW.Functions.CreateCallback("fw-housing:Server:SellHouse", function(Source, Cb, 
     Config.Houses[HouseId].Keyholders = {}
     Config.Houses[HouseId].Locked = true
     Config.Houses[HouseId].Business = ''
-    if Config.Houses[HouseId].Mlo and Config.MLOClearDecorOnSell then
-        Config.Houses[HouseId].Decorations = {}
-        SaveHouse(HouseId)
-    end
     TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
 
     local ReceiveMoney = math.floor(Config.Houses[HouseId].Price / 2)
@@ -377,12 +368,6 @@ function LoadHouses()
     local NewHouses = {}
 
     for k, v in pairs(Houses) do
-        local MloKey = v.mlo
-        if MloKey and not Config.MLOHouses[MloKey] then
-            print(("^3[fw-housing]^7 Skipping house %s: MLO '%s' is not in Config.MLOHouses."):format(v.id, MloKey))
-            goto SkipHouse
-        end
-
         local Coords = json.decode(v.coords)
         local Garage = json.decode(v.garage)
         local Locations = json.decode(v.locations)
@@ -406,16 +391,13 @@ function LoadHouses()
             Coords = vector4(Coords.x, Coords.y, Coords.z, Coords.w),
             Garage = Garage.x and vector4(Garage.x, Garage.y, Garage.z, Garage.w) or false,
             Locations = {
-                Stash = Locations.Stash and vector3(Locations.Stash.x, Locations.Stash.y, Locations.Stash.z) or (MloKey and Config.MLOHouses[MloKey].Stash and Config.MLOHouses[MloKey].Stash.Coords) or false,
-                Wardrobe = Locations.Wardrobe and vector3(Locations.Wardrobe.x, Locations.Wardrobe.y, Locations.Wardrobe.z) or (MloKey and Config.MLOHouses[MloKey].Wardrobe) or false,
+                Stash = Locations.Stash and vector3(Locations.Stash.x, Locations.Stash.y, Locations.Stash.z) or false,
+                Wardrobe = Locations.Wardrobe and vector3(Locations.Wardrobe.x, Locations.Wardrobe.y, Locations.Wardrobe.z) or false,
                 BackdoorIn = Locations.BackdoorIn and vector4(Locations.BackdoorIn.x, Locations.BackdoorIn.y, Locations.BackdoorIn.z, Locations.BackdoorIn.w) or false,
                 BackdoorOut = Locations.BackdoorOut and vector4(Locations.BackdoorOut.x, Locations.BackdoorOut.y, Locations.BackdoorOut.z, Locations.BackdoorOut.w) or false,
             },
-            Decorations = EnsureDecorIds(json.decode(v.decorations or '[]') or {}),
-            Mlo = MloKey or false,
+            Decorations = json.decode(v.decorations)
         }
-
-        ::SkipHouse::
     end
 
     print("Loaded " .. #NewHouses .. " houses.")

@@ -115,11 +115,7 @@ AddEventHandler('fw-ui:Client:Target:Changed', function(Entity, EntityType, Enti
     end
 
     local DoorId = GetTargetDoorId(Entity)
-    -- Doors registered by other resources (e.g. fw-housing MLO doors) are not in Config.Doors.
-    if DoorId == nil or Config.Doors[DoorId] == nil then
-        CurrentDoor, Listening = nil, false
-        return
-    end
+    if DoorId == nil then return end
     if DoorId ~= CurrentDoor then Listening = false end
     
     Citizen.SetTimeout(20, function()
@@ -132,6 +128,7 @@ RegisterNetEvent('fw-doors:Client:Sync:Doors')
 AddEventHandler('fw-doors:Client:Sync:Doors', function(DoorId, DoorData)
     if Config.Debug then print(DoorId) end
     Config.Doors[DoorId] = DoorData
+    if DoorHud and DoorHud.Invalidate then DoorHud.Invalidate(DoorId) end
     DoorSystemSetAutomaticRate(DoorId, 1.0, false, false)
     DoorSystemSetDoorState(DoorId, Config.Doors[DoorId].Locked, false, true)
     DoorSystemSetHoldOpen(DoorId, Config.Doors[DoorId].IsGate)
@@ -140,7 +137,9 @@ AddEventHandler('fw-doors:Client:Sync:Doors', function(DoorId, DoorData)
     if #(GetEntityCoords(PlayerPedId()) - Config.Doors[DoorId].Coords) < 2.0 then
         local HasAccess = HasDoorAcces(DoorId)
         local DoorState = Config.Doors[DoorId].Locked == 1 and true or false
-        if not Config.Doors[DoorId].IsHidden then
+        if DoorHud and DoorHud.Enabled then
+            DoorHud.Access[DoorId] = HasAccess
+        elseif not Config.Doors[DoorId].IsHidden then
             exports['fw-ui']:EditInteraction((HasAccess and "[E] %s" or "%s"):format(DoorState and 'Closed' or 'Open'), DoorState and 'error' or 'success', true)
         end
     end
@@ -188,12 +187,14 @@ function ListenForKeypress(DoorId)
             local Distance = Config.Doors[CurrentDoorId].IsGate and 8.0 or 2.0
             local CurrentDoorLockState = (Config.Doors[CurrentDoorId].Locked == 1 and true or false)
             local HasDoorKeys, IsHidden = HasDoorAcces(CurrentDoorId), Config.Doors[CurrentDoorId].IsGate
+            local UseHud = DoorHud and DoorHud.Enabled
+            if UseHud then DoorHud.Access[CurrentDoorId] = HasDoorKeys end
             while Listening do
                 Citizen.Wait(4)
                 if CurrentDoorLockState ~= LockState and not IsHidden then
                     if #(GetEntityCoords(PlayerPedId()) - Config.Doors[CurrentDoorId].Coords) < Distance then
                         LockState = CurrentDoorLockState
-                        if not Config.Doors[CurrentDoorId].IsHidden then
+                        if not UseHud and not Config.Doors[CurrentDoorId].IsHidden then
                             exports['fw-ui']:ShowInteraction((HasDoorKeys and "[E] %s" or "%s"):format(LockState and 'Locked' or 'Open'), LockState and 'error' or 'success')
                         end
                     end
@@ -223,7 +224,7 @@ function ListenForKeypress(DoorId)
                 end
             end
             Citizen.Wait(35)
-            exports['fw-ui']:HideInteraction()
+            if not UseHud then exports['fw-ui']:HideInteraction() end
         end)
     end
 end

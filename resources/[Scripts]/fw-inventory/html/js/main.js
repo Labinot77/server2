@@ -24,6 +24,8 @@ $(document).ready(function(){
                 // Backpack equipped/unequipped from outside the UI (use item, robbed, ...).
                 if (event.data.SlotId == Layout.BackpackSlot) RefreshBackpackState('player');
                 UpdateInventoryWeights('player');
+                RefreshMagazinePanel();
+                RefreshAttachmentsPanel();
                 break;
             case "SetPlayerLimits":
                 if (InventoryOpen) RefreshBackpackState('player');
@@ -38,6 +40,9 @@ $(document).ready(function(){
                 BuildInventory('player', 'Player', MyInventory, MaxPlayerSlots);
                 BuildInventory('other', OtherInvData.Type, OtherInvData.Items, OtherInvData.Slots);
 
+                if (event.data.MagazineSlot) OpenMagazinePanel(event.data.MagazineSlot); else CloseMagazinePanel();
+                if (!event.data.MagazineSlot) CloseAttachmentsPanel();
+
                 $('.actions-wrapper > .inventory-actions > #steal-money').remove();
                 if (OtherInvData.Type == 'Other Player') {
                     $('.actions-wrapper > .inventory-actions').append(`<button class="inventory-actions-btn${OtherInvData.Cash === 0 ? ' disabled' : ''}" id="steal-money">Geld Stelen</button>`)
@@ -50,6 +55,8 @@ $(document).ready(function(){
                 ResetDrag();
                 CloseContextMenu();
                 CloseSplitModal();
+                CloseMagazinePanel();
+                CloseAttachmentsPanel();
                 $('.inventory-slot-hover').css({ opacity: 0 });
                 $('.inventory-wrapper').fadeOut(100);
                 break;
@@ -83,6 +90,9 @@ $(document).ready(function(){
                 if (OtherInvData) OtherInvData.Cash = event.data.Cash;
                 SetOtherCash(event.data.Cash);
                 break;
+            case "MagazineProgress": // handled in magazine.js
+            case "OpenMagazinePanel":
+                break;
             case "PlaceHint": // handled in contextmenu.js
                 break;
             case "InventoryBox":
@@ -105,6 +115,8 @@ const CloseInventory = () => {
     ResetDrag();
     CloseContextMenu();
     CloseSplitModal();
+    CloseMagazinePanel();
+                CloseAttachmentsPanel();
     $('.inventory-slot-hover').css('opacity', '0.0');
 };
 
@@ -159,6 +171,13 @@ $(document).on('mouseup', '#inventory-use', function(e){
     if (DragData.FromInv != 'player') return;
 
     const Slot = DragData.FromSlot;
+
+    // Magazine: show the loader right here, the inventory stays open.
+    if (IsMagazineItem('player', Slot)) {
+        ResetDrag();
+        return OpenMagazinePanel(Slot);
+    }
+
     CloseInventory();
     setTimeout(() => {
         $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot }));

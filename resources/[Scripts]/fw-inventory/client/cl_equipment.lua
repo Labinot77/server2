@@ -159,6 +159,10 @@ function GetNuiLayout()
         BackpackSlot = Config.BackpackSlot,
         MaxPlayerWeight = Config.MaxPlayerWeight,
         MaxPlayerSlots = Config.MaxPlayerSlots,
+        Magazines = Config.Magazines,
+        AttachmentSlots = Config.AttachmentSlots,
+        WeaponAttachments = GetNuiWeaponAttachments(),
+        WeaponMagTypes = GetNuiWeaponMagTypes(),
     }
 end
 
@@ -168,3 +172,8 @@ exports("HasPhoneEquipped", function(ItemName)
     if not Equipped then return false end
     return exports['fw-inventory']:CalculateQuality(Item.Item, Item.CreateDate) > 1.0
 end)
+
+-- Magazines (used by fw-weapons).
+exports("GetMagazineTypeForAmmo", function(AmmoType) return GetMagazineTypeForAmmo(AmmoType) end)
+exports("GetMagazineConfig", function() return Config.Magazines end)
+exports("GetReloadTime", function() return Config.ReloadTime end)

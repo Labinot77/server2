@@ -300,9 +300,17 @@ const BuildSlotHtml = (Container, Slot, Item) => {
     }
 
     const QualityData = CalculateQuality(Item.Item, Item.CreateDate);
+
+    // Magazines show how full they are instead of "1x".
+    let Quantity = `<span class="inventory-slot-quantity">${Item.Amount}x</span>`;
+    if (Item.Item == 'magazine' && Layout.Magazines && Layout.Magazines[Item.CustomType]) {
+        const Bullets = Math.max(0, Math.floor(Number(Item.Info && Item.Info.Bullets) || 0));
+        Quantity = `<span class="inventory-slot-quantity mag-qty${Bullets == 0 ? ' empty' : ''}">${Bullets}/${Layout.Magazines[Item.CustomType].Capacity}</span>`;
+    }
+
     return Html + `
         <div class="inventory-slot-image" style="background-image: url(${GetItemImage(Item.Item, Item.CustomType, Item.Info)})"></div>
-        <div class="inventory-slot-info"><span class="inventory-slot-quantity">${Item.Amount}x</span><span class="inventory-slot-weight">${Weight}</span></div>
+        <div class="inventory-slot-info">${Quantity}<span class="inventory-slot-weight">${Weight}</span></div>
         <div class="inventory-slot-name">${ItemData.Label}</div>
         <div class="${QualityData.Class}" style="width: ${QualityData.Percentage}%; background: ${GetQualityColor(QualityData.Percentage)}"></div>
     `;
@@ -536,6 +544,20 @@ const GenerateItemInfo = (InvName, SlotId) => {
             ItemMetadata += `<div><strong>${MetaDataIndex}:</strong> ${Value}</div>`;
         };
     });
+
+    // Weapons: what's in / on them.
+    if (ItemData.Weapon && Item.Info) {
+        if (Item.Info.Mag && Layout.Magazines && Layout.Magazines[Item.Info.Mag]) {
+            ItemMetadata += `<div><strong>Magazijn:</strong> ${Layout.Magazines[Item.Info.Mag].Label} (${Math.max(0, Math.floor(Number(Item.Info.Ammo) || 0))}/${Layout.Magazines[Item.Info.Mag].Capacity})</div>`;
+        } else if (Layout.WeaponMagTypes && Layout.WeaponMagTypes[Item.Item]) {
+            ItemMetadata += `<div><strong>Magazijn:</strong> geen</div>`;
+        }
+        if (Item.Info.Attachments && typeof Item.Info.Attachments == 'object') {
+            for (const [Kind, A] of Object.entries(Item.Info.Attachments)) {
+                if (A && ItemsList[A.Item]) ItemMetadata += `<div><strong>${Kind}:</strong> ${GetItemData(A.Item, A.CustomType, A.Info).Label}</div>`;
+            }
+        }
+    }
 
     var Quality = CalculateQuality(Item.Item, Item.CreateDate);
     return `<div class="tt-head"><span class="tt-type">${GetItemTypeLabel(Container, SlotId, ItemData)}</span><h2>${ItemData.Label}</h2></div>`

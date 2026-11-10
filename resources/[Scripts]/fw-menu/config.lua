@@ -449,24 +449,7 @@ Config.Menu = {
             if exports['fw-housing']:GetCurrentHouse() == nil then return false end
             if exports['fw-housing']:IsInside() then return false end
 
-            local House = exports['fw-housing']:GetCurrentHouse()
-            return not House.Locked and not House.Mlo
-        end,
-    },
-    {
-        Id = "decorate_property",
-        Title = "Decorate",
-        Icon = "#global-appartment",
-        Close = true,
-        Parameters = false,
-        Event = "fw-housing:Client:OpenFurniture",
-        Enabled = function()
-            if exports['fw-medical']:GetDeathStatus() then return false end
-            local House = exports['fw-housing']:GetCurrentHouse()
-            if House == nil or not House.Mlo then return false end
-            if not exports['fw-housing']:IsInside() then return false end
-
-            return exports['fw-housing']:HasKeyToCurrent()
+            return not exports['fw-housing']:GetCurrentHouse().Locked
         end,
     },
     {

@@ -1,0 +1,8 @@
+--Name: adsadas | 2026-11-10T12:28:26Z
+center = vector3(432.84, -1875.9, 27.85),
+length = 2,
+width = 2,
+name = "adsadas",
+heading = 0,
+--debugPoly = true
+

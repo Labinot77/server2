@@ -107,6 +107,12 @@ end)
 
 FW.AddKeybind("openInventory", 'Inventory', 'Openen', 'Tab', function(IsPressed)
     if not IsPressed then return end
+    OpenInventory()
+end)
+
+-- MagazineSlot: open with the magazine loader under GROUND (used by the "magazine" item).
+PendingMagazineSlot = false
+function OpenInventory(MagazineSlot)
     if HotbarCooldown then return end
     if IsInventoryBusy then return end
     if IsHoldingItem then return end
@@ -143,7 +149,89 @@ FW.AddKeybind("openInventory", 'Inventory', 'Openen', 'Tab', function(IsPressed)
         InvName = 'Drop-' .. CurrentDropId
     end
 
+    PendingMagazineSlot = MagazineSlot or false
     FW.TriggerServer('fw-inventory:Server:OpenInventory', InvType, InvName, MaxSlots, MaxWeight)
+end
+
+-- Magazine used from the hotbar (inventory closed): open the inventory with the loader.
+-- From inside the inventory the NUI shows the loader itself, without closing anything.
+RegisterNetEvent("fw-inventory:Client:OpenMagazineLoader")
+AddEventHandler("fw-inventory:Client:OpenMagazineLoader", function(Slot)
+    if CurrentInventory then
+        return SendNUIMessage({ Action = "OpenMagazinePanel", Slot = Slot })
+    end
+    OpenInventory(Slot)
+end)
+
+-- Loading takes time (Config.MagazineLoadTime), with an animation. Closing the inventory cancels.
+local IsLoadingMagazine = false
+RegisterNUICallback("LoadMagazine", function(Data, Cb)
+    Cb("Ok")
+    if IsLoadingMagazine then return end
+    IsLoadingMagazine = true
+
+    Citizen.CreateThread(function()
+        local Result = FW.SendCallback('fw-inventory:Server:BeginLoadMagazine', Data.MagSlot, Data.BulletSlot, Data.Amount) or {}
+        if not Result.Success then
+            if Result.Message then FW.Functions.Notify(Result.Message, "error") end
+            SendNUIMessage({ Action = "MagazineProgress", Cancel = true })
+            IsLoadingMagazine = false
+            return
+        end
+
+        if exports['fw-progressbar']:GetTaskBarStatus() then
+            FW.Functions.Notify("Je bent al met iets bezig!", "error")
+            FW.TriggerServer('fw-inventory:Server:CancelLoadMagazine')
+            SendNUIMessage({ Action = "MagazineProgress", Cancel = true })
+            IsLoadingMagazine = false
+            return
+        end
+
+        SendNUIMessage({ Action = "MagazineProgress", Duration = Result.Duration, Amount = Result.Amount, Current = Result.Current, Capacity = Result.Capacity })
+
+        -- Closing the inventory / dying cancels the load.
+        Citizen.CreateThread(function()
+            while IsLoadingMagazine do
+                Citizen.Wait(100)
+                if IsLoadingMagazine and (not CurrentInventory or FW.Functions.GetPlayerData().metadata.isdead) then
+                    TriggerEvent("progressbar:client:cancel")
+                    break
+                end
+            end
+        end)
+
+        local Anim = Config.MagazineLoadAnim or {}
+        local Finished = FW.Functions.CompactProgressbar(Result.Duration, ("Kogels laden (%sx)..."):format(Result.Amount), false, true, {
+            disableMovement = true, disableCarMovement = false, disableMouse = false, disableCombat = true,
+        }, { animDict = Anim.Dict, anim = Anim.Anim, flags = Anim.Flag or 49 }, {}, {}, true)
+
+        if Finished then
+            FW.TriggerServer('fw-inventory:Server:FinishLoadMagazine')
+            SendNUIMessage({ Action = "MagazineProgress", Done = true })
+        else
+            FW.TriggerServer('fw-inventory:Server:CancelLoadMagazine')
+            SendNUIMessage({ Action = "MagazineProgress", Cancel = true })
+        end
+
+        IsLoadingMagazine = false
+    end)
+end)
+
+exports("IsLoadingMagazine", function() return IsLoadingMagazine end)
+
+RegisterNUICallback("AttachToWeapon", function(Data, Cb)
+    Cb("Ok")
+    FW.TriggerServer('fw-inventory:Server:AttachToWeapon', Data.WeaponSlot, Data.ItemSlot)
+end)
+
+RegisterNUICallback("DetachFromWeapon", function(Data, Cb)
+    Cb("Ok")
+    FW.TriggerServer('fw-inventory:Server:DetachFromWeapon', Data.WeaponSlot, Data.Kind, Data.ToSlot)
+end)
+
+RegisterNUICallback("UnloadMagazine", function(Data, Cb)
+    Cb("Ok")
+    FW.TriggerServer('fw-inventory:Server:UnloadMagazine', Data.MagSlot, Data.Amount, Data.ToSlot)
 end)
 
 FW.AddKeybind("showActionbar", 'Inventory', 'Hotbar', 'Z', function(IsPressed)
@@ -215,7 +303,9 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
         MaxWeight = GetMaxPlayerWeight(PlyInventory),
         BackpackSlots = GetUnlockedBackpackSlots(PlyInventory),
         PlayerName = PlayerData.charinfo and (PlayerData.charinfo.firstname .. ' ' .. PlayerData.charinfo.lastname) or nil,
+        MagazineSlot = PendingMagazineSlot,
     })
+    PendingMagazineSlot = false
 
     CurrentInventory = OtherData
 
@@ -344,15 +434,8 @@ AddEventHandler('fw-inventory:Client:UseWeapon', function(ItemData)
         SetPedWeaponTintIndex(PlayerPedId(), GetHashKey(WeaponName), 6)
     end
 
-    local HasOldSilencer = HasEnoughOfItem('silencer_oilcan', 1)
-    if Config.Attachments['silencer_oilcan'][WeaponName] and HasOldSilencer then
-        GiveWeaponComponentToPed(PlayerPedId(), GetHashKey(WeaponName), GetHashKey(Config.Attachments['silencer_oilcan'][WeaponName]))
-    end
-
-    local HasNewSilencer = HasEnoughOfItem('silencer', 1)
-    if Config.Attachments['silencer'][WeaponName] and HasNewSilencer then
-        GiveWeaponComponentToPed(PlayerPedId(), GetHashKey(WeaponName), GetHashKey(Config.Attachments['silencer'][WeaponName]))
-    end
+    -- Attachments sit on the weapon itself now (right-click -> Attachments), see cl_attachments.lua.
+    ApplyWeaponAttachments(PlayerPedId(), WeaponName, ItemData.Info)
 
     if WeaponName == 'weapon_huntingrifle' then
         NetworkSetFriendlyFireOption(false)

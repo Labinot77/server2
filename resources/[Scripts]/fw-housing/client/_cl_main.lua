@@ -14,12 +14,6 @@ end)
 local CurrentHouse, IsInside = nil, false
 local HouseObject, HouseOffsets, HouseDecorations = nil, {}, {}
 
--- Shared with cl_mlo.lua / cl_decorate.lua
-function SetHousingCurrentHouse(House) CurrentHouse = House end
-function GetHousingCurrentHouse() return CurrentHouse end
-function IsInsideShell() return IsInside end
-function GetShellDecorEntity(DecorId) return HouseDecorations[DecorId] end
-
 -- Events
 RegisterNetEvent("fw-housing:Client:SyncHouse")
 AddEventHandler("fw-housing:Client:SyncHouse", function(HouseId, Data)
@@ -47,7 +41,7 @@ Citizen.CreateThread(function()
     end)
 
     while true do
-        if LoggedIn and not IsInside and not MloInsideHouseId then
+        if LoggedIn and not IsInside then
             local ClosestHouse = GetClosestHouse()
             if ClosestHouse then
                 if CurrentHouse == nil or CurrentHouse.Name ~= ClosestHouse.Name then
@@ -85,10 +79,9 @@ function GetClosestHouse()
         local BackDistance = 999.0
         if v.Locations.BackdoorOut and v.Locations.BackdoorIn then BackDistance = #(Coords - vector3(v.Locations.BackdoorOut.x, v.Locations.BackdoorOut.y, v.Locations.BackdoorOut.z)) end
 
-        local Radius = v.Mlo and 2.0 or 1.0
-        if FrontDistance <= Radius or BackDistance <= 1.0 then
+        if FrontDistance <= 1.0 or BackDistance <= 1.0 then
             if ClosestDistance > FrontDistance or ClosestDistance > BackDistance then
-                ClosestHouse, ClosestDistance = k, FrontDistance <= Radius and FrontDistance or BackDistance
+                ClosestHouse, ClosestDistance = k, FrontDistance <= 1.0 and FrontDistance or BackDistance
             end
         end
     end
@@ -98,7 +91,7 @@ end
 exports("GetClosestHouse", GetClosestHouse)
 exports("GetCurrentHouse", function() return CurrentHouse end)
 exports("GetHouse", function(HouseId) return Config.Houses[HouseId] end)
-exports("IsInside", function() return IsInside or MloInsideHouseId ~= nil end)
+exports("IsInside", function() return IsInside end)
 
 function HasKeyToCurrent(Cid)
     local Cid = Cid or FW.Functions.GetPlayerData().citizenid
@@ -270,7 +263,7 @@ function LoadInteriorDecorations(Decorations)
     print(json.encode(Decorations))
     for k, v in pairs(Decorations) do
         if _RequestModel(v.Model) then
-            local DecorId = v.Id or (#HouseDecorations + 1)
+            local DecorId = #HouseDecorations + 1
             HouseDecorations[DecorId] = CreateObjectNoOffset(v.Model, v.Coords.x, v.Coords.y, v.Coords.z, false, false, false, true, true)
             SetEntityRotation(HouseDecorations[DecorId], v.Rot.x, v.Rot.y, v.Rot.z, 0, true)
             FreezeEntityPosition(HouseDecorations[DecorId], true)
@@ -315,11 +308,6 @@ AddEventHandler("fw-housing:Client:EnterProperty", function(HouseId, Forced)
 
     if CurrentHouse == nil then
         return
-    end
-
-    -- MLO houses have a real door, there is nothing to teleport into.
-    if CurrentHouse.Mlo then
-        return EnterMloHouse(CurrentHouse, Forced)
     end
 
     if not Forced and CurrentHouse.Locked then return end
@@ -417,6 +405,5 @@ end)
 
 RegisterNetEvent("fw-housing:Client:OpenFurniture")
 AddEventHandler("fw-housing:Client:OpenFurniture", function(HouseId)
-    -- Works for both MLO and shell houses (see cl_decorate.lua)
-    OpenDecorateMenu(HouseId or (CurrentHouse and CurrentHouse.Id))
+    TriggerEvent('fw-editor:Client:SetState', true, HouseDecorations)
 end)

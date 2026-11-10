@@ -1085,6 +1085,36 @@ Shared.Items["ammo"] = {
     InsertInto = {},
 }
 
+Shared.Items["magazine"] = {
+    Name = "magazine",
+    Label = "Magazijn",
+    Image = "mag-pistol.png",
+    Description = "Gebruik hem om kogels te laden. Druk [R] met je wapen om te herladen.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = true, -- every magazine keeps its own bullet count (Info.Bullets)
+    IsBag = false, Weight = 0.3,
+    Price = 50,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["bullets"] = {
+    Name = "bullets",
+    Label = "Kogels",
+    Image = "bullets-pistol.png",
+    Description = "Losse kogels. Laad ze in een magazijn van hetzelfde type.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = false,
+    IsBag = false, Weight = 0.02,
+    Price = 1,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
 Shared.Items["herion_syringe"] = {
     Name = "herion_syringe",
     Label = "Spuit",

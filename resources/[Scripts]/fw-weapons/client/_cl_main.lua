@@ -298,3 +298,74 @@ end)
 exports("IsFreeAiming", function()
     return HasScope
 end)
+-- // Magazines: [R] reload \\ --
+-- For guns whose ammo type has a magazine (fw-inventory Config.Magazines) the native reload is
+-- disabled; [R] asks the server to insert your fullest matching magazine.
+local MagTypeCache, IsReloading = {}, false
+
+local function GetWeaponMagType(Weapon)
+    if MagTypeCache[Weapon] == nil then
+        local Data = Config.Weapons[Weapon]
+        MagTypeCache[Weapon] = Data and exports['fw-inventory']:GetMagazineTypeForAmmo(Data.AmmoType) or false
+    end
+    return MagTypeCache[Weapon]
+end
+
+local function ReloadWithMagazine(Ped, Weapon)
+    if IsReloading or not Config.WeaponData then return end
+    if IsPedReloading(Ped) or IsPedRagdoll(Ped) or IsPedSwimmingUnderWater(Ped) then return end
+
+    IsReloading = true
+    local Current = GetAmmoInPedWeapon(Ped, Weapon)
+    local Result = FW.SendCallback("fw-inventory:Server:ReloadWeapon", Config.WeaponData.Slot, Current) or {}
+
+    if not Result.Success then
+        if Result.Message then FW.Functions.Notify(Result.Message, "error") end
+        IsReloading = false
+        return
+    end
+
+    -- Weapon may have been put away while waiting.
+    if GetSelectedPedWeapon(Ped) ~= Weapon then
+        IsReloading = false
+        return
+    end
+
+    -- Everything in "reserve", empty clip -> GTA plays the reload and moves it into the clip.
+    SetAmmoInClip(Ped, Weapon, 0)
+    SetPedAmmo(Ped, Weapon, Result.Ammo)
+    MakePedReload(Ped)
+
+    if Config.WeaponData then Config.WeaponData.Info = Config.WeaponData.Info or {} Config.WeaponData.Info.Ammo = Result.Ammo end
+
+    Citizen.SetTimeout(exports['fw-inventory']:GetReloadTime() or 1800, function()
+        IsReloading = false
+    end)
+end
+
+Citizen.CreateThread(function()
+    while true do
+        local Sleep = 500
+
+        if LoggedIn and IsHoldingWeapon then
+            local Ped = PlayerPedId()
+            local Weapon = GetSelectedPedWeapon(Ped)
+
+            if GetWeaponMagType(Weapon) then
+                Sleep = 0
+                DisableControlAction(0, 45, true)  -- native reload
+                DisableControlAction(0, 140, true) -- R melee (pistol whip) on the same key
+
+                if IsReloading then DisablePlayerFiring(PlayerId(), true) end
+
+                if IsDisabledControlJustPressed(0, 45) then
+                    Citizen.CreateThread(function() ReloadWithMagazine(Ped, Weapon) end)
+                end
+            end
+        end
+
+        Citizen.Wait(Sleep)
+    end
+end)
+
+exports("IsReloading", function() return IsReloading end)

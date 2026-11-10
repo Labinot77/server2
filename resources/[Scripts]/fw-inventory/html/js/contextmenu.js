@@ -55,6 +55,11 @@ const BuildContextOptions = (Container, Slot, Item) => {
     Options.push({ Id: 'split', Label: 'Split', Icon: 'call_split', Disabled: !CanSplit });
     if (Container == 'player') Options.push({ Id: 'give', Label: 'Give', Icon: 'back_hand' });
 
+    // Weapons: magazine + attachments that sit on the gun.
+    if (Container == 'player' && ItemsList[Item.Item] && ItemsList[Item.Item].Weapon && HasAttachmentOptions(Item.Item)) {
+        Options.push({ Id: 'attachments', Label: 'Attachments', Icon: 'build' });
+    }
+
     return Options;
 };
 
@@ -119,6 +124,7 @@ $(document).on('click', '.inv-option-item', function(e) {
 
     if (Option == 'split') return OpenSplitModal(Container, Slot);
     if (Option == 'give') return GiveItem(Slot, Item);
+    if (Option == 'attachments') return OpenAttachmentsPanel(Slot);
 });
 
 // ---------------------------------------------------------------------------

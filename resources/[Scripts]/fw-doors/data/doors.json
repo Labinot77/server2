@@ -1,80 +1,105 @@
 {
+    "overrides": {},
     "doors": [
         {
-            "IsGate": false,
+            "CanDetcord": true,
+            "IsLockpickable": false,
             "Connected": [
                 "SKID_8547_2"
             ],
-            "CanDetcord": true,
-            "IsLockpickable": false,
+            "Disabled": false,
+            "Info": "SKID_8547_1",
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
             "Locked": 1,
+            "IsGate": false,
             "Model": -1547307588,
             "Coords": {
                 "z": 30.82,
                 "x": 434.74,
                 "y": -983.08
-            },
-            "Disabled": false,
-            "Access": {
-                "Gangs": [],
-                "Job": [
-                    "police"
-                ],
-                "Business": [],
-                "CitizenId": []
-            },
-            "Info": "SKID_8547_1"
+            }
         },
         {
-            "IsGate": false,
+            "CanDetcord": true,
+            "IsLockpickable": false,
             "Connected": [
                 "SKID_8547_1"
             ],
-            "CanDetcord": true,
-            "IsLockpickable": false,
+            "Disabled": false,
+            "Info": "SKID_8547_2",
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
             "Locked": 1,
+            "IsGate": false,
             "Model": -1547307588,
             "Coords": {
                 "z": 30.82,
                 "x": 434.74,
                 "y": -980.76
-            },
+            }
+        },
+        {
+            "CanDetcord": true,
+            "IsLockpickable": true,
+            "Connected": [],
             "Disabled": false,
+            "Info": "DIGITAL_DEN_FRONT",
             "Access": {
-                "Gangs": [],
+                "Business": [
+                    "Digital Den"
+                ],
                 "Job": [
                     "police"
                 ],
-                "Business": [],
-                "CitizenId": []
+                "CitizenId": [],
+                "Gangs": []
             },
-            "Info": "SKID_8547_2"
-        },
-        {
-            "IsGate": false,
-            "Connected": [],
-            "CanDetcord": true,
-            "IsLockpickable": true,
             "Locked": 0,
+            "IsGate": false,
             "Model": 1181020301,
             "Coords": {
                 "z": 66.91,
                 "x": 1137.34,
                 "y": -470.04
-            },
-            "Disabled": false,
+            }
+        },
+        {
+            "Model": 224373542,
             "Access": {
+                "CitizenId": [
+                    "2000"
+                ],
                 "Gangs": [],
+                "Business": [],
                 "Job": [
                     "police"
-                ],
-                "CitizenId": [],
-                "Business": [
-                    "Digital Den"
                 ]
             },
-            "Info": "DIGITAL_DEN_FRONT"
+            "IsLockpickable": false,
+            "Disabled": false,
+            "Info": "RANCHO_6009",
+            "Connected": [],
+            "Locked": 1,
+            "CanDetcord": true,
+            "IsGate": false,
+            "Coords": {
+                "z": 28.57,
+                "x": 426.55,
+                "y": -1841.95
+            }
         }
-    ],
-    "overrides": {}
+    ]
 }
