@@ -86,7 +86,7 @@ AddEventHandler('fw-admin:Client:Try:Open:Menu', function()
 
     if IsPlayerAdmin() then
         FW.Functions.TriggerCallback('fw-admin:Server:GetPlayers', function(Players)
-            SetCursorLocation(0.87, 0.15)
+            SetCursorLocation(0.5, 0.5)
             SetNuiFocus(true, true)
             SetNuiFocusKeepInput(Focus, Focus)
             SendNUIMessage({
@@ -181,6 +181,7 @@ Cloaked = false
 RegisterNUICallback("Trigger/Cloak", function(Data, Cb)
     if not IsPlayerAdmin() then return end
     SetCloak(Data.Cloak)
+    Cb('Ok')
 end)
 
 function SetCloak(Bool)
@@ -208,6 +209,7 @@ RegisterNUICallback("Trigger/Focus", function(Data, Cb)
 
     Focus = not Data.Focus
     SetNuiFocusKeepInput(Focus, Focus)
+    Cb('Ok')
 end)
 
 RegisterNUICallback("SaveBinds", function(Data, Cb)
@@ -215,10 +217,12 @@ RegisterNUICallback("SaveBinds", function(Data, Cb)
 
     Binds = Data
     SetResourceKvp("admin-binds", json.encode(Data))
+    Cb('Ok')
 end)
 
 RegisterNUICallback("Favorites", function(Data, Cb)
     SetResourceKvp("admin-favorites", json.encode(Data.Favorites))
+    Cb('Ok')
 end)
 
 -- Reports
