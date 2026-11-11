@@ -51,637 +51,97 @@ local function toggleVehicleDoor(vehicle, door)
 end
 
 -- ============================================================================
--- Eye entries (copied 1:1 from fw-ui/config/sh_config.lua -> Config.EyeEntries)
--- You can paste new fw-ui Eye options straight in here, same format:
---   Name, Label, Icon, EventType ('Client' / 'Server'), EventName, EventParams, Enabled(Entity)
--- `GetBoneDistanceFromVehicle` and `FW` work the same as in fw-ui (see client/eye.lua).
--- Categories: peds, vehicles, motorcycle, watercraft, aircraft, train.
+-- Helpers used by the options below
 -- ============================================================================
-local EyeEntries = {
-    ["peds"] = {
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {
-            {
-                Name = "sell_meth",
-                Icon = "fas fa-comment-dollar",
-                Label = "Verkopen",
-                EventType = "Client",
-                EventName = "fw-misc:Client:CorneringSale",
-                EventParams = {},
-                Enabled = function(Entity)
-                    if IsPedDeadOrDying(Entity) then
-                        return false
-                    end
+local FW
+local function core()
+  if not FW then FW = exports['fw-core']:GetCoreObject() end
+  return FW
+end
 
-                    return exports['fw-misc']:IsCorneringActive() and exports['fw-misc']:IsCorneringPed(Entity)
-                end,
-            },
-        },
-    },
-    ["vehicles"] = {
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {
-            {
-                Name = "boosting-vin-scratch",
-                Icon = "fas fa-eye-slash",
-                Label = "VIN Wegkrassen",
-                EventType = "Client",
-                EventName = "fw-boosting:Client:ScratchVin",
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports["fw-boosting"]:IsVehicleScratchable(Entity)
-                end,
-            },
-            {
-                Name = "chop_vehicle",
-                Icon = "fas fa-boxes",
-                Label = "Voertuig Scrappen",
-                EventType = "Client",
-                EventName = "fw-jobmanager:Client:StartChopProcess",
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports["fw-jobmanager"]:IsScrappingVehicle(Entity)
-                end,
-            },
-            {
-                Name = 'sanitation_throw_trash',
-                Label = 'Vuilniszak Weggooien',
-                Icon = 'fas fa-trash-restore',
-                EventType = 'Client',
-                EventName = 'fw-jobmanager:Client:Sanitation:ThrowInTrash',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local MyJob = exports['fw-jobmanager']:GetMyJob()
-                    if MyJob.CurrentJob ~= 'sanitation' then return false end
-                    local CurrentTask = FW.SendCallback("fw-jobmanager:Server:GetGroupCurrentTask", MyJob.CurrentJob, MyJob.CurrentGroup.Id)
+local function isOnDutyPolice()
+  local data = core().Functions.GetPlayerData()
+  return data.job and data.job.name == 'police' and data.job.onduty
+end
 
-                    if CurrentTask.TaskId ~= 4 and CurrentTask.TaskId ~= 6 then
-                        return false
-                    end
+local function isNotPolice()
+  local data = core().Functions.GetPlayerData()
+  return not data.job or data.job.name ~= 'police'
+end
 
-                    if GetEntityModel(Entity) == GetHashKey("trash") and GetBoneDistanceFromVehicle(2, "boot") < 5.0 and GetVehicleDoorAngleRatio(Entity, 5) > 0.0 then
-                        return true
-                    else
-                        return false
-                    end
-                end,
-            },
-            {
-                Name = 'postop_grab_goods',
-                Label = 'Goederen Pakken',
-                Icon = 'fas fa-box-open',
-                EventType = 'Client',
-                EventName = 'fw-jobmanager:Client:PostOp:GrabGoods',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local MyJob = exports['fw-jobmanager']:GetMyJob()
-                    if MyJob.CurrentJob ~= 'postop' then return false end
+local function playerNearby()
+  local player, distance = core().Functions.GetClosestPlayer()
+  return player ~= -1 and distance <= 2.0
+end
 
-                    local CurrentTaskId = exports['fw-jobmanager']:GetCurrentTaskId()
-                    if CurrentTaskId ~= 4 then return false end
+-- 'car', 'motorcycle', 'boat', 'aircraft' or 'train'
+local function vehicleType(entity)
+  local class = GetVehicleClass(entity)
+  if class == 8 then return 'motorcycle' end
+  if class == 14 then return 'boat' end
+  if class == 15 or class == 16 then return 'aircraft' end
+  if class == 21 then return 'train' end
+  return 'car'
+end
 
-                    return GetEntityModel(Entity) == GetHashKey("benson")
-                end,
-            },
-            {
-                Name = 'oxy_deliver_package',
-                Label = 'Goederen Afleveren',
-                Icon = 'fas fa-cubes',
-                EventType = 'Client',
-                EventName = 'fw-jobmanager:Client:Oxy:DeliverGoods',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local MyJob = exports['fw-jobmanager']:GetMyJob()
-                    if MyJob.CurrentJob ~= 'oxy' then return false end
+local function isCar(entity) return vehicleType(entity) == 'car' end
 
-                    local CurrentTaskId = exports['fw-jobmanager']:GetCurrentTaskId()
-                    if CurrentTaskId ~= 4 and CurrentTaskId ~= 6 then return false end
+local function isTrunkOpen(entity)
+  return GetVehicleDoorAngleRatio(entity, 5) > 0.0 or IsVehicleDoorDamaged(entity, 5)
+end
 
-                    if exports['fw-jobmanager']:IsOxyVehicle(Entity) then
-                        return true
-                    else
-                        return false
-                    end
-                end,
-            },
-            {
-                Name = 'scan_plate',
-                Label = 'Kenteken Nakijken',
-                Icon = 'fas fa-closed-captioning',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:ScanPlate',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return (GetBoneDistanceFromVehicle(2, "bumper_r") < 1.5 or GetBoneDistanceFromVehicle(2, "bumper_f") < 1.5) and PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-            {
-                Name = 'check_for_tampering',
-                Label = 'Controleer op Sabotage',
-                Icon = 'fas fa-unlink',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:CheckTampering',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return GetBoneDistanceFromVehicle(2, "door_dside_f") < 1.5 and PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-            {
-                Name = 'vehicle_refuel',
-                Label = 'Voertuig Tanken',
-                Icon = 'fas fa-gas-pump',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:Fuel:RefuelVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-vehicles']:CanRefuel()
-                end,
-            },
-            {
-                Name = 'enter_trunk',
-                Label = 'In Kofferbak Liggen',
-                Icon = 'fas fa-user-secret',
-                EventType = 'Client',
-                EventName = 'fw-assets:client:getin:trunk',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return GetBoneDistanceFromVehicle(2, "bumper_r") < 2.0 and (GetVehicleDoorAngleRatio(Entity, 5) > 0.0 or IsVehicleDoorDamaged(Entity, 5))
-                end,
-            },
-            {
-                Name = 'open_trunk',
-                Label = 'Kofferbak Openen',
-                Icon = 'fas fa-truck-loading',
-                EventType = 'Client',
-                EventName = 'fw-inventory:Client:OpenTrunk',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return GetBoneDistanceFromVehicle(2, "bumper_r") < 2.0 and GetVehicleDoorLockStatus(Entity) ~= 2
-                end,
-            },
+-- canInteract runs every frame, so the sanitation task (a server callback) is fetched in the
+-- background at most every 2 seconds instead of blocking the draw loop.
+local sanitationTask, sanitationChecked, sanitationPending = nil, 0, false
+local function getSanitationTaskId(job)
+  if not sanitationPending and GetGameTimer() - sanitationChecked > 2000 then
+    sanitationPending, sanitationChecked = true, GetGameTimer()
+    CreateThread(function()
+      local ok, task = pcall(core().SendCallback, 'fw-jobmanager:Server:GetGroupCurrentTask', job.CurrentJob, job.CurrentGroup.Id)
+      sanitationTask = ok and task and task.TaskId or nil
+      sanitationPending = false
+    end)
+  end
+  return sanitationTask
+end
 
-            {
-                Name = 'seat_in_vehicle',
-                Label = 'Zet in Voertuig',
-                Icon = 'fas fa-chevron-circle-left',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:SeatVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
+local function canStealRim(entity)
+  return exports['fw-inventory']:HasEnoughOfItem('screwdriver', 1)
+end
 
-                    return true
-                end,
-            },
-            {
-                Name = 'unseat_from_vehicle',
-                Label = 'Haal uit Voertuig',
-                Icon = 'fas fa-chevron-circle-right',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:UnseatVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
-
-                    return true
-                end,
-            },
-
-            {
-                Name = 'pickup_bicycle',
-                Label = 'Fiets Oppakken',
-                Icon = 'fas fa-spinner',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:client:carry:bicycle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return IsThisModelABicycle(GetEntityModel(Entity)) and not IsEntityAttachedToAnyPed(Entity) and not IsEntityAttachedToAnyPed(PlayerPedId())
-                end,
-            },
-            {
-                Name = 'save_outfit',
-                Label = 'Huidige Outfit Opslaan',
-                Icon = 'fas fa-plus',
-                EventType = 'Client',
-                EventName = 'fw-bennys:Client:SaveOutfit',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerJob = FW.Functions.GetPlayerData()
-                    return PlayerJob.name ~= 'police' and exports['fw-bennys']:IsInSecretBennys()
-                end,
-            },
-            {
-                Name = 'swap_outfit',
-                Label = 'Huidige Outfit Veranderen',
-                Icon = 'fas fa-redo',
-                EventType = 'Client',
-                EventName = 'fw-bennys:Client:SwapOutfit',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerJob = FW.Functions.GetPlayerData()
-                    return PlayerJob.name ~= 'police' and exports['fw-bennys']:IsInSecretBennys()
-                end,
-            },
-            {
-                Name = 'steal_rim',
-                Label = 'Velg Stelen',
-                Icon = 'fas fa-cog',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:StealRim',
-                EventParams = {},
-                Enabled = function(Entity)
-                    if not exports['fw-inventory']:HasEnoughOfItem('screwdriver', 1) then
-                        return false
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_lf") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_rf") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_lr") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_rr") < 1.0 then
-                        return true
-                    end
-                end,
-            },
-            {
-                Name = 'tow_vehicle',
-                Label = 'Voertuig Takelen',
-                Icon = 'fas fa-trailer',
-                EventType = 'Client',
-                EventName = 'fw-jobmanager:Client:TowVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    if GetEntityModel(Entity) ~= GetHashKey("flatbed") then return false end
-                    if GetBoneDistanceFromVehicle(2, "wheel_lr") > 2.5 then return false end
-                    return not exports['fw-jobmanager']:IsTowingVehicle()
-                end,
-            },
-            {
-                Name = 'untow_vehicle',
-                Label = 'Voertuig Aftakelen',
-                Icon = 'fas fa-trailer',
-                EventType = 'Client',
-                EventName = 'fw-jobmanager:Client:UntowVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    if GetEntityModel(Entity) ~= GetHashKey("flatbed") then return false end
-                    if GetBoneDistanceFromVehicle(2, "wheel_lr") > 2.5 then return false end
-                    return exports['fw-jobmanager']:IsTowingVehicle()
-                end,
-            },
-            {
-                Name = 'methrun_dropoff_goods',
-                Label = 'Goederen Afleveren',
-                Icon = 'fas fa-boxes',
-                EventType = 'Client',
-                EventName = 'fw-illegal:Client:MethrunDropoffGoods',
-                EventParams = {},
-                Enabled = function(Entity)
-                    if GetBoneDistanceFromVehicle(2, "wheel_lr") > 1.5 then return false end
-                    return exports['fw-illegal']:CanDoDropoff(Entity)
-                end,
-            },
-
-            -- Meth Cornering
-            {
-                Name = 'sell_meth',
-                Label = 'Start Methverkoop',
-                Icon = 'fas fa-handshake',
-                EventType = 'Client',
-                EventName = 'fw-misc:Client:StartCornering',
-                EventParams = { Type = 'meth' },
-                Enabled = function(Entity)
-                    return exports['fw-inventory']:HasEnoughOfItem('1gmeth', 5) and not exports['fw-misc']:IsCorneringActive()
-                end,
-            },
-            {
-                Name = 'stop_meth_cornering',
-                Label = 'Stop Methverkoop',
-                Icon = 'fas fa-handshake',
-                EventType = 'Client',
-                EventName = 'fw-misc:Client:StopCornering',
-                EventParams = { Type = 'meth' },
-                Enabled = function(Entity)
-                    return exports['fw-misc']:IsCorneringActive('meth') and exports['fw-misc']:IsCorneringVehicle(Entity)
-                end,
-            },
-
-            -- Weed Cornering
-            {
-                Name = 'sell_weed',
-                Label = 'Start Wietverkoop',
-                Icon = 'fas fa-handshake',
-                EventType = 'Client',
-                EventName = 'fw-misc:Client:StartCornering',
-                EventParams = { Type = 'weed' },
-                Enabled = function(Entity)
-                    return exports['fw-inventory']:HasEnoughOfItem('weed-bag', 5) and not exports['fw-misc']:IsCorneringActive()
-                end,
-            },
-            {
-                Name = 'stop_weed_cornering',
-                Label = 'Stop Wietverkoop',
-                Icon = 'fas fa-handshake',
-                EventType = 'Client',
-                EventName = 'fw-misc:Client:StopCornering',
-                EventParams = { Type = 'weed' },
-                Enabled = function(Entity)
-                    return exports['fw-misc']:IsCorneringActive('weed') and exports['fw-misc']:IsCorneringVehicle(Entity)
-                end,
-            },
-            {
-                Name = 'attach_rope',
-                Label = 'Koppel sleeptouw aan voertuig',
-                Icon = 'fas fa-cog',
-                EventType = 'Client',
-                EventName = 'fw-heists:Client:AttachRope',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-inventory']:HasEnoughOfItem('tow-rope', 1) and (GetBoneDistanceFromVehicle(2, "attach_female") < 2.0 or GetBoneDistanceFromVehicle(2, "attach_male") < 2.0)
-                end,
-            },
-            {
-                Name = 'detach_rope',
-                Label = 'Ontkoppel sleeptouw',
-                Icon = 'fas fa-cog',
-                EventType = 'Client',
-                EventName = 'fw-heists:Client:DetachRope',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-heists']:IsRopeAttached(Entity) and (GetBoneDistanceFromVehicle(2, "attach_female") < 2.0 or GetBoneDistanceFromVehicle(2, "attach_male") < 2.0)
-                end,
-            },
-            {
-                Name = 'inspect_vin',
-                Label = 'Controleer VIN',
-                Icon = 'fas fa-sim-card',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:InspectVIN',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-        }
-    },
-    ["motorcycle"] = {
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {
-            {
-                Name = 'vehicle_refuel',
-                Label = 'Voertuig Tanken',
-                Icon = 'fas fa-gas-pump',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:Fuel:RefuelVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-vehicles']:CanRefuel()
-                end,
-            },
-            {
-                Name = "autocare_check_vehicle",
-                Icon = "fas fa-cog",
-                Label = "Voertuig Controleren",
-                EventType = "Client",
-                EventName = "fw-businesses:Client:AutoCare:CheckVehicle",
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports["fw-businesses"]:IsAutocare()
-                end,
-            },
-            {
-                Name = 'scan_plate',
-                Label = 'Kenteken Nakijken',
-                Icon = 'fas fa-closed-captioning',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:ScanPlate',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return (GetBoneDistanceFromVehicle(2, "brakelight_l") < 1.0 or GetBoneDistanceFromVehicle(2, "headlight_l") < 1.0) and PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-            {
-                Name = 'save_outfit',
-                Label = 'Huidige Outfit Opslaan',
-                Icon = 'fas fa-plus',
-                EventType = 'Client',
-                EventName = 'fw-bennys:Client:SaveOutfit',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerJob = FW.Functions.GetPlayerData()
-                    return PlayerJob.name ~= 'police' and exports['fw-bennys']:IsInSecretBennys()
-                end,
-            },
-            {
-                Name = 'swap_outfit',
-                Label = 'Huidige Outfit Veranderen',
-                Icon = 'fas fa-redo',
-                EventType = 'Client',
-                EventName = 'fw-bennys:Client:SwapOutfit',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerJob = FW.Functions.GetPlayerData()
-                    return PlayerJob.name ~= 'police' and exports['fw-bennys']:IsInSecretBennys()
-                end,
-            },
-            {
-                Name = 'steal_rim',
-                Label = 'Velg Stelen',
-                Icon = 'fas fa-cog',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:StealRim',
-                EventParams = {},
-                Enabled = function(Entity)
-                    if not exports['fw-inventory']:HasEnoughOfItem('screwdriver', 1) then
-                        return false
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_lf") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_rf") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_lr") < 1.0 then
-                        return true
-                    end
-
-                    if GetBoneDistanceFromVehicle(2, "wheel_rr") < 1.0 then
-                        return true
-                    end
-                end,
-            },
-            {
-                Name = 'seat_in_vehicle',
-                Label = 'Zet in Voertuig',
-                Icon = 'fas fa-chevron-circle-left',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:SeatVehicle',
-                EventParams = { Type = 'weed' },
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
-
-                    return true
-                end,
-            },
-            {
-                Name = 'unseat_from_vehicle',
-                Label = 'Haal uit Voertuig',
-                Icon = 'fas fa-chevron-circle-right',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:UnseatVehicle',
-                EventParams = { Type = 'weed' },
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
-
-                    return true
-                end,
-            },
-            {
-                Name = 'check_for_tampering',
-                Label = 'Controleer op Sabotage',
-                Icon = 'fas fa-unlink',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:CheckTampering',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-            {
-                Name = 'inspect_vin',
-                Label = 'Controleer VIN',
-                Icon = 'fas fa-sim-card',
-                EventType = 'Client',
-                EventName = 'fw-vehicles:Client:InspectVIN',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local PlayerData = FW.Functions.GetPlayerData()
-                    return PlayerData.job.name == 'police' and PlayerData.job.onduty
-                end,
-            },
-        }
-    },
-    ["watercraft"] = {
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {
-            {
-                Name = 'anchor-down',
-                Label = 'Anker Zakken',
-                Icon = 'fas fa-anchor',
-                EventType = 'Client',
-                EventName = 'fw-items:use:item:anker',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-items']:CanDropAnchor()
-                end,
-            },
-            {
-                Name = 'anchor-up',
-                Label = 'Anker Oppakken',
-                Icon = 'fas fa-anchor',
-                EventType = 'Client',
-                EventName = 'fw-items:use:item:anker:tilt',
-                EventParams = {},
-                Enabled = function(Entity)
-                    return exports['fw-items']:CanTiltAnchor()
-                end,
-            },
-        }
-    },
-    ["aircraft"] = {
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {
-            {
-                Name = 'vehicle_refuel',
-                Label = 'Voertuig Tanken',
-                Icon = 'fas fa-gas-pump',
-                EventType = 'Server',
-                EventName = 'fw-vehicles:Server:FuelHelicopter',
-                EventParams = { SelfServe = true },
-                Enabled = function(Entity)
-                    return exports['fw-vehicles']:CanRefuelAircraft(Entity)
-                end,
-            },
-            {
-                Name = 'seat_in_vehicle',
-                Label = 'Zet in Voertuig',
-                Icon = 'fas fa-chevron-circle-left',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:SeatVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
-
-                    return true
-                end,
-            },
-            {
-                Name = 'unseat_from_vehicle',
-                Label = 'Haal uit Voertuig',
-                Icon = 'fas fa-chevron-circle-right',
-                EventType = 'Client',
-                EventName = 'fw-police:Client:UnseatVehicle',
-                EventParams = {},
-                Enabled = function(Entity)
-                    local Player, Distance = FW.Functions.GetClosestPlayer()
-                    if Player == -1 or Distance > 2.0 then
-                        return false
-                    end
-
-                    return true
-                end,
-            },
-        }
-    },
-    ["train"] = { -- why not xd
-        Type = "Default",
-        SpriteDistance = 0.0,
-        State = false,
-        Options = {}
-    },
+local stealRimOption = {
+  name = 'interact:steal_rim',
+  label = 'Steal Rim',
+  canInteract = canStealRim,
+  action = function(entity)
+    TriggerEvent('fw-vehicles:Client:StealRim', {}, entity)
+  end,
 }
 
+local wheelOptions = { stealRimOption }
+
+local towRopeOptions = {
+  {
+    name = 'interact:attach_rope',
+    label = 'Attach Tow Rope',
+    canInteract = function(entity)
+      return exports['fw-inventory']:HasEnoughOfItem('tow-rope', 1)
+    end,
+    action = function(entity)
+      TriggerEvent('fw-heists:Client:AttachRope', {}, entity)
+    end,
+  },
+  {
+    name = 'interact:detach_rope',
+    label = 'Detach Tow Rope',
+    canInteract = function(entity)
+      return exports['fw-heists']:IsRopeAttached(entity)
+    end,
+    action = function(entity)
+      TriggerEvent('fw-heists:Client:DetachRope', {}, entity)
+    end,
+  },
+}
 
 local Settings = {
   Debug = GetConvar('debug', 'false') == 'true' and true or false, -- Enable / Disable debug mode
@@ -722,7 +182,7 @@ local Settings = {
 
   -- Nearby object distance check.
   nearbyObjectDistance = 20.0, -- Keep it at 15.0 at minimum.
-  nearbyVehicleDistance = 4.0,
+  nearbyVehicleDistance = 8.0, -- Vehicles closer than this get their bone points (8m so long vehicles like the benson/flatbed work from the back)
 
   -- Line of sight: points behind walls / objects are hidden and can't be used.
   LineOfSight = {
@@ -739,24 +199,27 @@ local Settings = {
     tolerance = 0.25,
   },
 
-  -- fw-ui Eye options shown through interact (see EyeEntries at the top of this file).
-  Eye = {
+  -- Options added to every nearby ped (not players' own ped).
+  pedDefaults = {
     enabled = true,
-    scanInterval = 1000,     -- ms between scans for nearby vehicles / peds
-    refreshInterval = 300,   -- ms between re-checking each option's Enabled() function
-    vehicleScanRadius = 8.0, -- vehicles closer than this get an Eye point
-    vehicleReach = 1.0,      -- prompt range = half the vehicle's length + this
-    pedScanRadius = 5.0,
-    pedDistance = 3.0,       -- dot range on peds
-    pedInteractDst = 1.8,    -- prompt range on peds (same as fw-ui's 1.8)
-    -- Eye options NOT shown, because interact already has them on the boot bone (vehicleBoneDefaults).
-    -- Empty a list to show them anyway.
-    skip = {
-      vehicles = { 'open_trunk', 'enter_trunk', 'sell_weed', 'stop_weed_cornering' },
+    scanDistance = 5.0,
+    distance = 3.0,
+    interactDst = 1.8,
+    options = {
+      {
+        name = 'interact:corner_sell',
+        label = 'Sell',
+        canInteract = function(entity)
+          return not IsPedDeadOrDying(entity)
+              and exports['fw-misc']:IsCorneringActive()
+              and exports['fw-misc']:IsCorneringPed(entity)
+        end,
+        action = function(entity)
+          TriggerEvent('fw-misc:Client:CorneringSale', {}, entity)
+        end,
+      },
     },
   },
-
-  EyeEntries = EyeEntries,
 
 
 
@@ -812,6 +275,354 @@ local Settings = {
             end,
             action = function(entity, distance, args)
               TriggerEvent('fw-misc:Client:StopCornering', { Type = 'weed' }, entity)
+            end,
+          },
+          {
+            name = 'interact:meth_cornering',
+            label = 'Start Selling Meth',
+            canInteract = function(entity)
+              return not IsFrunkVehicle(entity)
+                  and exports['fw-inventory']:HasEnoughOfItem('1gmeth', 5)
+                  and not exports['fw-misc']:IsCorneringActive()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-misc:Client:StartCornering', { Type = 'meth' }, entity)
+            end,
+          },
+          {
+            name = 'interact:stop_meth_cornering',
+            label = 'Stop Selling Meth',
+            canInteract = function(entity)
+              return not IsFrunkVehicle(entity)
+                  and exports['fw-misc']:IsCorneringActive('meth')
+                  and exports['fw-misc']:IsCorneringVehicle(entity)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-misc:Client:StopCornering', { Type = 'meth' }, entity)
+            end,
+          },
+          {
+            name = 'interact:scan_plate',
+            label = 'Check Plate',
+            canInteract = function(entity)
+              return isCar(entity) and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:ScanPlate', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:sanitation_throw_trash',
+            label = 'Throw Trash Bag',
+            canInteract = function(entity)
+              if GetEntityModel(entity) ~= `trash` or not isTrunkOpen(entity) then return false end
+              local job = exports['fw-jobmanager']:GetMyJob()
+              if job.CurrentJob ~= 'sanitation' then return false end
+              local task = getSanitationTaskId(job)
+              return task == 4 or task == 6
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:Sanitation:ThrowInTrash', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:postop_grab_goods',
+            label = 'Grab Goods',
+            canInteract = function(entity)
+              if GetEntityModel(entity) ~= `benson` then return false end
+              if exports['fw-jobmanager']:GetMyJob().CurrentJob ~= 'postop' then return false end
+              return exports['fw-jobmanager']:GetCurrentTaskId() == 4
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:PostOp:GrabGoods', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:oxy_deliver_package',
+            label = 'Deliver Goods',
+            canInteract = function(entity)
+              if exports['fw-jobmanager']:GetMyJob().CurrentJob ~= 'oxy' then return false end
+              local task = exports['fw-jobmanager']:GetCurrentTaskId()
+              return (task == 4 or task == 6) and exports['fw-jobmanager']:IsOxyVehicle(entity)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:Oxy:DeliverGoods', {}, entity)
+            end,
+          },
+        },
+      },
+      ['bumper_f'] = {
+        distance = 3.0,
+        interactDst = 1.5,
+        options = {
+          {
+            name = 'interact:scan_plate_front',
+            label = 'Check Plate',
+            canInteract = function(entity)
+              return isCar(entity) and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:ScanPlate', {}, entity)
+            end,
+          },
+        },
+      },
+      ['door_dside_f'] = {
+        distance = 3.0,
+        interactDst = 1.5,
+        options = {
+          {
+            name = 'interact:seat_in_vehicle',
+            label = 'Seat in Vehicle',
+            canInteract = function(entity)
+              return isCar(entity) and playerNearby()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:SeatVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:unseat_from_vehicle',
+            label = 'Unseat from Vehicle',
+            canInteract = function(entity)
+              return isCar(entity) and playerNearby()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:UnseatVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:check_for_tampering',
+            label = 'Check for Tampering',
+            canInteract = function(entity)
+              return isCar(entity) and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:CheckTampering', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:inspect_vin',
+            label = 'Inspect VIN',
+            canInteract = function(entity)
+              return isCar(entity) and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-vehicles:Client:InspectVIN', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:boosting_vin_scratch',
+            label = 'Scratch VIN',
+            canInteract = function(entity)
+              return exports['fw-boosting']:IsVehicleScratchable(entity)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-boosting:Client:ScratchVin', {}, entity)
+            end,
+          },
+        },
+      },
+      -- Fuel, towing and drop-offs sit at the rear left wheel (like fw-ui's wheel_lr checks).
+      ['wheel_lr'] = {
+        distance = 3.0,
+        interactDst = 1.5,
+        options = {
+          {
+            name = 'interact:vehicle_refuel',
+            label = 'Refuel Vehicle',
+            canInteract = function(entity)
+              local t = vehicleType(entity)
+              return (t == 'car' or t == 'motorcycle') and exports['fw-vehicles']:CanRefuel()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-vehicles:Client:Fuel:RefuelVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:tow_vehicle',
+            label = 'Tow Vehicle',
+            canInteract = function(entity)
+              return GetEntityModel(entity) == `flatbed` and not exports['fw-jobmanager']:IsTowingVehicle()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:TowVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:untow_vehicle',
+            label = 'Untow Vehicle',
+            canInteract = function(entity)
+              return GetEntityModel(entity) == `flatbed` and exports['fw-jobmanager']:IsTowingVehicle()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:UntowVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:methrun_dropoff_goods',
+            label = 'Deliver Goods',
+            canInteract = function(entity)
+              return exports['fw-illegal']:CanDoDropoff(entity)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-illegal:Client:MethrunDropoffGoods', {}, entity)
+            end,
+          },
+          stealRimOption,
+        },
+      },
+      ['wheel_lf'] = { distance = 3.0, interactDst = 1.0, options = wheelOptions },
+      ['wheel_rf'] = { distance = 3.0, interactDst = 1.0, options = wheelOptions },
+      ['wheel_rr'] = { distance = 3.0, interactDst = 1.0, options = wheelOptions },
+      ['attach_female'] = { distance = 3.0, interactDst = 2.0, options = towRopeOptions },
+      ['attach_male'] = { distance = 3.0, interactDst = 2.0, options = towRopeOptions },
+      -- Whole-vehicle options, and everything for bikes / boats / aircraft (no doors or boot).
+      ['chassis'] = {
+        distance = 4.0,
+        interactDst = 2.5,
+        options = {
+          {
+            name = 'interact:chop_vehicle',
+            label = 'Scrap Vehicle',
+            canInteract = function(entity)
+              return exports['fw-jobmanager']:IsScrappingVehicle(entity)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-jobmanager:Client:StartChopProcess', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:pickup_bicycle',
+            label = 'Pick Up Bicycle',
+            canInteract = function(entity)
+              return IsThisModelABicycle(GetEntityModel(entity))
+                  and not IsEntityAttachedToAnyPed(entity)
+                  and not IsEntityAttachedToAnyPed(cache.ped)
+            end,
+            action = function(entity)
+              TriggerEvent('fw-vehicles:client:carry:bicycle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:save_outfit',
+            label = 'Save Current Outfit',
+            canInteract = function(entity)
+              local t = vehicleType(entity)
+              return (t == 'car' or t == 'motorcycle') and isNotPolice() and exports['fw-bennys']:IsInSecretBennys()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-bennys:Client:SaveOutfit', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:swap_outfit',
+            label = 'Change Current Outfit',
+            canInteract = function(entity)
+              local t = vehicleType(entity)
+              return (t == 'car' or t == 'motorcycle') and isNotPolice() and exports['fw-bennys']:IsInSecretBennys()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-bennys:Client:SwapOutfit', {}, entity)
+            end,
+          },
+          -- Motorcycles / aircraft
+          {
+            name = 'interact:seat_in_vehicle_other',
+            label = 'Seat in Vehicle',
+            canInteract = function(entity)
+              local t = vehicleType(entity)
+              return (t == 'motorcycle' or t == 'aircraft') and playerNearby()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:SeatVehicle', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:unseat_from_vehicle_other',
+            label = 'Unseat from Vehicle',
+            canInteract = function(entity)
+              local t = vehicleType(entity)
+              return (t == 'motorcycle' or t == 'aircraft') and playerNearby()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:UnseatVehicle', {}, entity)
+            end,
+          },
+          -- Motorcycles
+          {
+            name = 'interact:scan_plate_bike',
+            label = 'Check Plate',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'motorcycle' and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:ScanPlate', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:check_for_tampering_bike',
+            label = 'Check for Tampering',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'motorcycle' and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-police:Client:CheckTampering', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:inspect_vin_bike',
+            label = 'Inspect VIN',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'motorcycle' and isOnDutyPolice()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-vehicles:Client:InspectVIN', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:autocare_check_bike',
+            label = 'Inspect Vehicle',
+            canInteract = function(entity)
+              -- Only bikes without an engine bone, the others get it on the 'engine' point.
+              return vehicleType(entity) == 'motorcycle'
+                  and GetEntityBoneIndexByName(entity, 'engine') == -1
+                  and exports['fw-businesses']:IsAutocare()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-businesses:Client:AutoCare:CheckVehicle', {}, entity)
+            end,
+          },
+          -- Aircraft
+          {
+            name = 'interact:aircraft_refuel',
+            label = 'Refuel Aircraft',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'aircraft' and exports['fw-vehicles']:CanRefuelAircraft(entity)
+            end,
+            action = function(entity)
+              TriggerServerEvent('fw-vehicles:Server:FuelHelicopter', { SelfServe = true }, NetworkGetNetworkIdFromEntity(entity))
+            end,
+          },
+          -- Boats
+          {
+            name = 'interact:anchor_down',
+            label = 'Drop Anchor',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'boat' and exports['fw-items']:CanDropAnchor()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-items:use:item:anker', {}, entity)
+            end,
+          },
+          {
+            name = 'interact:anchor_up',
+            label = 'Raise Anchor',
+            canInteract = function(entity)
+              return vehicleType(entity) == 'boat' and exports['fw-items']:CanTiltAnchor()
+            end,
+            action = function(entity)
+              TriggerEvent('fw-items:use:item:anker:tilt', {}, entity)
             end,
           },
         },

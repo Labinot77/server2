@@ -26,7 +26,6 @@ client_scripts {
     'client/renderer.lua',
     'client/scanner.lua',
     'client/frunk.lua',
-    'client/eye.lua',
     'client/engine.lua',
     'client/interact_bridge.lua',
 }

@@ -9,6 +9,7 @@ local MODELS = {}
 local ENTITIES = {}
 local ENTITY_BONES = {}
 local NETWORKED_ENTITIES = {}
+local DEFAULT_PEDS = {} -- [ped] = interaction id (from settings.pedDefaults)
 
 local api = {}
 
@@ -482,34 +483,6 @@ function api.updateInteraction(id, options)
     end
 end exports('UpdateInteraction', api.updateInteraction)
 
----@param data table : { name, entity, options, distance, interactDst, offset }
----@return number : The id of the interaction
--- Internal: adds a standalone point on an entity. Unlike addLocalEntityInteraction it never merges
--- into (or moves) another interaction that is already on the same entity, e.g. the frunk point.
-function api.addEntityPoint(data)
-    if not checkParams(data.entity, data.options) then return end
-
-    local id = nextId()
-    interactions[id] = {
-        id = id,
-        name = data.name or 'interaction:'..id,
-        entity = data.entity,
-        options = data.options,
-        distance = data.distance or 8.0,
-        interactDst = data.interactDst or 1.0,
-        offset = data.offset or vec3(0.0, 0.0, 0.0),
-        resource = GetInvokingResource()
-    }
-
-    filterInteractions()
-
-    return id
-end
-
-function api.hasInteraction(id)
-    return interactions[id] ~= nil
-end
-
 function api.getNearbyInteractions()
     local options = {}
     local amount = 0
@@ -525,7 +498,8 @@ function api.getNearbyInteractions()
         if settings.vehicleBoneDefaults.enabled then
             for bone, data in pairs(settings.vehicleBoneDefaults.bones) do
                 local key = string.format('%s:%s', vehicle, bone)
-                if not ENTITY_BONES[key] then
+                -- Skip bones the model doesn't have (bikes have no boot, boats no wheels, ...).
+                if not ENTITY_BONES[key] and GetEntityBoneIndexByName(vehicle, bone) ~= -1 then
                     api.addEntityBoneInteraction({
                         entity = vehicle,
                         bone = bone,
@@ -539,12 +513,40 @@ function api.getNearbyInteractions()
         end
     end
 
-    for _, interaction in pairs(ENTITY_BONES) do
-        local distance = #(utils.getCoordsFromInteract(interaction) - playercoords)
-        if distance <= interaction.distance then
-            amount += 1
-            interaction.curDist = distance
-            options[amount] = interaction
+    local pedDefaults = settings.pedDefaults
+    if pedDefaults and pedDefaults.enabled then
+        local nearbyPeds = lib.getNearbyPeds(playercoords, pedDefaults.scanDistance)
+        for i = 1, #nearbyPeds do
+            local ped = nearbyPeds[i].ped
+            if not DEFAULT_PEDS[ped] then
+                DEFAULT_PEDS[ped] = api.addLocalEntityInteraction({
+                    entity = ped,
+                    options = pedDefaults.options,
+                    distance = pedDefaults.distance,
+                    interactDst = pedDefaults.interactDst,
+                })
+            end
+        end
+
+        for ped, id in pairs(DEFAULT_PEDS) do
+            if not DoesEntityExist(ped) or #(GetEntityCoords(ped) - playercoords) > pedDefaults.scanDistance + 5.0 then
+                api.removeInteraction(id)
+                DEFAULT_PEDS[ped] = nil
+            end
+        end
+    end
+
+    for key, interaction in pairs(ENTITY_BONES) do
+        -- Entity is gone (vehicle despawned / deleted): drop its bone points.
+        if not DoesEntityExist(interaction.entity) then
+            ENTITY_BONES[key] = nil
+        else
+            local distance = #(utils.getCoordsFromInteract(interaction) - playercoords)
+            if distance <= interaction.distance then
+                amount += 1
+                interaction.curDist = distance
+                options[amount] = interaction
+            end
         end
     end
 

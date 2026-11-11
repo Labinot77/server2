@@ -234,9 +234,9 @@ A ray is cast from the player's head to every nearby point. Points behind walls,
 | `flags` | `1 \| 2 \| 16` | What blocks: world, vehicles, objects |
 | `tolerance` | `0.25` | Hits this close to the point still count as visible |
 
-### Eye (fw-ui options)
+### Default vehicle / ped options
 
-`EyeEntries` in `config/settings.lua` is a copy of fw-ui's `Config.EyeEntries`, in the same format. `client/eye.lua` puts them on nearby vehicles (picked by vehicle class, like fw-ui) and peds, and triggers them exactly like fw-ui: `TriggerEvent(EventName, EventParams, entity)` or `TriggerServerEvent(EventName, EventParams, netId)`. Options already on the boot bone are listed in `Eye.skip` so they don't show twice.
+`vehicleBoneDefaults.bones` puts options on vehicle bones (`boot`, `bumper_f`, `door_dside_f`, wheels, `attach_*`, `chassis`, `engine`) of every nearby vehicle. Bones a model doesn't have are skipped. `pedDefaults.options` are added to every nearby NPC.
 
 ---
 
