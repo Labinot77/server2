@@ -163,7 +163,10 @@ button { font-family: inherit; }
 .menu-btn:hover, .menu-btn.is-open { background: #ffffff; color: var(--ink); }
 
 .menu-pop {
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.4rem);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
     position: absolute;
     right: 0;
     top: calc(100% + 0.35rem);
@@ -176,7 +179,7 @@ button { font-family: inherit; }
     border-radius: 2px;
 }
 
-.menu-pop.is-open { display: block; }
+.menu-pop.is-open { visibility: visible; opacity: 1; transform: none; }
 
 .menu-pop__item {
     display: block;
@@ -542,3 +545,32 @@ button { font-family: inherit; }
 .field .ui.selection.dropdown .menu::-webkit-scrollbar { width: 0.3125rem; }
 .field .ui.selection.dropdown .menu::-webkit-scrollbar-thumb { background: #eff1f1; border-radius: 0; }
 .field .ui.selection.dropdown .menu::-webkit-scrollbar-track { background: #1a1c1c; }
+
+/* ---------- Animations ---------- */
+
+.nav-item, .menu-btn, .menu-pop__item, .row__star, .row__badge, .row__card,
+.run-btn, .searchbar input, .field input {
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+}
+
+.nav-item:active, .menu-btn:active, .run-btn:active, .row__head:active .row__card { transform: scale(0.98); }
+.nav-item:hover:not(.is-active) { transform: translateX(0.2rem); }
+
+.sidebar, .main { animation: slide-in .25s ease-out both; }
+.main { animation-delay: .05s; }
+
+.list.is-animating .row { animation: card-in .22s ease-out both; animation-delay: calc(min(var(--i), 30) * 12ms); }
+
+.row.is-entering .row__panel { animation: panel-in .2s ease-out; }
+.row.is-closing .row__panel { animation: panel-out .14s ease-in forwards; }
+.row.is-entering .row__panel .field,
+.row.is-entering .row__panel .info,
+.row.is-entering .row__panel .run-btn { animation: card-in .2s ease-out both; }
+
+.row__star.is-popping svg { animation: star-pop .3s ease-out; }
+
+@keyframes slide-in { from { opacity: 0; transform: translateY(0.6rem); } }
+@keyframes card-in { from { opacity: 0; transform: translateY(0.35rem); } }
+@keyframes panel-in { from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; } to { max-height: 40rem; overflow: hidden; } }
+@keyframes panel-out { from { max-height: 40rem; overflow: hidden; } to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; overflow: hidden; } }
+@keyframes star-pop { 50% { transform: scale(1.45) rotate(-12deg); } }

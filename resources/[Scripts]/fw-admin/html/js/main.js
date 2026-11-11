@@ -44,6 +44,7 @@
     let activeCategory = 'all';
     let selectedIndex = 0;
     let openRowKey = null;
+    const anim = { list: false, open: null, fav: null }; // one-shot animation flags for the next render
     let isOpen = false;
     let cloaked = false;
     let fullFocus = true;
@@ -203,6 +204,11 @@
         listEl.innerHTML = cols.map(c => `<div class="col">${c.join('')}</div>`).join('');
         initDropdowns();
 
+        listEl.classList.toggle('is-animating', anim.list);
+        if (anim.open) listEl.querySelector(`.row[data-key="${anim.open}"]`)?.classList.add('is-entering');
+        if (anim.fav !== null) listEl.querySelector(`[data-fav="${anim.fav}"]`)?.classList.add('is-popping');
+        anim.list = false; anim.open = null; anim.fav = null;
+
         const sel = listEl.querySelector('.row.is-selected');
         if (sel) sel.scrollIntoView({ block: 'nearest' });
     }
@@ -222,7 +228,7 @@
             ? `<span class="row__icon row__icon--chevron">${ICON_CHEVRON}</span>`
             : `<span class="row__icon">${ICON_RUN}</span>`;
 
-        return `<div class="${classes}" data-key="${key}" data-i="${i}" data-idx="${idx}">
+        return `<div class="${classes}" style="--i:${i}" data-key="${key}" data-i="${i}" data-idx="${idx}">
             <div class="row__head" data-head="${key}">
                 <span class="row__star ${isFav ? 'is-fav' : ''}" data-fav="${idx}">${ICON_STAR}</span>
                 <div class="row__card">
@@ -254,7 +260,7 @@
             ['Bank / Phone Number', `${p.Account} / ${p.Phone}`],
         ].map(([l, v]) => `<div class="info"><span class="info__label">${esc(l)}</span><span class="info__value">${esc(v)}</span></div>`).join('');
 
-        return `<div class="${classes}" data-key="${row.key}" data-i="${i}">
+        return `<div class="${classes}" style="--i:${i}" data-key="${row.key}" data-i="${i}">
             <div class="row__head" data-head="${row.key}">
                 <span class="row__badge">${esc(p.ServerId)}</span>
                 <div class="row__card">
@@ -287,6 +293,7 @@
             $sel.dropdown({
                 allowAdditions: true,
                 fullTextSearch: true,
+                duration: 160,
                 onChange: (val) => {
                     if (optId === 'player') {
                         currentTarget = val;
@@ -302,7 +309,7 @@
         jQuery(listEl).find('select[data-bind]').each(function () {
             const $sel = jQuery(this);
             const v = bindValues[$sel.attr('data-bind')];
-            $sel.dropdown({ fullTextSearch: true });
+            $sel.dropdown({ fullTextSearch: true, duration: 160 });
             if (v !== undefined && v !== null && v !== '') $sel.dropdown('set selected', String(v));
         });
     }
@@ -326,22 +333,26 @@
     }
 
     // ---- Actions ----
-    function onHeadActivate(key) {
-        if (key[0] === 'p') {
+    function togglePanel(key) {
+        const prev = openRowKey && listEl.querySelector(`.row[data-key="${openRowKey}"]`);
+        const apply = () => {
             openRowKey = openRowKey === key ? null : key;
+            anim.open = openRowKey;
             render();
-            return;
-        }
+        };
+        if (!prev) return apply();
+        prev.classList.add('is-closing');
+        setTimeout(apply, 140);
+    }
+
+    function onHeadActivate(key) {
+        if (key[0] === 'p') return togglePanel(key);
 
         const idx = Number(key.slice(1));
         const item = items[idx];
         if (!item) return;
 
-        if (item.Collapse) {
-            openRowKey = openRowKey === key ? null : key;
-            render();
-            return;
-        }
+        if (item.Collapse) return togglePanel(key);
 
         if (item.Toggle) enabled[idx] = !enabled[idx];
         post('Trigger/Button', { Event: item.Event, EventType: item.EventType, Result: item.Toggle ? !!enabled[idx] : false });
@@ -370,12 +381,14 @@
     function toggleFavourite(idx) {
         const at = favourites.indexOf(idx);
         if (at >= 0) favourites.splice(at, 1); else favourites.push(idx);
+        anim.fav = idx;
         post('Favorites', { Favorites: favourites });
         render();
     }
 
     function setView(nextView, cat) {
         view = nextView;
+        anim.list = true;
         if (cat) activeCategory = cat;
         selectedIndex = 0;
         openRowKey = null;
@@ -547,6 +560,7 @@
                 players = Array.isArray(data.AllPlayers) ? data.AllPlayers : Object.values(data.AllPlayers || {});
                 favourites = Object.values(data.Favorites || {}).map(Number).filter(n => !isNaN(n));
                 isOpen = true;
+                anim.list = true;
                 app.classList.remove('hidden');
                 if (view === 'settings') setView('commands', 'all'); else render();
                 if (view === 'commands') searchEl.focus();
