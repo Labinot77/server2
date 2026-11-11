@@ -460,7 +460,6 @@ const OPTION_DEFS: Record<string, { label: string; event: string }> = {
 };
 
 const loadAutocareZones = async () => {
-    console.log('[autocare] waiting for config...');
     while (!exp['fw-config'].IsConfigReady()) {
         await Delay(100);
     }

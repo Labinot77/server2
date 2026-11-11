@@ -129,6 +129,103 @@ local function GetOrderVehicle(Order)
     end
 end
 
+-- ── Stance ─────────────────────────────────────────────────────────────────
+
+local STANCE_LIMITS = {
+    SpacersFront = { 0.3, 1.5 }, SpacersRear = { 0.3, 1.5 },
+    CamberFront = { 0.0, 0.5 }, CamberRear = { 0.0, 0.5 },
+    Width = { 0.3, 1.5 }, Suspension = { -0.2, 0.2 },
+}
+
+-- Only known keys, clamped to sane values. Returns nil when empty.
+local function CleanStance(Stance)
+    if type(Stance) ~= 'table' then return nil end
+    local Clean, Any = {}, false
+    for Key, Limit in pairs(STANCE_LIMITS) do
+        local Value = tonumber(Stance[Key])
+        if Value then
+            Clean[Key] = math.max(Limit[1], math.min(Limit[2], Value))
+            Any = true
+        end
+    end
+    return Any and Clean or nil
+end
+
+local function SetVehicleStance(Vehicle, Stance)
+    if Vehicle and Vehicle ~= 0 and DoesEntityExist(Vehicle) then
+        Entity(Vehicle).state:set('bennysStance', Stance, true)
+    end
+end
+
+-- fw-core calls this after applying saved mods: the stance is taken from the database, not the client.
+RegisterNetEvent('fw-bennys:Server:SyncStance', function(NetId, Plate)
+    local Vehicle = NetworkGetEntityFromNetworkId(tonumber(NetId) or 0)
+    if Vehicle == 0 or not DoesEntityExist(Vehicle) or type(Plate) ~= 'string' then return end
+
+    Plate = Plate:gsub('^%s*(.-)%s*$', '%1')
+    if GetVehicleNumberPlateText(Vehicle):gsub('%s+', '') ~= Plate:gsub('%s+', '') then return end
+
+    local Result = DB:executeSync("SELECT `mods` FROM `player_vehicles` WHERE `plate` = ? LIMIT 1", { Plate })
+    local Mods = Result and Result[1] and json.decode(Result[1].mods or '{}') or {}
+    SetVehicleStance(Vehicle, CleanStance(Mods.Stance))
+end)
+
+-- ── Saving mods ────────────────────────────────────────────────────────────
+
+local PendingSaves = {} -- [OrderId] = { Owner, Mechanic, Final, Expires }
+
+-- Ask the vehicle's network owner for a snapshot of its mods (on Complete / after each install).
+local function RequestModsSnapshot(Order, Mechanic, Final)
+    local Vehicle = GetOrderVehicle(Order)
+    if not Vehicle then
+        if Mechanic then Notify(Mechanic, "Voertuig niet gevonden, mods konden niet worden opgeslagen..", 'error') end
+        return false
+    end
+
+    local Owner = NetworkGetEntityOwner(Vehicle)
+    if not Owner or Owner <= 0 then Owner = Mechanic end
+    if not Owner then return false end
+
+    PendingSaves[Order.Id] = { Owner = Owner, Mechanic = Mechanic, Final = Final, Expires = os.time() + 60 }
+    TriggerClientEvent('fw-bennys:Client:Orders:Snapshot', Owner, Order.Id, Order.NetId, Order.Plate)
+    return true
+end
+
+RegisterNetEvent('fw-bennys:Server:Orders:SaveMods', function(OrderId, Mods)
+    local Source = source
+    local Order = Orders[tonumber(OrderId)]
+    local Pending = PendingSaves[tonumber(OrderId)]
+    if not Order or not Pending or Pending.Owner ~= Source or Pending.Expires < os.time() then return end -- only the client we asked
+    if type(Mods) ~= 'table' or next(Mods) == nil then return end
+    -- Kept (not cleared) so a second quick install's snapshot, which includes everything, is saved too.
+    local Final = Pending.Final
+    Pending.Final = false
+
+    -- Stance comes from the vehicle's state bag; validate it and keep the bag in sync.
+    Mods.Stance = CleanStance(Mods.Stance)
+    if Mods.Stance then SetVehicleStance(GetOrderVehicle(Order), Mods.Stance) end
+
+    -- Plates in player_vehicles are stored trimmed; GTA pads them to 8 characters.
+    local Plate = Order.Plate:gsub('^%s*(.-)%s*$', '%1')
+    local Result = DB:executeSync("UPDATE `player_vehicles` SET `mods` = ? WHERE `plate` = ?", { json.encode(Mods), Plate })
+    local Saved = Result and (Result.affectedRows or Result.changedRows or 0) > 0
+
+    if not Saved then
+        -- affectedRows is 0 when nothing changed too, so check the vehicle exists.
+        local Exists = DB:executeSync("SELECT 1 FROM `player_vehicles` WHERE `plate` = ? LIMIT 1", { Plate })
+        Saved = Exists and Exists[1] ~= nil
+    end
+
+    print(('[fw-bennys] Order #%d mods %s for %s'):format(Order.Id, Saved and 'saved' or 'NOT saved (not an owned vehicle)', Plate))
+
+    if Final then
+        local Text = Saved and ("Order #%d afgerond, mods zijn opgeslagen."):format(Order.Id)
+            or ("Order #%d afgerond, maar %s is geen eigen voertuig: mods zijn niet opgeslagen."):format(Order.Id, Plate)
+        if Pending.Mechanic then Notify(Pending.Mechanic, Text, Saved and 'success' or 'error') end
+        TriggerEvent('fw-logs:Server:Log', 'bennysMenu', 'Order Completed', ("Order: #%d\nPlate: %s\nCustomer: %s\nMechanic: %s\nSaved: %s\nMods: ```json\n%s```"):format(Order.Id, Plate, Order.CustomerName, tostring(Order.MechanicName), tostring(Saved), json.encode(Mods)), 'green')
+    end
+end)
+
 -- ── Startup ────────────────────────────────────────────────────────────────
 
 CreateThread(function()
@@ -270,12 +367,26 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:Action', function(Source, C
         Order.Status = 'accepted'
         Order.MechanicCid = Cid
         Order.MechanicName = PlayerName(Player)
+        Order.ReleasedBy = nil
         NotifyCustomer(Order, ("Je order #%d is opgepakt door %s."):format(Order.Id, Order.MechanicName), 'success')
     elseif Action == 'release' then
+        -- Unassign: installed items stay installed, so another mechanic continues where this one left off.
         if Order.Status ~= 'accepted' or not Mine then return Cb({ Success = false, Message = 'Dit is niet jouw order' }) end
         Order.Status = 'pending'
         Order.MechanicCid = nil
         Order.MechanicName = nil
+        Order.ReleasedBy = PlayerName(Player)
+
+        local Done = 0
+        for _, Item in ipairs(Order.Items) do if Item.Installed then Done = Done + 1 end end
+
+        local Members = GetMembers(Order.Business)
+        for _, Data in pairs(FW.GetPlayers()) do
+            local Member = FW.Functions.GetPlayer(Data.ServerId)
+            if Data.ServerId ~= Source and Member and Members[Member.PlayerData.citizenid] then
+                Notify(Data.ServerId, ("Order #%d (%s) is weer beschikbaar - %d/%d geïnstalleerd."):format(Order.Id, Order.Plate, Done, #Order.Items), 'primary')
+            end
+        end
     elseif Action == 'decline' then
         if Order.Status ~= 'pending' and not (Order.Status == 'accepted' and Mine) then return Cb({ Success = false, Message = 'Kan deze order niet weigeren' }) end
         Order.Status = 'cancelled'
@@ -288,6 +399,7 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:Action', function(Source, C
         if not AllInstalled(Order) then return Cb({ Success = false, Message = 'Nog niet alles is geïnstalleerd' }) end
         Order.Status = 'completed'
         NotifyCustomer(Order, ("Je voertuig (%s) is klaar! Order #%d is afgerond."):format(Order.Plate, Order.Id), 'success')
+        RequestModsSnapshot(Order, Source, true)
     else
         return Cb({ Success = false, Message = 'Onbekende actie' })
     end
@@ -320,14 +432,14 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:InstallItem', function(Sour
     Item.InstalledBy = PlayerName(Player)
 
     -- Mods only sync when set by the entity owner, so the owner's client applies it.
-    local Owner = NetworkGetEntityOwner(Vehicle)
-    if Owner and Owner > 0 then
-        TriggerClientEvent('fw-bennys:Client:Orders:ApplyItem', Owner, Order.NetId, Item.Slot, Item.Value, Order.Plate)
-    else
-        TriggerClientEvent('fw-bennys:Client:Orders:ApplyItem', Source, Order.NetId, Item.Slot, Item.Value, Order.Plate)
-    end
-
     local Finished = AllInstalled(Order)
+
+    -- The owner applies it and sends back a snapshot of all mods, which is saved (see SaveMods below).
+    local Owner = NetworkGetEntityOwner(Vehicle)
+    if not Owner or Owner <= 0 then Owner = Source end
+    PendingSaves[Order.Id] = { Owner = Owner, Mechanic = Source, Final = Finished, Expires = os.time() + 60 }
+    TriggerClientEvent('fw-bennys:Client:Orders:ApplyItem', Owner, Order.Id, Order.NetId, Item.Slot, Item.Value, Order.Plate)
+
     if Finished then
         Order.Status = 'completed'
         NotifyCustomer(Order, ("Je voertuig (%s) is klaar! Order #%d is afgerond."):format(Order.Plate, Order.Id), 'success')

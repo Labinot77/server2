@@ -14,6 +14,7 @@ client_scripts {
     'client/cl_legacy.lua',
     'client/cl_orders.lua',
     'client/cl_laptop.lua',
+    'client/cl_stance.lua',
     'dist/client.js',
 }
 

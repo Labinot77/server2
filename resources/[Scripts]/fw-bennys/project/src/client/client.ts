@@ -23,11 +23,14 @@ const CanOpenBennys = async (Authorized?: { Job?: string[]; Business?: string[] 
     return false;
 };
 
+exp("GetPreviewingStanceVehicle", () => Menu.PreviewingStanceVehicle());
+
 // Applies one work-order item. Called on the vehicle owner's client (see sv_orders.lua).
 exp("ApplyOrderItem", (Vehicle: number, Slot: string, Value: any) => {
     if (!DoesEntityExist(Vehicle)) return false;
     const State = new VehicleState(Vehicle);
     State.Preview(Slot, Value);
+    if (Slot.startsWith("Stance:")) State.CommitStance();
     return true;
 });
 

@@ -93,7 +93,16 @@ end
 function FW.VSync.GetVehicleMods(Vehicle)
     local VehicleColorOne, VehicleColorTwo = GetVehicleColours(Vehicle)
     local PearlescentColor, WheelColor = GetVehicleExtraColours(Vehicle)
+    local PaintTypeOne = GetVehicleModColor_1(Vehicle)
+    local PaintTypeTwo = GetVehicleModColor_2(Vehicle)
     local VehicleMods = {
+        -- Custom RGB paint (false when the vehicle uses a palette colour) and paint finish (Normal/Metallic/...).
+        ['CustomColorOne'] = GetIsVehiclePrimaryColourCustom(Vehicle) and { GetVehicleCustomPrimaryColour(Vehicle) } or false,
+        ['CustomColorTwo'] = GetIsVehicleSecondaryColourCustom(Vehicle) and { GetVehicleCustomSecondaryColour(Vehicle) } or false,
+        ['PaintTypeOne'] = (PaintTypeOne and PaintTypeOne >= 0 and PaintTypeOne <= 5) and PaintTypeOne or nil,
+        ['PaintTypeTwo'] = (PaintTypeTwo and PaintTypeTwo >= 0 and PaintTypeTwo <= 5) and PaintTypeTwo or nil,
+        -- Wheel stance from fw-bennys (replicated state bag), e.g. { SpacersFront = 0.95, Suspension = 0.05 }.
+        ['Stance'] = Entity(Vehicle).state.bennysStance or nil,
         ['DirtLevel'] = GetVehicleDirtLevel(Vehicle),
         ['PlateIndex'] = GetVehicleNumberPlateTextIndex(Vehicle),
         ['ColorOne'] = VehicleColorOne,
@@ -184,8 +193,13 @@ function FW.VSync.ApplyVehicleMods(Vehicle, VehicleMods, Plate, FadeIgnore)
 
         Citizen.Wait(250)
 
+        -- Paint keys are applied after the loop: the paint-type native overwrites colour indices.
+        local PaintKeys = { CustomColorOne = true, CustomColorTwo = true, PaintTypeOne = true, PaintTypeTwo = true, Stance = true }
+
         for k, v in pairs(VehicleMods) do
-            if k == 'PlateIndex' then
+            if PaintKeys[k] then
+                -- handled below
+            elseif k == 'PlateIndex' then
                 SetVehicleNumberPlateTextIndex(Vehicle, v)
             elseif k == 'DirtLevel' then
                 SetVehicleDirtLevel(Vehicle, v)
@@ -244,6 +258,29 @@ function FW.VSync.ApplyVehicleMods(Vehicle, VehicleMods, Plate, FadeIgnore)
                 end)
             end
         end
+        if VehicleMods.PaintTypeOne or VehicleMods.PaintTypeTwo or VehicleMods.CustomColorOne or VehicleMods.CustomColorTwo then
+            local ColorOne, ColorTwo = GetVehicleColours(Vehicle)
+            local PearlescentColor, WheelColor = GetVehicleExtraColours(Vehicle)
+
+            if VehicleMods.PaintTypeOne then SetVehicleModColor_1(Vehicle, VehicleMods.PaintTypeOne, ColorOne, PearlescentColor) end
+            if VehicleMods.PaintTypeTwo then SetVehicleModColor_2(Vehicle, VehicleMods.PaintTypeTwo, ColorTwo) end
+
+            local One, Two = VehicleMods.CustomColorOne, VehicleMods.CustomColorTwo
+            -- Accept arrays and objects ({"1":..}) in case the JSON came back keyed.
+            local function Rgb(C) return tonumber(C[1] or C['1'] or C.r), tonumber(C[2] or C['2'] or C.g), tonumber(C[3] or C['3'] or C.b) end
+            if type(One) == 'table' then local R, G, B = Rgb(One); if R then SetVehicleCustomPrimaryColour(Vehicle, R, G, B) end end
+            if type(Two) == 'table' then local R, G, B = Rgb(Two); if R then SetVehicleCustomSecondaryColour(Vehicle, R, G, B) end end
+
+            SetVehicleExtraColours(Vehicle, PearlescentColor, WheelColor)
+        end
+
+        -- Stance is applied every frame by fw-bennys (client/cl_stance.lua) from this state bag.
+        if type(VehicleMods.Stance) == 'table' and next(VehicleMods.Stance) and NetworkGetEntityIsNetworked(Vehicle) then
+            Entity(Vehicle).state:set('bennysStance', VehicleMods.Stance, true)
+            -- Only the entity owner can set it client side; the server re-reads it from player_vehicles to be sure.
+            if Plate then TriggerServerEvent('fw-bennys:Server:SyncStance', NetworkGetNetworkIdFromEntity(Vehicle), Plate) end
+        end
+
         -- NetworkRequestControlOfEntity(Vehicle) NetworkRequestControlOfEntity(Vehicle)
         -- NetworkRequestControlOfNetworkId(NetworkGetNetworkIdFromEntity(Vehicle))
         if not FadeIgnore then NetworkFadeInEntity(Vehicle, 0) end

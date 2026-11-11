@@ -366,14 +366,16 @@
         if (o.Status === "pending") {
             Actions = `
                 <div class="btn ghost danger" data-action="decline" data-id="${o.Id}"><i class="fas fa-ban"></i>Decline</div>
-                <div class="btn primary" data-action="accept" data-id="${o.Id}"><i class="fas fa-check"></i>Accept Order</div>`;
-            Hint = `<p class="hint"><i class="fas fa-info-circle"></i>Accept the order to start working on this ${Esc(o.Model)}.</p>`;
+                <div class="btn primary" data-action="accept" data-id="${o.Id}"><i class="fas fa-check"></i>${Done > 0 ? "Continue Order" : "Accept Order"}</div>`;
+            Hint = Done > 0
+                ? `<p class="hint"><i class="fas fa-history"></i>${o.ReleasedBy ? Esc(o.ReleasedBy) + " left off at" : "Left off at"} ${Done}/${o.Items.length}. Accept to continue where they stopped.</p>`
+                : `<p class="hint"><i class="fas fa-info-circle"></i>Accept the order to start working on this ${Esc(o.Model)}.</p>`;
         } else if (o.Status === "accepted" && Mine) {
             Actions = `
                 <div class="btn ghost" data-action="locate" data-id="${o.Id}"><i class="fas fa-map-marker-alt"></i>Locate</div>
-                <div class="btn ghost" data-action="release" data-id="${o.Id}"><i class="fas fa-undo"></i>Release</div>
+                <div class="btn ghost" data-action="release" data-id="${o.Id}" title="Another mechanic can continue; installed parts stay installed"><i class="fas fa-user-minus"></i>Unassign me</div>
                 <div class="btn primary ${AllDone ? "" : "disabled"}" data-action="complete" data-id="${o.Id}"><i class="fas fa-flag-checkered"></i>Complete</div>`;
-            Hint = `<p class="hint"><i class="fas fa-wrench"></i>Walk up to the vehicle and use the prompts to install each part.</p>`;
+            Hint = `<p class="hint"><i class="fas fa-wrench"></i>Use the prompts at the vehicle to install each part. Unassign to let someone else finish; progress is kept.</p>`;
         } else if (o.Status === "accepted") {
             Hint = `<p class="hint"><i class="fas fa-user-cog"></i>Being worked on by ${Esc(o.MechanicName)}.</p>`;
         }
@@ -504,7 +506,7 @@
         const o = State.orders.find(x => x.Id === Data.Id);
         if (Action === "accept" && o) { o.Status = "accepted"; o.MechanicCid = State.me.cid; o.MechanicName = State.me.name; Toast("Order geaccepteerd"); }
         if (Action === "decline" && o) { o.Status = "cancelled"; Toast("Order geannuleerd", "error"); }
-        if (Action === "release" && o) { o.Status = "pending"; o.MechanicCid = null; o.MechanicName = null; }
+        if (Action === "release" && o) { o.ReleasedBy = o.MechanicName; o.Status = "pending"; o.MechanicCid = null; o.MechanicName = null; Toast("Order vrijgegeven"); }
         Render();
     };
 

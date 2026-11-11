@@ -144,6 +144,20 @@ export class VehicleState {
         for (const Slot of Slots) this.Apply(Slot);
     }
 
+    // Stance is stored on the vehicle as a replicated state bag (only the values that were changed).
+    // cl_stance.lua applies it every frame for everyone; fw-core saves it with the mods (player_vehicles).
+    CommitStance() {
+        const Changed: Record<string, number> = {};
+        for (const Slot of Object.keys(this.Pending)) {
+            if (Slot.startsWith("Stance:")) Changed[Slot.slice("Stance:".length)] = Number(this.Pending[Slot]);
+        }
+        if (Object.keys(Changed).length === 0) return;
+
+        const Ent = (globalThis as any).Entity(this.Vehicle);
+        const Current = Ent.state.bennysStance || {};
+        Ent.state.set("bennysStance", { ...Current, ...Changed }, true);
+    }
+
     HasPendingStance() {
         return Object.keys(this.Pending).some(Slot => Slot.startsWith("Stance:"));
     }

@@ -174,6 +174,16 @@ local function InstallItem(OrderId, Index)
     FW.Functions.Notify(Result.Finished and ("Order #%d is afgerond!"):format(OrderId) or ("%s geïnstalleerd."):format(Item.Label), "success")
 end
 
+-- Hand the order back to the pool; installed items stay installed for the next mechanic.
+function UnassignOrder(OrderId)
+    local Result = FW.SendCallback('fw-bennys:Server:Orders:Action', 'release', OrderId)
+    if Result and Result.Success then
+        FW.Functions.Notify(("Je bent niet meer toegewezen aan order #%d. Een andere monteur kan verder."):format(OrderId), "primary")
+    else
+        FW.Functions.Notify(Result and Result.Message or "Er ging iets mis..", "error")
+    end
+end
+
 -- One interaction per accepted order of mine, with an option per item that isn't installed yet.
 local function RemoveVehicleInteraction(OrderId)
     local Entry = VehicleInteractions[OrderId]
@@ -208,6 +218,14 @@ local function SyncVehicleInteractions()
                     end
 
                     if #Options > 0 then
+                        Options[#Options + 1] = {
+                            name = ('bennys_order_%d_unassign'):format(Order.Id),
+                            label = ('Unassign me from order #%d'):format(Order.Id),
+                            canInteract = function() return not Busy end,
+                            action = function()
+                                CreateThread(function() UnassignOrder(Order.Id) end)
+                            end,
+                        }
                         Wanted[Order.Id] = true
                         local Existing = VehicleInteractions[Order.Id]
                         if not Existing or Existing.Key ~= Key or Existing.Vehicle ~= Vehicle then
@@ -235,7 +253,14 @@ end
 
 -- ── Applying (vehicle owner) ───────────────────────────────────────────────
 
-RegisterNetEvent('fw-bennys:Client:Orders:ApplyItem', function(NetId, Slot, Value, Plate)
+local function SendModsSnapshot(OrderId, Vehicle)
+    -- Wait for SetVehicleMod etc. to settle before reading everything back.
+    Wait(400)
+    if not DoesEntityExist(Vehicle) then return end
+    TriggerServerEvent('fw-bennys:Server:Orders:SaveMods', OrderId, FW.VSync.GetVehicleMods(Vehicle))
+end
+
+RegisterNetEvent('fw-bennys:Client:Orders:ApplyItem', function(OrderId, NetId, Slot, Value, Plate)
     local Vehicle = FindOrderVehicle(NetId, Plate)
     if not Vehicle then return end
 
@@ -245,10 +270,13 @@ RegisterNetEvent('fw-bennys:Client:Orders:ApplyItem', function(NetId, Slot, Valu
         exports[GetCurrentResourceName()]:ApplyOrderItem(Vehicle, Slot, Value)
     end
 
-    -- Persist like the old Benny's did (only affects owned vehicles, matched by plate).
-    Wait(300)
-    local Mods = FW.VSync.GetVehicleMods(Vehicle)
-    FW.SendCallback("fw-bennys:Server:SaveMods", NetworkGetNetworkIdFromEntity(Vehicle), Mods, GetVehicleNumberPlateText(Vehicle), { Slot = Slot, Value = Value, Source = 'WorkOrder' })
+    -- The server saves the full snapshot to player_vehicles (by the order's plate).
+    SendModsSnapshot(OrderId, Vehicle)
+end)
+
+RegisterNetEvent('fw-bennys:Client:Orders:Snapshot', function(OrderId, NetId, Plate)
+    local Vehicle = FindOrderVehicle(NetId, Plate)
+    if Vehicle then SendModsSnapshot(OrderId, Vehicle) end
 end)
 
 -- ── Sync ───────────────────────────────────────────────────────────────────

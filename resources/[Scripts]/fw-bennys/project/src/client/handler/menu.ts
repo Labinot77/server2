@@ -11,22 +11,6 @@ let Labels: Record<string, { Label: string; Option: string }> = {};
 let FrameTick: ReturnType<typeof setTick> | null = null;
 let OrderBusiness: string | undefined;
 
-// Vehicles with purchased stance keep getting it applied (wheel offset natives aren't persistent).
-const PersistedStance = new Map<number, VehicleState>();
-let PersistTick: ReturnType<typeof setTick> | null = null;
-
-const StartPersistTick = () => {
-    if (PersistTick) return;
-    PersistTick = setTick(() => {
-        for (const [Vehicle, VehState] of PersistedStance) {
-            if (!DoesEntityExist(Vehicle)) { PersistedStance.delete(Vehicle); continue; }
-            if (State && State.Vehicle === Vehicle) continue; // Menu tick handles it.
-            VehState.ApplyStance();
-        }
-        if (PersistedStance.size === 0 && PersistTick) { clearTick(PersistTick); PersistTick = null; }
-    });
-};
-
 const VehicleName = (Vehicle: number) => {
     const Display = GetDisplayNameFromVehicleModel(GetEntityModel(Vehicle));
     const Label = GetLabelText(Display);
@@ -55,8 +39,7 @@ const Close = (Commit: boolean) => {
     if (!Commit) {
         State.RevertAll();
     } else if (State.HasPendingStance()) {
-        PersistedStance.set(Vehicle, State);
-        StartPersistTick();
+        State.CommitStance();
     }
 
     if (FrameTick) clearTick(FrameTick);
@@ -76,13 +59,13 @@ const Close = (Commit: boolean) => {
 export const Menu = {
     IsOpen: () => State !== null,
 
+    // The vehicle whose stance the menu is previewing (cl_stance.lua leaves it alone meanwhile), or 0.
+    PreviewingStanceVehicle: () => (State && State.HasPendingStance() ? State.Vehicle : 0),
+
     // Business is set when the zone creates work orders instead of installing directly.
     Open: (Vehicle: number, Business?: string) => {
         if (State) return;
         OrderBusiness = Business;
-
-        // Re-opening a vehicle with persisted stance: start from what's on it now.
-        PersistedStance.delete(Vehicle);
 
         State = new VehicleState(Vehicle);
         Labels = {};
