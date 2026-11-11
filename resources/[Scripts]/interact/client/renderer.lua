@@ -181,11 +181,18 @@ local function CreateInteractions()
     local bestDist = hoverRadius
     screenCount = 0
 
+    -- Work on this frame's list: a canInteract that calls an async export can yield, and the slow
+    -- thread may replace `nearby` with a shorter list in the meantime.
+    local list = nearby
+
     -- Pass 1: find every on-screen point and pick the in-range one closest to the crosshair.
-    for i = 1, #nearby do
-        local interaction = nearby[i]
-        local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
-        local onScreen, sx, sy = GetScreenCoordFromWorldCoord(coords.x, coords.y, coords.z)
+    for i = 1, #list do
+        local interaction = list[i]
+        local coords = interaction and (interaction.coords or utils.getCoordsFromInteract(interaction))
+        local onScreen, sx, sy = false, 0.0, 0.0
+        if coords then
+            onScreen, sx, sy = GetScreenCoordFromWorldCoord(coords.x, coords.y, coords.z)
+        end
 
         if onScreen and isInSight(interaction) then
             local amount = getVisibleOptions(interaction)
