@@ -294,6 +294,8 @@
                 allowAdditions: true,
                 fullTextSearch: true,
                 duration: 160,
+                onShow() { $sel.closest('.field').addClass('dd-open'); },
+                onHide() { $sel.closest('.field').removeClass('dd-open'); },
                 onChange: (val) => {
                     if (optId === 'player') {
                         currentTarget = val;

@@ -559,13 +559,18 @@ button { font-family: inherit; }
 .sidebar, .main { animation: slide-in .25s ease-out both; }
 .main { animation-delay: .05s; }
 
-.list.is-animating .row { animation: card-in .22s ease-out both; animation-delay: calc(min(var(--i), 30) * 12ms); }
+.list.is-animating .row { animation: card-in .22s ease-out backwards; animation-delay: calc(min(var(--i), 30) * 12ms); }
 
 .row.is-entering .row__panel { animation: panel-in .2s ease-out; }
 .row.is-closing .row__panel { animation: panel-out .14s ease-in forwards; }
 .row.is-entering .row__panel .field,
 .row.is-entering .row__panel .info,
-.row.is-entering .row__panel .run-btn { animation: card-in .2s ease-out both; }
+.row.is-entering .row__panel .run-btn { animation: card-in .2s ease-out backwards; }
+
+/* keep an open dropdown above the fields and cards after it */
+.row.is-open { position: relative; z-index: 2; }
+.row__panel .field { position: relative; }
+.row__panel .field:focus-within, .row__panel .field.dd-open { z-index: 5; }
 
 .row__star.is-popping svg { animation: star-pop .3s ease-out; }
 
