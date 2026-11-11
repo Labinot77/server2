@@ -131,6 +131,7 @@
         await UpdateMounted();
         await tick();
         InputElement?.focus();
+        if (document.activeElement == InputElement) SendEvent("Chat/Opened", {});
     };
 
     const CloseChat = () => {
@@ -306,6 +307,7 @@
                         bind:this={InputElement}
                         bind:value={Value}
                         on:keydown={OnKeyDown}
+                        on:blur={() => Open && Cancel()}
                         on:input={OnInput}
                     />
                 </div>

@@ -127,13 +127,25 @@ onNet("chat:clear", () => {
 
 // --- Opening / sending ------------------------------------------------------
 
+// The old `chat` resource (with its own Vue page) also opens on T. If it's still running, leave T to it,
+// otherwise both chats grab the keyboard and the player ends up stuck.
+const OldChatRunning = () => GetResourceState("chat") == "started" && !!GetResourceMetadata("chat", "ui_page", 0);
+
+let OpenedAck = false;
+
 const OpenChat = () => {
     if (IsOpen || IsPauseMenuActive()) return;
 
     IsOpen = true;
+    OpenedAck = false;
     SetUIFocus(true, false); // keyboard only, no cursor
     SendUIMessage("Hud", "ChatOpen", { Settings: Chat });
     SendCommands();
+
+    // Fail-safe: if the UI never confirms the input is focused, give the keyboard back.
+    setTimeout(() => {
+        if (IsOpen && !OpenedAck) CloseChat();
+    }, 1500);
 };
 
 const CloseChat = () => {
@@ -147,7 +159,12 @@ setTick(async () => {
     if (!Chat.Enabled || !LoggedIn) return await new Promise((Res) => setTimeout(Res, 450));
     if (IsOpen) return;
 
-    if (IsControlJustReleased(0, Chat.Control)) OpenChat();
+    if (IsControlJustReleased(0, Chat.Control) && !OldChatRunning()) OpenChat();
+});
+
+RegisterNUICallback("Chat/Opened", (Data: any, Cb: Function) => {
+    OpenedAck = true;
+    Cb("Ok");
 });
 
 RegisterNUICallback("Chat/Close", (Data: any, Cb: Function) => {
@@ -179,8 +196,8 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
 
 // Diagnostic: the old chat UI opens on T as well when the `chat` resource still has its Vue page.
 setTimeout(() => {
-    if (GetResourceState("chat") == "started" && GetResourceMetadata("chat", "ui_page", 0)) {
-        console.log("^1[fw-hud] The `chat` resource still declares a ui_page: the old chat UI will also open on T and steal the keyboard. Use the slimmed chat resource (fxmanifest.lua without ui_page) and `restart chat`.^7");
+    if (OldChatRunning()) {
+        console.log("^1[fw-hud] The old `chat` resource (with ui_page) is still running, so the old chat is used on T. Replace it with the slimmed chat resource (fxmanifest.lua only, no html folder / __resource.lua) and `restart chat`.^7");
     };
 }, 5000);
 
