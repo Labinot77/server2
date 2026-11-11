@@ -5,12 +5,11 @@ import { GetHudSetting } from "./settings";
 // The engine radar is hidden; the UI draws the map, blips and GPS route itself (fw-ui Hud/layers/Minimap.svelte).
 
 const WaypointSprite = 8;
-const HiddenDisplays = [0, 3, 4]; // main map only / hidden
+const HiddenDisplays = [0, 3]; // hidden / main map only (4 still shows on the minimap in-game)
 const GpsRouteNative = "0xF3162836C28F9DA5"; // GET_POS_ALONG_GPS_TYPE_ROUTE
 
 let MinimapVisible = false;
 let LastSentVisible: boolean | null = null;
-let RouteType = 0;
 
 const MinimapWanted = () => MinimapVisible && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
 
@@ -72,21 +71,18 @@ const CollectBlips = () => {
 // --- GPS route --------------------------------------------------------------
 
 const GetRoutePoint = (Distance: number, Type: number): number[] | null => {
-    const [Found, Pos] = Citizen.invokeNative<[boolean, number[]]>(GpsRouteNative, Citizen.pointerValueVector(), true, Distance, Type, Citizen.returnResultAnyway());
+    // Whole numbers are sent to the game as integers, the native reads a float: force a fraction.
+    const Float = Distance + 0.001;
+    const [Found, Pos] = Citizen.invokeNative<[boolean, number[]]>(GpsRouteNative, Citizen.pointerValueVector(), true, Float, Type, Citizen.returnResultAnyway());
     return Found && Pos && (Pos[0] != 0 || Pos[1] != 0) ? Pos : null;
 };
 
 const CollectRoute = () => {
     if (!DoesBlipExist(GetFirstBlipInfoId(WaypointSprite))) return [];
 
-    // The waypoint route slot differs per build; find the one that answers and remember it.
-    if (!GetRoutePoint(Minimap.RouteStep, RouteType)) {
-        RouteType = [0, 1, 2].find((Type) => GetRoutePoint(Minimap.RouteStep, Type)) ?? 0;
-    }
-
     const Points: number[] = [];
     for (let Distance = 0; Distance <= Minimap.RouteRange; Distance += Minimap.RouteStep) {
-        const Pos = GetRoutePoint(Distance, RouteType);
+        const Pos = GetRoutePoint(Distance, 0);
         if (!Pos) break;
         Points.push(Math.round(Pos[0] * 10) / 10, Math.round(Pos[1] * 10) / 10);
     }
@@ -114,6 +110,11 @@ const CollectRoute = () => {
 })();
 
 // --- Commands & cleanup -----------------------------------------------------
+
+RegisterCommand("minimapdebug", () => {
+    const Route = CollectRoute();
+    console.log(`[fw-hud] blips=${CollectBlips().length} waypoint=${DoesBlipExist(GetFirstBlipInfoId(WaypointSprite))} routeFound=${GetGpsBlipRouteFound()} routePoints=${Route.length / 2} first=${Route.slice(0, 4).join(",")}`);
+}, false);
 
 RegisterCommand("mapzoom", (Source: number, Args: string[]) => {
     const Value = Number(Args[0]);
