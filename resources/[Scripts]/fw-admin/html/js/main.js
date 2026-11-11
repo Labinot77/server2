@@ -15,6 +15,9 @@
     const btnCloak = document.getElementById('btnCloak');
     const btnFocus = document.getElementById('btnFocus');
     const btnResetFavs = document.getElementById('btnResetFavs');
+    const menuBtn = document.getElementById('menuBtn');
+    const menuPop = document.getElementById('menuPop');
+    const searchCount = document.getElementById('searchCount');
 
     const CATEGORY_LABELS = {
         all: 'ALL COMMANDS',
@@ -44,6 +47,8 @@
     let isOpen = false;
     let cloaked = false;
     let fullFocus = true;
+    let listLayout = false;
+    try { listLayout = localStorage.getItem('fw-admin:layout') === 'list'; } catch (e) {}
 
     const money = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 
@@ -65,6 +70,7 @@
     }
 
     const ICON_STAR = '<svg viewBox="0 0 576 512" fill="currentColor"><path d="M259.3 17.8L194 150.2 47.9 171.5c-26.2 3.8-36.7 36.1-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0z"/></svg>';
+    const ICON_RUN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm2 3v2h2V8zm4 0v2h2V8zm4 0v2h2V8zm4 0v2h2V8zM7 14v2h10v-2z"/></svg>';
     const ICON_CHEVRON = '<svg viewBox="0 0 448 512" fill="currentColor"><path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"/></svg>';
 
     function isTyping() {
@@ -167,9 +173,11 @@
         const showSearch = view !== 'settings';
         searchWrap.classList.toggle('is-hidden', !showSearch);
         searchEl.placeholder = view === 'players' ? 'Search players...' : 'Search commands...';
+        searchCount.textContent = `${searchEl.value.length}/100`;
+        listEl.classList.toggle('is-list', listLayout);
 
         if (view === 'settings') {
-            viewLabel.textContent = 'SETTINGS';
+            viewLabel.textContent = 'KEYBINDS';
             countEl.textContent = bindCount;
             countUnitEl.textContent = 'KEYBINDS';
             renderSettings();
@@ -207,15 +215,21 @@
         const state = item.Toggle && !item.Collapse
             ? `<span class="row__state ${enabled[idx] ? 'is-on' : ''}">${enabled[idx] ? 'ON' : 'OFF'}</span>` : '';
 
+        const icon = panel
+            ? `<span class="row__icon row__icon--chevron">${ICON_CHEVRON}</span>`
+            : `<span class="row__icon">${ICON_RUN}</span>`;
+
         return `<div class="${classes}" data-key="${key}" data-i="${i}" data-idx="${idx}">
             <div class="row__head" data-head="${key}">
                 <span class="row__star ${isFav ? 'is-fav' : ''}" data-fav="${idx}">${ICON_STAR}</span>
-                <div class="row__text">
-                    <div class="row__title">${esc(item.Name)}</div>
-                    <div class="row__desc">${esc(itemDesc(item))}</div>
+                <div class="row__card">
+                    <div class="row__text">
+                        <div class="row__title">${esc(item.Name)}</div>
+                        <div class="row__desc">${esc(itemDesc(item))}</div>
+                    </div>
+                    ${state}
+                    ${icon}
                 </div>
-                ${state}
-                ${panel ? `<span class="row__chevron">${ICON_CHEVRON}</span>` : ''}
             </div>
             ${panel}
         </div>`;
@@ -240,11 +254,13 @@
         return `<div class="${classes}" data-key="${row.key}" data-i="${i}">
             <div class="row__head" data-head="${row.key}">
                 <span class="row__badge">${esc(p.ServerId)}</span>
-                <div class="row__text">
-                    <div class="row__title">${esc(p.Name)}</div>
-                    <div class="row__desc">${esc(`${p.CharName || ''} · ${p.Cid || ''} · ${p.Steam || ''}`)}</div>
+                <div class="row__card">
+                    <div class="row__text">
+                        <div class="row__title">${esc(p.Name)}</div>
+                        <div class="row__desc">${esc(`${p.CharName || ''} · ${p.Cid || ''} · ${p.Steam || ''}`)}</div>
+                    </div>
+                    <span class="row__icon row__icon--chevron">${ICON_CHEVRON}</span>
                 </div>
-                <span class="row__chevron">${ICON_CHEVRON}</span>
             </div>
             <div class="row__panel">
                 <div class="info-grid">${info}</div>
@@ -438,6 +454,16 @@
         post('Trigger/Focus', { Focus: false });
     });
 
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menuBtn.classList.toggle('is-open', menuPop.classList.toggle('is-open'));
+    });
+    document.addEventListener('click', (e) => {
+        if (menuPop.contains(e.target)) return;
+        menuPop.classList.remove('is-open');
+        menuBtn.classList.remove('is-open');
+    });
+
     btnCloak.addEventListener('click', () => {
         cloaked = !cloaked;
         btnCloak.classList.toggle('is-active', cloaked);
@@ -463,11 +489,13 @@
 
         const inPanel = isPanelField(document.activeElement);
 
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const step = { ArrowDown: listLayout ? 1 : 3, ArrowUp: listLayout ? -1 : -3, ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        if (step) {
             if (inPanel || view === 'settings') return;
+            if (document.activeElement === searchEl && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
             e.preventDefault();
-            if (document.activeElement === searchEl) searchEl.blur();
-            selectedIndex += e.key === 'ArrowDown' ? 1 : -1;
+            searchEl.blur();
+            selectedIndex = Math.max(0, selectedIndex + step);
             render();
             return;
         }
@@ -485,11 +513,16 @@
         if (k === 'f' && view === 'commands') {
             const row = currentRows()[selectedIndex];
             if (row) toggleFavourite(row.idx);
-        } else if (k === 'q') {
+        } else if (k === 'q' || k === 'e') {
+            const dir = k === 'q' ? 1 : -1;
             const nextCat = view === 'commands'
-                ? COMMAND_CATS[(COMMAND_CATS.indexOf(activeCategory) + 1) % COMMAND_CATS.length]
+                ? COMMAND_CATS[(COMMAND_CATS.indexOf(activeCategory) + dir + COMMAND_CATS.length) % COMMAND_CATS.length]
                 : 'all';
             setView('commands', nextCat);
+        } else if (k === 'x') {
+            listLayout = !listLayout;
+            try { localStorage.setItem('fw-admin:layout', listLayout ? 'list' : 'grid'); } catch (err) {}
+            render();
         } else if (k === '/' ) {
             e.preventDefault();
             searchEl.focus();
