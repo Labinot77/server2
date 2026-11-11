@@ -62,6 +62,7 @@ export const UpdateMinimapVisibility = (Force: boolean = false) => {
     DisplayRadar(MinimapReady ? Wanted : (MinimapVisible && !Blackbars));
 
     if (!Force && LastSentVisible == Wanted) return;
+    if (Wanted && !LastSentVisible) setTimeout(() => RefreshBigmap(), 100);
     LastSentVisible = Wanted;
     SendUIMessage("Hud", "SetMinimapVisibility", { Visible: Wanted });
 };
@@ -230,11 +231,13 @@ setTick(async () => {
         }
 
         const [X, Y] = GetEntityCoords(PlayerPedId(), true);
+        const [, , CamZ] = GetGameplayCamRot(2);
+        const Rad = CamZ * Math.PI / 180;
+        const Back = Minimap.CenterOffset * ZoomDistance;
         SetRadarAsExteriorThisFrame();
         SetRadarZoomToDistance(ZoomDistance);
-        LockMinimapPosition(X, Y);
-        const [, , CamZ] = GetGameplayCamRot(2);
-        LockMinimapAngle(Math.floor(CamZ + 0.5) % 360);
+        LockMinimapPosition(X + Math.sin(Rad) * Back, Y - Math.cos(Rad) * Back);
+        LockMinimapAngle(((Math.floor(CamZ + 0.5) % 360) + 360) % 360);
         RadarLocked = true;
     } else {
         NextLayoutAt = 0;
@@ -299,10 +302,8 @@ RegisterCommand("mapzoom", (Source: number, Args: string[]) => {
 }, false);
 
 RegisterCommand("minimapcal", (Source: number, Args: string[]) => {
-    console.log(`HELLO`);
-
     const Keys: {[key: string]: keyof typeof Minimap} = {
-        sx: "EngineScaleX", sy: "EngineScaleY", ox: "MaskOffsetX", oy: "MaskOffsetY", scale: "MaskScale",
+        sx: "EngineScaleX", sy: "EngineScaleY", ox: "MaskOffsetX", oy: "MaskOffsetY", scale: "MaskScale", center: "CenterOffset",
     };
 
     if (Args[0] == "debug") return console.log(`[fw-hud] ${GetScreenDebugText()}`);
@@ -311,7 +312,7 @@ RegisterCommand("minimapcal", (Source: number, Args: string[]) => {
 
     if (Keys[Args[0]] && !isNaN(Number(Args[1]))) {
         (Minimap as any)[Keys[Args[0]]] = Number(Args[1]);
-        if (Args[0] != "scale") Minimap.AutoCalibrate = false;
+        if (Args[0] != "scale" && Args[0] != "center") Minimap.AutoCalibrate = false;
     }
 
     emit("fw-hud:Client:ApplyMinimapLayout");

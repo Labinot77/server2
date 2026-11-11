@@ -16,6 +16,7 @@ export const VehicleData = writable({
     IsAircraft: false, Altitude: 0,
     Lights: false, Belt: false, Locked: false,
     Engine: 1000, EngineOn: true, Electric: false,
+    Nitrous: 0, Harness: 0,
 });
 
 // /hudsettings: same shape as the Defaults in fw-hud handlers/settings.ts.

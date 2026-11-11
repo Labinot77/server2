@@ -30,6 +30,11 @@
     $: Fuel = Math.min(100, Math.max(0, $VehicleData.Fuel || 0));
     $: LowFuel = Fuel <= 20;
 
+    $: Meters = [
+        { Value: $VehicleData.Nitrous || 0, Color: "#e43f5a", Icon: "fa-meteor" },
+        { Value: $VehicleData.Harness || 0, Color: "#dd4dfa", Icon: "fa-user-shield" },
+    ];
+
     $: Digits = [...String(Speed).padStart(3, "0")].map((Char, Index) => ({
         Char,
         Dim: Speed <= 0 || (Speed < 10 && Index < 2) || (Speed < 100 && Index < 1),
@@ -143,6 +148,13 @@
                 <div class="icon" class:locked={$VehicleData.Locked}>
                     <i class="fas {$VehicleData.Locked ? 'fa-lock' : 'fa-unlock'}"></i>
                 </div>
+                {#each Meters as Meter}
+                    {#if Meter.Value > 0}
+                        <div class="icon meter" style="--value: {Meter.Value}%; --color: {Meter.Color}">
+                            <i class="fas {Meter.Icon}"></i>
+                        </div>
+                    {/if}
+                {/each}
             </div>
         </div>
     </div>
@@ -342,6 +354,14 @@
     .icon.belt-on { color: #2ecc71; }
     .icon.belt-off { color: #ff7a45; animation: Flash 1s infinite; }
     .icon.locked { color: #ff7a45; }
+
+    .icon.meter {
+        border: none;
+        background:
+            radial-gradient(closest-side, rgba(12, 12, 12, 0.95) 80%, transparent 82%),
+            conic-gradient(var(--color) var(--value), rgba(255, 255, 255, 0.12) 0);
+        color: var(--color);
+    }
 
     @keyframes Flash {
         0%, 100% { opacity: 1; }

@@ -8,6 +8,7 @@ export const Minimap = {
     EngineScaleX: 1,
     EngineScaleY: 1,
     AutoCalibrate: true,
+    CenterOffset: 0.25, // pulls the player arrow to the ring center (fraction of Zoom, tune with /minimapcal center)
 };
 
 
@@ -152,7 +153,7 @@ export const Hud: Array<HudType> = [
         Show: false,
         Color: '#e43f5a', Icon: 'meteor',
         Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: true,
+        AutoHide: true, AutoShow: false,
         Buffed: false, IsEnhancement: false
     },
     {
@@ -160,7 +161,7 @@ export const Hud: Array<HudType> = [
         Show: false,
         Color: '#dd4dfa', Icon: 'user-slash',
         Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: true,
+        AutoHide: true, AutoShow: false,
         Buffed: false, IsEnhancement: false
     },
     {
