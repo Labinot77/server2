@@ -63,6 +63,113 @@ local function triggerOption(interaction, option)
 end
 
 local nearby = {}
+
+-- ============================================================================
+-- Line of sight
+-- A ray is cast from the player's head (or camera) to every nearby point. Points with a wall or
+-- object in between are hidden and can't be used.
+-- ============================================================================
+local los = settings.LineOfSight or { enabled = false }
+local visibility = {} -- [key] = true when the point is in line of sight
+
+local StartShapeTestLosProbe = StartShapeTestLosProbe
+local GetShapeTestResult = GetShapeTestResult
+local GetPedBoneCoords = GetPedBoneCoords
+local GetFinalRenderedCamCoord = GetFinalRenderedCamCoord
+local GetEntityAttachedTo = GetEntityAttachedTo
+
+-- Stable key per point. Model interactions are re-cloned every refresh, so they are keyed by entity.
+local function losKey(interaction)
+    if interaction.id then return interaction.id end
+    if interaction.bone then return ('b:%s:%s'):format(interaction.entity, interaction.bone) end
+    if interaction.entity then return ('e:%s'):format(interaction.entity) end
+    local c = interaction.coords
+    return ('c:%.2f:%.2f:%.2f'):format(c.x, c.y, c.z)
+end
+
+local function isInSight(interaction)
+    if not los.enabled then return true end
+    return visibility[losKey(interaction)] == true
+end
+
+local function getLosOrigin()
+    if los.origin == 'camera' then
+        return GetFinalRenderedCamCoord()
+    end
+    return GetPedBoneCoords(cache.ped, 31086, 0.0, 0.0, 0.0) -- SKEL_Head
+end
+
+local function isClear(probe, hit, endCoords, hitEntity)
+    if not hit or hit == 0 then return true end
+
+    -- Hitting the thing the point belongs to (or a part attached to it) means we're looking at it.
+    if probe.entity and hitEntity ~= 0 then
+        if hitEntity == probe.entity or GetEntityAttachedTo(hitEntity) == probe.entity then
+            return true
+        end
+    end
+
+    -- Props the player is holding shouldn't block.
+    if hitEntity ~= 0 and GetEntityAttachedTo(hitEntity) == cache.ped then
+        return true
+    end
+
+    -- Point sits slightly inside a surface.
+    return #(endCoords - probe.coords) <= los.tolerance
+end
+
+if los.enabled then
+    CreateThread(function()
+        local probes = {}
+        while true do
+            local list = nearby
+            if #list > 0 then
+                local origin = getLosOrigin()
+                local count = 0
+
+                -- Fire every probe in the same frame, then collect the results.
+                for i = 1, #list do
+                    local interaction = list[i]
+                    local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
+                    count += 1
+                    probes[count] = {
+                        key = losKey(interaction),
+                        coords = coords,
+                        entity = interaction.entity,
+                        handle = StartShapeTestLosProbe(origin.x, origin.y, origin.z, coords.x, coords.y, coords.z,
+                            los.flags, interaction.entity or cache.ped, los.options),
+                    }
+                end
+
+                local fresh = {}
+                for i = 1, count do
+                    local probe = probes[i]
+                    local status, hit, endCoords, _, hitEntity = GetShapeTestResult(probe.handle)
+                    local tries = 0
+                    while status == 1 and tries < 10 do
+                        Wait(0)
+                        tries += 1
+                        status, hit, endCoords, _, hitEntity = GetShapeTestResult(probe.handle)
+                    end
+
+                    if status == 2 then
+                        fresh[probe.key] = isClear(probe, hit, endCoords, hitEntity)
+                    else
+                        fresh[probe.key] = visibility[probe.key] -- probe failed, keep the last result
+                    end
+                    probes[i] = nil
+                end
+
+                visibility = fresh
+                Wait(los.interval)
+            else
+                table.wipe(visibility)
+                Wait(250)
+            end
+        end
+    end)
+end
+
 local screenCoords, screenCount = {}, 0
 local hoverRadius = settings.Prompt.hoverRadius
 local GetAspectRatio = GetAspectRatio
@@ -80,7 +187,7 @@ local function CreateInteractions()
         local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
         local onScreen, sx, sy = GetScreenCoordFromWorldCoord(coords.x, coords.y, coords.z)
 
-        if onScreen then
+        if onScreen and isInSight(interaction) then
             local amount = getVisibleOptions(interaction)
 
             if amount > 0 then

@@ -482,6 +482,34 @@ function api.updateInteraction(id, options)
     end
 end exports('UpdateInteraction', api.updateInteraction)
 
+---@param data table : { name, entity, options, distance, interactDst, offset }
+---@return number : The id of the interaction
+-- Internal: adds a standalone point on an entity. Unlike addLocalEntityInteraction it never merges
+-- into (or moves) another interaction that is already on the same entity, e.g. the frunk point.
+function api.addEntityPoint(data)
+    if not checkParams(data.entity, data.options) then return end
+
+    local id = nextId()
+    interactions[id] = {
+        id = id,
+        name = data.name or 'interaction:'..id,
+        entity = data.entity,
+        options = data.options,
+        distance = data.distance or 8.0,
+        interactDst = data.interactDst or 1.0,
+        offset = data.offset or vec3(0.0, 0.0, 0.0),
+        resource = GetInvokingResource()
+    }
+
+    filterInteractions()
+
+    return id
+end
+
+function api.hasInteraction(id)
+    return interactions[id] ~= nil
+end
+
 function api.getNearbyInteractions()
     local options = {}
     local amount = 0

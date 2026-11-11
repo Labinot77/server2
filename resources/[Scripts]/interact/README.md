@@ -222,6 +222,22 @@ Sizes are fractions of screen height – divide the pixel size you want at 1080p
 | `onVehicle` | `true` | Disable while in a vehicle |
 | `onHandCuff` | `true` | Disable while cuffed |
 
+### LineOfSight
+
+A ray is cast from the player's head to every nearby point. Points behind walls, props or vehicles are hidden and can't be used.
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `enabled` | `true` | Turn the check on/off |
+| `origin` | `'ped'` | `'ped'` (player's head) or `'camera'` |
+| `interval` | `100` | ms between checks |
+| `flags` | `1 \| 2 \| 16` | What blocks: world, vehicles, objects |
+| `tolerance` | `0.25` | Hits this close to the point still count as visible |
+
+### Eye (fw-ui options)
+
+`EyeEntries` in `config/settings.lua` is a copy of fw-ui's `Config.EyeEntries`, in the same format. `client/eye.lua` puts them on nearby vehicles (picked by vehicle class, like fw-ui) and peds, and triggers them exactly like fw-ui: `TriggerEvent(EventName, EventParams, entity)` or `TriggerServerEvent(EventName, EventParams, netId)`. Options already on the boot bone are listed in `Eye.skip` so they don't show twice.
+
 ---
 
 ## Project structure
