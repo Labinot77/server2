@@ -197,7 +197,10 @@
         if (selectedIndex >= rows.length) selectedIndex = rows.length - 1;
         if (selectedIndex < 0) selectedIndex = 0;
 
-        listEl.innerHTML = rows.map((row, i) => view === 'players' ? playerRowHTML(row, i) : commandRowHTML(row, i)).join('');
+        // Independent columns: an open card only pushes down cards in its own column.
+        const cols = Array.from({ length: listLayout ? 1 : 3 }, () => []);
+        rows.forEach((row, i) => cols[i % cols.length].push(view === 'players' ? playerRowHTML(row, i) : commandRowHTML(row, i)));
+        listEl.innerHTML = cols.map(c => `<div class="col">${c.join('')}</div>`).join('');
         initDropdowns();
 
         const sel = listEl.querySelector('.row.is-selected');
