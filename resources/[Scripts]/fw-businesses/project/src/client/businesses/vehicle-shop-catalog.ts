@@ -132,6 +132,7 @@ const SpawnCatalogVehicle = async (ModelName: string) => {
 
 const CloseCatalog = () => {
     UsingCatalog = false;
+    StopRotation();
     SetUIFocus(false, false);
     SendUIMessage("VehicleCatalog", "SetVisibility", { Visible: false });
 
@@ -203,6 +204,60 @@ RegisterNUICallback("VehicleCatalog/DoRPM", (Data: any, Cb: Function) => {
     if (Vehicle && DoesEntityExist(Vehicle)) SetVehicleCurrentRpm(Vehicle, 1.0);
     Cb("ok")
 })
+
+// Showroom rotation (A/D held in the UI). Runs a tick only while a key is held.
+const ROTATE_SPEED = 75.0; // degrees per second
+let RotateDirection = 0;
+let RotateTick = 0;
+
+const StopRotation = () => {
+    RotateDirection = 0;
+    if (RotateTick) {
+        clearTick(RotateTick);
+        RotateTick = 0;
+    };
+};
+
+RegisterNUICallback("VehicleCatalog/Rotate", (Data: { Direction: number }, Cb: Function) => {
+    RotateDirection = Math.sign(Number(Data.Direction) || 0);
+
+    if (RotateDirection == 0) {
+        StopRotation();
+    } else if (!RotateTick) {
+        RotateTick = setTick(() => {
+            if (!UsingCatalog || RotateDirection == 0 || !Vehicle || !DoesEntityExist(Vehicle)) return StopRotation();
+            SetEntityHeading(Vehicle, (GetEntityHeading(Vehicle) + RotateDirection * ROTATE_SPEED * GetFrameTime()) % 360.0);
+        });
+    };
+
+    Cb("ok");
+});
+
+// Mouse-drag rotation, the UI sends small batched deltas in degrees.
+RegisterNUICallback("VehicleCatalog/RotateBy", (Data: { Delta: number }, Cb: Function) => {
+    const Delta = Math.max(-45, Math.min(45, Number(Data.Delta) || 0));
+    if (Vehicle && DoesEntityExist(Vehicle)) SetEntityHeading(Vehicle, (GetEntityHeading(Vehicle) + Delta) % 360.0);
+    Cb("ok");
+});
+
+// Preview paint (local entity only, purely visual).
+RegisterNUICallback("VehicleCatalog/SetColor", (Data: { Slot: "Primary" | "Secondary" | "Reset"; Rgb?: number[] }, Cb: Function) => {
+    if (!Vehicle || !DoesEntityExist(Vehicle)) return Cb("ok");
+
+    if (Data.Slot == "Reset") {
+        ClearVehicleCustomPrimaryColour(Vehicle);
+        ClearVehicleCustomSecondaryColour(Vehicle);
+        return Cb("ok");
+    };
+
+    if (!Array.isArray(Data.Rgb) || Data.Rgb.length != 3) return Cb("ok");
+    const [R, G, B] = Data.Rgb.map(Val => Math.max(0, Math.min(255, Math.floor(Number(Val) || 0))));
+
+    if (Data.Slot == "Primary") SetVehicleCustomPrimaryColour(Vehicle, R, G, B);
+    else if (Data.Slot == "Secondary") SetVehicleCustomSecondaryColour(Vehicle, R, G, B);
+
+    Cb("ok");
+});
 
 setImmediate(async () => {
     while (!exp['fw-config'].IsConfigReady()) {
