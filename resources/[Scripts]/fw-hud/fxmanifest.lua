@@ -13,7 +13,3 @@ server_scripts {
     '@fw-assets/server/sv_errorlog.lua',
     'dist/server.js',
 }
-
-files {
-    'project/src/assets/radar-mask.png',
-}

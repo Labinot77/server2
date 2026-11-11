@@ -1,18 +1,14 @@
 <script>
     import { onMount } from "svelte";
-    import { OnEvent, SendEvent as _SendEvent } from "../../../utils/Utils";
+    import { OnEvent } from "../../../utils/Utils";
     import { MyPreferences } from "../../Preferences/preferences.store.js";
 
-    import { LayoutEditing, LayoutRevision } from "../hud.store.js";
+    import { LayoutEditing } from "../hud.store.js";
     import { Layout } from "../layout.js";
+    import { BlipSprites, BlipColours } from "../blips.js";
 
     // sample waypoint while the layout editor is open
     $: ShownWaypoint = Waypoint || ($LayoutEditing ? { Distance: "1.20 km", Direction: "right" } : false);
-
-    // the layout editor moves/scales .compass, so measure the ring again (put after ScheduleRadarSync is defined)
-    $: if ($LayoutRevision) ScheduleRadarSync(250, false);
-
-    const SendEvent = (Event, Parameters, Callback) => _SendEvent(Event, Parameters, Callback, "fw-hud");
 
     const DirectionAngles = { straight: 0, right: 90, left: -90, back: 180 };
 
@@ -21,7 +17,7 @@
     let Zone = "";
     let Waypoint = false;
 
-    // Heading animation
+    // Heading animation (camera bearing, also rotates the map)
     let TargetHeading = null;
     let RenderedHeading = 0;
     let Frame = null;
@@ -59,74 +55,187 @@
         LastFrame = null;
     };
 
-    // Radar sync: measure the real ring and tell fw-hud where it is.
-    let Ring;
-    let ScreenRevision = null;
-    let LastSent = null;
-    let SyncTimer;
-    let RetryCount = 0;
+    // --- Map ----------------------------------------------------------------
+    // World -> map image pixels (same calibration as the dispatch map, 6144px image cut in 512px tiles).
+    const ToImage = (X, Y) => [0.49728 * X + 2815.2, -0.492 * Y + 4147.2];
+    const PixelsPerMeter = 0.495;
+    const TileSize = 512, TileCount = 12;
+    const Ocean = "#0fa8d2";
+    const BlipSize = 17, ArrowSize = 9;
 
-    const Round5 = (Value) => Math.round(Value * 100000) / 100000;
+    let Canvas;
+    let MapFrame = null, MapLast = null;
+    let Target = null, Pos = null;
+    let Blips = [], Route = [], RouteColour = "#3fc8f4";
 
-    const SendRadarLayout = (Force) => {
-        if (!Ring || !Visible || ScreenRevision === null) return;
+    const Tiles = {}, Icons = {};
 
-        const Rect = Ring.getBoundingClientRect();
-        if (Rect.width < 2 || Rect.height < 2) return;
+    const GetTile = (X, Y) => {
+        const Key = `${X}_${Y}`;
+        if (!Tiles[Key]) {
+            Tiles[Key] = new Image();
+            Tiles[Key].src = `./images/minimap/${Key}.webp`;
+        }
+        return Tiles[Key].complete && Tiles[Key].naturalWidth ? Tiles[Key] : null;
+    };
 
-        const Layout = {
-            revision: ScreenRevision,
-            cx: Round5((Rect.left + Rect.width / 2) / window.innerWidth),
-            cy: Round5((Rect.top + Rect.height / 2) / window.innerHeight),
-            diameter: Round5(Math.max(Rect.width, Rect.height) / window.innerHeight),
-            dx: Round5(Rect.width / window.innerWidth),
-            dy: Round5(Rect.height / window.innerHeight),
-        };
+    // Blip icons are white with a black outline: multiply by the blip colour like the game does.
+    const GetIcon = (Sprite, Colour) => {
+        const Key = `${Sprite}_${Colour}`;
+        if (Icons[Key] !== undefined) return Icons[Key];
 
-        if (!Force && LastSent
-            && LastSent.revision == Layout.revision
-            && Math.abs(LastSent.cx - Layout.cx) < 0.0002
-            && Math.abs(LastSent.cy - Layout.cy) < 0.0002
-            && Math.abs(LastSent.diameter - Layout.diameter) < 0.0002) return;
+        const Name = BlipSprites[Sprite];
+        if (!Name) return (Icons[Key] = null);
 
-        SendEvent("Minimap/RadarLayout", Layout, (Success, Reply) => {
-            if (Success && Reply && Reply.ok) {
-                LastSent = Layout;
-                RetryCount = 0;
-            } else if (Success && Reply && Reply.screen && RetryCount < 5) {
-                // Screen changed while measuring, adopt the new revision and retry.
-                RetryCount++;
-                ScreenRevision = Reply.screen.revision;
-                ScheduleRadarSync(120, true);
+        Icons[Key] = false; // loading
+        const Img = new Image();
+        Img.onload = () => {
+            const C = document.createElement("canvas");
+            C.width = Img.width; C.height = Img.height;
+            const Ctx = C.getContext("2d");
+            Ctx.drawImage(Img, 0, 0);
+            const Hex = BlipColours[Colour];
+            if (Hex && Colour != 0) {
+                Ctx.globalCompositeOperation = "multiply";
+                Ctx.fillStyle = Hex;
+                Ctx.fillRect(0, 0, C.width, C.height);
+                Ctx.globalCompositeOperation = "destination-in";
+                Ctx.drawImage(Img, 0, 0);
             }
-        });
+            Icons[Key] = C;
+        };
+        Img.onerror = () => (Icons[Key] = null);
+        Img.src = `./images/blips/${Name}.png`;
+        return false;
     };
 
-    const ScheduleRadarSync = (Delay, Force) => {
-        clearTimeout(SyncTimer);
-        SyncTimer = setTimeout(() => SendRadarLayout(Force), Delay);
+    const DrawMap = (Timestamp) => {
+        MapFrame = requestAnimationFrame(DrawMap);
+        if (!Canvas || !Target) return;
+
+        const Dt = MapLast === null ? 16.67 : Math.min(100, Timestamp - MapLast);
+        MapLast = Timestamp;
+
+        // Smooth between the ~30 fps position updates, snap on teleports.
+        if (!Pos || Math.hypot(Target.X - Pos.X, Target.Y - Pos.Y) > 150) Pos = { ...Target };
+        const K = 1 - Math.exp(-Dt / 45), KZ = 1 - Math.exp(-Dt / 300);
+        Pos.X += (Target.X - Pos.X) * K;
+        Pos.Y += (Target.Y - Pos.Y) * K;
+        Pos.Zoom += (Target.Zoom - Pos.Zoom) * KZ;
+        Pos.Heading = Target.Heading;
+
+        const Dpr = window.devicePixelRatio || 1;
+        const Size = Math.round(Canvas.clientWidth * Dpr);
+        if (Canvas.width != Size) Canvas.width = Canvas.height = Size;
+
+        const Ctx = Canvas.getContext("2d");
+        const R = Size / 2;
+        const Scale = R / (Pos.Zoom * PixelsPerMeter);
+        const Angle = -RenderedHeading * Math.PI / 180;
+        const Cos = Math.cos(Angle), Sin = Math.sin(Angle);
+        const [IX, IY] = ToImage(Pos.X, Pos.Y);
+
+        Ctx.setTransform(1, 0, 0, 1, 0, 0);
+        Ctx.clearRect(0, 0, Size, Size);
+        Ctx.save();
+        Ctx.beginPath();
+        Ctx.arc(R, R, R, 0, Math.PI * 2);
+        Ctx.clip();
+        Ctx.fillStyle = Ocean;
+        Ctx.fillRect(0, 0, Size, Size);
+
+        // Tiles + route in map space
+        Ctx.translate(R, R);
+        Ctx.rotate(Angle);
+        Ctx.scale(Scale, Scale);
+        Ctx.translate(-IX, -IY);
+
+        const Reach = (R * 1.45) / Scale;
+        for (let TY = Math.max(0, Math.floor((IY - Reach) / TileSize)); TY <= Math.min(TileCount - 1, Math.floor((IY + Reach) / TileSize)); TY++) {
+            for (let TX = Math.max(0, Math.floor((IX - Reach) / TileSize)); TX <= Math.min(TileCount - 1, Math.floor((IX + Reach) / TileSize)); TX++) {
+                const Tile = GetTile(TX, TY);
+                if (Tile) Ctx.drawImage(Tile, TX * TileSize, TY * TileSize, TileSize + 0.5, TileSize + 0.5);
+            }
+        }
+
+        if (Route.length >= 4) {
+            Ctx.beginPath();
+            Ctx.moveTo(IX, IY);
+            for (let i = 0; i < Route.length; i += 2) Ctx.lineTo(...ToImage(Route[i], Route[i + 1]));
+            Ctx.lineCap = Ctx.lineJoin = "round";
+            Ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+            Ctx.lineWidth = (9 * Dpr) / Scale;
+            Ctx.stroke();
+            Ctx.strokeStyle = RouteColour;
+            Ctx.lineWidth = (6 * Dpr) / Scale;
+            Ctx.stroke();
+        }
+
+        // Blips in screen space so they stay upright; long-range ones stick to the edge.
+        Ctx.setTransform(1, 0, 0, 1, 0, 0);
+        const Half = (BlipSize * Dpr) / 2;
+        for (const [X, Y, Sprite, Colour, ShortRange] of Blips) {
+            const Icon = GetIcon(Sprite, Colour);
+            if (!Icon) continue;
+
+            const [BX, BY] = ToImage(X, Y);
+            const DX = (BX - IX) * Scale, DY = (BY - IY) * Scale;
+            let SX = DX * Cos - DY * Sin, SY = DX * Sin + DY * Cos;
+
+            const Dist = Math.hypot(SX, SY), Max = R - Half - 2 * Dpr;
+            if (Dist > Max) {
+                if (ShortRange) continue;
+                SX *= Max / Dist; SY *= Max / Dist;
+            }
+            Ctx.drawImage(Icon, R + SX - Half, R + SY - Half, Half * 2, Half * 2);
+        }
+
+        // Player arrow: ped bearing relative to the camera bearing.
+        Ctx.translate(R, R);
+        Ctx.rotate((-Pos.Heading - RenderedHeading) * Math.PI / 180);
+        const A = ArrowSize * Dpr;
+        Ctx.beginPath();
+        Ctx.moveTo(0, -A);
+        Ctx.lineTo(A * 0.75, A);
+        Ctx.lineTo(0, A * 0.45);
+        Ctx.lineTo(-A * 0.75, A);
+        Ctx.closePath();
+        Ctx.fillStyle = "#fff";
+        Ctx.strokeStyle = "#1b1b1f";
+        Ctx.lineWidth = 2 * Dpr;
+        Ctx.lineJoin = "round";
+        Ctx.stroke();
+        Ctx.fill();
+
+        Ctx.restore();
     };
 
-    const HandleScreenChange = (Screen) => {
-        if (Screen && typeof Screen.revision == "number") ScreenRevision = Screen.revision;
-        LastSent = null;
-        RetryCount = 0;
-
-        // CEF resizes a moment after the game does, measure a few times to settle.
-        [60, 300, 900].forEach((Delay) => setTimeout(() => SendRadarLayout(true), Delay));
+    const StartMap = () => {
+        if (MapFrame === null) MapFrame = requestAnimationFrame(DrawMap);
     };
 
-    OnEvent("Hud", "SetScreen", (Data) => HandleScreenChange(Data.Screen));
+    const StopMap = () => {
+        if (MapFrame !== null) cancelAnimationFrame(MapFrame);
+        MapFrame = null;
+        MapLast = null;
+        Pos = null;
+    };
+
+    $: (Visible || $LayoutEditing) ? StartMap() : StopMap();
 
     OnEvent("Hud", "SetMinimapVisibility", (Data) => {
         Visible = Data.Visible;
-
-        if (Visible) {
-            ScheduleRadarSync(50, true);
-        } else {
+        if (!Visible) {
             StopAnimation();
             Waypoint = false;
         };
+    });
+
+    OnEvent("Hud", "SetMinimapPosition", (Data) => Target = Data);
+    OnEvent("Hud", "SetMinimapBlips", (Data) => Blips = Data.Blips || []);
+    OnEvent("Hud", "SetMinimapRoute", (Data) => {
+        Route = Data.Points || [];
+        if (Data.Colour) RouteColour = Data.Colour;
     });
 
     OnEvent("Hud", "SetCompassHeading", (Data) => {
@@ -146,26 +255,9 @@
         Waypoint = Data.Visible ? { Distance: Data.Distance, Direction: Data.Direction } : false;
     });
 
-    onMount(() => {
-        const OnResize = () => HandleScreenChange(null);
-        window.addEventListener("resize", OnResize);
-
-        let Observer;
-        if (typeof ResizeObserver == "function") {
-            Observer = new ResizeObserver(() => ScheduleRadarSync(150, false));
-            Observer.observe(document.documentElement);
-        };
-
-        SendEvent("Minimap/ScreenReady", {}, (Success, Reply) => {
-            if (Success && Reply && Reply.screen) HandleScreenChange(Reply.screen);
-        });
-
-        return () => {
-            window.removeEventListener("resize", OnResize);
-            if (Observer) Observer.disconnect();
-            clearTimeout(SyncTimer);
-            StopAnimation();
-        };
+    onMount(() => () => {
+        StopAnimation();
+        StopMap();
     });
 </script>
 
@@ -182,7 +274,8 @@
         <div class="compass__degree"><span>{Math.round(RenderedHeading) % 360}</span>&deg;</div>
     {/if}
 
-    <div class="compass__ring" bind:this={Ring}>
+    <div class="compass__ring">
+        <canvas class="compass__map" bind:this={Canvas}></canvas>
         <div class="compass__border"></div>
 
         <div class="compass__letters" style="transform: rotate({-RenderedHeading}deg);">
@@ -252,6 +345,15 @@
         isolation: isolate;
     }
     
+
+    .compass__map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        border-radius: 50%;
+    }
 
     .compass__border {
         position: absolute;

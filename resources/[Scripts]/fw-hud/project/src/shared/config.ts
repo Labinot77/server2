@@ -1,14 +1,13 @@
 import type { ConfigType, Preferences, HudType } from "./types";
 
 export const Minimap = {
-    Zoom: 100.0,
-    MaskScale: 1.0,
-    MaskOffsetX: 0,
-    MaskOffsetY: 0.0,
-    EngineScaleX: 1,
-    EngineScaleY: 1,
-    AutoCalibrate: true,
-    CenterOffset: 0.25, // pulls the player arrow to the ring center (fraction of Zoom, tune with /minimapcal center)
+    Zoom: 110,          // visible radius in meters on foot
+    ZoomVehicle: 180,   // visible radius in meters in a vehicle
+    RouteStep: 8,       // meters between sampled GPS route points
+    RouteRange: 900,    // how far ahead the route is sampled
+    RouteColour: "#3fc8f4",
+    DataInterval: 250,  // ms between blip / route refreshes
+    MaxBlipSprite: 900,
 };
 
 
