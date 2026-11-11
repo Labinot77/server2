@@ -13,6 +13,8 @@ const PRESETS: Record<CameraFocus, { Heading: number; Pitch: number; Zoom: numbe
     interior: { Heading: 290, Pitch: 22, Zoom: 0.5 },
 };
 
+const WALL_PADDING = 0.25; // metres kept between the camera and a wall
+
 const CONTROLS = { W: 32, S: 33, A: 34, D: 35, Q: 44, E: 38 };
 
 let Cam = 0;
@@ -40,8 +42,19 @@ const UpdateCamPosition = () => {
     const P = Rad(Current.Pitch);
     const Flat = Current.Distance * Math.cos(P);
 
-    const [X, Y, Z] = GetOffsetFromEntityInWorldCoords(Vehicle, Math.sin(H) * Flat, Math.cos(H) * Flat, CenterZ + Current.Distance * Math.sin(P));
+    let [X, Y, Z] = GetOffsetFromEntityInWorldCoords(Vehicle, Math.sin(H) * Flat, Math.cos(H) * Flat, CenterZ + Current.Distance * Math.sin(P));
     const [CX, CY, CZ] = GetOffsetFromEntityInWorldCoords(Vehicle, 0.0, 0.0, CenterZ);
+
+    // Raycast car -> camera (world + objects, ignoring the car); stop just in front of anything hit.
+    const Ray = StartExpensiveSynchronousShapeTestLosProbe(CX, CY, CZ, X, Y, Z, 1 | 16, Vehicle, 4);
+    const [, Hit, HitCoords] = GetShapeTestResult(Ray);
+    if (Hit) {
+        const Dist = Math.hypot(X - CX, Y - CY, Z - CZ);
+        const Safe = Math.max(0, Math.hypot(HitCoords[0] - CX, HitCoords[1] - CY, HitCoords[2] - CZ) - WALL_PADDING) / Dist;
+        X = CX + (X - CX) * Safe;
+        Y = CY + (Y - CY) * Safe;
+        Z = CZ + (Z - CZ) * Safe;
+    }
 
     SetCamCoord(Cam, X, Y, Z);
     PointCamAtCoord(Cam, CX, CY, CZ);

@@ -7,7 +7,7 @@ description 'Fleeca-style DUI ATM for crp-framework (fw-core / fw-financials)'
 author 'osmfxmods.com, crp-framework port'
 version '2.1.0'
 
-dependencies { 'ox_lib', 'fw-core', 'fw-financials' }
+dependencies { 'ox_lib', 'fw-core', 'fw-financials', 'fw-dui' }
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -17,7 +17,6 @@ shared_scripts {
 client_scripts {
     'client/layout.lua',
     'client/dui.lua',
-    'client/camera.lua',
     'client/main.lua',
 }
 

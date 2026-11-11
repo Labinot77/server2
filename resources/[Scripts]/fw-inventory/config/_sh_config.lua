@@ -4,7 +4,7 @@ Shared = Shared or {}
 Config.Drops = {}
 
 Config.MaxPlayerWeight = 250.0 -- Base carry weight (pockets + body + accessories).
-Config.MaxPlayerSlots = 45
+Config.MaxPlayerSlots = 46
 
 -- // Player inventory layout \\ --
 -- Every section lives inside the same 'ply-<citizenid>' inventory, so all existing
@@ -12,8 +12,8 @@ Config.MaxPlayerSlots = 45
 Config.SlotLayout = {
     Pockets     = { 1, 15 },  -- Always available.
     Backpack    = { 16, 35 }, -- Only usable while a backpack is equipped in the backpack body slot.
-    Body        = { 36, 40 }, -- ID card, phone, keys, wallet, backpack.
-    Accessories = { 41, 45 }, -- Clothing props, applied on the ped when equipped.
+    Body        = { 36, 41 }, -- ID card, phone, keys, wallet, backpack, radio.
+    Accessories = { 42, 46 }, -- Clothing props, applied on the ped when equipped.
 }
 
 -- Rules per equipment slot.
@@ -27,12 +27,13 @@ Config.EquipSlots = {
     [38] = { Section = 'Body', Label = 'Keys',     Icon = 'key',                   Items = { 'keyring' },                AutoPlace = true },
     [39] = { Section = 'Body', Label = 'Wallet',   Icon = 'account_balance_wallet', Items = { 'wallet' },                AutoPlace = true },
     [40] = { Section = 'Body', Label = 'Backpack', Icon = 'backpack',              Items = { 'backpack' },               AutoPlace = false, IsBackpack = true },
+    [41] = { Section = 'Body', Label = 'Radio',    Icon = 'radio',                 Items = { 'radio' },                  AutoPlace = true },
 
-    [41] = { Section = 'Accessories', Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
-    [42] = { Section = 'Accessories', Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
-    [43] = { Section = 'Accessories', Label = 'Glasses',  Icon = 'eyeglasses', Items = { 'glasses' },  Clothing = 'Glasses' },
-    [44] = { Section = 'Accessories', Label = 'Earrings', Icon = 'diamond',    Items = { 'earrings' }, Clothing = 'Earrings' },
-    [45] = { Section = 'Accessories', Label = 'Watch',    Icon = 'watch',      Items = { 'watch' },    Clothing = 'Watches' },
+    [42] = { Section = 'Accessories', Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
+    [43] = { Section = 'Accessories', Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
+    [44] = { Section = 'Accessories', Label = 'Glasses',  Icon = 'eyeglasses', Items = { 'glasses' },  Clothing = 'Glasses' },
+    [45] = { Section = 'Accessories', Label = 'Earrings', Icon = 'diamond',    Items = { 'earrings' }, Clothing = 'Earrings' },
+    [46] = { Section = 'Accessories', Label = 'Watch',    Icon = 'watch',      Items = { 'watch' },    Clothing = 'Watches' },
 }
 
 -- Items that can be equipped in the backpack slot.
@@ -393,3 +394,6 @@ Config.OpenSounds = {
 
 -- Crafting UI: also list recipes the player has not unlocked yet (greyed out with the rep they need).
 Config.ShowLockedRecipes = true
+
+-- Inventory closes when you're moved this far (m) from where you opened it (pushed, dragged, car moved).
+Config.InventoryMoveDistance = 2.5

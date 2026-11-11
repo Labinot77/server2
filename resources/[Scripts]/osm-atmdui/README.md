@@ -7,7 +7,7 @@ Withdraw access to in fw-financials, and view the last 6 transactions.
 Based on [osm-atmdui](https://github.com/OsmFX-Mods/osm-atmdui) by OsmFX Mods (CC BY-NC-SA 4.0, see LICENSE.md).
 
 ## Requirements
-`ox_lib`, `fw-core`, `fw-financials`, `ghmattimysql`. Optional: `interact` (disabled while the ATM is open).
+`ox_lib`, `fw-core`, `fw-financials`, `fw-dui`, `ghmattimysql`. Optional: `interact` (disabled while the ATM is open).
 
 ## Opening it
 ```lua
@@ -22,7 +22,7 @@ ESC, Backspace or right click leaves.
 - `config.lua` limits, camera, per-model offsets, texts
 - `client/layout.lua` button positions; used for both drawing and clicking
 - `client/main.lua` session, cursor, actions, exports
-- `client/dui.lua` / `client/camera.lua` screen texture and locked camera
+- `client/dui.lua` page on the ATM screen (drawn by fw-dui, which also does the camera + cursor)
 - `server/financials.lua` fw-financials accounts, history, withdraw
 - `server/main.lua` callbacks and limits
 - `web/` React source; `cd web && npm i && npm run build` writes `html/index.html`

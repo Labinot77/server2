@@ -465,7 +465,6 @@ const loadAutocareZones = async () => {
     }
 
     const config = await exp['fw-config'].GetModuleConfig("bus-autocare");
-    console.log('[autocare] config:', JSON.stringify(config?.zones?.[0]));
 
     for (const zone of config.zones) {
         const options = zone.options
@@ -490,7 +489,6 @@ const loadAutocareZones = async () => {
                 interactDst: zone.interactDst ?? 1.5,
                 options,
             });
-            console.log(`[autocare] added ${zone.name} -> id ${id}`);
             autocareInteractions.push(id);
         } catch (e) {
             console.log(`[autocare] FAILED ${zone.name}:`, e);

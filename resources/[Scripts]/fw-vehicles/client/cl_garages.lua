@@ -1,5 +1,16 @@
 local CurrentGarage, IsGovGarage, PreviewVehicle = nil, false, false
 local GarageVehicles = {}
+local GarageMode = 'garage' -- 'garage' | 'impound'
+
+local function FormatMoney(Amount)
+    local Formatted = tostring(math.floor(tonumber(Amount) or 0))
+    while true do
+        local Next, Count = Formatted:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+        Formatted = Next
+        if Count == 0 then break end
+    end
+    return "$" .. Formatted
+end
 
 Citizen.CreateThread(function()
     local HouseGarages = FW.SendCallback("fw-vehicles:Server:GetHouseGarages")
@@ -240,20 +251,25 @@ AddEventHandler("fw-vehicles:Client:OpenGarage", function(Data)
         return FW.Functions.Notify("Geen toegang..", "error")
     end
  
+    if Config.Garages[CurrentGarage].IsImpound then
+        return OpenImpound(Config.Garages[CurrentGarage].Name)
+    end
+
     local Vehicles = FW.SendCallback("fw-vehicles:Server:GetGarageVehicles", CurrentGarage, IsGov and Data.Owner or false)
-    
+    GarageMode = 'garage'
+
     local Payload = {}
+    GarageVehicles = {}
     for _, v in pairs(Vehicles) do
         GarageVehicles[v.plate] = v 
         Payload[#Payload + 1] = BuildVehiclePayload(v)
     end
 
-    print(json.encode(Vehicles))
-    
     exports['fw-ui']:SetUIFocus(true, true)
-    
+
     exports['fw-ui']:SendUIMessage("Garage", "SetVisibility", {
         Visible = true,
+        Title = "Garage Manager",
         Label = Config.Garages[CurrentGarage].Name,
         Vehicles = Payload,
     })
@@ -261,25 +277,85 @@ end)
 
 
 function BuildVehiclePayload(v)
-    local SharedVehicle = FW.Shared.HashVehicles[GetHashKey(v.vehicle)]
-    local MetaData = json.decode(v.metadata)
- 
+    local Hash = GetHashKey(v.vehicle)
+    local SharedVehicle = FW.Shared.HashVehicles[Hash]
+    local MetaData = type(v.metadata) == 'string' and json.decode(v.metadata) or (v.metadata or {})
+    local Cid = FW.Functions.GetPlayerData().citizenid
+
+    local State = 'Out'
+    if v.state == 'in' then
+        State = 'Stored'
+    elseif v.state == 'depot' then
+        State = 'Impounded'
+    end
+
     return {
         Plate = v.plate,
         Model = v.vehicle,
-        Name = SharedVehicle and SharedVehicle.Name or GetLabelText(GetDisplayNameFromVehicleModel(GetHashKey(v.vehicle))),
-        -- OpenGarage only distinguishes 'in' (Stored) vs anything else (Out). No depot state here.
-        State = v.state == 'in' and 'Stored' or 'Out',
-        Locked = v.locked == true,
-        Type = v.type == 'job' and 'Job' or 'Personal', -- adjust to your actual ownership column
+        Name = SharedVehicle and SharedVehicle.Name or GetLabelText(GetDisplayNameFromVehicleModel(Hash)),
+        State = State,
+        -- Owned by you = Personal, anything else in this garage (house / gang / gov) = Shared
+        Type = v.citizenid == Cid and 'Personal' or 'Shared',
+        Seats = GetVehicleModelNumberOfSeats(Hash),
+        Image = SharedVehicle and SharedVehicle.Image or nil, -- UI falls back to images/pdm/<model>.jpg, then a car icon
         Stats = {
+            Fuel = MetaData.Fuel,
             Engine = MetaData.Engine,
             Body = MetaData.Body,
         },
     }
 end
- 
- 
+
+-- IMPOUND LOT (same UI, vehicles with state 'depot')
+
+function BuildImpoundPayload(v)
+    local Payload = BuildVehiclePayload(v)
+    local ImpoundData = v.impounddata and json.decode(v.impounddata) or {}
+    local Fee = tonumber(ImpoundData.Fee) or 0
+
+    Payload.State = 'Impounded'
+    Payload.Retrievable = v.canrelease ~= false
+    Payload.Fee = Fee
+    Payload.FeeLabel = FormatMoney(Fee)
+    Payload.Details = {
+        { Label = 'VIN', Value = v.vinnumber or '--' },
+        { Label = 'Impounded On', Value = ImpoundData.ImpoundDate or '--' },
+        { Label = 'Reason', Value = ImpoundData.Reason or '--' },
+        { Label = 'Issued By', Value = ImpoundData.Issuer or '--' },
+        { Label = 'Strikes', Value = ImpoundData.Strikes or 0 },
+        { Label = 'Held Until', Value = ImpoundData.ReleaseTxt or '--' },
+        { Label = 'Release Fee', Value = FormatMoney(Fee) },
+    }
+
+    return Payload
+end
+
+function OpenImpound(Label)
+    local Vehicles = FW.SendCallback("fw-vehicles:Server:GetDepotVehicles")
+    GarageMode = 'impound'
+    GarageVehicles = {}
+
+    local Payload = {}
+    for _, v in pairs(Vehicles or {}) do
+        GarageVehicles[v.plate] = v
+        Payload[#Payload + 1] = BuildImpoundPayload(v)
+    end
+
+    exports['fw-ui']:SetUIFocus(true, true)
+    exports['fw-ui']:SendUIMessage("Garage", "SetVisibility", {
+        Visible = true,
+        Title = "Impound Lot",
+        Label = Label or "Los Santos Depot",
+        EmptyText = "You have no impounded vehicles",
+        Vehicles = Payload,
+    })
+end
+exports("OpenImpound", OpenImpound)
+
+RegisterNetEvent("fw-vehicles:Client:OpenImpound")
+AddEventHandler("fw-vehicles:Client:OpenImpound", function(Data)
+    OpenImpound(Data and Data.Label)
+end)
 
 RegisterNetEvent("fw-vehicles:Client:GarageActions")
 AddEventHandler("fw-vehicles:Client:GarageActions", function()
@@ -350,6 +426,10 @@ AddEventHandler("fw-vehicles:Client:ParkVehicle", function(Data)
         return
     end
 
+    if Config.Garages[CurrentGarage] and Config.Garages[CurrentGarage].IsImpound then
+        return FW.Functions.Notify("Je kan hier niet parkeren, dit is het depot..", "error")
+    end
+
     if IsGovGarage and not IsGovVehicle(Data.Entity) then
         return FW.Functions.Notify("Voertuig kan hier niet geparkeerd worden..", "error")
     end
@@ -380,6 +460,14 @@ AddEventHandler("fw-vehicles:Client:SpawnPreview", function(Data)
     RequestModel(Model)
     while not HasModelLoaded(Model) do
         Citizen.Wait(4)
+    end
+
+    if not CurrentGarage or not Config.Garages[CurrentGarage] then return end
+
+    -- Another preview may have spawned while this model was loading (fast scrolling in the UI)
+    if PreviewVehicle then
+        FW.VSync.DeleteVehicle(PreviewVehicle)
+        PreviewVehicle = nil
     end
 
     local Id, Dist = GetClosestGarage()
@@ -509,15 +597,23 @@ RegisterNUICallback("Garage/Close", function(Data, Cb)
 end)
 
 RegisterNUICallback("Garage/SpawnPreview", function(Data, Cb)
-    local v = GarageVehicles[Data.Plate]
-    if not v then return end
-    TriggerEvent("fw-vehicles:Client:SpawnPreview", { Vehicle = v })
     Cb({})
+    local v = GarageVehicles[Data.Plate]
+    if not v or not CurrentGarage or CurrentGarage == 'depot' then return end
+    TriggerEvent("fw-vehicles:Client:SpawnPreview", { Vehicle = v })
 end)
 
 RegisterNUICallback("Garage/TakeVehicle", function(Data, Cb)
+    Cb({})
     local v = GarageVehicles[Data.Plate]
     if not v then return end
+
+    if GarageMode == 'impound' then
+        if v.state ~= 'depot' then return end
+        TriggerEvent("fw-vehicles:Client:TakeOutDepot", { Plate = v.plate, SelfRetrieve = false })
+        return
+    end
+
+    if v.state ~= 'in' then return end
     TriggerEvent("fw-vehicles:Client:SpawnVehicle", { Vehicle = v })
-    Cb({})
 end)

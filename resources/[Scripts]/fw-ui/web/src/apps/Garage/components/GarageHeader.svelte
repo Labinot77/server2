@@ -1,119 +1,115 @@
 <script>
-    import Button from "../../../lib/Button/Button.svelte";
-
-    export let Breadcrumb = "San Andreas Parking";
-    export let Title = "Garage";
-    export let Subtitle = "Get vehicles from the garage";
-    export let Count = 0;
-    export let Total = 0;
-    export let OnExit = () => {};
+    export let Title = "Garage Manager";
+    export let Label = "";
+    export let SearchTerm = "";
 </script>
 
 <div class="garage-header">
-    <div class="garage-header-left">
-        <p class="garage-breadcrumb">{Breadcrumb}</p>
-        <div class="garage-title-row">
-            <div class="garage-icon-badge">P</div>
-            <div>
-                <p class="garage-title">{Title}</p>
-                <p class="garage-subtitle">{Subtitle}</p>
-            </div>
-        </div>
+    <div class="garage-header-title">
+        <p class="title">{Title}</p>
+        {#if Label}<p class="label">{Label}</p>{/if}
     </div>
 
-    <div class="garage-header-right">
-    {#if Count !== 0 && Total !== 0}
-        <div class="garage-count-pill">
-            <span class="garage-dot"></span>
-            <span>{Count}/{Total}</span>
-        </div>
+    <label class="garage-search">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search" spellcheck="false" bind:value={SearchTerm} />
+        {#if SearchTerm.length > 0}
+            <button class="clear" tabindex="-1" on:click={() => (SearchTerm = "")}>
+                <i class="fas fa-times"></i>
+            </button>
         {/if}
-        <div class="garage-header-buttons">
-            <Button Color="default" on:click={OnExit}>Exit</Button>
-        </div>
-    </div>
+    </label>
 </div>
 
 <style>
     .garage-header {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        padding: 2vh 2.2vh 1.6vh;
-        border-bottom: 0.1vh solid rgba(94, 196, 184, 0.14);
+        gap: 2vh;
+        padding: 1.8vh 2vh;
+        background: var(--header);
     }
 
-    .garage-breadcrumb {
-        font-size: 1.3vh;
-        color: #4fd8c4;
-        margin: 0 0 0.6vh 0;
-        font-family: Roboto;
-    }
-
-    .garage-title-row {
-        display: flex;
-        align-items: center;
-        gap: 1.2vh;
-    }
-
-    .garage-icon-badge {
-        width: 3.6vh;
-        height: 3.6vh;
-        border-radius: 0.8vh;
-        background: rgba(79, 216, 196, 0.1);
-        border: 0.1vh solid rgba(94, 196, 184, 0.14);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.5vh;
-        color: #4fd8c4;
-        flex-shrink: 0;
-        font-family: Roboto;
-    }
-
-    .garage-title {
-        font-size: 2.2vh;
-        font-weight: 700;
-        color: white;
-        margin: 0;
-        line-height: 1.1;
-        font-family: Roboto;
-    }
-
-    .garage-subtitle {
-        font-size: 1.3vh;
-        color: #5e8a86;
-        margin: 0.2vh 0 0 0;
-        font-family: Roboto;
-    }
-
-    .garage-header-right {
+    .garage-header-title {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 1vh;
+        min-width: 0;
     }
 
-    .garage-count-pill {
+    .title {
+        margin: 0;
+        font-size: 2.6vh;
+        font-weight: 700;
+        font-style: italic;
+        letter-spacing: 0.05vh;
+        text-transform: uppercase;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .label {
+        margin: 0.4vh 0 0 0;
+        font-size: 1.2vh;
+        font-weight: 600;
+        font-style: italic;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .garage-search {
+        flex: 0 0 52%;
         display: flex;
         align-items: center;
-        gap: 0.6vh;
+        gap: 1vh;
+        height: 3.4vh;
+        padding: 0 1.2vh;
+        background: var(--input);
+        border: 0.1vh solid transparent;
+        border-radius: 0.3vh;
+        cursor: text;
+        transition: border-color 0.15s ease;
+    }
+
+    .garage-search:focus-within {
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .garage-search > i {
         font-size: 1.3vh;
-        color: #5e8a86;
-        font-family: Roboto;
+        color: var(--text-muted);
     }
 
-    .garage-dot {
-        width: 0.7vh;
-        height: 0.7vh;
-        border-radius: 50%;
-        background: #4fd8c4;
-        display: inline-block;
+    input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1.45vh;
+        font-weight: 600;
+        font-style: italic;
     }
 
-    .garage-header-buttons {
-        display: flex;
-        gap: 0.6vh;
+    input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .clear {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--text-muted);
+        font-size: 1.2vh;
+        cursor: pointer;
+    }
+
+    .clear:hover {
+        color: var(--text);
     }
 </style>

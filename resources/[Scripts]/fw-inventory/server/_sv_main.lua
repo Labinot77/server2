@@ -270,8 +270,15 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
     if Data.FromInv == 'player' then Data.FromInv = 'ply-' .. Player.PlayerData.citizenid end
     if Data.ToInv == 'player' then Data.ToInv = 'ply-' .. Player.PlayerData.citizenid end
 
+    local IsValid, Reason = ValidateWorldAccess(Source, Data)
+    if not IsValid then
+        Player.Functions.Notify(Reason, "error")
+        TriggerClientEvent("fw-inventory:Client:ForceClose", Source)
+        return
+    end
+
     -- Pockets / Backpack / Body / Accessories rules (see sv_equipment.lua).
-    local IsValid, Reason = ValidateItemMovement(Type, Data)
+    IsValid, Reason = ValidateItemMovement(Type, Data)
     if not IsValid then
         Player.Functions.Notify(Reason or "Dat kan niet.", "error")
         -- The NUI already moved the item optimistically; force a clean state.
@@ -529,6 +536,7 @@ FW.RegisterServer("fw-inventory:Server:UseItem", function(Source, Slot, IgnoreSh
 
     local ItemData = Shared.Items[Item.Item]
     if not ItemData then return end
+    SetLastUsedSlot('ply-' .. Player.PlayerData.citizenid, Item.Item, Item.CustomType, Slot)
 
     if CalculateQuality(Item.Item, Item.CreateDate) < 1.0 then
         return Player.Functions.Notify("Item is kapot..", "error")

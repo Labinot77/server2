@@ -260,6 +260,15 @@ function RelocateInvalidItems(Player)
     end
 
     local Moved = 0
+    for Slot = Config.SlotLayout.Accessories[2] - 1, Config.SlotLayout.Body[2], -1 do
+        local Item, Next = Work[Slot], Slot + 1
+        if Item and not CanItemGoInSlot(Item.Item, Slot) and CanItemGoInSlot(Item.Item, Next) and not Work[Next] then
+            MoveWholeSlot(InvName, Slot, Next)
+            Work[Next], Work[Slot] = Item, nil
+            Moved = Moved + 1
+        end
+    end
+
     for Slot = 1, Config.MaxPlayerSlots do
         local Item = Work[Slot]
         if Item and not ValidatePlayerSlot(Work, Slot, Item.Item, Item.Amount) then

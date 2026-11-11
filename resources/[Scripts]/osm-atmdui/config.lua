@@ -16,38 +16,19 @@ Config.Withdraw = {
 
 Config.CursorSensitivity = 13.0
 
+-- Camera in front of the screen (fw-dui fits the distance to the screen size).
 Config.Camera = {
-    transitionTime = 500, -- ms
-    distance = 0.50,      -- metres in front of the screen
-    height = 0.07,        -- metres above the screen centre
     fov = 30.0,
+    transitionTime = 500, -- ms
 }
 
--- Per ATM model (entity-local offsets):
---   texture: the screen texture the DUI replaces
---   screen:  screen edges, used to aim the camera
---   cash:    where the cash prop slides out
+-- ATM models, with where the cash prop slides out (entity-local offsets).
+-- The screen itself (corners, resolution) is in fw-dui/config/sh_config.lua.
 Config.Models = {
-    prop_fleeca_atm = {
-        texture = { dict = 'prop_fleeca_atm', name = 'prop_fleece_emis' },
-        screen  = { left = -0.306, right = 0.065, top = 1.23, bottom = 1.055, y = 0.085 },
-        cash    = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 },
-    },
-    prop_atm_01 = {
-        texture = { dict = 'prop_atm_01', name = 'prop_cashpoint_screen' },
-        screen  = { left = -0.19, right = 0.084, top = 1.14, bottom = 1.02, y = -0.12 },
-        cash    = { x = -0.05, startY = -0.20, endY = -0.35, z = 0.75 },
-    },
-    prop_atm_02 = {
-        texture = { dict = 'prop_atm_02', name = 'prop_cashpoint_screen' },
-        screen  = { left = -0.306, right = 0.065, top = 1.23, bottom = 1.05, y = 0.085 },
-        cash    = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 },
-    },
-    prop_atm_03 = {
-        texture = { dict = 'prop_atm_03', name = 'prop_cashpoint_screen' },
-        screen  = { left = -0.306, right = 0.065, top = 1.23, bottom = 1.05, y = 0.07 },
-        cash    = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 },
-    },
+    prop_fleeca_atm = { cash = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 } },
+    prop_atm_01     = { cash = { x = -0.05, startY = -0.20, endY = -0.35, z = 0.75 } },
+    prop_atm_02     = { cash = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 } },
+    prop_atm_03     = { cash = { x = -0.11, startY = 0.15, endY = -0.15, z = 0.95 } },
 }
 
 Config.Text = {

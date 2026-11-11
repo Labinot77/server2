@@ -61,12 +61,19 @@ const ShowVehicleHud = () => {
 }
 exp("ShowVehicleHud", ShowVehicleHud);
 
+// Lets other resources (e.g. Benny's) hide the speedometer + minimap while their UI is open.
+let VehicleHudBlocked = false;
+exp("SetVehicleHudBlocked", (Blocked: boolean) => {
+    VehicleHudBlocked = !!Blocked;
+    if (VehicleHudBlocked && VehicleHudState) HideVehicleHud();
+});
+
 
 VehicleThread.addHook('active', () => {
     const Ped = PlayerPedId();
     const Vehicle = GetVehiclePedIsIn(Ped, false);
 
-if (Vehicle == 0 || IsPauseMenuActive() || exp['fw-police'].IsInHeliCam()) {
+if (Vehicle == 0 || IsPauseMenuActive() || VehicleHudBlocked || exp['fw-police'].IsInHeliCam()) {
     if (VehicleHudState) HideVehicleHud();
     return;
 };

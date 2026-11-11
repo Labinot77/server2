@@ -287,4 +287,10 @@ end)
 -- Exports for other resources
 
 exports('GetPlacedProps', function() return Props end)
+exports('GetPropEntity', function(Id) local Prop = Props[Id] return Prop and Prop.Entity end)
+exports('GetPropIdByEntity', function(Entity)
+    for Id, Prop in pairs(Props) do
+        if Prop.Entity == Entity then return Id end
+    end
+end)
 exports('IsPlacingProp', function() return IsPlacing end)

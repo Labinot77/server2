@@ -76,14 +76,14 @@ FW.Functions.CreateCallback("fw-businesses:Server:VehicleShop:GetShopData", asyn
 });
 
 FW.Functions.CreateCallback("fw-businesses:Server:GetCatalog", async (Source: number, Cb: Function, ShopName: VehicleShops) => {
-    const Result = await exp['ghmattimysql'].executeSync("SELECT `vehicle` FROM `server_vehicles` WHERE `shop` = ?", [ ShopName ]);
+    const Result = await exp['ghmattimysql'].executeSync("SELECT `vehicle`, `stock` FROM `server_vehicles` WHERE `shop` = ?", [ ShopName ]);
     let Retval = [];
 
     for (let i = 0; i < Result.length; i++) {
         const VehicleData = FW.Shared.HashVehicles[GetHashKey(Result[i].vehicle)]
         if (VehicleData) {
             const Price = FW.Shared.CalculateTax('Vehicle Registration Tax', VehicleData.Price);
-            Retval.push({...VehicleData, Price: Price * 1.07})
+            Retval.push({...VehicleData, Price: Price * 1.07, Stock: Math.max(0, Number(Result[i].stock) || 0)})
         };
     };
 

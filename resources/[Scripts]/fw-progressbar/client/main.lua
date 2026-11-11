@@ -86,6 +86,8 @@ function Process(action, start, tick, finish)
             wasCancelled = false
             isAnim = false
             isProp = false
+            local inVehicle = IsPedInAnyVehicle(PlayerPedId(), false)
+            SendNUIMessage({ action = "setVehicleMode", enabled = inVehicle })
             SendNUIMessage({
                 action = "progress",
                 duration = Action.duration,
@@ -99,6 +101,11 @@ function Process(action, start, tick, finish)
                     Citizen.Wait(1)
                     if tick ~= nil then
                         tick()
+                    end
+                    local nowInVehicle = IsPedInAnyVehicle(PlayerPedId(), false)
+                    if nowInVehicle ~= inVehicle then
+                        inVehicle = nowInVehicle
+                        SendNUIMessage({ action = "setVehicleMode", enabled = inVehicle })
                     end
                     if IsControlJustPressed(0, Keys["DELETE"]) and Action.canCancel then
                         TriggerEvent("progressbar:client:cancel")

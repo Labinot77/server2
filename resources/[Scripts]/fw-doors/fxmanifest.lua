@@ -15,6 +15,7 @@ client_scripts {
     'client/cl_zones.lua',
     'client/cl_hud_font.lua',
     'client/cl_hud.lua',
+    'client/cl_interact.lua',
     'client/cl_creator.lua',
 }
 

@@ -1,6 +1,7 @@
 FW = exports['fw-core']:GetCoreObject()
 
 -- [Id] = { Id, Model, Coords = vector3, Rotation = vector3, Frozen, Collision, PlacedBy }
+-- Other resources: AddEventHandler('fw-props:Server:PropsChanged', ...) fires after a place / delete / reload.
 local Props = {}
 
 -- Database
@@ -107,6 +108,7 @@ RegisterNetEvent("fw-props:Server:PlaceProp", function(Data)
     }
 
     TriggerClientEvent('fw-props:Client:AddProp', -1, Props[Id])
+    TriggerEvent('fw-props:Server:PropsChanged')
     Player.Functions.Notify(("Prop placed (#%s)."):format(Id), "success")
 
     TriggerEvent('fw-logs:Server:Log', 'props', 'Prop Placed', ("User: [%s] - %s - %s %s\nProp: #%s %s\nCoords: %s"):format(Source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Id, Data.Model, tostring(Coords)), 'green')
@@ -130,6 +132,7 @@ RegisterNetEvent("fw-props:Server:DeleteProp", function(Id)
     Props[Id] = nil
 
     TriggerClientEvent('fw-props:Client:RemoveProp', -1, Id)
+    TriggerEvent('fw-props:Server:PropsChanged')
     Player.Functions.Notify(("Prop #%s removed."):format(Id), "success")
 
     TriggerEvent('fw-logs:Server:Log', 'props', 'Prop Removed', ("User: [%s] - %s - %s %s\nProp: #%s %s"):format(Source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Id, Model), 'red')
@@ -152,6 +155,7 @@ end, Config.Permission)
 FW.Commands.Add("reloadprops", "Reload all placed props from the database.", {}, false, function(Source)
     LoadProps()
     TriggerClientEvent('fw-props:Client:SetProps', -1, GetPropList())
+    TriggerEvent('fw-props:Server:PropsChanged')
 end, Config.Permission)
 
 -- Internal: delete from a command (source is the server here)
@@ -165,5 +169,6 @@ AddEventHandler("fw-props:Server:DeletePropAs", function(Source, Id)
     exports['ghmattimysql']:executeSync("DELETE FROM `placed_props` WHERE `id` = @Id", { ['@Id'] = Id })
     Props[Id] = nil
     TriggerClientEvent('fw-props:Client:RemoveProp', -1, Id)
+    TriggerEvent('fw-props:Server:PropsChanged')
     Player.Functions.Notify(("Prop #%s removed."):format(Id), "success")
 end)

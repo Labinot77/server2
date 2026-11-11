@@ -271,6 +271,7 @@ function OpenPhone(IsPressed, IsBurner)
     end
     
     IsPhoneOpen = true
+    exports['fw-ui']:SendUIMessage("Hud", "SetPhoneOpen", true)
     local HasVPN = exports['fw-inventory']:HasEnoughOfItem('vpn', 1) and PlayerData.job.name ~= 'police'
     local HasRacingUsb, HasPDRacingUsb, RacingAlias = table.unpack(exports['fw-racing']:HasRacingUsb())
 
@@ -370,6 +371,7 @@ end
 
 function ClosePhone(Forced)
     IsPhoneOpen, CurrentApp = false, ""
+    exports['fw-ui']:SendUIMessage("Hud", "SetPhoneOpen", false)
     StopPhoneAnim()
     SetNuiFocus(false, false)
     if Forced then

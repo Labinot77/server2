@@ -92,6 +92,7 @@ body {
     font-family: "Barlow Condensed", sans-serif;
     opacity: 0;
     transform: translateY(0);
+    transition: bottom 0.25s ease-out;
 }
 
 .progress-container.showing {
@@ -199,4 +200,9 @@ body {
     border-radius: 0.45vh;
     transition: width 0.3s ease-out;
     box-shadow: 0 0 1.4vh rgba(43, 230, 168, 0.7);
+}
+
+/* Sit above the vehicle control hints while in a vehicle */
+body.vehicle-controls .progress-container {
+    bottom: 9vh;
 }

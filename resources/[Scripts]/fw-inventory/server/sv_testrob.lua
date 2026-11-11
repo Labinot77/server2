@@ -35,9 +35,9 @@ local DummyItems = {
     { Slot = 39, Item = 'wallet', Amount = 1 },
     { Slot = 40, Item = 'backpack', Amount = 1, Backpack = true },
     -- Accessories
-    { Slot = 41, Item = 'hat', Amount = 1, Info = { Prop = 12, Texture = 0 } },
-    { Slot = 42, Item = 'mask', Amount = 1, Info = { Prop = 52, Texture = 0 } },
-    { Slot = 45, Item = 'watch', Amount = 1 },
+    { Slot = 42, Item = 'hat', Amount = 1, Info = { Prop = 12, Texture = 0 } },
+    { Slot = 43, Item = 'mask', Amount = 1, Info = { Prop = 52, Texture = 0 } },
+    { Slot = 46, Item = 'watch', Amount = 1 },
 }
 
 function IsTestRobInventory(InvName)

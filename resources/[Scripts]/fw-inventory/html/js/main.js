@@ -59,6 +59,15 @@ $(document).ready(function(){
 
                 $('.inventory-wrapper').fadeIn(100);
                 break;
+            case "SwapOther":
+                if (!InventoryOpen) break;
+                ResetDrag();
+                CloseContextMenu();
+                CloseSplitModal();
+                OtherInvData = event.data.OtherData;
+                BuildInventory('other', OtherInvData.Type, OtherInvData.Items, OtherInvData.Slots);
+                $('.actions-wrapper > .inventory-actions > #steal-money').remove();
+                break;
             case "CloseInventory":
                 InventoryOpen = false;
                 ResetDrag();

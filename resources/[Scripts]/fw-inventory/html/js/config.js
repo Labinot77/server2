@@ -3,7 +3,7 @@ let HasWeaponsLicense = false;
 let OtherInvData = {}, MyInventory = {};
 let InventoryOpen = false;
 let MaxPlayerWeight = 250.0; // Base weight, the backpack adds on top (see GetContainerMaxWeight).
-let MaxPlayerSlots = 45;
+let MaxPlayerSlots = 46;
 
 // Mirrors Config.SlotLayout / Config.EquipSlots / Config.Backpacks from config/_sh_config.lua.
 // Overwritten by the Lua side on load (SetItemsList -> Layout), these are just defaults.
@@ -15,8 +15,8 @@ let Layout = {
     SlotLayout: {
         Pockets: [1, 15],
         Backpack: [16, 35],
-        Body: [36, 40],
-        Accessories: [41, 45],
+        Body: [36, 41],
+        Accessories: [42, 46],
     },
     EquipSlots: [
         { Slot: 36, Section: 'Body', Label: 'ID Card', Icon: 'badge', Items: ['id_card'] },
@@ -24,11 +24,12 @@ let Layout = {
         { Slot: 38, Section: 'Body', Label: 'Keys', Icon: 'key', Items: ['keyring'] },
         { Slot: 39, Section: 'Body', Label: 'Wallet', Icon: 'account_balance_wallet', Items: ['wallet'] },
         { Slot: 40, Section: 'Body', Label: 'Backpack', Icon: 'backpack', Items: ['backpack'], IsBackpack: true },
-        { Slot: 41, Section: 'Accessories', Label: 'Hat', Icon: 'styler', Items: ['hat'] },
-        { Slot: 42, Section: 'Accessories', Label: 'Mask', Icon: 'masks', Items: ['mask'] },
-        { Slot: 43, Section: 'Accessories', Label: 'Glasses', Icon: 'eyeglasses', Items: ['glasses'] },
-        { Slot: 44, Section: 'Accessories', Label: 'Earrings', Icon: 'diamond', Items: ['earrings'] },
-        { Slot: 45, Section: 'Accessories', Label: 'Watch', Icon: 'watch', Items: ['watch'] },
+        { Slot: 41, Section: 'Body', Label: 'Radio', Icon: 'radio', Items: ['radio'] },
+        { Slot: 42, Section: 'Accessories', Label: 'Hat', Icon: 'styler', Items: ['hat'] },
+        { Slot: 43, Section: 'Accessories', Label: 'Mask', Icon: 'masks', Items: ['mask'] },
+        { Slot: 44, Section: 'Accessories', Label: 'Glasses', Icon: 'eyeglasses', Items: ['glasses'] },
+        { Slot: 45, Section: 'Accessories', Label: 'Earrings', Icon: 'diamond', Items: ['earrings'] },
+        { Slot: 46, Section: 'Accessories', Label: 'Watch', Icon: 'watch', Items: ['watch'] },
     ],
     Backpacks: [
         { Name: 'backpack', Weight: 100.0, Slots: 20 },

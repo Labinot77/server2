@@ -1,4 +1,10 @@
 FW = FW or exports['fw-core']:GetCoreObject()
+Config = Config or {}
+Config.Creator = Config.Creator or {}
+Config.Creator.Command = Config.Creator.Command or 'doormenu'
+Config.Creator.Permissions = Config.Creator.Permissions or { 'admin', 'god' }
+Config.Creator.MaxAimDistance = Config.Creator.MaxAimDistance or 10.0
+Config.Creator.NearbyRadius = Config.Creator.NearbyRadius or 15.0
 
 -- Door creator: persistent storage + admin events.
 -- Doors added in-game are saved to data/doors.json and appended AFTER the doors in

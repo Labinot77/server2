@@ -1,3 +1,10 @@
+Config = Config or {}
+Config.Creator = Config.Creator or {}
+Config.Creator.Command = Config.Creator.Command or 'doormenu'
+Config.Creator.Permissions = Config.Creator.Permissions or { 'admin', 'god' }
+Config.Creator.MaxAimDistance = Config.Creator.MaxAimDistance or 10.0
+Config.Creator.NearbyRadius = Config.Creator.NearbyRadius or 15.0
+
 -- Door creator menu: /doormenu
 -- Aim at a door, press E, fill in the form, done. Saved server-side to data/doors.json.
 
@@ -9,6 +16,7 @@ RegisterNetEvent('fw-doors:Client:Creator:Register', function(DoorId, DoorData)
     if type(DoorData) ~= 'table' then return end
     Config.Doors[DoorId] = DoorData
     if DoorHud and DoorHud.Invalidate then DoorHud.Invalidate(DoorId) end
+    if DoorInteract then DoorInteract.Refresh(DoorId) end
 
     if DoorData.Disabled then
         if IsDoorRegisteredWithSystem(DoorId) then

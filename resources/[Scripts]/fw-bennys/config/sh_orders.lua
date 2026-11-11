@@ -43,13 +43,14 @@ Config.Orders = {
 -- Resolution is the DUI page size; keep it the same aspect ratio as the screen.
 Config.Laptop = {
     -- Texture = screen texture to replace, Dict = its texture dictionary (defaults to the model name),
+    -- RenderTarget = named render target instead of a texture, Resolution = DUI size.
     Models = {
         ['prop_laptop_jimmy'] = {
             Texture = 'prop_jimmy_screen',
             Resolution = { 1280, 800 },
         },
-        ['prop_laptop_01a'] = {
-            RenderTarget = 'prop_moniter_desktop',          -- script_rt_tvscreen (512x256)
+        ['prop_laptop_lester2'] = {
+            RenderTarget = 'tvscreen',          -- script_rt_tvscreen (512x256)
             Resolution = { 1280, 640 },
         },
         ['as_prop_as_laptop_01a'] = {
@@ -67,7 +68,7 @@ Config.Laptop = {
     Camera = {
         Offset = vector3(0.0, -0.55, 0.30), -- where the camera sits
         LookAt = vector3(0.0, 0.05, 0.13),  -- the middle of the screen
-        Fov = 25.0,
+        Fov = 42.0,
         Transition = 600,
     },
 }

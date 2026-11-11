@@ -3,8 +3,27 @@
 
 DoorHud = { Enabled = false, Access = {} }
 
+local Defaults = {
+    Enabled = true, Mode = 'interact', InteractDistance = 2.0, GateInteractDistance = 8.0, RegisterDistance = 30.0, Labels = { [0] = 'UNLOCKED', [1] = 'LOCKED' },
+    Colors = { [0] = { 255, 255, 255, 255 }, [1] = { 255, 255, 255, 255 } },
+    NoAccessAlpha = 160, KeyColor = { 255, 255, 255, 255 }, KeySize = 0.0125, TextSize = 0.0115,
+    TextGap = 0.0045, Tracking = -3, SpaceWidth = 12, RingSize = 0.0095, RingAlpha = 195,
+    CenterSize = 0.0035, RingDistance = 6.0, ZOffset = 0.0, ShowOnGates = false,
+}
+Config.HUD = Config.HUD or {}
+for K, V in pairs(Defaults) do
+    if Config.HUD[K] == nil then Config.HUD[K] = V end
+end
+
 local Cfg = Config.HUD
-if not Cfg or not Cfg.Enabled then return end
+if not Cfg.Enabled then return end
+
+if Cfg.Mode == 'interact' then
+    -- cl_interact.lua handles the UI; fw-ui prompts and our own drawing stay off.
+    DoorHud.Enabled, DoorHud.Interact = true, true
+    return
+end
+if not DoorHudFont then return print('^1[fw-doors]^7 cl_hud_font.lua not loaded - check fxmanifest.lua') end
 
 local TXD = 'fw_doors_hud'
 local Font = DoorHudFont

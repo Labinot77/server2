@@ -1,5 +1,5 @@
 import { ColorPalette, PaintTypes } from "../../shared/config";
-import { RegisterNUICallback, SendUIMessage, SetUIFocus } from "../../shared/utils";
+import { exp, RegisterNUICallback, SendUIMessage, SetUIFocus } from "../../shared/utils";
 import type { CameraFocus, CartEntry, OpenPayload } from "../../shared/types";
 import { BennysCamera } from "./camera";
 import { BuildCatalog } from "./catalog";
@@ -10,6 +10,11 @@ let State: VehicleState | null = null;
 let Labels: Record<string, { Label: string; Option: string }> = {};
 let FrameTick: ReturnType<typeof setTick> | null = null;
 let OrderBusiness: string | undefined;
+
+// Speedometer + minimap (fw-hud). Never let a missing/old fw-hud break the menu.
+const SetVehicleHud = (Visible: boolean) => {
+    try { exp['fw-hud'].SetVehicleHudBlocked(!Visible); } catch { /* fw-hud not running */ }
+};
 
 const VehicleName = (Vehicle: number) => {
     const Display = GetDisplayNameFromVehicleModel(GetEntityModel(Vehicle));
@@ -47,6 +52,7 @@ const Close = (Commit: boolean) => {
 
     BennysCamera.Destroy();
     SendUIMessage("Bennys", "SetVisibility", { Visibility: false });
+    SetVehicleHud(true); // fw-hud shows it again on its next tick
     SetNuiFocusKeepInput(false);
     SetUIFocus(false, false);
     FreezeEntityPosition(Vehicle, false);
@@ -82,6 +88,7 @@ export const Menu = {
             PaintTypes,
         };
 
+        SetVehicleHud(false);
         BennysCamera.Create(Vehicle);
 
         SendUIMessage("Bennys", "Open", Payload);

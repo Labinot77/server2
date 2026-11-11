@@ -387,12 +387,30 @@ end
 exports("AddItemToInventory", AddItemToInventory)
 
 -- // Remove Items \\ --
+-- Item scripts often remove "1 sandwich" without a slot after it was used. Remember which slot was used,
+-- so that one is taken instead of whichever stack the database returns first.
+local LastUsed = {}
+function SetLastUsedSlot(InvName, Item, CustomType, Slot)
+    LastUsed[InvName] = { Item = Item, CustomType = CustomType or "", Slot = Slot, Time = os.time() }
+end
+
+function GetPreferredSlot(InvName, Item, CustomType)
+    local Used = LastUsed[InvName]
+    if Used and Used.Item == Item and Used.CustomType == (CustomType or "") and os.time() - Used.Time <= 60 then
+        return Used.Slot
+    end
+end
+
 function RemoveItemFromInventory(InvName, Item, Amount, Slot, CustomType)
     if not Shared.Items[Item] then return end
     if CustomType and #CustomType > 0 and (Shared.CustomTypes[Item] == nil or Shared.CustomTypes[Item][CustomType] == nil) then return end
     if not CustomType then CustomType = "" end
     if not Amount or Amount <= 0 then Amount = 1 end
-    if not Slot then Slot = FindSlot(InvName, Item, CustomType, true) end
+    if not Slot then
+        local Preferred = GetPreferredSlot(InvName, Item, CustomType)
+        local Items = Preferred and GetInventoryItems(InvName)
+        Slot = (Items and Items[Preferred] and Items[Preferred].Item == Item and (Items[Preferred].CustomType or "") == CustomType and Preferred) or FindSlot(InvName, Item, CustomType, true)
+    end
     if not Slot then return end
 
     local Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Amount, {
@@ -419,33 +437,37 @@ exports("RemoveItemFromInventory", RemoveItemFromInventory)
 
 function RemoveItemFromInventoryByName(InvName, Item, Amount, CustomType)
     if not CustomType then CustomType = "" end
-    if not Amount then Amount = 1 end
+    if not Amount or Amount <= 0 then Amount = 1 end
 
-    local Slots = {}
-    if string.startsWith(InvName, 'ply-') then
-        Slots = exports['ghmattimysql']:executeSync("SELECT `slot` FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType GROUP BY `slot` LIMIT " .. Amount, {
-            ['@Inventory'] = InvName,
-            ['@Item'] = Item,
-            ['@CustomType'] = CustomType,
+    -- Take from the slot that was just used first, then the remaining stacks in slot order.
+    local Stacks = exports['ghmattimysql']:executeSync("SELECT `slot`, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType GROUP BY `slot`", {
+        ['@Inventory'] = InvName, ['@Item'] = Item, ['@CustomType'] = CustomType,
+    }) or {}
+    local Preferred = GetPreferredSlot(InvName, Item, CustomType)
+    table.sort(Stacks, function(a, b)
+        if (a.slot == Preferred) ~= (b.slot == Preferred) then return a.slot == Preferred end
+        return a.slot < b.slot
+    end)
+
+    local Removed, Slots = 0, {}
+    for _, Stack in ipairs(Stacks) do
+        if Removed >= Amount then break end
+        local Take = math.min(Amount - Removed, Stack.amount)
+        local Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Take, {
+            ['@Inventory'] = InvName, ['@Item'] = Item, ['@CustomType'] = CustomType, ['@Slot'] = Stack.slot,
         })
-    end
-
-    local Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType LIMIT " .. Amount, {
-        ['@Inventory'] = InvName,
-        ['@Item'] = Item,
-        ['@CustomType'] = CustomType,
-    })
-
-    if string.startsWith(InvName, 'ply-') then
-        local Target = FW.Functions.GetPlayerByCitizenId(InvName:sub(5))
-        if Target then
-            if Shared.Items[Item].HasProp then
-                TriggerClientEvent("fw-assets:Client:Attach:Items", Target.PlayerData.source)
-            end
+        if Result.affectedRows > 0 then
+            Removed = Removed + Result.affectedRows
+            Slots[#Slots + 1] = { slot = Stack.slot }
         end
     end
 
-    return Result.affectedRows > 0, Slots
+    if Removed > 0 and string.startsWith(InvName, 'ply-') and Shared.Items[Item] and Shared.Items[Item].HasProp then
+        local Target = FW.Functions.GetPlayerByCitizenId(InvName:sub(5))
+        if Target then TriggerClientEvent("fw-assets:Client:Attach:Items", Target.PlayerData.source) end
+    end
+
+    return Removed > 0, Slots
 end
 exports("RemoveItemFromInventoryByName", RemoveItemFromInventoryByName)
 

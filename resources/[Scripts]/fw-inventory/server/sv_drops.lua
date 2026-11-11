@@ -377,3 +377,29 @@ function LoadPersistentDrops()
 
     print(("[fw-inventory] Loaded %s saved ground drops."):format(Loaded))
 end
+
+-- Glovebox only while seated in that car; a drop only while standing at it.
+-- An empty drop (just created when the inventory opened) follows the player, so items land where they are now.
+local function Trim(Text) return (tostring(Text or ''):gsub('^%s+', ''):gsub('%s+$', '')) end
+
+function ValidateWorldAccess(Source, Data)
+    local Ped = GetPlayerPed(Source)
+    for _, InvName in ipairs({ Data.FromInv, Data.ToInv }) do
+        if type(InvName) == 'string' and InvName:sub(1, 8) == 'glovebox' then
+            local Vehicle = GetVehiclePedIsIn(Ped, false)
+            if Vehicle == 0 or Trim(GetVehicleNumberPlateText(Vehicle)) ~= Trim(InvName:sub(9)) then
+                return false, "Je zit niet meer in het voertuig."
+            end
+        end
+
+        local DropId = DropIdFromName(InvName)
+        local Drop = DropId and Config.Drops[DropId]
+        if Drop and InvName == Data.ToInv and (Drop.ItemCount or 0) == 0 then
+            Drop.Coords = GetEntityCoords(Ped)
+            TriggerClientEvent("fw-inventory:Client:SetDropData", -1, DropId, Drop)
+        elseif Drop and not IsPlayerNearDrop(Source, DropId) then
+            return false, "Je bent te ver weg."
+        end
+    end
+    return true
+end

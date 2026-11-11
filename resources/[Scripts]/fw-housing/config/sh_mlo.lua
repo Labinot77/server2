@@ -68,7 +68,7 @@ Config.MLOHouses = {
             -- Floor is ~28.0. Keep minZ slightly under the floor, raise maxZ if the MLO has an upstairs.
             minZ = 27.0,
             maxZ = 33.0,
-            debug = false, -- true = draw the zone in-game
+            debug = true, -- true = draw the zone in-game
         },
 
         Stash = { Slots = 40, Weight = 1000 },

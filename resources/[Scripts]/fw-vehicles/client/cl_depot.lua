@@ -92,6 +92,13 @@ end)
 
 RegisterNetEvent("fw-vehicles:Client:OpenDepot")
 AddEventHandler("fw-vehicles:Client:OpenDepot", function(args)
+    -- The depot desk now opens the Impound Lot UI. The old menu is still available via
+    -- "fw-vehicles:Client:OpenDepotMenu" (recent depots / plate lookup / request help).
+    OpenImpound("Los Santos Depot")
+end)
+
+RegisterNetEvent("fw-vehicles:Client:OpenDepotMenu")
+AddEventHandler("fw-vehicles:Client:OpenDepotMenu", function(args)
     local MenuItems = {}
 
 
@@ -134,7 +141,7 @@ AddEventHandler("fw-vehicles:Client:LookupRecentDepots", function()
 
     MenuItems[#MenuItems + 1] = {
         Title = "Back",
-        Data = { Event = 'fw-vehicles:Client:OpenDepot', Type = 'Client'},
+        Data = { Event = 'fw-vehicles:Client:OpenDepotMenu', Type = 'Client'},
     }
 
     MenuItems[#MenuItems + 1] = {
@@ -215,7 +222,7 @@ AddEventHandler("fw-vehicles:Client:LookupPersonalDepot", function()
 
     MenuItems[#MenuItems + 1] = {
         Title = "Back",
-        Data = { Event = 'fw-vehicles:Client:OpenDepot', Type = 'Client'},
+        Data = { Event = 'fw-vehicles:Client:OpenDepotMenu', Type = 'Client'},
     }
 
     MenuItems[#MenuItems + 1] = {
@@ -304,7 +311,7 @@ AddEventHandler("fw-vehicles:Client:LookupByPlate", function()
 
             MenuItems[#MenuItems + 1] = {
                 Title = "Back",
-                Data = { Event = 'fw-vehicles:Client:OpenDepot', Type = 'Client'},
+                Data = { Event = 'fw-vehicles:Client:OpenDepotMenu', Type = 'Client'},
             }
 
             local VehicleData = FW.Shared.HashVehicles[GetHashKey(Vehicle.vehicle)]
@@ -383,9 +390,11 @@ AddEventHandler('fw-vehicles:Client:TakeOutDepot', function(Data)
     end
 
     local Spot = GetDepotSpot()
-    if Spot == false then return end
+    if Spot == false then return FW.Functions.Notify("Er is geen vrije plek om het voertuig neer te zetten..", "error") end
 
-    local HasPaid = FW.SendCallback("fw-vehicles:Server:PayReleaseFee", VehicleData.plate, Data.SelfRetrieve and json.decode(VehicleData.impounddata).Fee * 2 or json.decode(VehicleData.impounddata).Fee)
+    local ImpoundData = VehicleData.impounddata and json.decode(VehicleData.impounddata) or {}
+    local Fee = tonumber(ImpoundData.Fee) or 0
+    local HasPaid = FW.SendCallback("fw-vehicles:Server:PayReleaseFee", VehicleData.plate, Data.SelfRetrieve and Fee * 2 or Fee)
     if not HasPaid then
         FW.Functions.Notify("Je hebt niet genoeg bank balans.", "error")
         return

@@ -1,24 +1,36 @@
 <script>
-    import VehicleCard from "./Card.svelte";
+    import Card from "./Card.svelte";
 
     export let Vehicles = [];
-    export let SelectedPlate = null;
-    export let OnSelect = () => {};
+    export let FocusIndex = 0;
+    export let MenuPlate = null;
+    export let MenuIndex = 0;
+    export let HasSearch = false;
+    export let EmptyText = "";
+    export let OnFocus = () => {};
+    export let OnOpenMenu = () => {};
+    export let OnRetrieve = () => {};
+    export let OnInfo = () => {};
 </script>
 
-<div class="garage-grid-wrap">
+<div class="grid-wrap">
     {#if Vehicles.length === 0}
-        <div class="garage-misc-empty">
-            <i class="fas fa-frown"></i>
-            <p>You have no vehicles in this garage.</p>
+        <div class="empty">
+            <i class="fas fa-car-side"></i>
+            <p>{HasSearch ? "No vehicles match your search" : EmptyText || "No vehicles in this garage"}</p>
         </div>
     {:else}
-        <div class="garage-grid">
-            {#each Vehicles as Vehicle (Vehicle.Plate)}
-                <VehicleCard
-                    {...Vehicle}
-                    Selected={SelectedPlate === Vehicle.Plate}
-                    {OnSelect}
+        <div class="grid">
+            {#each Vehicles as Vehicle, i (Vehicle.Plate)}
+                <Card
+                    {Vehicle}
+                    Focused={FocusIndex === i}
+                    MenuOpen={MenuPlate === Vehicle.Plate}
+                    bind:MenuIndex
+                    OnFocus={() => OnFocus(i)}
+                    {OnOpenMenu}
+                    {OnRetrieve}
+                    {OnInfo}
                 />
             {/each}
         </div>
@@ -26,44 +38,48 @@
 </div>
 
 <style>
-    .garage-grid-wrap {
+    .grid-wrap {
         flex: 1 1 0%;
+        min-height: 0;
         overflow-y: auto;
-        padding: 0.6vh 2.2vh 2vh;
+        padding: 1.8vh 2vh;
     }
 
-    .garage-grid-wrap::-webkit-scrollbar {
-        display: none;
+    .grid-wrap::-webkit-scrollbar {
+        width: 0.4vh;
     }
 
-    .garage-grid {
+    .grid-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 0.4vh;
+    }
+
+    .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(15vh, 1fr));
-        gap: 1.4vh;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.2vh;
     }
 
-    .garage-misc-empty {
-        position: relative;
-        left: 0;
-        right: 0;
-        text-align: center;
-        width: 100%;
+    .empty {
         height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: white;
+        gap: 1.4vh;
+        color: var(--text-muted);
     }
 
-    .garage-misc-empty > i {
-        font-size: 4.5vh;
+    .empty i {
+        font-size: 5vh;
+        opacity: 0.5;
     }
 
-    .garage-misc-empty > p {
-        margin-top: 3.3vh;
-        font-size: 1.8vh;
-        font-weight: bold;
-        font-family: Roboto;
+    .empty p {
+        margin: 0;
+        font-size: 1.6vh;
+        font-weight: 700;
+        font-style: italic;
+        text-transform: uppercase;
     }
 </style>

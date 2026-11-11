@@ -313,6 +313,7 @@ Config.Garages = {
     },
     ['impound_01'] = {
         Name = "Impound Garage",
+        IsImpound = true, -- Opens the Impound Lot UI (vehicles with state 'depot') instead of a normal garage
         Blip = { Sprite = 357, Color = 3, Text = "Garage" },
         Zone = { vector3(1021.65, -2311.52, 30.51), 19.4, 5.8, 85, 29.51, 33.51 },
         Spots = {

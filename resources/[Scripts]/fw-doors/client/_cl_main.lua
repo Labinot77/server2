@@ -49,8 +49,7 @@ Citizen.CreateThread(function()
 
     while true do
         Citizen.Wait(4)
-        if LoggedIn and (CurrentDoor ~= nil) or CurrentDoor == nil and NearBollards ~= nil then
-            local DoorConfig = Config.Doors[CurrentDoor]
+        if LoggedIn and NearBollards ~= nil then
             if IsControlJustReleased(0, 38) then
                 TriggerEvent('fw-doors:Client:Press:Special:Door')
             end
@@ -132,6 +131,7 @@ AddEventHandler('fw-doors:Client:Sync:Doors', function(DoorId, DoorData)
     DoorSystemSetAutomaticRate(DoorId, 1.0, false, false)
     DoorSystemSetDoorState(DoorId, Config.Doors[DoorId].Locked, false, true)
     DoorSystemSetHoldOpen(DoorId, Config.Doors[DoorId].IsGate)
+    if DoorInteract and DoorInteract.Update then DoorInteract.Update(DoorId) end
     if DoorId ~= CurrentDoor then return end
     if Config.Doors[DoorId].IsGate then return end
     if #(GetEntityCoords(PlayerPedId()) - Config.Doors[DoorId].Coords) < 2.0 then
@@ -179,7 +179,12 @@ end)
 
 -- // Functions \\ --
 
+local function HandledByInteract(DoorId)
+    return DoorInteract and DoorInteract.Points[DoorId] ~= nil
+end
+
 function ListenForKeypress(DoorId)
+    if HandledByInteract(DoorId) then return end
     if not Listening then
         Listening = true
         Citizen.CreateThread(function()
@@ -189,7 +194,7 @@ function ListenForKeypress(DoorId)
             local HasDoorKeys, IsHidden = HasDoorAcces(CurrentDoorId), Config.Doors[CurrentDoorId].IsGate
             local UseHud = DoorHud and DoorHud.Enabled
             if UseHud then DoorHud.Access[CurrentDoorId] = HasDoorKeys end
-            while Listening do
+            while Listening and not HandledByInteract(CurrentDoorId) do
                 Citizen.Wait(4)
                 if CurrentDoorLockState ~= LockState and not IsHidden then
                     if #(GetEntityCoords(PlayerPedId()) - Config.Doors[CurrentDoorId].Coords) < Distance then

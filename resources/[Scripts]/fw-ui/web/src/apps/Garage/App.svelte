@@ -1,22 +1,37 @@
 <script>
-    import { OnEvent, SetExitHandler, SendEvent as _SendEvent } from "../../utils/Utils";
+    import "@fontsource/barlow-condensed/600.css";
+    import "@fontsource/barlow-condensed/600-italic.css";
+    import "@fontsource/barlow-condensed/700.css";
+    import "@fontsource/barlow-condensed/700-italic.css";
+
+    import { onDestroy } from "svelte";
+    import { OnEvent, SendEvent as _SendEvent } from "../../utils/Utils";
     const SendEvent = (Event, Parameters, Callback) => _SendEvent(Event, Parameters, Callback, "fw-vehicles");
 
     import AppWrapper from "../../components/AppWrapper.svelte";
     import GarageHeader from "./components/GarageHeader.svelte";
+    import FilterTabs from "./components/FilterTabs.svelte";
     import VehicleGrid from "./components/VehicleGrid.svelte";
-    import VehicleActionPanel from "./components/VehicleActionPanel.svelte";
+    import InfoModal from "./components/InfoModal.svelte";
+    import KeyHints from "./components/KeyHints.svelte";
 
     import {
+        Tabs,
+        COLUMNS,
+        GarageTitle,
         GarageLabel,
+        EmptyText,
+        CanRetrieve,
         Vehicles,
-        SelectedPlate,
+        ActiveTab,
+        SearchTerm,
+        FocusIndex,
+        MenuPlate,
+        MenuIndex,
+        InfoPlate,
         FilteredVehicles,
-        ModalData,
         ResetGarageState,
     } from "./garage.js";
-
-    const Modals = {};
 
     let Visible = false;
     let State = "Loaded";
@@ -28,94 +43,203 @@
             return;
         }
 
-        GarageLabel.set(Data.Label || "Development Garage");
+        ResetGarageState();
+        GarageTitle.set(Data.Title || "Garage Manager");
+        GarageLabel.set(Data.Label || "");
+        EmptyText.set(Data.EmptyText || "");
         Vehicles.set(Data.Vehicles || []);
 
         State = "Loading";
         Visible = true;
-        setTimeout(() => {
-            State = "Loaded";
-        }, 600);
+        setTimeout(() => (State = "Loaded"), 400);
     });
 
     OnEvent("Garage", "SetVehicles", (Data) => {
         Vehicles.set(Data.Vehicles || []);
     });
 
-    $: SelectedVehicle = $Vehicles.find((v) => v.Plate === $SelectedPlate) ?? null;
+    // Tab counts (respecting the search term)
+    $: Counts = Tabs.reduce((Acc, Tab) => {
+        const Term = $SearchTerm.trim().toLowerCase();
+        Acc[Tab] = $Vehicles.filter(
+            (v) =>
+                (Tab === "All" || v.Type === Tab) &&
+                (!Term || (v.Name || "").toLowerCase().includes(Term) || (v.Plate || "").toLowerCase().includes(Term))
+        ).length;
+        return Acc;
+    }, {});
 
-const HandleSelect = (Plate) => {
-    $SelectedPlate = $SelectedPlate === Plate ? null : Plate;
-
-    if ($SelectedPlate) {
-        SendEvent("Garage/SpawnPreview", { Plate: $SelectedPlate });
+    // Keep focus inside the list when the filter changes
+    $: if ($FilteredVehicles.length === 0) {
+        $FocusIndex = 0;
+    } else if ($FocusIndex > $FilteredVehicles.length - 1) {
+        $FocusIndex = $FilteredVehicles.length - 1;
     }
-};
 
-const HandleTakeVehicle = (Plate) => {
-    const Vehicle = $Vehicles.find((v) => v.Plate === Plate);
-    if (!Vehicle || Vehicle.State !== "Stored") return;
+    $: FocusedVehicle = $FilteredVehicles[$FocusIndex] ?? null;
+    $: InfoVehicle = $Vehicles.find((v) => v.Plate === $InfoPlate) ?? null;
 
-    SendEvent("Garage/TakeVehicle", { Plate });
-    CloseGarage();
-};
+    // Spawn the ghost preview of the focused vehicle (debounced so hovering doesn't spam)
+    let PreviewTimer, LastPreview = null;
+    $: if (Visible && State === "Loaded") QueuePreview(FocusedVehicle?.Plate ?? null);
 
-    const HandleToggleLockdown = (Plate) => {
-        SendEvent("Garage/ToggleLockdown", { Plate });
+    const QueuePreview = (Plate) => {
+        clearTimeout(PreviewTimer);
+        if (!Plate || Plate === LastPreview) return;
+        PreviewTimer = setTimeout(() => {
+            LastPreview = Plate;
+            SendEvent("Garage/SpawnPreview", { Plate });
+        }, 250);
     };
 
-    const CloseGarage = () => {
+    const SetTab = (Direction) => {
+        const Index = Tabs.indexOf($ActiveTab);
+        $ActiveTab = Tabs[(Index + Direction + Tabs.length) % Tabs.length];
+        $FocusIndex = 0;
+        $MenuPlate = null;
+    };
+
+    const OpenMenu = (Plate) => {
+        const Index = $FilteredVehicles.findIndex((v) => v.Plate === Plate);
+        if (Index !== -1) $FocusIndex = Index;
+        const Vehicle = $FilteredVehicles[Index];
+        $MenuIndex = Vehicle && !CanRetrieve(Vehicle) ? 1 : 0;
+        $MenuPlate = Plate;
+    };
+
+    const OpenInfo = (Plate) => {
+        $MenuPlate = null;
+        $InfoPlate = Plate;
+    };
+
+    const Retrieve = (Plate) => {
+        const Vehicle = $Vehicles.find((v) => v.Plate === Plate);
+        if (!CanRetrieve(Vehicle)) return;
+
+        SendEvent("Garage/TakeVehicle", { Plate });
+        CloseGarage(false);
+    };
+
+    const CloseGarage = (DeletePreview = true) => {
+        if (!Visible) return;
         Visible = false;
+        clearTimeout(PreviewTimer);
+        LastPreview = null;
         ResetGarageState();
-        SendEvent("Garage/Close", {});
+        SendEvent("Garage/Close", { DeletePreview });
     };
 
-    SetExitHandler("", "Garage/Close", () => CloseGarage(), {__resource: "fw-vehicles"});
+    const MoveFocus = (Delta) => {
+        const Count = $FilteredVehicles.length;
+        if (Count === 0) return;
+        const Next = $FocusIndex + Delta;
+        if (Next < 0 || Next > Count - 1) {
+            // Left/right wrap, up/down clamp
+            if (Math.abs(Delta) === 1) $FocusIndex = (Next + Count) % Count;
+            return;
+        }
+        $FocusIndex = Next;
+    };
+
+    const OnKeyDown = (Event) => {
+        if (!Visible || State !== "Loaded") return;
+
+        const Typing = document.activeElement && document.activeElement.tagName === "INPUT";
+        const Key = Event.key;
+
+        if (Key === "Escape") {
+            Event.preventDefault();
+            if ($InfoPlate) return ($InfoPlate = null);
+            if ($MenuPlate) return ($MenuPlate = null);
+            if (Typing) return document.activeElement.blur();
+            return CloseGarage();
+        }
+
+        if (Typing) {
+            if (Key === "Enter" || Key === "ArrowDown") {
+                Event.preventDefault();
+                document.activeElement.blur();
+            }
+            return;
+        }
+
+        // Information modal
+        if ($InfoPlate) {
+            if (Key === "Enter" && InfoVehicle) Retrieve(InfoVehicle.Plate);
+            return;
+        }
+
+        // Context menu
+        if ($MenuPlate) {
+            const Vehicle = $Vehicles.find((v) => v.Plate === $MenuPlate);
+            if (Key === "ArrowUp" || Key === "ArrowDown") {
+                Event.preventDefault();
+                const Next = $MenuIndex === 0 ? 1 : 0;
+                if (Next === 0 && !CanRetrieve(Vehicle)) return;
+                $MenuIndex = Next;
+            } else if (Key === "Enter") {
+                $MenuIndex === 0 ? Retrieve($MenuPlate) : OpenInfo($MenuPlate);
+            } else if (Key === "ArrowLeft" || Key === "ArrowRight" || Key === "Backspace") {
+                $MenuPlate = null;
+            }
+            return;
+        }
+
+        switch (Key.toLowerCase()) {
+            case "q": return SetTab(-1);
+            case "e": return SetTab(1);
+            case "arrowleft": Event.preventDefault(); return MoveFocus(-1);
+            case "arrowright": Event.preventDefault(); return MoveFocus(1);
+            case "arrowup": Event.preventDefault(); return MoveFocus(-COLUMNS);
+            case "arrowdown": Event.preventDefault(); return MoveFocus(COLUMNS);
+            case "enter": if (FocusedVehicle) OpenMenu(FocusedVehicle.Plate); return;
+        }
+    };
+
+    onDestroy(() => clearTimeout(PreviewTimer));
 </script>
+
+<svelte:window on:keydown={OnKeyDown} />
 
 <AppWrapper AppName="Garage" Focused={Visible}>
     {#if Visible}
         <div class="garage-wrapper">
-            <div class="garage-container" class:loading={State == "Loading"}>
-                {#if State == "Loading"}
-                    <div style="display: flex; justify-content: center; align-items: center; height: 20vh; width: 100%;">
-                       <svg xmlns="http://www.w3.org/2000/svg" class="spinner" width="15vh" height="15vh" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
-    {#each Array(12) as _, i}
-        <g transform="rotate({i * 30} 50 50)">
-            <rect x="47.5" y="24" rx="1.92" ry="1.92" width="5" height="12" fill="var(--accent)">
-                <animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="{-(11 - i) / 12}s" repeatCount="indefinite"></animate>
-            </rect>
-        </g>
-    {/each}
-</svg>
-                    </div>
-                {:else}
-                    {#if $ModalData.Type && Modals[$ModalData.Type] && $ModalData.Show}
-                        <svelte:component this={Modals[$ModalData.Type]} />
+            <div class="garage-column">
+                <div class="garage-container" class:loading={State == "Loading"}>
+                    {#if State == "Loading"}
+                        <div class="loader">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                        </div>
+                    {:else}
+                        <GarageHeader Title={$GarageTitle} Label={$GarageLabel} bind:SearchTerm={$SearchTerm} />
+
+                        <FilterTabs
+                            bind:ActiveTab={$ActiveTab}
+                            {Counts}
+                            OnPrev={() => SetTab(-1)}
+                            OnNext={() => SetTab(1)}
+                        />
+
+                        <VehicleGrid
+                            Vehicles={$FilteredVehicles}
+                            FocusIndex={$FocusIndex}
+                            MenuPlate={$MenuPlate}
+                            bind:MenuIndex={$MenuIndex}
+                            HasSearch={$SearchTerm.trim().length > 0}
+                            EmptyText={$EmptyText}
+                            OnFocus={(i) => !$MenuPlate && ($FocusIndex = i)}
+                            OnOpenMenu={OpenMenu}
+                            OnRetrieve={Retrieve}
+                            OnInfo={OpenInfo}
+                        />
+
+                        {#if InfoVehicle}
+                            <InfoModal Vehicle={InfoVehicle} OnClose={() => ($InfoPlate = null)} OnRetrieve={Retrieve} />
+                        {/if}
                     {/if}
+                </div>
 
-                    <GarageHeader
-                        Breadcrumb={$GarageLabel}
-                        Count={$Vehicles.length}
-                        Total={$Vehicles.length}
-                        OnExit={CloseGarage}
-                    />
-
-                    <!-- <SearchBar bind:SearchTerm={$SearchTerm} bind:ActiveTab={$ActiveTab} /> -->
-
-                    <VehicleGrid
-                        Vehicles={$FilteredVehicles}
-                        SelectedPlate={$SelectedPlate}
-                        OnSelect={HandleSelect}
-                        OnTakeVehicle={HandleTakeVehicle}
-                    />
-
-                    <VehicleActionPanel
-                        Vehicle={SelectedVehicle}
-                        OnTakeVehicle={HandleTakeVehicle}
-                        OnToggleLockdown={HandleToggleLockdown}
-                    />
-                {/if}
+                <KeyHints />
             </div>
         </div>
     {/if}
@@ -123,61 +247,76 @@ const HandleTakeVehicle = (Plate) => {
 
 <style>
     .garage-wrapper {
-        display: flex;
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        margin: 0;
-        align-items: center;
-        justify-content: end;
+        inset: 0;
+        display: flex;
+        justify-content: flex-end;
         pointer-events: none;
     }
 
-    .garage-container {
-        /* Theme tokens, inherited by child components */
-        --accent: #13dff2;
-        --accent-success: #43df78;
-        --accent-error: #ff4e55;
-        --panel: rgba(14, 14, 14, 0.8);
-        --panel-solid: rgba(19, 18, 18, 0.96);
-        --text: #f4f4f4;
-        --text-muted: rgba(244, 244, 244, 0.6);
-        --edge: rgba(255, 255, 255, 0.08);
-
+    .garage-column {
         display: flex;
         flex-direction: column;
-        position: relative;
-        overflow: hidden;
-        width: 45vh;
-        height: 75vh;
-        margin-right: 2.5vh;
+        justify-content: flex-end;
+        width: 48vh;
+        height: 100vh;
+        margin-right: 3vh;
+        padding-top: 2vh;
+        box-sizing: border-box;
 
-        background: var(--panel);
-        border: 0.1vh solid var(--edge);
-        border-bottom: 0.3vh solid color-mix(in srgb, var(--accent) 45%, transparent);
-        border-radius: 0.3vh;
-        box-shadow: 0 0 1vh rgba(0, 0, 0, 0.4);
+        /* Theme tokens, inherited by child components */
+        --header: #15171b;
+        --panel: #22252a;
+        --card: #191b1f;
+        --card-hover: #1d2025;
+        --input: #2c3036;
+        --text: #f2f3f5;
+        --text-muted: rgba(242, 243, 245, 0.55);
+        --edge: rgba(255, 255, 255, 0.07);
+        --stored: #3fe079;
+        --out: #f5c542;
+        --impounded: #ff8a34;
 
-        font-family: 'Roboto Condensed', Arial, sans-serif;
-        font-weight: 500;
+        font-family: "Barlow Condensed", "Roboto Condensed", Arial, sans-serif;
+        font-weight: 600;
         color: var(--text);
-        text-shadow: 0 2px 2px rgba(0, 0, 0, 0.75);
         user-select: none;
-        pointer-events: auto;
+    }
 
-        transition: height 800ms ease 0s;
+    .garage-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        background: rgba(34, 37, 42, 0.97);
+        border-radius: 0.3vh;
+        box-shadow: 0 0 2vh rgba(0, 0, 0, 0.45);
+        pointer-events: auto;
+        animation: slide-in 0.25s ease-out;
     }
 
     .garage-container.loading {
-        height: 20vh;
+        flex: 0 0 18vh;
+        margin-bottom: auto;
     }
 
-    .spinner {
-        margin: auto;
-        display: block;
-        filter: drop-shadow(0 0 0.6vh var(--accent));
+    .garage-column :global(.key-hints) {
+        pointer-events: auto;
+    }
+
+    .loader {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4vh;
+        color: var(--text-muted);
+    }
+
+    @keyframes slide-in {
+        from { opacity: 0; transform: translateX(2vh); }
+        to { opacity: 1; transform: none; }
     }
 </style>

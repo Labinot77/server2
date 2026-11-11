@@ -119,7 +119,6 @@ AddEventHandler('fw-admin:Server:Open:Clothing', function(Target)
         if Target == source then
             TriggerClientEvent('fw-admin:Client:Force:Close', source)
         end
-        exports['fw-clothes']:GrantFreeEdit(Target)
         TriggerClientEvent('fw-clothes:Client:OpenClothesMenu', Target, "Creation")
     end
 end)
@@ -247,6 +246,18 @@ AddEventHandler('Admin:Spawn:Item', function(Result)
     local ItemName = Result.item
     TriggerClientEvent('FW:Notify', source, "Je gaf " .. Amount .. 'x ' .. ItemName .. ' (' .. Result.customType .. ') aan ' .. GetPlayerName(Result.player) .. "!", "success")
     TPlayer.Functions.AddItem(ItemName, Amount, false, nil, true, Result.customType)
+end)
+
+RegisterNetEvent('Admin:Spawn:BuffFood')
+AddEventHandler('Admin:Spawn:BuffFood', function(Result)
+    if not IsPlayerAdmin(source) then return end
+
+    local TPlayer = FW.Functions.GetPlayer(tonumber(Result.player))
+    if TPlayer == nil then return end
+
+    local Percentage = math.min(tonumber(Result.percentage) or 25, 100)
+    TPlayer.Functions.AddItem(Result.item, 1, false, { Buff = Result.buff, BuffPercentage = Percentage }, true, Result.customType)
+    TriggerClientEvent('FW:Notify', source, ('Je gaf %s (%s, %s %d%%) aan %s!'):format(Result.item, Result.customType, Result.buff, Percentage, GetPlayerName(Result.player)), "success")
 end)
 
 RegisterNetEvent('Admin:Remove:Item')
@@ -659,7 +670,7 @@ FW.Commands.Add("reportr", "Reply op een report", {}, false, function(source, ar
     else
         TriggerClientEvent('FW:Notify', source, "Persoon is niet online", "error")
     end
-end, "admin")
+end)
 
 FW.Commands.Add('reporttoggle', 'Toggle Incoming Reports (Admin Only)', {}, false, function(source, args)
     local src = source

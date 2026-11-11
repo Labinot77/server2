@@ -18,6 +18,9 @@
         VehicleData.update((Val) => ({ ...Val, Visible: Data.Visible }));
     });
 
+    let PhoneOpen = false;
+    OnEvent("Hud", "SetPhoneOpen", (Open) => PhoneOpen = Open);
+
     OnEvent("Hud", "SetVehicleData", (Data) => {
         VehicleData.update((Val) => ({ ...Val, ...Data }));
     });
@@ -33,7 +36,7 @@
     }));
 </script>
 
-{#if ($VehicleData.Visible || $LayoutEditing) && !$MyPreferences['BlackBars.Show']}
+{#if ($VehicleData.Visible || $LayoutEditing) && !PhoneOpen && !$MyPreferences['BlackBars.Show']}
     <div class="vehicle-row">
         {#if $MyPreferences['Vehicle.ShowControls'] !== false}
             <div class="controls">

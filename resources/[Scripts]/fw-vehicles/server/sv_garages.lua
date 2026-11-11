@@ -126,13 +126,25 @@ FW.Functions.CreateCallback("fw-vehicles:Server:GetVehiclesFromCid", function(So
     Cb(Vehicles)
 end)
 
+local GovOwners = { police = 'gov_pd', ems = 'gov_ems', doc = 'gov_doc' }
+
 FW.Functions.CreateCallback("fw-vehicles:Server:GetDepotVehicles", function(Source, Cb, Garage)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
 
-    local Vehicles = exports['ghmattimysql']:executeSync("SELECT * FROM `player_vehicles` WHERE `citizenid` = @Cid AND `state` = 'depot'", {
+    -- Your own impounded vehicles + the impounded fleet vehicles of your job (police/ems/doc)
+    local GovOwner = GovOwners[Player.PlayerData.job.name] or Player.PlayerData.citizenid
+    local Vehicles = exports['ghmattimysql']:executeSync("SELECT * FROM `player_vehicles` WHERE (`citizenid` = @Cid OR `citizenid` = @Gov) AND `state` = 'depot'", {
         ['@Cid'] = Player.PlayerData.citizenid,
+        ['@Gov'] = GovOwner,
     })
+
+    -- Release check is done here because the client has no os.time()
+    local Now = os.time()
+    for _, v in pairs(Vehicles) do
+        local ImpoundData = v.impounddata and json.decode(v.impounddata) or nil
+        v.canrelease = not (ImpoundData and ImpoundData.ReleaseDate and ImpoundData.ReleaseDate > Now)
+    end
 
     Cb(Vehicles)
 end)

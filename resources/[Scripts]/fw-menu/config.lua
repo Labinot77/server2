@@ -244,7 +244,7 @@ Config.Menu = {
     },
     {
         Id = "garage",
-        Title = "Voertuigen Acties",
+        Title = "Police Action Vehicle",
         Icon = "#police-action-vehicle",
         Close = true,
         Event = "fw-vehicles:Client:GarageActions",

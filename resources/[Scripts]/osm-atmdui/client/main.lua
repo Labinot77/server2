@@ -1,5 +1,5 @@
--- ATM session: owns the screen state, moves the on-screen cursor with the mouse and
--- hit-tests clicks against client/layout.lua. Every change is pushed to the DUI.
+-- ATM session: owns the screen state and hit-tests the fw-dui cursor against client/layout.lua.
+-- Every change is pushed to the DUI.
 
 local FW = exports['fw-core']:GetCoreObject()
 
@@ -9,17 +9,10 @@ local ATM = {
     entity = nil,
     model = nil,
     state = { screen = 'idle' },
-    cursor = { x = 50.0, y = 72.0 },
+    hover = nil,
 }
 
 -- ── helpers ────────────────────────────────────────────────────────────────
-
-local function Clamp(v, a, b) return math.max(a, math.min(b, v)) end
-
-local function SetInteractDisabled(disabled)
-    if GetResourceState('interact') ~= 'started' then return end
-    exports['interact']:Disable(disabled)
-end
 
 local function PlaySound(name, set)
     PlaySoundFrontend(-1, name, set, true)
@@ -205,33 +198,22 @@ local function OnClick(id)
     end
 end
 
--- ── input ──────────────────────────────────────────────────────────────────
+-- ── input (camera + cursor come from fw-dui) ──────────────────────────────
 
-local function InputLoop()
-    local last
-    while ATM.inSession do
-        DisableAllControlActions(0)
-
-        local c = ATM.cursor
-        c.x = Clamp(c.x + GetDisabledControlNormal(0, 1) * Config.CursorSensitivity, 0.0, 100.0)
-        c.y = Clamp(c.y + GetDisabledControlNormal(0, 2) * Config.CursorSensitivity, 0.0, 100.0)
-        local hover = HitTest(c.x, c.y)
-
-        local key = ('%.1f:%.1f:%s'):format(c.x, c.y, hover)
-        if key ~= last then
-            last = key
-            ATM_DUI.Send('CURSOR', { x = c.x, y = c.y, hover = hover, visible = true })
-        end
-
-        if IsDisabledControlJustPressed(0, 24) then OnClick(hover) end
-
-        -- ESC / Backspace / right click
-        if not ATM.busy and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25)) then
-            ATM.EndSession()
-        end
-
-        Wait(0)
-    end
+local function StartInput()
+    exports['fw-dui']:Focus(ATM_DUI.Id, {
+        X = 50.0, Y = 72.0,
+        Sensitivity = Config.CursorSensitivity,
+        Fov = Config.Camera.fov,
+        Transition = Config.Camera.transitionTime,
+        OnCursor = function(x, y)
+            ATM.hover = HitTest(x, y)
+            ATM_DUI.Send('CURSOR', { x = x, y = y, hover = ATM.hover, visible = true })
+        end,
+        OnClick = function() OnClick(ATM.hover) end,
+        CanClose = function() return not ATM.busy end,
+        OnClose = function() ATM.EndSession() end,
+    })
 end
 
 -- ── session ────────────────────────────────────────────────────────────────
@@ -242,20 +224,21 @@ function ATM.StartSession(entity)
 
     ATM.inSession, ATM.busy = true, false
     ATM.entity, ATM.model = entity, model
-    ATM.cursor = { x = 50.0, y = 72.0 }
+    ATM.hover = nil
     ATM.state = { screen = 'loading', accounts = {}, accIndex = 1, amount = '' }
 
-    SetInteractDisabled(true)
     TaskTurnPedToFaceEntity(PlayerPedId(), entity, 800)
     Wait(600)
 
-    ATM_DUI.Show(model)
+    if not ATM_DUI.Show(entity, model) then
+        ATM.inSession, ATM.busy = false, false
+        return
+    end
     Push()
 
     lib.requestAnimDict('amb@prop_human_atm@male@idle_a')
     TaskPlayAnim(PlayerPedId(), 'amb@prop_human_atm@male@idle_a', 'idle_a', 8.0, -8.0, -1, 1, 0, false, false, false)
-    ATM_Camera.Start(entity, model)
-    CreateThread(InputLoop)
+    StartInput()
 
     local accounts, dailyLeft = lib.callback.await('osm-atmdui:getAccounts', false)
     if not ATM.inSession then return end
@@ -277,9 +260,8 @@ function ATM.EndSession()
     Push()
     ATM_DUI.Send('CURSOR', { visible = false })
 
-    ATM_Camera.Stop()
+    exports['fw-dui']:StopFocus()
     ClearPedTasks(PlayerPedId())
-    SetInteractDisabled(false)
 
     SetTimeout(1200, function()
         if ATM.inSession then return end
@@ -311,7 +293,5 @@ end
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() or not ATM.inSession then return end
-    ATM_Camera.Stop()
-    ClearPedTasks(PlayerPedId())
-    SetInteractDisabled(false)
+    ClearPedTasks(PlayerPedId()) -- fw-dui releases the camera and screen itself
 end)

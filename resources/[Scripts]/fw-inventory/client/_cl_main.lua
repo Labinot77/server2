@@ -121,6 +121,12 @@ function OpenInventory(MagazineSlot)
     if PlayerData == nil then return end
     if PlayerData.metadata['isdead'] or PlayerData.metadata['ishandcuffed'] then return end
 
+    PendingMagazineSlot = MagazineSlot or false
+    FW.TriggerServer('fw-inventory:Server:OpenInventory', ResolveWorldInventory())
+end
+
+-- What the GROUND panel should show right now: glovebox, trunk, container, a nearby drop or new ground.
+function ResolveWorldInventory()
     -- Standing on/near a ground item -> that drop opens as GROUND.
     CurrentDropId = GetClosestDropId(Config.DropOpenDistance)
 
@@ -149,8 +155,7 @@ function OpenInventory(MagazineSlot)
         InvName = 'Drop-' .. CurrentDropId
     end
 
-    PendingMagazineSlot = MagazineSlot or false
-    FW.TriggerServer('fw-inventory:Server:OpenInventory', InvType, InvName, MaxSlots, MaxWeight)
+    return InvType, InvName, MaxSlots, MaxWeight
 end
 
 -- Magazine used from the hotbar (inventory closed): open the inventory with the loader.
@@ -282,11 +287,20 @@ RegisterNetEvent("fw-inventory:Client:LoadInventory")
 AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
     local PlayerData = FW.Functions.GetPlayerData()
 
+    if SwitchPending and CurrentInventory then
+        SwitchPending = false
+        CurrentInventory = OtherData
+        SendNUIMessage({ Action = "SwapOther", OtherData = OtherData })
+        return WatchOpenInventory(OtherData)
+    end
+    SwitchPending = false
+
     SetTimecycleModifier('hud_def_blur')
     SetTimecycleModifierStrength(1.0)
 
     SetNuiFocus(true, true)
     SetCursorLocation(0.5, 0.5)
+    HideGameHud()
 
     if OtherData then PlayOpenSound(OtherData.Type) end
 
@@ -310,6 +324,7 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
     PendingMagazineSlot = false
 
     CurrentInventory = OtherData
+    WatchOpenInventory(OtherData)
 
     if OtherData.Type == 'Trunk' then
         DoTrunkAnimation()
@@ -484,11 +499,58 @@ AddEventHandler("fw-inventory:Client:CheckWeapon", function(WeaponItem)
 end)
 
 -- Functions
+-- Keeps GROUND in sync with where you are: leave the car -> ground, get in -> glovebox,
+-- get pushed / walk away from a stash, trunk or player you're searching -> ground at your new spot.
+SwitchPending = false
+local function SwitchOtherInventory()
+    SwitchPending = true
+    FW.TriggerServer('fw-inventory:Server:OpenInventory', ResolveWorldInventory())
+    Citizen.SetTimeout(2000, function() SwitchPending = false end) -- server refused: try again later
+end
+
+function WatchOpenInventory(OtherData)
+    local OpenCoords = GetEntityCoords(PlayerPedId())
+    Citizen.CreateThread(function()
+        while CurrentInventory == OtherData do
+            Citizen.Wait(250)
+            if CurrentInventory ~= OtherData or SwitchPending then goto continue end
+
+            local Ped = PlayerPedId()
+            local Seated, Moved = IsSeatedInVehicle(Ped), #(GetEntityCoords(Ped) - OpenCoords) > Config.InventoryMoveDistance
+
+            if OtherData.Type == 'Glovebox' then
+                if not Seated then SwitchOtherInventory() end
+            elseif OtherData.Type == 'Drop' then
+                if Seated then
+                    SwitchOtherInventory()
+                elseif Moved then
+                    local _, InvName = ResolveWorldInventory()
+                    -- Same pile, or an empty fresh drop with nothing else here: the server moves it on the next put.
+                    if InvName == OtherData.Name or (not InvName and IsTableEmpty(OtherData.Items)) then
+                        OpenCoords = GetEntityCoords(Ped)
+                    else
+                        SwitchOtherInventory()
+                    end
+                end
+            elseif Moved then
+                SwitchOtherInventory()
+            end
+            ::continue::
+        end
+    end)
+end
+
+function IsTableEmpty(Items)
+    for k, v in pairs(Items or {}) do if v and k ~= 0 then return false end end
+    return true
+end
+
 function CloseInventory()
     FW.TriggerServer("fw-inventory:Server:UpdateInventory", CurrentInventory)
     
     SetTimecycleModifier('default')
     SetNuiFocus(false, false)
+    RestoreGameHud()
     SendNUIMessage({ Action = "CloseInventory" })
     
     CurrentInventory = false
@@ -528,10 +590,17 @@ function GetVehicleTrunkWeight(Entity)
     return TrunkWeight
 end
 
+-- Seated and not climbing out (task 2 = CTaskExitVehicle, active as soon as F is pressed).
+function IsSeatedInVehicle(Ped)
+    return GetVehiclePedIsIn(Ped, false) ~= 0 and not GetIsTaskActive(Ped, 2)
+end
+
 function CheckVehicle()
     local Hit, Pos, Entity = exports['fw-ui']:RayCastGamePlayCamera(3.5)
 
-    if GetVehiclePedIsIn(PlayerPedId()) ~= 0 then
+    if GetVehiclePedIsIn(PlayerPedId()) ~= 0 and not IsSeatedInVehicle(PlayerPedId()) then
+        return false, nil, nil
+    elseif GetVehiclePedIsIn(PlayerPedId()) ~= 0 then
         local Vehicle = GetVehiclePedIsIn(PlayerPedId())
         return false, GetVehicleNumberPlateText(Vehicle), Vehicle
     elseif GetVehiclePedIsIn(PlayerPedId()) == 0 and Entity ~= 0 and GetEntityType(Entity) == 2 and GetVehicleDoorLockStatus(Entity) < 2 then
