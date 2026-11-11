@@ -2,7 +2,7 @@ import { Thread } from "../../shared/classes/thread";
 import { Delay, SendUIMessage, exp } from "../../shared/utils";
 import { FW } from "../client";
 import { StartCompass, StopCompass } from "./compass";
-import { SetHudVisibleState } from "./hud";
+import { GetHudId, SetHudValue, SetHudVisibleState } from "./hud";
 import { SetMinimapVisible } from "./minimap";
 
 const VehicleThread = new Thread("tick", 50);
@@ -16,6 +16,8 @@ const MaxSpeedKnots = 200;
 
 let VehicleHudState: boolean = false;
 let LastFuelWarning: number = 0;
+let CurrentNitrousValue: number = 0;
+let CurrentHarnessValue: number = 0;
 let Cache: {[key: string]: any} | null = null;
 
 const Clamp = (Value: number, Min: number, Max: number) => Math.min(Max, Math.max(Min, Value));
@@ -108,8 +110,9 @@ if (Vehicle == 0 || IsPauseMenuActive() || VehicleHudBlocked || exp['fw-police']
         Engine: Math.floor(Math.max(GetVehicleEngineHealth(Vehicle), 0)),
         EngineOn: !!GetIsVehicleEngineRunning(Vehicle),
         // Electric: IsElectric(Vehicle),
-        Nitrous: Math.round(Clamp(exp['fw-vehicles'].GetVehicleMeta(Vehicle, 'Nitrous') || 0, 0, 100)),
-        Harness: Math.round(Clamp(exp['fw-vehicles'].GetVehicleMeta(Vehicle, 'Harness') || 0, 0, 100)),
+
+        // Nitrous: CurrentNitrousValue,
+        // Harness: CurrentHarnessValue,
     };
 
     // Only talk to the UI when something actually changed.
@@ -118,6 +121,18 @@ if (Vehicle == 0 || IsPauseMenuActive() || VehicleHudBlocked || exp['fw-police']
         SendUIMessage("Hud", "SetVehicleData", Data);
     };
 
+    const NitrousPercentage = exp['fw-vehicles'].GetVehicleMeta(Vehicle, 'Nitrous');
+    const HarnessPercentage = exp['fw-vehicles'].GetVehicleMeta(Vehicle, 'Harness');
+
+    if (NitrousPercentage != CurrentNitrousValue) {
+        CurrentNitrousValue = NitrousPercentage
+        SetHudValue(GetHudId('Nitrous'), CurrentNitrousValue);
+    };
+
+    if (HarnessPercentage != CurrentHarnessValue) {
+        CurrentHarnessValue = HarnessPercentage
+        SetHudValue(GetHudId('Harness'), CurrentHarnessValue);
+    };
 });
 
 const WarnFuellevel = async () => {
@@ -134,5 +149,7 @@ onNet("baseevents:enteredVehicle", (Vehicle: number, SeatIndex: number, DisplayN
 onNet("baseevents:leftVehicle", (Vehicle: number, SeatIndex: number, DisplayName: string, NetId: number) => {
     if (VehicleThread.running) VehicleThread.stop();
 
+    CurrentNitrousValue = 0;
+    CurrentHarnessValue = 0;
     HideVehicleHud();
 });

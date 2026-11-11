@@ -153,7 +153,7 @@ export const Hud: Array<HudType> = [
         Show: false,
         Color: '#e43f5a', Icon: 'meteor',
         Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: false,
+        AutoHide: true, AutoShow: true,
         Buffed: false, IsEnhancement: false
     },
     {
@@ -161,7 +161,7 @@ export const Hud: Array<HudType> = [
         Show: false,
         Color: '#dd4dfa', Icon: 'user-slash',
         Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: false,
+        AutoHide: true, AutoShow: true,
         Buffed: false, IsEnhancement: false
     },
     {

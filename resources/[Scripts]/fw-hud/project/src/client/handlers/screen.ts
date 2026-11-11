@@ -96,9 +96,8 @@ export const GetMinimapRadarRect = (Zoom: number, OffsetX: number, OffsetY: numb
 
     if (Minimap.AutoCalibrate) {
         const T = Clamp(16.0 / 9.0 - Screen.aspect, 0.0, 0.45);
-        // Mask circle fills the whole texture, so the rect is the ring itself (keeps the GPS route inside).
-        EngX = 1.0;
-        EngY = (0.97 + 0.731 * T) / 0.982;
+        EngX = 0.765;
+        EngY = 0.97 + 0.731 * T;
         OffX = -0.15 - 0.1125 * T;
         OffY = -0.01 + 1.294 * T;
     }
