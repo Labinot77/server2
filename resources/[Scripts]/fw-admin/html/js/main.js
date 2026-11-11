@@ -210,7 +210,7 @@
         const classes = ['row', i === selectedIndex ? 'is-selected' : '', openRowKey === key ? 'is-open' : ''].join(' ');
         const panel = item.Collapse ? `<div class="row__panel">
                 ${openRowKey === key ? fieldsHTML(item, idx) : ''}
-                <button class="run-btn" data-run="${idx}">${esc(item.Name)}</button>
+                <button class="run-btn" data-run="${idx}">Execute</button>
             </div>` : '';
         const state = item.Toggle && !item.Collapse
             ? `<span class="row__state ${enabled[idx] ? 'is-on' : ''}">${enabled[idx] ? 'ON' : 'OFF'}</span>` : '';

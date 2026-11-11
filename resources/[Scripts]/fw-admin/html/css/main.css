@@ -226,7 +226,10 @@ button { font-family: inherit; }
 .list::-webkit-scrollbar-thumb { background: #eff1f1; }
 .list::-webkit-scrollbar-track { background: transparent; }
 
-.row.is-open, .settings, .empty { grid-column: 1 / -1; }
+.settings, .empty { grid-column: 1 / -1; }
+
+.row { position: relative; }
+.row.is-open { z-index: 10; }
 
 .row__head { display: flex; gap: 0.25rem; height: 2.85rem; cursor: pointer; }
 
@@ -325,11 +328,47 @@ button { font-family: inherit; }
 
 .row__panel {
     display: none;
-    margin: 0.25rem 0 0.4rem 3.1rem;
-    padding: 0.9rem 1rem 1rem;
-    background: var(--panel);
-    border-radius: 2px;
+    position: absolute;
+    top: 100%;
+    left: 3.1rem;
+    right: 0;
+    padding: 0.6rem;
+    background: rgba(18, 20, 22, 0.97);
+    box-shadow: 0 0.6rem 1.5rem rgba(0, 0, 0, 0.5);
 }
+
+.list.is-list .row.is-open .row__panel { position: static; margin-left: 3.1rem; }
+
+.row__panel .field {
+    flex-direction: row;
+    align-items: center;
+    max-width: none;
+    margin-bottom: 0.4rem;
+    padding-left: 0.6rem;
+    background: var(--panel-hi);
+}
+
+.row__panel .field label { flex: 0 0 40%; font-size: 1rem; }
+.row__panel .field > input,
+.row__panel .field > .ui.dropdown { flex: 1; margin: 0.25rem; }
+
+.row__panel .field input,
+.row__panel .field .ui.selection.dropdown { background: #ffffff; border-color: #ffffff; color: var(--ink); }
+.row__panel .field .ui.dropdown > .text,
+.row__panel .field .ui.search.selection.dropdown > input.search,
+.row__panel .field .ui.selection.dropdown > .dropdown.icon { color: var(--ink); }
+
+.row__panel .run-btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.2rem;
+    background: #000000;
+    color: #ffffff;
+}
+
+.row__panel .run-btn:hover { background: #1c1f22; }
+.row__panel .btn-row { flex-wrap: nowrap; }
+.row__panel .btn-row .run-btn { flex: 1; min-width: 0; white-space: nowrap; font-size: 1rem; }
 
 .row.is-open .row__panel { display: block; }
 
@@ -387,12 +426,12 @@ button { font-family: inherit; }
 
 .info-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.5rem 2rem;
-    margin-bottom: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+    margin-bottom: 0.5rem;
 }
 
-.info { display: flex; flex-direction: column; min-width: 0; }
+.info { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-width: 0; padding: 0.3rem 0.6rem; background: var(--panel-hi); }
 .info__label { font-style: italic; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: var(--text-2); }
 .info__value { font-weight: 600; font-size: 1.05rem; color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
 
