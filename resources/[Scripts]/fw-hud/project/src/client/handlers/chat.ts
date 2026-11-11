@@ -1,6 +1,6 @@
-// Port of codera-hud client/chat.lua onto your existing `chat` resource.
+// Port of codera-hud client/chat.lua onto the fw-chat resource.
 //
-// Your `chat` resource (resources/[Cores]/[fivem]/[gameplay]/chat) stays as the SERVER side:
+// fw-chat (resources/[Cores]/[fivem]/[gameplay]/fw-chat) stays as the SERVER side:
 // sv_chat.lua keeps routing `_chat:messageEntered`, `chatMessage`, `chat:init`, /clear etc.
 // Its client side is only the spam filter export; the UI is the Chat.svelte layer in fw-ui.
 //
@@ -181,8 +181,8 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
     if (Message.length > Chat.MaxLength) Message = Message.substring(0, Chat.MaxLength);
     if (Message.startsWith("/")) Message = Message.substring(1);
 
-    // Spam filter lives in the chat resource (exports['chat']:GetSpamFilter()).
-    const SpamFilter: {[word: string]: number} = exp['chat'].GetSpamFilter() || {};
+    // Spam filter lives in fw-chat (exports['fw-chat']:GetSpamFilter()).
+    const SpamFilter: {[word: string]: number} = GetResourceState("fw-chat") == "started" ? exp['fw-chat'].GetSpamFilter() || {} : {};
     const Lowered = Message.toLowerCase();
     const Matched = Object.keys(SpamFilter).find((Word) => Lowered.includes(Word));
 
@@ -197,7 +197,7 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
 // Diagnostic: the old chat UI opens on T as well when the `chat` resource still has its Vue page.
 setTimeout(() => {
     if (OldChatRunning()) {
-        console.log("^1[fw-hud] The old `chat` resource (with ui_page) is still running, so the old chat is used on T. Replace it with the slimmed chat resource (fxmanifest.lua only, no html folder / __resource.lua) and `restart chat`.^7");
+        console.log("^1[fw-hud] The default `chat` resource is running (artifact citizen/system_resources/chat), so the old chat is used on T. Remove `ensure chat` from server.cfg, `ensure fw-chat` instead, and restart the server.^7");
     };
 }, 5000);
 
