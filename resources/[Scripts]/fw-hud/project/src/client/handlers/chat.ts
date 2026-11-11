@@ -2,8 +2,7 @@
 //
 // Your `chat` resource (resources/[Cores]/[fivem]/[gameplay]/chat) stays as the SERVER side:
 // sv_chat.lua keeps routing `_chat:messageEntered`, `chatMessage`, `chat:init`, /clear etc.
-// Only its NUI (Vue page + cl_chat.lua) is replaced by this handler and the Chat.svelte layer.
-// See ../../../../chat/ for the slimmed-down cl_chat.lua + __resource.lua.
+// Its client side is only the spam filter export; the UI is the Chat.svelte layer in fw-ui.
 //
 // Like your old chat, whatever the player types is run with ExecuteCommand
 // (`/` optional), after the spam filter check.
@@ -181,7 +180,7 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
 // Diagnostic: the old chat UI opens on T as well when the `chat` resource still has its Vue page.
 setTimeout(() => {
     if (GetResourceState("chat") == "started" && GetResourceMetadata("chat", "ui_page", 0)) {
-        console.log("^1[fw-hud] The `chat` resource still declares a ui_page: the old chat UI will also open on T and steal the keyboard. Install the slimmed chat/cl_chat.lua + chat/__resource.lua and `restart chat`.^7");
+        console.log("^1[fw-hud] The `chat` resource still declares a ui_page: the old chat UI will also open on T and steal the keyboard. Use the slimmed chat resource (fxmanifest.lua without ui_page) and `restart chat`.^7");
     };
 }, 5000);
 

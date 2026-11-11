@@ -232,7 +232,9 @@
             CompleteSuggestion();
         } else if (Event.key == "Enter") {
             Event.preventDefault();
-            if (Active.length) return CompleteSuggestion();
+            // Complete a partial command, but send one that is already typed in full.
+            const Typed = Value.trim().slice(1).toLowerCase();
+            if (Active.length && Active[0].name.toLowerCase() != Typed) return CompleteSuggestion();
             Send();
         } else if (Event.key == "Escape") {
             Event.preventDefault();
