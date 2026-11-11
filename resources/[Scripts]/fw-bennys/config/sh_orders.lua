@@ -37,38 +37,18 @@ Config.Orders = {
     HistoryCount = 20,
 }
 
--- Laptop DUI. Laptops are read from placed_props; the model decides how the page gets onto the screen:
---   RenderTarget = the prop has a script render target (script_rt_<name>), the page is drawn into it every frame
---   Texture      = the page replaces that texture in the model's txd (AddReplaceTexture)
--- Resolution is the DUI page size; keep it the same aspect ratio as the screen.
+-- Work-order laptop. Laptops are props placed from the admin panel (fw-admin) inside a business Area above.
+-- How the page gets on each model's screen (texture / render target, resolution, camera) is set in fw-dui/config/sh_config.lua.
 Config.Laptop = {
-    -- Texture = screen texture to replace, Dict = its texture dictionary (defaults to the model name),
-    -- RenderTarget = named render target instead of a texture, Resolution = DUI size.
     Models = {
-        ['prop_laptop_jimmy'] = {
-            Texture = 'prop_jimmy_screen',
-            Resolution = { 1280, 800 },
-        },
-        ['prop_laptop_lester2'] = {
-            RenderTarget = 'tvscreen',          -- script_rt_tvscreen (512x256)
-            Resolution = { 1280, 640 },
-        },
-        ['as_prop_as_laptop_01a'] = {
-            Texture = 'prop_moniter_desktop_01',
-            Resolution = { 1280, 800 },
-        },
+        ['prop_laptop_jimmy'] = true,
+        ['prop_laptop_lester2'] = true,
+        ['as_prop_as_laptop_01a'] = true,
+        ['custom_laptop_01'] = true,
     },
 
     CursorSensitivity = 14.0,
 
-    -- Max distance between the spawned prop and its placed_props coords to be treated as the same laptop.
-    MatchDistance = 1.5,
-
-    -- Camera, as offsets from the laptop prop. A model can override this with its own Camera = { ... }.
-    Camera = {
-        Offset = vector3(0.0, -0.55, 0.30), -- where the camera sits
-        LookAt = vector3(0.0, 0.05, 0.13),  -- the middle of the screen
-        Fov = 42.0,
-        Transition = 600,
-    },
+    -- The nearest laptop within this many metres shows the live dashboard (members) or the locked screen.
+    RenderDistance = 15.0,
 }

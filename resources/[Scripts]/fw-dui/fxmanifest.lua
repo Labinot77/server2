@@ -2,16 +2,13 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-description 'fw-dui - DUI pages drawn on one specific prop (laptops, monitors, ATMs, ...)'
+description 'fw-dui - DUI screens on props (ATMs, laptops, ...), incl. props placed from fw-admin'
 
 shared_script 'config/sh_config.lua'
 
 client_scripts {
     '@fw-assets/client/cl_errorlog.lua',
-    'client/_cl_main.lua',
-    'client/cl_focus.lua',
-    'client/cl_static.lua',
-    'client/cl_calibrate.lua',
+    'client/*.lua',
 }
 
-files { 'html/*.html' }
+server_script 'server/*.lua'

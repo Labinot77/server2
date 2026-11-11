@@ -15,3 +15,4 @@ server_scripts {
     'sv_config.lua',
     'server/*.lua',
 }
+files { 'html/atm/index.html' } -- ATM page, built from web-atm/ (npm run build)

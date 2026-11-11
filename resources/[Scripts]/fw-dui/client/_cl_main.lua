@@ -1,254 +1,243 @@
--- Core: create DUI pages and draw each one on a single entity.
---   Corner models: textured quad on that entity only (DrawSpritePoly) -> unlit, no copies.
---   Texture / RenderTarget models: legacy global modes, last attached wins.
+-- fw-dui: named screens (e.g. 'atm', 'bennys_laptop'). A screen is one DUI page shown on the nearest
+-- prop of its models while the player is in range, and unloaded when nobody is near.
+--
+-- Events for the resource that registered the screen (TriggerEvent, client side):
+--   fw-dui:Client:Shown  (Name, Entity, PropId)  page is on Entity (PropId = fw-admin placed prop id, or nil)
+--   fw-dui:Client:Hidden (Name)                  out of range, page unloaded
+--   fw-dui:Client:Cursor (Name, X, Y)            focused without Mouse: cursor moved (percent)
+--   fw-dui:Client:Click  (Name, X, Y)            focused without Mouse: left click
+--   fw-dui:Client:Closed (Name)                  the player left the focused screen
+--   fw-dui:Client:WatchEnded (Name, Entity)      stopped watching another player's screen (Mirror), show your idle page
 
-local TXD_NAME = 'fw_dui'
-local Txd = CreateRuntimeTxd(TXD_NAME)
-
-Duis = {}             -- [Id] = { Id, Dui, Tex, Width, Height, Owner, Entity, Model, Geometry }
-local Pool = {}       -- ['WxH'] = { { Dui, Tex } } runtime textures can't be freed, so DUIs are reused
-local EntityOwner = {}-- [Entity] = Id drawn on it (newest attach wins)
-local GlobalOwner = {}-- [texture / render target] = Id
-local ModelsByHash = {}
-local NextId, TexCount = 0, 0
+Screens = {} -- [Name] = screen state
+local Txd = CreateRuntimeTxd('fw_dui')
+local TexCount = 0
 
 for Name, Data in pairs(Config.Models) do
     Data.Name = Name
-    ModelsByHash[joaat(Name)] = Data
+    Data.Resolution = Data.Resolution or { 1280, 720 }
 end
 
--- Helpers
+-- ── fw-admin placed props ──────────────────────────────────────────────────
 
-local function GetModel(Model)
-    if type(Model) == 'string' then Model = joaat(Model) end
-    return ModelsByHash[Model]
+local function GetPlacedProps()
+    if GetResourceState('fw-admin') ~= 'started' then return {} end
+    return exports['fw-admin']:GetPlacedProps() or {}
 end
 
-local function Cross(A, B)
-    return vector3(A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x)
+function GetPropId(Entity)
+    for Id, Prop in pairs(GetPlacedProps()) do
+        if Prop.Entity == Entity then return Id end
+    end
 end
 
--- World corners of the screen + the normal pointing out of it (towards the viewer).
-function GetScreenCorners(D)
-    local G, E = D.Geometry, D.Entity
-    local TL = GetOffsetFromEntityInWorldCoords(E, G.TL.x, G.TL.y, G.TL.z)
-    local TR = GetOffsetFromEntityInWorldCoords(E, G.TR.x, G.TR.y, G.TR.z)
-    local BL = GetOffsetFromEntityInWorldCoords(E, G.BL.x, G.BL.y, G.BL.z)
-    local N = Cross(BL - TL, TR - TL)
-    N = N / #N
-    return TL, TR, BL, TR + BL - TL, N
-end
+local function FindNearest(S, Coords)
+    local Best, BestModel, BestDist = nil, nil, S.Distance
 
-local function GlobalKey(Model)
-    return Model.RenderTarget and ('rt:' .. Model.RenderTarget) or ('tx:' .. (Model.Dict or Model.Name) .. ':' .. Model.Texture)
-end
-
--- Create / destroy
-
-function Create(Url, Width, Height)
-    Width, Height = Width or Config.DefaultResolution[1], Height or Config.DefaultResolution[2]
-    local Key = Width .. 'x' .. Height
-    local Entry = Pool[Key] and table.remove(Pool[Key])
-
-    if Entry then
-        SetDuiUrl(Entry.Dui, Url)
-    else
-        local Dui = CreateDui(Url, Width, Height)
-        local Deadline = GetGameTimer() + 5000
-        while not IsDuiAvailable(Dui) do
-            if GetGameTimer() > Deadline then DestroyDui(Dui) return nil end
-            Wait(0)
-        end
-        TexCount = TexCount + 1
-        Entry = { Dui = Dui, Tex = ('dui_%d'):format(TexCount) }
-        CreateRuntimeTextureFromDuiHandle(Txd, Entry.Tex, GetDuiHandle(Dui))
+    local function Check(Entity, Model)
+        local Dist = #(Coords - GetEntityCoords(Entity))
+        if Dist <= BestDist then Best, BestModel, BestDist = Entity, Model, Dist end
     end
 
-    Wait(300) -- let the page boot before the first message
-    NextId = NextId + 1
-    Duis[NextId] = {
-        Id = NextId, Dui = Entry.Dui, Tex = Entry.Tex, Key = Key, Width = Width, Height = Height,
-        Owner = GetInvokingResource() or GetCurrentResourceName(),
-    }
-    return NextId
-end
-
-function Detach(Id)
-    local D = Duis[Id]
-    if not D or not D.Entity then return end
-
-    if D.Geometry then
-        if EntityOwner[D.Entity] == Id then
-            -- Hand the screen back to an older DUI on the same prop (e.g. an idle screen).
-            EntityOwner[D.Entity] = nil
-            for OtherId, Other in pairs(Duis) do
-                if OtherId ~= Id and Other.Entity == D.Entity and Other.Geometry then EntityOwner[D.Entity] = OtherId end
-            end
+    if S.Placed then
+        for _, Prop in pairs(GetPlacedProps()) do
+            local Model = S.Models[joaat(Prop.Model)]
+            if Model and Prop.Entity and DoesEntityExist(Prop.Entity) then Check(Prop.Entity, Model) end
         end
     else
-        local Key = GlobalKey(D.Model)
-        if GlobalOwner[Key] == Id then
-            GlobalOwner[Key] = nil
-            if D.Model.RenderTarget then
-                ReleaseNamedRendertarget(D.Model.RenderTarget)
-            else
-                RemoveReplaceTexture(D.Model.Dict or D.Model.Name, D.Model.Texture)
-            end
+        for Hash, Model in pairs(S.Models) do
+            local Entity = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, BestDist, Hash, false, false, false)
+            if Entity ~= 0 then Check(Entity, Model) end
         end
     end
 
-    D.Entity, D.Model, D.Geometry, D.RenderId = nil, nil, nil, nil
+    return Best, BestModel
 end
 
-function Destroy(Id)
-    local D = Duis[Id]
-    if not D then return end
-    if Focused and Focused.Id == Id then StopFocus() end
-    Detach(Id)
-    SetDuiUrl(D.Dui, 'about:blank')
-    Pool[D.Key] = Pool[D.Key] or {}
-    table.insert(Pool[D.Key], { Dui = D.Dui, Tex = D.Tex })
-    Duis[Id] = nil
-end
+-- ── Screen texture ─────────────────────────────────────────────────────────
 
--- Geometry (optional) overrides the model's corners, used by /duicalib.
-function Attach(Id, Entity, Geometry)
-    local D = Duis[Id]
-    local Model = DoesEntityExist(Entity) and GetModel(GetEntityModel(Entity))
-    if not D or not Model then return false end
+local function SetTexture(S, Model)
+    if S.Model == Model then return end
 
-    Detach(Id)
-    D.Entity, D.Model = Entity, Model
-    D.Geometry = Geometry or (Model.TL and Model)
-
-    if D.Geometry then
-        EntityOwner[Entity] = Id
-        return true
+    local Old = S.Model
+    if Old and Old.RenderTarget then
+        ReleaseNamedRendertarget(Old.RenderTarget)
+    elseif Old then
+        RemoveReplaceTexture(Old.Dict or Old.Name, Old.Texture)
     end
-
-    local Key = GlobalKey(Model)
-    if GlobalOwner[Key] then Detach(GlobalOwner[Key]) end
-    GlobalOwner[Key] = Id
+    S.Model, S.RenderId = Model, nil
+    if not Model then return end
 
     if Model.RenderTarget then
         if not IsNamedRendertargetRegistered(Model.RenderTarget) then RegisterNamedRendertarget(Model.RenderTarget, false) end
-        if not IsNamedRendertargetLinked(GetEntityModel(Entity)) then LinkNamedRendertarget(GetEntityModel(Entity)) end
-        D.RenderId = GetNamedRendertargetRenderId(Model.RenderTarget)
-    elseif Model.Texture then
-        AddReplaceTexture(Model.Dict or Model.Name, Model.Texture, TXD_NAME, D.Tex)
+        if not IsNamedRendertargetLinked(joaat(Model.Name)) then LinkNamedRendertarget(joaat(Model.Name)) end
+        S.RenderId = GetNamedRendertargetRenderId(Model.RenderTarget)
     else
-        GlobalOwner[Key], D.Entity, D.Model = nil, nil, nil
+        AddReplaceTexture(Model.Dict or Model.Name, Model.Texture, 'fw_dui', S.Tex)
+    end
+end
+
+-- ── Page ───────────────────────────────────────────────────────────────────
+
+local function Hide(S)
+    if S.Loading then return end
+    SetTexture(S, nil)
+    local WasShown = S.Entity ~= nil
+    S.Entity = nil
+    if S.Loaded then
+        SetDuiUrl(S.Dui, 'about:blank')
+        S.Loaded = false
+    end
+    if WasShown then TriggerEvent('fw-dui:Client:Hidden', S.Name) end
+end
+
+-- Loads the page at the model's resolution (the DUI is reused while the size stays the same).
+function LoadScreen(S, Model)
+    while S.Loading do Wait(50) end
+    local W, H = Model.Resolution[1], Model.Resolution[2]
+
+    if S.Dui and (S.Width ~= W or S.Height ~= H) then
+        Hide(S)
+        DestroyDui(S.Dui)
+        S.Dui = nil
+    end
+    if S.Loaded then return true end
+
+    S.Loading = true
+    if S.Dui then
+        SetDuiUrl(S.Dui, S.Url)
+    else
+        S.Dui, S.Width, S.Height = CreateDui(S.Url, W, H), W, H
+        TexCount = TexCount + 1
+        S.Tex = ('dui_%d'):format(TexCount) -- runtime textures can't be recreated, new name per DUI
+        CreateRuntimeTextureFromDuiHandle(Txd, S.Tex, GetDuiHandle(S.Dui))
+
+        local Deadline = GetGameTimer() + 4000
+        while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(50) end
+    end
+
+    Wait(500) -- let the page boot before the first message
+    S.Loaded, S.Loading = true, false
+    return true
+end
+
+function ApplyScreen(S, Entity, Model)
+    SetTexture(S, Model)
+    if S.Entity == Entity then return end
+    S.Entity = Entity
+    TriggerEvent('fw-dui:Client:Shown', S.Name, Entity, GetPropId(Entity))
+end
+
+local function Destroy(S)
+    if Focused and Focused.S == S then StopFocus() end
+    S.Loading = false
+    Hide(S)
+    if S.Dui then DestroyDui(S.Dui) end
+    Screens[S.Name] = nil
+end
+
+-- ── Exports ────────────────────────────────────────────────────────────────
+
+--[[ Options:
+    Url      = page, e.g. 'nui://fw-financials/html/atm/index.html'
+    Models   = { 'prop_fleeca_atm', ... } (keys of Config.Models)
+    Distance = range in metres (default 15)
+    Placed   = true: only props placed from the fw-admin panel
+    Mirror   = true: players nearby see what the user does on it (cursor, clicks, Send messages)
+]]
+local function RegisterScreen(Name, Options)
+    if Screens[Name] then Destroy(Screens[Name]) end
+
+    local S = {
+        Name = Name, Url = Options.Url, Distance = Options.Distance or 15.0, Placed = Options.Placed == true, Mirror = Options.Mirror == true,
+        Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {},
+    }
+    for _, Model in ipairs(Options.Models or {}) do
+        if Config.Models[Model] then
+            S.Models[joaat(Model)] = Config.Models[Model]
+        else
+            print(('[fw-dui] %s: model %s is not in fw-dui Config.Models'):format(Name, Model))
+        end
+    end
+    Screens[Name] = S
+end
+
+-- Locks the screen on Entity (range check stops moving it). Yields until the page is loaded.
+local function Show(Name, Entity)
+    local S = Screens[Name]
+    local Model = S and DoesEntityExist(Entity) and S.Models[GetEntityModel(Entity)]
+    if not Model then return false end
+
+    S.Locked, S.Watching = true, nil
+    if not LoadScreen(S, Model) then
+        S.Locked = false
         return false
     end
+    ApplyScreen(S, Entity, Model)
     return true
 end
 
--- Page communication
-
-function Send(Id, Action, Data)
-    local D = Duis[Id]
-    if D then SendDuiMessage(D.Dui, json.encode({ action = Action, data = Data })) end
+-- Unlocks the screen; the page stays on the prop and the range check takes over again.
+local function Release(Name)
+    if Screens[Name] then Screens[Name].Locked = false end
 end
 
-function SetUrl(Id, Url)
-    local D = Duis[Id]
-    if D then SetDuiUrl(D.Dui, Url) end
+-- MirrorData: what players watching you get instead of Data (e.g. balances hidden); false = not mirrored.
+function Send(Name, Action, Data, MirrorData)
+    local S = Screens[Name]
+    if not S or not S.Loaded then return end
+    SendDuiMessage(S.Dui, json.encode({ action = Action, data = Data }))
+    if MirrorData ~= false then MirrorPush(S, { 'msg', Action, MirrorData == nil and Data or MirrorData }) end
 end
 
--- X / Y in percent of the page (0-100).
-function MouseMove(Id, X, Y)
-    local D = Duis[Id]
-    if D then SendDuiMouseMove(D.Dui, math.floor(X / 100 * D.Width), math.floor(Y / 100 * D.Height)) end
-end
-
-function GetResolution(Model)
-    local Data = GetModel(Model)
-    local Res = Data and Data.Resolution or Config.DefaultResolution
-    return Res[1], Res[2]
-end
-
--- 'poly' | 'texture' | 'rendertarget' | nil (unsupported)
-function GetScreenMode(Model)
-    local Data = GetModel(Model)
-    if not Data then return nil end
-    return (Data.TL and 'poly') or (Data.RenderTarget and 'rendertarget') or (Data.Texture and 'texture') or nil
-end
-
-exports('Create', Create)
-exports('Destroy', Destroy)
-exports('Attach', Attach)
-exports('Detach', Detach)
+exports('RegisterScreen', RegisterScreen)
+exports('Show', Show)
+exports('Release', Release)
 exports('Send', Send)
-exports('SetUrl', SetUrl)
-exports('MouseMove', MouseMove)
-exports('MouseDown', function(Id, Button) if Duis[Id] then SendDuiMouseDown(Duis[Id].Dui, Button or 'left') end end)
-exports('MouseUp', function(Id, Button) if Duis[Id] then SendDuiMouseUp(Duis[Id].Dui, Button or 'left') end end)
-exports('MouseWheel', function(Id, Delta) if Duis[Id] then SendDuiMouseWheel(Duis[Id].Dui, Delta, 0) end end)
-exports('GetResolution', GetResolution)
-exports('GetScreenMode', GetScreenMode)
-exports('IsAttached', function(Id) return Duis[Id] ~= nil and Duis[Id].Entity ~= nil end)
-function GetEntityDui(Entity) return EntityOwner[Entity] end
-exports('GetEntityDui', GetEntityDui)
+exports('GetEntity', function(Name) return Screens[Name] and Screens[Name].Entity end)
+exports('GetPropId', GetPropId)
 
--- Drawing
-
-local function Tri(A, B, C, Tex, Ua, Va, Ub, Vb, Uc, Vc)
-    local L = Config.Brightness
-    DrawSpritePoly(A.x, A.y, A.z, B.x, B.y, B.z, C.x, C.y, C.z, L, L, L, 255, TXD_NAME, Tex, Ua, Va, 1.0, Ub, Vb, 1.0, Uc, Vc, 1.0)
-end
-
-local function DrawPoly(D, CamCoords)
-    if #(CamCoords - GetEntityCoords(D.Entity)) > Config.DrawDistance then return false end
-    local TL, TR, BL, BR, N = GetScreenCorners(D)
-    local O = N * 0.003 -- just in front of the screen, no z-fighting
-    TL, TR, BL, BR = TL + O, TR + O, BL + O, BR + O
-    -- both windings, so it shows regardless of face culling
-    Tri(TL, TR, BR, D.Tex, 0, 0, 1, 0, 1, 1)
-    Tri(TL, BR, BL, D.Tex, 0, 0, 1, 1, 0, 1)
-    Tri(TL, BR, TR, D.Tex, 0, 0, 1, 1, 1, 0)
-    Tri(TL, BL, BR, D.Tex, 0, 0, 0, 1, 1, 1)
-    return true
-end
-
-local function DrawTarget(D)
-    SetTextRenderId(D.RenderId)
-    SetScriptGfxDrawOrder(4)
-    SetScriptGfxDrawBehindPausemenu(true)
-    DrawSprite(TXD_NAME, D.Tex, 0.5, 0.5, 1.0, 1.0, 0.0, 255, 255, 255, 255)
-    SetTextRenderId(GetDefaultScriptRendertargetRenderId())
-    return true
-end
+-- ── Threads ────────────────────────────────────────────────────────────────
 
 CreateThread(function()
     while true do
-        local Drew = false
-        local CamCoords = GetFinalRenderedCamCoord()
-
-        for Id, D in pairs(Duis) do
-            if D.Entity then
-                if not DoesEntityExist(D.Entity) then
-                    Detach(Id) -- prop despawned (e.g. fw-props streaming)
-                elseif D.Geometry then
-                    if EntityOwner[D.Entity] == Id and DrawPoly(D, CamCoords) then Drew = true end
-                elseif D.RenderId and DrawTarget(D) then
-                    Drew = true
+        local Coords = GetEntityCoords(PlayerPedId())
+        for _, S in pairs(Screens) do
+            if not S.Locked and not S.Watching then
+                local Entity, Model = FindNearest(S, Coords)
+                if not Entity then
+                    Hide(S)
+                elseif (S.Entity ~= Entity or S.Model ~= Model) and LoadScreen(S, Model) and not S.Locked and not S.Watching and Screens[S.Name] == S then
+                    ApplyScreen(S, Entity, Model)
                 end
             end
         end
+        Wait(1000)
+    end
+end)
 
+-- Render targets have to be drawn every frame.
+CreateThread(function()
+    while true do
+        local Drew = false
+        for _, S in pairs(Screens) do
+            if S.RenderId then
+                Drew = true
+                SetTextRenderId(S.RenderId)
+                SetScriptGfxDrawOrder(4)
+                SetScriptGfxDrawBehindPausemenu(true)
+                DrawSprite('fw_dui', S.Tex, 0.5, 0.5, 1.0, 1.0, 0.0, 255, 255, 255, 255)
+                SetTextRenderId(GetDefaultScriptRendertargetRenderId())
+            end
+        end
         Wait(Drew and 0 or 250)
     end
 end)
 
--- Cleanup: a stopping resource takes its DUIs with it.
-
+-- A stopping resource takes its screens with it.
 AddEventHandler('onResourceStop', function(Resource)
     local Self = Resource == GetCurrentResourceName()
-    for Id, D in pairs(Duis) do
-        if Self or D.Owner == Resource then Destroy(Id) end
-    end
-    if not Self then return end
-    for _, List in pairs(Pool) do
-        for _, Entry in ipairs(List) do DestroyDui(Entry.Dui) end
+    for _, S in pairs(Screens) do
+        if Self or S.Owner == Resource then Destroy(S) end
     end
 end)

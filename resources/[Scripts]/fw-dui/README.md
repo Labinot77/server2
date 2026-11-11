@@ -1,49 +1,46 @@
 # fw-dui
 
-Shared DUI resource: draws a web page on **one specific prop** (laptop, monitor, ATM, ...).
-Used by `osm-atmdui` and `fw-bennys`; props you place with `fw-props` work the same way.
+Shared DUI screens on props. A **screen** is one named page (`atm`, `bennys_laptop`, ...) that fw-dui shows on
+the nearest prop of its models while the player is in range, and unloads when nobody is near.
+Props placed from the fw-admin panel are pulled from fw-admin (`Placed = true`).
 
-`ensure fw-dui` after `fw-core` / `fw-ui` and before the scripts that use it.
+Start order: `fw-admin` → `fw-dui` → resources that use it (`fw-financials`, `fw-bennys`).
 
-## Why the page is drawn on the entity
-`AddReplaceTexture` and render targets are **global**: they change that texture on every copy of the model,
-so two laptops next to each other both showed the page. fw-dui instead draws the page as a quad on the screen
-corners of the one entity it is attached to. That also means it is **unlit**: no glare or reflections from
-the game lights, the brightness stays the same (`Config.Brightness`).
+## Models
+`config/sh_config.lua` says how the page gets on each model: `Texture` (+ `Dict`) or `RenderTarget`,
+`Resolution`, and an optional `Camera`. A replaced texture changes on every prop of that model, so props that
+may show different pages at the same time need their own model + texture name.
 
-Models without corners still fall back to the old `Texture` / `RenderTarget` modes (global, with lighting).
-
-## Calibrating a screen
-1. `Config.DevMode = true`, restart fw-dui, stand next to the prop.
-2. `/duicalib [model]` - a test grid appears on the prop.
-3. `1/2/3` pick a corner (top-left, top-right, bottom-left), arrows move it, `PgUp/PgDn` depth, `SHIFT` fine.
-4. `ENTER` prints the line for `Config.Models` in F8. Paste it in `config/sh_config.lua`.
-
-Laptops are not calibrated yet, so they use the texture fallback until you do this (the ATM corners come from
-the old osm-atmdui offsets and may need a nudge).
-
-## Exports (client)
+## Use it from another resource (client)
 ```lua
-local Id = exports['fw-dui']:Create(Url, Width, Height)   -- yields; Width/Height: exports['fw-dui']:GetResolution(Model)
-exports['fw-dui']:Attach(Id, Entity)                        -- show on that entity only
-exports['fw-dui']:Send(Id, 'action', Data)                  -- page receives { action = 'action', data = Data }
-exports['fw-dui']:Detach(Id)                                -- off the prop, page stays loaded
-exports['fw-dui']:Destroy(Id)                               -- release (DUIs are pooled, nothing leaks)
-exports['fw-dui']:SetUrl(Id, Url)
-exports['fw-dui']:MouseMove(Id, X, Y) / MouseDown(Id) / MouseUp(Id) / MouseWheel(Id, Delta)
+local DUI = exports['fw-dui']
 
--- Camera on the screen + cursor. Handles freeze, HUD, interact and ESC / Backspace / right click.
-exports['fw-dui']:Focus(Id, {
-    Mouse = true,                   -- real mouse events to the page (fw-bennys), or use OnCursor / OnClick (osm-atmdui)
-    OnCursor = function(X, Y) end,
-    OnClick = function(X, Y) end,
-    CanClose = function() return true end,
-    OnClose = function() end,
+DUI:RegisterScreen('my_screen', {
+    Url = ('nui://%s/html/page.html'):format(GetCurrentResourceName()),
+    Models = { 'custom_laptop_01' },
+    Distance = 15.0,
+    Placed = true, -- only props placed from the admin panel
 })
-exports['fw-dui']:StopFocus()
-```
-DUIs created by a resource are cleaned up automatically when that resource stops.
 
-## Always-on screens
-Add entries to `Config.Screens` (by fw-props `PropId`, or `Model` + `Coords`). A script that attaches to the same
-prop (e.g. the work-order laptop) takes over the screen and hands it back when it's done.
+AddEventHandler('fw-dui:Client:Shown', function(Name, Entity, PropId)
+    if Name == 'my_screen' then DUI:Send('my_screen', 'data', { ... }) end -- page gets { action, data }
+end)
+
+DUI:Show('my_screen', Entity)   -- lock on this prop (yields until loaded)
+DUI:Focus('my_screen', { Mouse = true })   -- camera + cursor; ESC / Backspace / right click leaves
+DUI:StopFocus()
+DUI:Release('my_screen')        -- back to the range check, the page stays on screen
+```
+
+Other events: `fw-dui:Client:Hidden (Name)`, `fw-dui:Client:Closed (Name)`, and without `Mouse`:
+`fw-dui:Client:Cursor (Name, X, Y)` / `fw-dui:Client:Click (Name, X, Y)` (percent, hit-test yourself).
+`DUI:SetCloseable(false)` blocks leaving (e.g. while an ATM transaction runs).
+Screens are removed automatically when the resource that registered them stops.
+
+## Mirror (others see your screen)
+Register with `Mirror = true` and players within `Config.MirrorDistance` see what the user does on it:
+cursor, clicks and every `Send`. `DUI:Send(Name, Action, Data, MirrorData)` lets you send watchers
+something else (`MirrorData`, e.g. balances replaced by `**`) or nothing (`false`).
+When the user stops, watchers get `fw-dui:Client:WatchEnded (Name, Entity)` to restore their own page.
+Someone who walks up halfway through only sees changes from that moment on (a page switched with mouse
+clicks before they arrived, like a laptop tab, can differ until the next change).

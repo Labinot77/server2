@@ -9,6 +9,7 @@ client_scripts {
     '@fw-inventory/config/_sh_config.lua',
     '@fw-inventory/config/sh_items.lua',
     'config.lua',
+    'config_props.lua',
     'client/*.lua',
 }
 
@@ -18,6 +19,7 @@ server_script {
     '@fw-inventory/config/_sh_config.lua',
     '@fw-inventory/config/sh_items.lua',
     'config.lua',
+    'config_props.lua',
     'server/*.lua',
 }
 

@@ -1,40 +1,50 @@
 Config = {}
 
-Config.DevMode = false            -- enables /duicalib
-Config.DrawDistance = 25.0        -- screens further than this from the camera aren't drawn
-Config.Brightness = 235           -- 0-255, screen brightness (stable, not affected by lights)
-Config.DefaultResolution = { 1280, 720 }
-
---[[
-    Screens per prop model. Offsets are relative to the prop (use /duicalib to find them):
-      TL / TR / BL = top-left, top-right, bottom-left corner of the visible screen.
-
-    With corners the page is drawn on that ONE entity, unlit (no glare, no copies on other props).
-    Without corners it falls back to the old global modes (every prop of the model, game lighting):
-      Texture = 'name' (+ Dict, defaults to the model)  -> AddReplaceTexture
-      RenderTarget = 'name'                             -> named render target
-
-    Resolution = DUI page size, keep it the screen's aspect ratio (/duicalib prints one).
-]]
-Config.Models = {
-    -- Laptops (fw-bennys). Corners not calibrated yet -> texture/render target fallback until you run /duicalib.
-    ['prop_laptop_jimmy'] = { Resolution = { 1280, 800 }, Texture = 'prop_jimmy_screen' },
-    ['prop_laptop_01a'] = { Resolution = { 1280, 640 }, RenderTarget = 'prop_moniter_desktop' },
-    ['as_prop_as_laptop_01a'] = { Resolution = { 1280, 800 }, Texture = 'prop_moniter_desktop_01' },
-
-    -- ATMs (osm-atmdui). Corners from the old osm screen offsets, fine-tune with /duicalib.
-    ['prop_fleeca_atm'] = { Resolution = { 1326, 1004 }, TL = vec3(-0.306, 0.085, 1.23), TR = vec3(0.065, 0.085, 1.23), BL = vec3(-0.306, 0.085, 1.055) },
-    ['prop_atm_01'] = { Resolution = { 1326, 1004 }, TL = vec3(-0.19, -0.12, 1.14), TR = vec3(0.084, -0.12, 1.14), BL = vec3(-0.19, -0.12, 1.02) },
-    ['prop_atm_02'] = { Resolution = { 1326, 1004 }, TL = vec3(-0.306, 0.085, 1.23), TR = vec3(0.065, 0.085, 1.23), BL = vec3(-0.306, 0.085, 1.05) },
-    ['prop_atm_03'] = { Resolution = { 1326, 1004 }, TL = vec3(-0.306, 0.07, 1.23), TR = vec3(0.065, 0.07, 1.23), BL = vec3(-0.306, 0.07, 1.05) },
+-- Default camera when a model has no Camera of its own (offsets from the prop).
+Config.Camera = {
+    Offset = vector3(0.0, -0.55, 0.30), -- where the camera sits
+    LookAt = vector3(0.0, 0.05, 0.13),  -- the middle of the screen
+    Fov = 42.0,
+    Transition = 600,
 }
 
+Config.CursorSensitivity = 14.0
+
+-- Screens registered with Mirror = true: players within this range see what the user does on it.
+Config.MirrorDistance = 20.0
+
 --[[
-    Always-on screens (idle monitors, info boards, ...). Shown while you're near, one DUI each.
-      PropId = id from fw-props (/placeprop prints it)   OR   Model + Coords of a map prop
-      Url    = page to show (nui://resource/file.html or https://...)
-      Data   = sent to the page as { action = 'data', data = Data }
+    How the page gets onto each model's screen:
+      Texture      = screen texture to replace (Dict = its .ytd, defaults to the model name)
+      RenderTarget = named render target (script_rt_<name>) instead of a texture
+      Resolution   = DUI page size, keep the screen's aspect ratio
+      Camera       = optional { Offset, LookAt, Fov, Transition }
+
+    AddReplaceTexture changes the texture on every prop of that model, so give each prop that
+    may show a different page at the same time its own model + texture name.
 ]]
-Config.Screens = {
-    -- { PropId = 12, Url = 'nui://fw-dui/html/idle.html', Data = { Title = 'Hayes Repairs', Text = 'Log in to see work orders' } },
+Config.Models = {
+    -- Laptops (fw-bennys)
+    ['prop_laptop_jimmy'] = { Texture = 'prop_jimmy_screen', Resolution = { 1280, 800 } },
+    ['prop_laptop_lester2'] = { RenderTarget = 'tvscreen', Resolution = { 1280, 640 } },
+    ['as_prop_as_laptop_01a'] = { Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 800 } },
+    ['custom_laptop_01'] = { Texture = 'laptop_custom_screen_01', Resolution = { 1280, 800 } },
+
+    -- ATMs (fw-financials)
+    ['prop_fleeca_atm'] = {
+        Dict = 'prop_fleeca_atm', Texture = 'prop_fleece_emis', Resolution = { 1326, 1004 },
+        Camera = { Offset = vector3(-0.1205, -0.415, 1.2125), LookAt = vector3(-0.1205, 0.085, 1.1425), Fov = 30.0, Transition = 500 },
+    },
+    ['prop_atm_01'] = {
+        Dict = 'prop_atm_01', Texture = 'prop_cashpoint_screen', Resolution = { 1326, 1004 },
+        Camera = { Offset = vector3(-0.053, -0.62, 1.15), LookAt = vector3(-0.053, -0.12, 1.08), Fov = 30.0, Transition = 500 },
+    },
+    ['prop_atm_02'] = {
+        Dict = 'prop_atm_02', Texture = 'prop_cashpoint_screen', Resolution = { 1326, 1004 },
+        Camera = { Offset = vector3(-0.1205, -0.415, 1.21), LookAt = vector3(-0.1205, 0.085, 1.14), Fov = 30.0, Transition = 500 },
+    },
+    ['prop_atm_03'] = {
+        Dict = 'prop_atm_03', Texture = 'prop_cashpoint_screen', Resolution = { 1326, 1004 },
+        Camera = { Offset = vector3(-0.1205, -0.43, 1.21), LookAt = vector3(-0.1205, 0.07, 1.14), Fov = 30.0, Transition = 500 },
+    },
 }

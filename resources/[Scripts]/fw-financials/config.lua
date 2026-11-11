@@ -74,3 +74,38 @@ Config.Zones = {
         maxZ = 107.88
     }
 }
+
+-- ATM screen (DUI on the ATM itself, drawn by fw-dui). Screen textures + cameras: fw-dui/config/sh_config.lua
+Config.ATM = {
+    BankName = 'FLEECA',
+    RenderDistance = 15.0,  -- the nearest ATM within this range shows the idle screen
+    CursorSensitivity = 13.0,
+    TestCommand = 'atmtest', -- opens the nearest ATM (false to disable)
+
+    Withdraw = {
+        QuickAmounts = { 100, 500, 1000, 5000 },
+        MaxPerTransaction = 10000,
+        DailyLimit = 50000, -- per character per day (resets at midnight / restart)
+        MaxDigits = 6,
+    },
+
+    -- Where the cash prop slides out (offsets from the ATM)
+    Models = {
+        ['prop_fleeca_atm'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
+        ['prop_atm_01'] = { Cash = { X = -0.05, StartY = -0.20, EndY = -0.35, Z = 0.75 } },
+        ['prop_atm_02'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
+        ['prop_atm_03'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
+    },
+
+    Text = {
+        invalid_amount = 'Invalid amount',
+        insufficient_funds = 'Insufficient funds',
+        over_limit = 'Over the single withdrawal limit',
+        daily_limit = 'Daily limit reached',
+        no_permission = 'No withdraw access on this account',
+        error = 'Transaction failed',
+        take_cash = 'Please take your cash',
+        no_accounts = 'No accounts found',
+        no_atm = 'No ATM nearby',
+    },
+}

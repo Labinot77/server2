@@ -264,7 +264,7 @@
     </div>
 
     <div class="toast" id="toast"></div>
-    <div class="boot" id="boot"><i class="fas fa-car-mechanic"></i><p class="italic">Work Orders</p><span>Starting up...</span></div>
+    <div class="boot" id="boot"><i class="fas fa-car-mechanic"></i><p class="italic">Work Orders</p><span id="bootText">Starting up...</span></div>
     <div class="calibrate hidden" id="calibrate"></div>
 
     <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="white" stroke="#0b0d10" stroke-width="1.4" stroke-linejoin="round"/></svg>
@@ -485,6 +485,11 @@
                 break;
             case "toast":
                 Toast(Msg.data.text, Msg.data.type);
+                break;
+            case "idle":
+                $("bootText").textContent = (Msg.data && Msg.data.text) || "Locked";
+                $("boot").classList.remove("hidden");
+                $("calibrate").classList.add("hidden");
                 break;
             case "close":
                 $("calibrate").classList.add("hidden");

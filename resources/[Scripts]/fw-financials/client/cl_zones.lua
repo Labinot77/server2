@@ -96,7 +96,7 @@ end)
             {
                 label = 'ATM',
                 action = function(entity, coords, args)
-                    exports['osm-atmdui']:OpenATM(entity)
+                    OpenATM(entity)
                 end,
             },
             {
@@ -124,7 +124,7 @@ end)
             {
                 label = 'ATM',
                 action = function(entity, coords, args)
-                    exports['osm-atmdui']:OpenATM(entity)
+                    OpenATM(entity)
                 end,
             },
         },
@@ -144,7 +144,7 @@ end)
                     return exports['fw-heists']:GetAttachingRope()
                 end,
               action = function(entity, coords, args)
-    exports['osm-atmdui']:OpenATM(entity)
+    OpenATM(entity)
 end,
             },
         },

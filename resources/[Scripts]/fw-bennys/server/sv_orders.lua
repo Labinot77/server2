@@ -88,7 +88,7 @@ local function GetBusinessOrders(Business)
     return Open
 end
 
--- Push the current list to every online member of the business.
+-- Push the current list to every online member of the business; everyone else gets it for the laptop screen only.
 local function Broadcast(Business)
     local List = GetBusinessOrders(Business)
     local Members = GetMembers(Business)
@@ -96,6 +96,8 @@ local function Broadcast(Business)
         local Player = FW.Functions.GetPlayer(Data.ServerId)
         if Player and Members[Player.PlayerData.citizenid] then
             TriggerClientEvent('fw-bennys:Client:Orders:Updated', Data.ServerId, Business, List)
+        elseif Player then
+            TriggerClientEvent('fw-bennys:Client:Laptop:View', Data.ServerId, Business, List)
         end
     end
 end
@@ -348,6 +350,12 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:GetMyBusinesses', function(
     Cb(List)
 end)
 
+-- Read-only list for the laptop screen, anyone near a laptop can see it.
+FW.Functions.CreateCallback('fw-bennys:Server:Orders:View', function(Source, Cb, Business)
+    if not Config.Orders.Businesses[Business] then return Cb(false) end
+    Cb(GetBusinessOrders(Business))
+end)
+
 FW.Functions.CreateCallback('fw-bennys:Server:Orders:Get', function(Source, Cb, Business)
     if not IsMember(Source, Business) then return Cb(false) end
     Cb(GetBusinessOrders(Business))
@@ -518,6 +526,8 @@ end)
 
 -- Call after placing/removing a laptop prop: TriggerEvent('fw-bennys:Server:Laptop:Reload')
 AddEventHandler('fw-bennys:Server:Laptop:Reload', LoadLaptops)
+-- fw-admin fires this after a prop is placed / deleted / reloaded, so new laptops work right away.
+AddEventHandler('fw-admin:Server:PropsChanged', LoadLaptops)
 RegisterCommand('bennysreloadlaptops', function(Source)
     if Source ~= 0 and not IsPlayerAceAllowed(Source, 'command') then return end
     LoadLaptops()

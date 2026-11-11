@@ -1,15 +1,10 @@
--- Focus: camera locked on an attached screen, the mouse drives a cursor on it.
---[[ Options (all optional):
-    X, Y         start cursor in percent (default 50, 50)
-    Sensitivity  cursor speed (default 14)
-    Mouse        true = forward real mouse events to the page (SendDuiMouse*)
-    Fov, Distance, Height, Transition   camera; distance is auto-fitted to the screen when nil
-    OnCursor(X, Y)  cursor moved        OnClick(X, Y)  left click
-    CanClose()      return false to block ESC / Backspace / right click
-    OnClose()       focus ended (by the player, or the prop disappeared)
-]]
+-- Focus: the camera locks on a shown screen and the mouse drives a cursor on it.
+--   Options.Mouse = true  -> real mouse events go to the page (SendDuiMouse*)
+--   Options.Mouse = false -> fw-dui:Client:Cursor / Click events, the resource hit-tests itself
+--   Options.X / Y         -> start cursor in percent (default 50 / 50)
+--   Options.Sensitivity   -> cursor speed (default Config.CursorSensitivity)
 
-Focused = nil -- { Id, Opts, X, Y, Cam }
+Focused = nil -- { S, Cam, Transition, X, Y, Options, Closeable }
 
 local function Clamp(V) return math.max(0.0, math.min(100.0, V)) end
 
@@ -17,66 +12,58 @@ local function SetInteractDisabled(Disabled)
     if GetResourceState('interact') == 'started' then exports['interact']:Disable(Disabled) end
 end
 
-local function StartCamera(D, Opts)
-    local Fov = Opts.Fov or 30.0
-    local Pos, Target
+function StopFocus()
+    if not Focused then return end
+    local F = Focused
+    Focused = nil
+    MirrorStop(F.S)
 
-    if D.Geometry then
-        local TL, TR, BL, BR, N = GetScreenCorners(D)
-        Target = (TR + BL) / 2
-        local Tan = math.tan(math.rad(Fov / 2)) -- Fov is vertical
-        local Distance = Opts.Distance or math.max(#(BL - TL) / 2 / Tan, #(TR - TL) / 2 / (Tan * GetAspectRatio(false))) * 1.15
-        Pos = Target + N * Distance + vector3(0.0, 0.0, Opts.Height or 0.0)
-    else
-        -- Legacy modes have no corners: look at the prop from the front.
-        Target = GetOffsetFromEntityInWorldCoords(D.Entity, 0.0, 0.0, 0.15)
-        Pos = GetOffsetFromEntityInWorldCoords(D.Entity, 0.0, -(Opts.Distance or 0.55), 0.15 + (Opts.Height or 0.15))
-    end
+    -- Easing back into first person plays GTA's switch effect, so cut straight back there.
+    local FirstPerson = GetFollowPedCamViewMode() == 4
+    RenderScriptCams(false, not FirstPerson, FirstPerson and 0 or F.Transition, true, true)
+    DestroyCam(F.Cam, false)
+
+    FreezeEntityPosition(PlayerPedId(), false)
+    SetInteractDisabled(false)
+    TriggerEvent('hud:client:ToggleHUD', true)
+end
+
+local function Focus(Name, Options)
+    local S = Screens[Name]
+    if Focused or not S or not S.Entity or not S.Model then return false end
+    Options = Options or {}
+
+    local C = S.Model.Camera or Config.Camera
+    local Pos = GetOffsetFromEntityInWorldCoords(S.Entity, C.Offset.x, C.Offset.y, C.Offset.z)
+    local Target = GetOffsetFromEntityInWorldCoords(S.Entity, C.LookAt.x, C.LookAt.y, C.LookAt.z)
 
     local Cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamCoord(Cam, Pos.x, Pos.y, Pos.z)
     PointCamAtCoord(Cam, Target.x, Target.y, Target.z)
-    SetCamFov(Cam, Fov)
-    RenderScriptCams(true, true, Opts.Transition or 500, true, true)
-    return Cam
-end
+    SetCamFov(Cam, C.Fov or Config.Camera.Fov)
+    local Transition = C.Transition or Config.Camera.Transition
+    RenderScriptCams(true, true, Transition, true, true)
 
-function StopFocus(ByPlayer)
-    if not Focused then return end
-    local F = Focused
-    Focused = nil
-
-    RenderScriptCams(false, true, F.Opts.Transition or 500, true, true)
-    DestroyCam(F.Cam, false)
-    FreezeEntityPosition(PlayerPedId(), false)
-    SetInteractDisabled(false)
-    TriggerEvent('hud:client:ToggleHUD', true)
-
-    if ByPlayer and F.Opts.OnClose then F.Opts.OnClose() end
-end
-
-function StartFocus(Id, Opts)
-    local D = Duis[Id]
-    if Focused or not D or not D.Entity then return false end
-    Opts = Opts or {}
-
-    local F = { Id = Id, Opts = Opts, X = Opts.X or 50.0, Y = Opts.Y or 50.0 }
-    F.Cam = StartCamera(D, Opts)
+    local F = { S = S, Cam = Cam, Transition = Transition, X = Options.X or 50.0, Y = Options.Y or 50.0, Options = Options, Closeable = true }
     Focused = F
+    MirrorStart(S)
 
     FreezeEntityPosition(PlayerPedId(), true)
     SetInteractDisabled(true)
     TriggerEvent('hud:client:ToggleHUD', false)
 
     CreateThread(function()
-        local Sensitivity, Last = Opts.Sensitivity or 14.0, nil
+        local Sensitivity, Last = Options.Sensitivity or Config.CursorSensitivity, nil
         while Focused == F do
             DisableAllControlActions(0)
             EnableControlAction(0, 249, true) -- push to talk
             HideHudAndRadarThisFrame()
 
-            if not D.Entity or IsEntityDead(PlayerPedId()) then
-                StopFocus(true)
+            local Closed = not S.Entity or not DoesEntityExist(S.Entity) or IsEntityDead(PlayerPedId())
+                or (F.Closeable and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25)))
+            if Closed then
+                StopFocus()
+                TriggerEvent('fw-dui:Client:Closed', Name)
                 break
             end
 
@@ -86,25 +73,21 @@ function StartFocus(Id, Opts)
             local Key = ('%.1f:%.1f'):format(F.X, F.Y)
             if Key ~= Last then
                 Last = Key
-                if Opts.Mouse then MouseMove(Id, F.X, F.Y) end
-                if Opts.OnCursor then Opts.OnCursor(F.X, F.Y) end
+                if Options.Mouse then
+                    SendDuiMouseMove(S.Dui, math.floor(F.X / 100 * S.Width), math.floor(F.Y / 100 * S.Height))
+                    MirrorPush(S, { 'move', F.X, F.Y })
+                else
+                    TriggerEvent('fw-dui:Client:Cursor', Name, F.X, F.Y)
+                end
             end
 
-            if IsDisabledControlJustPressed(0, 24) then
-                if Opts.Mouse then SendDuiMouseDown(D.Dui, 'left') end
-                if Opts.OnClick then Opts.OnClick(F.X, F.Y) end
-            end
-            if Opts.Mouse then
-                if IsDisabledControlJustReleased(0, 24) then SendDuiMouseUp(D.Dui, 'left') end
-                if IsDisabledControlJustPressed(0, 241) then SendDuiMouseWheel(D.Dui, 120, 0) end
-                if IsDisabledControlJustPressed(0, 242) then SendDuiMouseWheel(D.Dui, -120, 0) end
-            end
-
-            -- ESC / Backspace / right click
-            if (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25))
-                and (not Opts.CanClose or Opts.CanClose()) then
-                StopFocus(true)
-                break
+            if Options.Mouse then
+                if IsDisabledControlJustPressed(0, 24) then SendDuiMouseDown(S.Dui, 'left') MirrorPush(S, { 'down' }) end
+                if IsDisabledControlJustReleased(0, 24) then SendDuiMouseUp(S.Dui, 'left') MirrorPush(S, { 'up' }) end
+                if IsDisabledControlJustPressed(0, 241) then SendDuiMouseWheel(S.Dui, 120, 0) MirrorPush(S, { 'wheel', 120 }) end
+                if IsDisabledControlJustPressed(0, 242) then SendDuiMouseWheel(S.Dui, -120, 0) MirrorPush(S, { 'wheel', -120 }) end
+            elseif IsDisabledControlJustPressed(0, 24) then
+                TriggerEvent('fw-dui:Client:Click', Name, F.X, F.Y)
             end
 
             Wait(0)
@@ -114,6 +97,8 @@ function StartFocus(Id, Opts)
     return true
 end
 
-exports('Focus', StartFocus)
-exports('StopFocus', function() StopFocus(false) end)
+exports('Focus', Focus)
+exports('StopFocus', StopFocus)
 exports('IsFocused', function() return Focused ~= nil end)
+-- false blocks ESC / Backspace / right click (e.g. while an ATM transaction runs)
+exports('SetCloseable', function(Closeable) if Focused then Focused.Closeable = Closeable end end)
