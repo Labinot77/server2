@@ -78,6 +78,12 @@ function IsPlayerAdmin()
     return Citizen.Await(Promise)
 end
 
+-- Hide the status HUD, speedometer and minimap while the menu is open.
+local function SetHudHidden(Hidden)
+    pcall(function() exports['fw-ui']:SendUIMessage('Hud', 'SetVisibility', not Hidden) end)
+    pcall(function() exports['fw-hud']:SetVehicleHudBlocked(Hidden) end)
+end
+
 -- // Events \\ --
 
 RegisterNetEvent('fw-admin:Client:Try:Open:Menu')
@@ -97,6 +103,7 @@ AddEventHandler('fw-admin:Client:Try:Open:Menu', function()
             })
 
             MenuOpen = true
+            SetHudHidden(true)
 
             Citizen.CreateThread(function()
                 while MenuOpen do
@@ -112,6 +119,7 @@ AddEventHandler('fw-admin:Client:Try:Open:Menu', function()
                     DisableControlAction(0, 289, true) -- INPUT_REPLAY_START_STOP_RECORDING_SECONDARY
                     DisableControlAction(0, 346, true) -- INPUT_VEH_MELEE_LEFT
                     DisableControlAction(0, 347, true) -- INPUT_VEH_MELEE_RIGHT
+                    HideHudAndRadarThisFrame()
                     Citizen.Wait(1)
                 end
             end)
@@ -124,6 +132,7 @@ end)
 RegisterNetEvent('fw-admin:Client:Force:Close')
 AddEventHandler('fw-admin:Client:Force:Close', function()
     MenuOpen = false
+    SetHudHidden(false)
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false, false)
     SendNUIMessage({
@@ -148,6 +157,7 @@ end
 RegisterNUICallback('Close', function(Data, Cb)
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false, false)
+    SetHudHidden(false)
     Citizen.SetTimeout(200, function()
         MenuOpen = false
     end)
@@ -232,4 +242,7 @@ end)
 
 RegisterNetEvent('qb-admin:client:SendStaffChat', function(name, msg)
     TriggerServerEvent('qb-admin:server:Staffchat:addMessage', name, msg)
+end)
+AddEventHandler('onResourceStop', function(Resource)
+    if Resource == GetCurrentResourceName() and MenuOpen then SetHudHidden(false) end
 end)

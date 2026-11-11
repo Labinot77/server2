@@ -35,7 +35,7 @@ button { font-family: inherit; }
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: frame-in .18s ease-out;
 }
