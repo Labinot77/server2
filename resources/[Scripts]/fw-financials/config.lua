@@ -89,9 +89,11 @@ Config.ATM = {
         MaxDigits = 6,
     },
 
-    -- Where the cash prop slides out (offsets from the ATM)
+    -- Cash = where the cash prop slides out (offsets from the ATM).
+    -- Sheet = true: the screen is only a corner of a shared texture (stock prop_fleeca_atm uses prop_fleece_emis),
+    -- so the page squeezes its UI into that corner. Leave it off when the model has its own screen texture.
     Models = {
-        ['prop_fleeca_atm'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
+        ['prop_fleeca_atm'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } }, -- own screen in prop_fleeca_atm_dui
         ['prop_atm_01'] = { Cash = { X = -0.05, StartY = -0.20, EndY = -0.35, Z = 0.75 } },
         ['prop_atm_02'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
         ['prop_atm_03'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },

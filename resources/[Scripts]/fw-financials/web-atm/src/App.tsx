@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fleeca ATM screen (DUI). Pure renderer: Lua owns all state and sends
-//   INIT   { layout, bankName, quickAmounts, dailyLimit, model }
+//   INIT   { layout, bankName, quickAmounts, dailyLimit, model, sheet }
+//          sheet = the screen is a corner of a shared texture sheet (stock Fleeca ATM): squeeze the UI into it
 //   STATE  { screen, accounts, accIndex, amount, history, result, toast, processing, ... }
 //   CURSOR { x, y, hover, visible }   (percent of screen)
 //   PRESS  { id }                     (click flash)
@@ -39,7 +40,7 @@ export default function App() {
   const [state, setState] = useState<State>({ screen: 'idle' });
   const [cursor, setCursor] = useState<{ x: number; y: number; hover?: string | null; visible: boolean }>({ x: 50, y: 72, hover: null, visible: false });
   const [pressed, setPressed] = useState<string | null>(null);
-  const [model, setModel] = useState('');
+  const [sheet, setSheet] = useState(false);
   const pressTimer = useRef<number>();
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function App() {
           if (data?.quickAmounts) setQuick(data.quickAmounts);
           if (data?.bankName) setBankName(data.bankName);
           if (data?.dailyLimit) setDailyLimit(data.dailyLimit);
-          setModel(data?.model || '');
+          setSheet(data?.sheet === true);
           break;
         case 'STATE': setState(data || { screen: 'idle' }); break;
         case 'CURSOR': setCursor(c => ({ ...c, ...data, visible: data?.visible !== false })); break;
@@ -75,14 +76,13 @@ export default function App() {
   const hov = (id: string) => cursor.visible && cursor.hover === id;
   const prs = (id: string) => pressed === id;
 
-  const isFleeca = model === 'prop_fleeca_atm';
   const panelScreen = state.screen === 'withdraw' || state.screen === 'history';
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-transparent">
       <div
         className="w-full h-full relative overflow-hidden bg-fleeca-paper text-fleeca-ink select-none"
-        style={isFleeca ? { transformOrigin: 'top left', transform: 'translate(0.39vw, 50.78vh) scale(0.4921, 0.4648)' } : undefined}
+        style={sheet ? { transformOrigin: 'top left', transform: 'translate(0.39vw, 50.78vh) scale(0.4921, 0.4648)' } : undefined}
       >
         {/* Background diagonal shape */}
         <div

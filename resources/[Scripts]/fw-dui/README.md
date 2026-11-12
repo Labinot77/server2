@@ -105,3 +105,9 @@ at night. Two parts fix it:
    material and set its shader to `emissive.sps` (or `emissivenight.sps`), with the screen texture as
    DiffuseSampler and no specular map. An emissive screen lights itself, so it looks the same at noon and at
    night. If you do this, the `Specular` line isn't needed.
+
+## ATM screen on its own texture (Fleeca)
+`prop_fleece_emis` is a sheet with the screen *and* the lit sign panels, so a DUI on it also covers the signs
+(black bars) and the screen only shows a cut-out of the page. In the copy `prop_fleeca_atm_dui`, give the screen
+its own material and texture `prop_fleeca_atm_screen_dui`, mapped edge to edge; the signs keep `prop_fleece_emis`.
+fw-dui's config already points at `prop_fleeca_atm_screen_dui`.

@@ -364,7 +364,7 @@ FW.Player.CreatePlayer = function(PlayerData)
         local Retval = exports['fw-inventory']:AddItemToInventory('ply-' .. self.PlayerData.citizenid, Item, Amount, Slot, Info, CustomType)
         if Retval then
             TriggerEvent("fw-logs:Server:Log", 'additem', "Item Added [" .. (GetInvokingResource() or "Unknown Resource") .. "]", ("User: [%s] - %s - %s\nItem: %s\nAmount: %s"):format(self.PlayerData.source, self.PlayerData.citizenid, self.PlayerData.charinfo.firstname .. " " .. self.PlayerData.charinfo.lastname, CustomType and #CustomType > 0 and (Item .. " [" .. CustomType .. "]") or Item, Amount), "green")
-            if Show then TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Ontvangen", Item, Amount, CustomType) end
+            if Show then TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Received", Item, Amount, CustomType) end
             TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
         end
         return Retval
@@ -396,7 +396,7 @@ FW.Player.CreatePlayer = function(PlayerData)
             TriggerEvent("fw-logs:Server:Log", 'removeitem', "Item Removed [" .. (GetInvokingResource() or "Unknown Resource") .. "]", ("User: [%s] - %s - %s\nItem: %s\nAmount: %s"):format(self.PlayerData.source, self.PlayerData.citizenid, self.PlayerData.charinfo.firstname .. " " .. self.PlayerData.charinfo.lastname, CustomType and #CustomType > 0 and (Item .. " [" .. CustomType .. "]") or Item, Amount), "red")
 
             if Show then
-                TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Verwijderd", Item, Amount, CustomType)
+                TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Removed", Item, Amount, CustomType)
             end
 
             TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
@@ -416,7 +416,7 @@ FW.Player.CreatePlayer = function(PlayerData)
             end
     
             if Show then
-                TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Verwijderd", Item, Amount, CustomType)
+                TriggerClientEvent("fw-inventory:Client:ShowActionBox", self.PlayerData.source, "Removed", Item, Amount, CustomType)
             end
 
             TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
@@ -440,7 +440,7 @@ FW.Player.CreatePlayer = function(PlayerData)
         local Retval = exports['fw-inventory']:RemoveItemFromInventoryByKV('ply-' .. self.PlayerData.citizenid, Item, Amount, Value, CustomType)
         if Retval then
             if string.sub(Item, 1, 7) == 'weapon_' then TriggerClientEvent('fw-assets:Client:Attach:Items', self.PlayerData.source) end
-            if Show then TriggerClientEvent('fw-inventory:Client:ShowActionBox', self.PlayerData.source, 'Verwijderd', Item, Amount, CustomType) end
+            if Show then TriggerClientEvent('fw-inventory:Client:ShowActionBox', self.PlayerData.source, 'Removed', Item, Amount, CustomType) end
             TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
         end
         return true

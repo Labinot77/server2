@@ -8,7 +8,7 @@ FW = FW or exports['fw-core']:GetCoreObject()
 local SCREEN = 'bennys_laptop'
 local DUI = exports['fw-dui']
 
-local Laptop = { Open = false, Entity = nil, Business = nil, Shown = nil, ShownBusiness = nil, Preview = false }
+local Laptop = { Open = false, Entity = nil, Business = nil, PropId = nil, Shown = nil, ShownBusiness = nil, Preview = false }
 local Laptops = {} -- [placed prop id] = { Id, Model, Coords, Business }
 local ViewOrders = {} -- [Business] = orders, for players who aren't members
 
@@ -84,12 +84,22 @@ function CloseLaptop()
     ManagementLock()
     DUI:Release(SCREEN) -- the range check takes over
     ClearPedTasks(PlayerPedId())
-    Laptop.Entity, Laptop.Business = nil, nil
+    TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId) -- free for the next player
+    Laptop.Entity, Laptop.Business, Laptop.PropId = nil, nil, nil
 end
 
 function OpenLaptop(Entity, Business)
     if Laptop.Open or not DoesEntityExist(Entity) then return end
-    Laptop.Open, Laptop.Entity, Laptop.Business, Laptop.Preview = true, Entity, Business, false
+    local Entry = GetLaptopForEntity(Entity)
+    if not Entry then return end
+
+    -- One player per laptop (server lock, see LaptopBlockReason).
+    Laptop.Open = true
+    if not FW.SendCallback('fw-bennys:Server:Laptop:Claim', Entry.Id) then
+        Laptop.Open = false
+        return FW.Functions.Notify("Someone else is using this laptop.", "error")
+    end
+    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Preview = Entity, Business, Entry.Id, false
 
     local Ped = PlayerPedId()
     TaskTurnPedToFaceEntity(Ped, Entity, 600)
@@ -97,6 +107,7 @@ function OpenLaptop(Entity, Business)
     local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
     if not Shown then
         Laptop.Open = false
+        TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId)
         return FW.Functions.Notify("The laptop couldn't be loaded.", "error")
     end
     Entity = ScreenEntity -- the screen copy when fw-dui swapped the laptop
@@ -241,10 +252,29 @@ end
 RegisterNetEvent('fw-bennys:Client:Laptop:SetLaptops', SetLaptops)
 
 -- Why the prompt is (not) shown, as a reason string; nil = can interact.
+-- Another player has a session on this laptop (server id), nil = free or it's me.
+local function GetLaptopUser(Id)
+    local User = GlobalState[('bennys_laptop_%s'):format(Id)]
+    if User and User ~= GetPlayerServerId(PlayerId()) then return User end
+end
+
+-- Dead, talking on the radio or a progress bar running (fw-progressbar or fw-ui).
+local function IsPlayerBusy()
+    local PlayerData = FW.Functions.GetPlayerData()
+    if IsEntityDead(PlayerPedId()) or (PlayerData and PlayerData.metadata and PlayerData.metadata.isdead) then return 'dead' end
+    if GetResourceState('fw-voice') == 'started' and exports['fw-voice']:TalkingOnRadio() then return 'talking on the radio' end
+    for _, Resource in ipairs({ 'fw-progressbar', 'fw-ui' }) do
+        if GetResourceState(Resource) == 'started' and exports[Resource]:GetTaskBarStatus() then return 'a progress bar is running' end
+    end
+end
+
 function LaptopBlockReason(Entity)
     if Laptop.Open then return 'laptop already open' end
+    local Busy = IsPlayerBusy()
+    if Busy then return Busy end
     local Entry = GetLaptopForEntity(Entity)
     if not Entry then return 'not a placed laptop (admin panel) inside a business Area' end
+    if GetLaptopUser(Entry.Id) then return 'someone else is using this laptop' end
     if not IsOrderMechanic(Entry.Business) then return 'not a member of ' .. Entry.Business .. ' (client cache)' end
     return nil
 end

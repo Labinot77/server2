@@ -518,6 +518,41 @@ CreateThread(function()
 end)
 
 local LastLaptopLoad = 0
+-- One player per laptop: GlobalState['bennys_laptop_<prop id>'] = server id of the user, nil = free.
+-- GlobalState reaches every client (also players who join later), so the interact hides for everyone else.
+local function InUseKey(Id) return ('bennys_laptop_%s'):format(Id) end
+
+FW.Functions.CreateCallback('fw-bennys:Server:Laptop:Claim', function(Source, Cb, Id)
+    local Entry
+    for _, Laptop in ipairs(Laptops) do
+        if Laptop.Id == Id then Entry = Laptop end
+    end
+    if not Entry or not IsMember(Source, Entry.Business) then return Cb(false) end
+    if #(GetEntityCoords(GetPlayerPed(Source)) - Entry.Coords) > 4.0 then return Cb(false) end
+
+    local User = GlobalState[InUseKey(Id)]
+    if User and User ~= Source and GetPlayerName(User) then return Cb(false) end -- someone (still online) is using it
+
+    GlobalState[InUseKey(Id)] = Source
+    Cb(true)
+end)
+
+RegisterNetEvent('fw-bennys:Server:Laptop:Release', function(Id)
+    if GlobalState[InUseKey(Id)] == source then GlobalState[InUseKey(Id)] = nil end
+end)
+
+local function ReleaseAll(Source)
+    for _, Laptop in ipairs(Laptops) do
+        local Key = InUseKey(Laptop.Id)
+        if GlobalState[Key] and (not Source or GlobalState[Key] == Source) then GlobalState[Key] = nil end
+    end
+end
+
+AddEventHandler('playerDropped', function() ReleaseAll(source) end)
+AddEventHandler('onResourceStop', function(Resource)
+    if Resource == GetCurrentResourceName() then ReleaseAll() end
+end)
+
 FW.Functions.CreateCallback('fw-bennys:Server:Laptop:GetLaptops', function(Source, Cb, Reload)
     -- Clients ask for a reload when they see a laptop prop that isn't known yet (placed after start).
     if Reload and os.time() - LastLaptopLoad >= 10 then

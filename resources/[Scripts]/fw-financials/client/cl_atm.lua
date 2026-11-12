@@ -303,6 +303,7 @@ AddEventHandler('fw-dui:Client:Shown', function(Name, Entity)
         quickAmounts = Config.ATM.Withdraw.QuickAmounts,
         dailyLimit = Config.ATM.Withdraw.DailyLimit,
         model = ModelOf(Entity),
+        sheet = Config.ATM.Models[ModelOf(Entity)] and Config.ATM.Models[ModelOf(Entity)].Sheet == true,
     })
     Push()
 end)

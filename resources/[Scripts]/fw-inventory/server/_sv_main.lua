@@ -561,7 +561,7 @@ FW.RegisterServer("fw-inventory:Server:UseItem", function(Source, Slot, IgnoreSh
     SetLastUsedSlot('ply-' .. Player.PlayerData.citizenid, Item.Item, Item.CustomType, Slot)
 
     if CalculateQuality(Item.Item, Item.CreateDate) < 1.0 then
-        return Player.Functions.Notify("Item is kapot..", "error")
+        return Player.Functions.Notify("Broken..", "error")
     end
 
     if ItemData.Weapon then
@@ -569,7 +569,7 @@ FW.RegisterServer("fw-inventory:Server:UseItem", function(Source, Slot, IgnoreSh
         Player.Functions.DecayItem(Item.Item, Slot, 0.1)
     else
         if not IgnoreShowbox then
-            TriggerClientEvent('fw-inventory:Client:ShowActionBox', Source, 'Gebruikt', Item.Item, 1, Item.CustomType)
+            TriggerClientEvent('fw-inventory:Client:ShowActionBox', Source, 'Used', Item.Item, 1, Item.CustomType)
         end
         Citizen.SetTimeout(IgnoreShowbox and 250 or 750, function()
             TriggerClientEvent("fw-inventory:Client:OnItemUsed", Source, Item, ItemData)

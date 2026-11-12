@@ -2,27 +2,73 @@
     "overrides": {},
     "doors": [
         {
-            "Coords": {
-                "z": 66.91,
-                "y": -470.04,
-                "x": 1137.34
-            },
+            "IsLockpickable": false,
+            "CanDetcord": true,
             "Access": {
-                "Gangs": [],
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
                 "Business": [],
+                "Gangs": []
+            },
+            "Info": "MIRR_8462",
+            "Connected": [],
+            "IsGate": false,
+            "Model": 1181020301,
+            "Locked": 1,
+            "Disabled": false,
+            "Coords": {
+                "x": 1137.34,
+                "z": 66.91,
+                "y": -470.04
+            }
+        },
+        {
+            "Model": -131754413,
+            "Locked": 1,
+            "Access": {
                 "CitizenId": [],
                 "Job": [
                     "police"
-                ]
+                ],
+                "Business": [],
+                "Gangs": []
             },
-            "Info": "MIRR_8462",
-            "IsLockpickable": false,
+            "Info": "PBOX_6427",
             "Connected": [],
             "IsGate": false,
-            "Locked": 1,
             "CanDetcord": true,
+            "IsLockpickable": false,
             "Disabled": false,
-            "Model": 1181020301
+            "Coords": {
+                "x": 145.42,
+                "z": 29.64,
+                "y": -1041.81
+            }
+        },
+        {
+            "Model": 2121050683,
+            "Locked": 1,
+            "Access": {
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "PBOX_8375",
+            "Connected": [],
+            "IsGate": false,
+            "CanDetcord": true,
+            "IsLockpickable": false,
+            "Disabled": false,
+            "Coords": {
+                "x": 148.03,
+                "z": 29.51,
+                "y": -1044.36
+            }
         }
     ]
 }
