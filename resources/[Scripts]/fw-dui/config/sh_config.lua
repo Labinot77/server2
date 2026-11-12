@@ -53,11 +53,11 @@ Config.Models = {
         Camera = { Offset = vector3(-0.053, -0.62, 1.15), LookAt = vector3(-0.053, -0.12, 1.08), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_02'] = {
-        Variant = 'prop_atm_02_dui', Texture = 'prop_cashpoint_screen_dui', Specular = 'prop_cashpoint_screen_dui_s', Resolution = { 1326, 1004 },
+        Variant = 'prop_atm_02_dui', Texture = 'prop_atm_02_screen_dui', Resolution = { 1326, 1004 },
         Camera = { Offset = vector3(-0.1205, -0.415, 1.21), LookAt = vector3(-0.1205, 0.085, 1.14), Fov = 30.0, Transition = 500 },
     },
     ['prop_atm_03'] = {
-        Variant = 'prop_atm_03_dui', Texture = 'prop_cashpoint_screen_dui', Specular = 'prop_cashpoint_screen_dui_s', Resolution = { 1326, 1004 },
+        Variant = 'prop_atm_03_dui', Texture = 'prop_atm_03_screen_dui', Specular = 'prop_atm_03_screen_dui_s', Resolution = { 1326, 1004 },
         Camera = { Offset = vector3(-0.1205, -0.43, 1.21), LookAt = vector3(-0.1205, 0.07, 1.14), Fov = 30.0, Transition = 500 },
     },
 }
