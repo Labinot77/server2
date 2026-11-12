@@ -41,9 +41,6 @@ Config.Orders = {
 -- How the page gets on each model's screen (texture / render target, resolution, camera) is set in fw-dui/config/sh_config.lua.
 Config.Laptop = {
     Models = {
-        ['prop_laptop_jimmy'] = true,
-        ['prop_laptop_lester2'] = true,
-        ['as_prop_as_laptop_01a'] = true,
         ['custom_laptop_01'] = true,
     },
 

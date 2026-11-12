@@ -11,7 +11,6 @@ import { InitiateHud } from "./handlers/hud";
 import { GetPreferences, LoadPreferences } from "./handlers/preferences";
 import { StartCompass } from "./handlers/compass";
 
-import './handlers/screen'
 import './handlers/minimap'
 import { ForceMinimapSync } from "./handlers/minimap";
 import { InitiatePlayer } from "./handlers/player";

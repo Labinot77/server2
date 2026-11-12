@@ -86,11 +86,11 @@ AddEventHandler("playerConnecting", function(Name, KickReason, Deferral)
     local Steam = SteamId
     local License = GetIdentifierOfType(Source, 'license')
 
-    if FW.AreLicensesUsed(Steam, License) then
-        TriggerEvent('fw-logs:Server:Log', 'anticheat', 'Player Join Canceled', ('%s (%s / %s) joined the server but has an client already active.'):format(Name, Steam, License), 'orange')
-        Deferral.done('You are in the server with another client..')
-        return
-    end
+    -- if FW.AreLicensesUsed(Steam, License) then
+    --     TriggerEvent('fw-logs:Server:Log', 'anticheat', 'Player Join Canceled', ('%s (%s / %s) joined the server but has an client already active.'):format(Name, Steam, License), 'orange')
+    --     Deferral.done('You are in the server with another client..')
+    --     return
+    -- end
 
     if SpecialMessage ~= nil and SpecialMessage ~= false then
         Config.ConnectCard.body[2].text = '\n\n'..SpecialMessage..'\n'

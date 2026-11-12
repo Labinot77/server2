@@ -1,9 +1,8 @@
-// Port of codera-hud client/chat.lua onto your existing `chat` resource.
+// Port of codera-hud client/chat.lua onto the fw-chat resource.
 //
-// Your `chat` resource (resources/[Cores]/[fivem]/[gameplay]/chat) stays as the SERVER side:
+// fw-chat (resources/[Cores]/[fivem]/[gameplay]/fw-chat) stays as the SERVER side:
 // sv_chat.lua keeps routing `_chat:messageEntered`, `chatMessage`, `chat:init`, /clear etc.
-// Only its NUI (Vue page + cl_chat.lua) is replaced by this handler and the Chat.svelte layer.
-// See ../../../../chat/ for the slimmed-down cl_chat.lua + __resource.lua.
+// Its client side is only the spam filter export; the UI is the Chat.svelte layer in fw-ui.
 //
 // Like your old chat, whatever the player types is run with ExecuteCommand
 // (`/` optional), after the spam filter check.
@@ -128,13 +127,25 @@ onNet("chat:clear", () => {
 
 // --- Opening / sending ------------------------------------------------------
 
+// The old `chat` resource (with its own Vue page) also opens on T. If it's still running, leave T to it,
+// otherwise both chats grab the keyboard and the player ends up stuck.
+const OldChatRunning = () => GetResourceState("chat") == "started" && !!GetResourceMetadata("chat", "ui_page", 0);
+
+let OpenedAck = false;
+
 const OpenChat = () => {
     if (IsOpen || IsPauseMenuActive()) return;
 
     IsOpen = true;
+    OpenedAck = false;
     SetUIFocus(true, false); // keyboard only, no cursor
     SendUIMessage("Hud", "ChatOpen", { Settings: Chat });
     SendCommands();
+
+    // Fail-safe: if the UI never confirms the input is focused, give the keyboard back.
+    setTimeout(() => {
+        if (IsOpen && !OpenedAck) CloseChat();
+    }, 1500);
 };
 
 const CloseChat = () => {
@@ -148,7 +159,12 @@ setTick(async () => {
     if (!Chat.Enabled || !LoggedIn) return await new Promise((Res) => setTimeout(Res, 450));
     if (IsOpen) return;
 
-    if (IsControlJustReleased(0, Chat.Control)) OpenChat();
+    if (IsControlJustReleased(0, Chat.Control) && !OldChatRunning()) OpenChat();
+});
+
+RegisterNUICallback("Chat/Opened", (Data: any, Cb: Function) => {
+    OpenedAck = true;
+    Cb("Ok");
 });
 
 RegisterNUICallback("Chat/Close", (Data: any, Cb: Function) => {
@@ -165,8 +181,8 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
     if (Message.length > Chat.MaxLength) Message = Message.substring(0, Chat.MaxLength);
     if (Message.startsWith("/")) Message = Message.substring(1);
 
-    // Spam filter lives in the chat resource (exports['chat']:GetSpamFilter()).
-    const SpamFilter: {[word: string]: number} = exp['chat'].GetSpamFilter() || {};
+    // Spam filter lives in fw-chat (exports['fw-chat']:GetSpamFilter()).
+    const SpamFilter: {[word: string]: number} = GetResourceState("fw-chat") == "started" ? exp['fw-chat'].GetSpamFilter() || {} : {};
     const Lowered = Message.toLowerCase();
     const Matched = Object.keys(SpamFilter).find((Word) => Lowered.includes(Word));
 
@@ -180,8 +196,8 @@ RegisterNUICallback("Chat/Send", (Data: { Message?: string }, Cb: Function) => {
 
 // Diagnostic: the old chat UI opens on T as well when the `chat` resource still has its Vue page.
 setTimeout(() => {
-    if (GetResourceState("chat") == "started" && GetResourceMetadata("chat", "ui_page", 0)) {
-        console.log("^1[fw-hud] The `chat` resource still declares a ui_page: the old chat UI will also open on T and steal the keyboard. Install the slimmed chat/cl_chat.lua + chat/__resource.lua and `restart chat`.^7");
+    if (OldChatRunning()) {
+        console.log("^1[fw-hud] The default `chat` resource is running (artifact citizen/system_resources/chat), so the old chat is used on T. Remove `ensure chat` from server.cfg, `ensure fw-chat` instead, and restart the server.^7");
     };
 }, 5000);
 

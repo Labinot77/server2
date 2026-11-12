@@ -1,66 +1,20 @@
 import { Config, Minimap } from "../../shared/config";
 import { Delay, SendUIMessage } from "../../shared/utils";
-import { GetMinimapRadarRect, GetScreenDebugText } from "./screen";
 import { GetHudSetting } from "./settings";
 
-          
-const StreamedTxd = "circlemap_codera";
+// The engine radar is hidden; the UI draws the map, blips and GPS route itself (fw-ui Hud/layers/Minimap.svelte).
 
-// const RadarMaskFile = 'project/src/assets/radar-mask.png';
-const RadarMaskName = "round_mask";
-const LoadTimeoutMs = 5000;
-
-const DefaultLayout = [
-    { Name: "minimap",      AlignX: "L", AlignY: "B", X: 0.0,    Y: -0.047, W: 0.14,  H: 0.188 },
-    { Name: "minimap_mask", AlignX: "L", AlignY: "B", X: 0.0,    Y: 0.0,    W: 0.125, H: 0.19 },
-    { Name: "minimap_blur", AlignX: "L", AlignY: "B", X: -0.008, Y: -0.008, W: 0.162, H: 0.234 },
-];
+const WaypointSprite = 8;
+const HiddenDisplays = [0, 3]; // hidden / main map only (4 still shows on the minimap in-game)
+const GpsRouteNative = "0xF3162836C28F9DA5"; // GET_POS_ALONG_GPS_TYPE_ROUTE
 
 let MinimapVisible = false;
-let MinimapReady = false;
-let MinimapLoading = false;
-let RuntimeTxd = 0;
-let RadarMaskTxd = "";
-let RadarLocked = false;
-let LayoutGeneration = 0;
-let ScreenGeneration = 0;
-let BigmapRefreshRunning = false;
 let LastSentVisible: boolean | null = null;
-let ZoomDistance = Minimap.Zoom;
 
-// Zoom levels
-setImmediate(() => {
-    SetMapZoomDataLevel(0, 2.75, 0.9, 0.08, 0.0, 0.0);
-    SetMapZoomDataLevel(1, 2.8, 0.9, 0.08, 0.0, 0.0);
-    SetMapZoomDataLevel(2, 8.0, 0.9, 0.08, 0.0, 0.0);
-    SetMapZoomDataLevel(3, 20.0, 0.9, 0.08, 0.0, 0.0);
-    SetMapZoomDataLevel(4, 35.0, 0.9, 0.08, 0.0, 0.0);
-    SetMapZoomDataLevel(5, 55.0, 0.0, 0.1, 2.0, 1.0);
-    SetMapZoomDataLevel(6, 450.0, 0.0, 0.1, 1.0, 1.0);
-    SetMapZoomDataLevel(7, 4.5, 0.0, 0.0, 0.0, 0.0);
-    SetMapZoomDataLevel(8, 11.0, 0.0, 0.0, 2.0, 3.0);
-});
+const MinimapWanted = () => MinimapVisible && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
 
-on("fw-hud:Client:OnHudSettingsUpdate", () => UpdateMinimapVisibility());
-
-
-RegisterCommand("minimapmask", async () => {
-    RequestStreamedTextureDict(StreamedTxd, false);
-    await Delay(1000);
-    console.log(`[fw-hud] ready=${MinimapReady} txdLoaded=${HasStreamedTextureDictLoaded(StreamedTxd)}`);
-}, false);
-
-const RadarWanted = () => MinimapVisible && MinimapReady && !Config.MyPreferences["BlackBars.Show"]
-    && GetHudSetting("map", "showMinimap", true);
-
-// Single place that decides if the radar + UI ring are visible.
 export const UpdateMinimapVisibility = (Force: boolean = false) => {
-    const Wanted = RadarWanted();
-
-    // Until the custom radar is ready, fall back to the default radar instead of hiding it.
-    const Blackbars = Config.MyPreferences["BlackBars.Show"];
-    DisplayRadar(MinimapReady ? Wanted : (MinimapVisible && !Blackbars));
-
+    const Wanted = MinimapWanted();
     if (!Force && LastSentVisible == Wanted) return;
     LastSentVisible = Wanted;
     SendUIMessage("Hud", "SetMinimapVisibility", { Visible: Wanted });
@@ -71,257 +25,104 @@ export const SetMinimapVisible = (Visible: boolean) => {
     UpdateMinimapVisibility();
 };
 
-
-const LoadRadarMask = (): boolean => {
-    RequestStreamedTextureDict(StreamedTxd, false);
-    if (!HasStreamedTextureDictLoaded(StreamedTxd)) return false;
-
-    AddReplaceTexture("platform:/textures/graphics", "radarmasksm", StreamedTxd, "radarmasksm");
-    AddReplaceTexture("platform:/textures/graphics", "radarmask1g", StreamedTxd, "radarmasksm");
-    AddReplaceTexture("platform:/textures/graphics", "radarmasklg", StreamedTxd, "radarmasklg");
-    return true;
-};
-
-// --- Layout -----------------------------------------------------------------
-
-const ApplyRadarLayout = () => {
-    SetMinimapClipType(1);
-    const [X, Y, W, H] = GetMinimapRadarRect(Minimap.MaskScale, Minimap.MaskOffsetX, Minimap.MaskOffsetY);
-    for (const Name of ["minimap", "minimap_mask", "minimap_blur"]) {
-        SetMinimapComponentPosition(Name, "L", "T", X, Y, W, H);
-    }
-};
-
-const ApplyDefaultLayout = () => {
-    SetMinimapClipType(0);
-    for (const C of DefaultLayout) SetMinimapComponentPosition(C.Name, C.AlignX, C.AlignY, C.X, C.Y, C.W, C.H);
-};
-
-const UnlockMinimap = () => {
-    if (!RadarLocked) return;
-    UnlockMinimapAngle();
-    UnlockMinimapPosition();
-    RadarLocked = false;
-};
-
-const RefreshBigmap = async () => {
-    if (BigmapRefreshRunning || IsPauseMenuActive()) return;
-    BigmapRefreshRunning = true;
-
-    ApplyRadarLayout();
-    DisplayRadar(false);
-    SetRadarBigmapEnabled(true, false);
-    await Delay(50);
-    SetRadarBigmapEnabled(false, false);
-    ApplyRadarLayout();
-    DisplayRadar(RadarWanted());
-
-    BigmapRefreshRunning = false;
-};
-
-on("fw-hud:Client:ScreenChanged", async () => {
-    ScreenGeneration += 1;
-    const Generation = ScreenGeneration;
-
-    while (Generation == ScreenGeneration && (IsPauseMenuActive() || !MinimapReady)) await Delay(100);
-    if (Generation != ScreenGeneration) return;
-
-    await Delay(350);
-    for (let i = 1; i <= 6; i++) {
-        if (Generation != ScreenGeneration || IsPauseMenuActive()) return;
-        if (LoadRadarMask()) {
-            ApplyRadarLayout();
-            if (i == 1 || i == 6) RefreshBigmap();
-        }
-        await Delay(350);
-    }
-});
-
-on("fw-hud:Client:ApplyMinimapLayout", async () => {
-    if (!MinimapReady) return;
-    ApplyRadarLayout();
-
-    LayoutGeneration += 1;
-    const Generation = LayoutGeneration;
-
-    await Delay(250);
-    while (Generation == LayoutGeneration && IsPauseMenuActive()) await Delay(100);
-    if (Generation == LayoutGeneration && MinimapReady) RefreshBigmap();
-});
-
-// --- Setup ------------------------------------------------------------------
-
-const WaitForPlayerReady = async () => {
-    while (!NetworkIsPlayerActive(PlayerId())) await Delay(100);
-    while (GetIsLoadingScreenActive()) await Delay(100);
-    while (!IsScreenFadedIn()) await Delay(100);
-    while (!DoesEntityExist(PlayerPedId())) await Delay(100);
-    await Delay(1500);
-};
-
-const SetupMinimap = async () => {
-    if (MinimapReady || MinimapLoading) return;
-    MinimapLoading = true;
-
-    const Deadline = GetGameTimer() + LoadTimeoutMs;
-    while (!LoadRadarMask()) {
-        if (Deadline < GetGameTimer()) {
-            // console.log(`[fw-hud] Timed out loading "${RadarMaskFile}"; keeping the default minimap.`);
-            MinimapLoading = false;
-            return;
-        }
-        await Delay(0);
-    }
-
-    ApplyRadarLayout();
-    DisplayRadar(false);
-    SetRadarBigmapEnabled(true, false);
-    await Delay(50);
-    SetRadarBigmapEnabled(false, false);
-    SetMinimapClipType(1);
-
-    MinimapLoading = false;
-    MinimapReady = true;
-    UpdateMinimapVisibility(true);
-};
-
-const PostSpawnRefresh = async () => {
-    if (!MinimapReady) return;
-    for (let i = 0; i < 30; i++) {
-        ApplyRadarLayout();
-        await Delay(100);
-    }
-    RefreshBigmap();
-};
-
-(async () => {
-    await WaitForPlayerReady();
-    while (!MinimapReady) {
-        await SetupMinimap();
-        if (!MinimapReady) await Delay(1000);
-    }
-    PostSpawnRefresh();
-})();
-
-onNet("FW:Client:OnPlayerLoaded", async () => {
-    await Delay(1500);
-    PostSpawnRefresh();
-});
-
-on("onClientResourceStart", async (Name: string) => {
-    if (Name != GetCurrentResourceName()) return;
-    await Delay(1500);
-    PostSpawnRefresh();
-});
-
-// Called by client.ts when the UI restarts, so the UI gets the current state again.
+// Called by client.ts when the UI restarts.
 export const ForceMinimapSync = () => UpdateMinimapVisibility(true);
 
-// --- Per-frame radar lock ---------------------------------------------------
+on("fw-hud:Client:OnHudSettingsUpdate", () => UpdateMinimapVisibility());
 
-let NextLayoutAt = 0;
-setTick(async () => {
-    if (MinimapReady && RadarWanted() && !IsPauseMenuActive()) {
-        const Now = GetGameTimer();
-        if (NextLayoutAt <= Now) {
-            ApplyRadarLayout();
-            SetMinimapClipType(1);
-            NextLayoutAt = Now + 500;
-        }
+// --- Position (every frame the map is shown, throttled to ~30 fps) ----------
 
-        const [X, Y] = GetEntityCoords(PlayerPedId(), true);
-        SetRadarAsExteriorThisFrame();
-        SetRadarZoomToDistance(ZoomDistance);
-        LockMinimapPosition(X, Y);
-        const [, , CamZ] = GetGameplayCamRot(2);
-        LockMinimapAngle(Math.floor(CamZ + 0.5) % 360);
-        RadarLocked = true;
-    } else {
-        NextLayoutAt = 0;
-        UnlockMinimap();
-        if (!MinimapReady) await Delay(200);
-    }
+let NextPosition = 0;
+setTick(() => {
+    DisplayRadar(false);
+    if (!LastSentVisible || IsPauseMenuActive()) return;
+
+    const Now = GetGameTimer();
+    if (Now < NextPosition) return;
+    NextPosition = Now + 33;
+
+    const Ped = PlayerPedId();
+    const [X, Y] = GetEntityCoords(Ped, true);
+    SendUIMessage("Hud", "SetMinimapPosition", {
+        X, Y,
+        Heading: GetEntityHeading(Ped),
+        Zoom: IsPedInAnyVehicle(Ped, false) ? Minimap.ZoomVehicle : Minimap.Zoom,
+    });
 });
 
-// Hide the engine's north blip (the ring draws its own N)
-setInterval(() => {
-    if (!MinimapReady) return;
-    const Blip = GetNorthRadarBlip();
-    if (Blip && DoesBlipExist(Blip)) {
-        SetBlipAlpha(Blip, 0);
-        SetBlipDisplay(Blip, 0);
+// --- Blips ------------------------------------------------------------------
+
+const CollectBlips = () => {
+    const Ignore = [GetMainPlayerBlipId(), GetNorthRadarBlip()];
+    const Blips: number[][] = [];
+
+    for (let Sprite = 1; Sprite <= Minimap.MaxBlipSprite; Sprite++) {
+        for (let Blip = GetFirstBlipInfoId(Sprite); DoesBlipExist(Blip); Blip = GetNextBlipInfoId(Sprite)) {
+            if (Ignore.includes(Blip) || GetBlipAlpha(Blip) == 0 || HiddenDisplays.includes(GetBlipInfoIdDisplay(Blip))) continue;
+
+            const [X, Y] = GetBlipInfoIdCoord(Blip);
+            // [x, y, sprite, colour, shortRange(0/1), rotation]
+            Blips.push([Math.round(X), Math.round(Y), Sprite, GetBlipColour(Blip), IsBlipShortRange(Blip) ? 1 : 0, GetBlipRotation(Blip)]);
+        }
     }
-}, 500);
+    return Blips;
+};
 
-// --- Waypoint changes break the radar layout, re-apply when it changes ---------
+// --- GPS route --------------------------------------------------------------
 
-const GetWaypointState = () => {
-    if (!IsWaypointActive()) return "off";
-    const Blip = GetFirstBlipInfoId(8);
-    if (!DoesBlipExist(Blip)) return "missing";
-    const [X, Y] = GetBlipCoords(Blip);
-    return `on:${Math.floor(X + 0.5)}:${Math.floor(Y + 0.5)}`;
+const GetRoutePoint = (Distance: number, Type: number): number[] | null => {
+    // Whole numbers are sent to the game as integers, the native reads a float: force a fraction.
+    const Float = Distance + 0.001;
+    const [Found, Pos] = Citizen.invokeNative<[boolean, number[]]>(GpsRouteNative, Citizen.pointerValueVector(), true, Float, Type, Citizen.returnResultAnyway());
+    return Found && Pos && (Pos[0] != 0 || Pos[1] != 0) ? Pos : null;
+};
+
+const CollectRoute = () => {
+    if (!DoesBlipExist(GetFirstBlipInfoId(WaypointSprite))) return [];
+
+    const Points: number[] = [];
+    for (let Distance = 0; Distance <= Minimap.RouteRange; Distance += Minimap.RouteStep) {
+        const Pos = GetRoutePoint(Distance, 0);
+        if (!Pos) break;
+        Points.push(Math.round(Pos[0] * 10) / 10, Math.round(Pos[1] * 10) / 10);
+    }
+    return Points;
 };
 
 (async () => {
-    let LastState = "off";
-    let LastRefresh = 0;
-
+    let LastBlips = "", LastRoute = "";
     while (true) {
-        await Delay(100);
-        if (!MinimapReady) continue;
+        await Delay(Minimap.DataInterval);
+        if (!LastSentVisible || IsPauseMenuActive()) continue;
 
-        const State = GetWaypointState();
-        if (State != LastState) {
-            LastState = State;
-            await Delay(150);
-            if (!MinimapReady) continue;
+        const Blips = CollectBlips(), BlipsKey = JSON.stringify(Blips);
+        if (BlipsKey != LastBlips) {
+            LastBlips = BlipsKey;
+            SendUIMessage("Hud", "SetMinimapBlips", { Blips });
+        }
 
-            RefreshBigmap();
-            for (let i = 0; i < 12; i++) {
-                ApplyRadarLayout();
-                await Delay(50);
-            }
-        } else if (State != "off" && State != "missing" && GetGameTimer() - LastRefresh > 250) {
-            LastRefresh = GetGameTimer();
-            ApplyRadarLayout();
-            SetMinimapClipType(1);
+        const Points = CollectRoute(), RouteKey = Points.join();
+        if (RouteKey != LastRoute) {
+            LastRoute = RouteKey;
+            SendUIMessage("Hud", "SetMinimapRoute", { Points, Colour: Minimap.RouteColour });
         }
     }
 })();
 
 // --- Commands & cleanup -----------------------------------------------------
 
-RegisterCommand("mapzoom", (Source: number, Args: string[]) => {
-    const Value = Number(Args[0]);
-    if (!Value) return console.log(`[fw-hud] usage: /mapzoom <meters> (now: ${ZoomDistance})`);
-    ZoomDistance = Math.max(10.0, Value);
+RegisterCommand("minimapdebug", () => {
+    const Route = CollectRoute();
+    console.log(`[fw-hud] blips=${CollectBlips().length} waypoint=${DoesBlipExist(GetFirstBlipInfoId(WaypointSprite))} routeFound=${GetGpsBlipRouteFound()} routePoints=${Route.length / 2} first=${Route.slice(0, 4).join(",")}`);
 }, false);
 
-RegisterCommand("minimapcal", (Source: number, Args: string[]) => {
-    console.log(`HELLO`);
-
-    const Keys: {[key: string]: keyof typeof Minimap} = {
-        sx: "EngineScaleX", sy: "EngineScaleY", ox: "MaskOffsetX", oy: "MaskOffsetY", scale: "MaskScale",
-    };
-
-    if (Args[0] == "debug") return console.log(`[fw-hud] ${GetScreenDebugText()}`);
-    if (Args[0] == "auto") Minimap.AutoCalibrate = true;
-    if (Args[0] == "values") return console.log(`[fw-hud] ${JSON.stringify(Minimap)}`);
-
-    if (Keys[Args[0]] && !isNaN(Number(Args[1]))) {
-        (Minimap as any)[Keys[Args[0]]] = Number(Args[1]);
-        if (Args[0] != "scale") Minimap.AutoCalibrate = false;
-    }
-
-    emit("fw-hud:Client:ApplyMinimapLayout");
+RegisterCommand("mapzoom", (Source: number, Args: string[]) => {
+    const Value = Number(Args[0]);
+    if (!Value) return console.log(`[fw-hud] usage: /mapzoom <meters> [vehicle meters] (now: ${Minimap.Zoom} / ${Minimap.ZoomVehicle})`);
+    Minimap.Zoom = Math.max(30, Value);
+    Minimap.ZoomVehicle = Math.max(30, Number(Args[1]) || Minimap.ZoomVehicle);
 }, false);
 
 on("onResourceStop", (Resource: string) => {
-    if (Resource != GetCurrentResourceName()) return;
-    RemoveReplaceTexture("platform:/textures/graphics", "radarmasksm");
-    RemoveReplaceTexture("platform:/textures/graphics", "radarmask1g");
-    RemoveReplaceTexture("platform:/textures/graphics", "radarmasklg");
-    UnlockMinimap();
-    if (MinimapReady) ApplyDefaultLayout();
+    if (Resource == GetCurrentResourceName()) DisplayRadar(true);
 });
