@@ -18,6 +18,10 @@ Config.ClothingImages = {
 -- Matches the empty space between the menu on the left and the panels on the right.
 Config.CameraDragArea = { 0.36, 0.70 }
 
+-- Camera stops this far (metres) in front of walls, but never closer to the ped than CameraMinDistance.
+Config.CameraWallMargin = 0.15
+Config.CameraMinDistance = 0.3
+
 -- Camera stage (see Config.CameraSettings) the menu jumps to per body part.
 Config.CameraFocus = { head = 1, body = 2, character = 4, legs = 4, shoes = 5 }
 

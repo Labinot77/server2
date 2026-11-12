@@ -24,7 +24,7 @@
         z-index: 200;
         transition: max-height .5s ease;
         position: absolute;
-        top: 2.2vh;
+        top: 2.8vh;
         left: 0;
         right: 0;
         margin: 0 auto;

@@ -14,7 +14,7 @@
     <div class="component-image-container">
         <div>
             <p class="component-image-text" style="word-break: break-word;">
-                Aantal bijlages: {Attachments.length}
+                Attachments: {Attachments.length}
             </p>
             {#if !Hidden}
                 <div>
@@ -43,8 +43,8 @@
                         class="component-image-text"
                         style="text-align: center; margin-top: .8vh;"
                     >
-                        Bekijk alleen afbeeldingen van mensen waarvan je weet dat ze
-                        geen eikels zijn
+                        Only view images from people you know
+                        aren't jerks
                     </p>
                 </div>
             {:else}
@@ -84,7 +84,7 @@
 
     .component-image-container > .container {
         width: 100%;
-        border-radius: 0.4vh;
+        border-radius: var(--phone-radius);
         min-height: 12.5vh;
         overflow: hidden;
         margin-top: 0.8vh;
@@ -109,7 +109,7 @@
         justify-content: center;
         z-index: 2;
         border: 0.1vh solid #fff;
-        border-radius: 0.4vh;
+        border-radius: var(--phone-radius);
         text-shadow: -0.1vh 0.1vh 0 #37474f, 0.1vh 0.1vh 0 #37474f,
             0.1vh -0.1vh 0 #37474f, -0.1vh -0.1vh 0 #37474f;
     }

@@ -57,14 +57,31 @@ function SetCameraParams(Ped, Camera, Increasement, Heading)
     CamHeading = (CamHeading + Increasement) % 360
     local _Heading = Heading ~= nil and Heading or CamHeading
     local CamSettings = Config.CameraSettings[CurrentCamStage]
+    local Distance = GetClearCamDistance(Ped, _Heading, CamSettings)
 
-    local EntityCos = math.cos(_Heading * math.pi / 180) * CamSettings.AttachOffset
-    local EntitySin = math.sin(_Heading * math.pi / 180) * CamSettings.AttachOffset
+    local EntityCos = math.cos(_Heading * math.pi / 180) * Distance
+    local EntitySin = math.sin(_Heading * math.pi / 180) * Distance
     AttachCamToEntity(Camera, Ped, EntityCos, EntitySin, CamSettings.AttachZ, false)
 
     local ScreenSin = math.sin(CamHeading * math.pi / 180) * CamSettings.WidthOffset
     local ScreenCos = math.cos(CamHeading * math.pi / 180) * CamSettings.WidthOffset
     PointCamAtEntity(Camera, Ped, ScreenCos, ScreenSin, CamSettings.AttachZ, false)
+end
+
+-- Raycast from the ped to where the camera wants to be, so it stops in front of walls instead of going through.
+function GetClearCamDistance(Ped, Heading, CamSettings)
+    local Distance = CamSettings.AttachOffset
+    local X, Y = math.cos(Heading * math.pi / 180) * Distance, math.sin(Heading * math.pi / 180) * Distance
+
+    local From = GetOffsetFromEntityInWorldCoords(Ped, 0.0, 0.0, CamSettings.AttachZ)
+    local To = GetOffsetFromEntityInWorldCoords(Ped, X, Y, CamSettings.AttachZ)
+    local Ray = StartExpensiveSynchronousShapeTestLosProbe(From.x, From.y, From.z, To.x, To.y, To.z, 1 | 16, Ped, 4) -- world + objects
+    local _, Hit, HitCoords = GetShapeTestResult(Ray)
+
+    if Hit == 1 then
+        Distance = math.max(#(HitCoords - From) - Config.CameraWallMargin, Config.CameraMinDistance)
+    end
+    return Distance
 end
 
 function UpdateCameraPosition(Ped, Upwards)
@@ -106,9 +123,16 @@ function SetCameraStage(Ped, Stage)
 end
 
 function CameraController()
-    local IsMouseInField = false
+    local IsMouseInField, LastHeading = false, nil
     Citizen.CreateThread(function()
         while CameraActive and Camera and DoesCamExist(Camera) do
+            -- The camera hangs off the ped, so turning the ped swings it around: check for walls again.
+            local Heading = GetEntityHeading(PlayerPedId())
+            if Heading ~= LastHeading and not IsSwitchingStage then
+                LastHeading = Heading
+                SetCameraParams(PlayerPedId(), Camera, 0.0)
+            end
+
             local CursorX, CursorY = GetNuiCursorPosition()
 
             -- Disable the controls.

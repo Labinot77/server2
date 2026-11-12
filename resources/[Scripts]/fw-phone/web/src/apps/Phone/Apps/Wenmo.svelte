@@ -40,7 +40,7 @@
                     IsPhone: true,
                     ContactPicker: true,
                     Data: {
-                        Title: "Telefoonnummer",
+                        Title: "Phone Number",
                         Icon: "phone",
                         Value: Data.phone,
                         Select: await GetContactsSelect(),
@@ -52,7 +52,7 @@
                     Type: "TextField",
                     IsCurrency: true,
                     Data: {
-                        Title: "Aantal",
+                        Title: "Amount",
                         Icon: "dollar-sign",
                         Type: "number",
                     },
@@ -61,14 +61,14 @@
                     Id: "Comment",
                     Type: "TextArea",
                     Data: {
-                        Title: "Commentaar",
+                        Title: "Comment",
                     },
                 },
             ],
             OnSubmit: (Result) => {
                 if (Result.Phone.length <= 0) return;
                 if (Result.Amount <= 0) return;
-                if (Result.Comment.length <= 0) Result.Comment = "Geen Commentaar";
+                if (Result.Comment.length <= 0) Result.Comment = "No Comment";
 
                 LoaderModal.set(true);
                 SendEvent("Wenmo/SendMoney", { ...Result }, (Success, Data) => {
@@ -117,7 +117,7 @@
 <AppWrapper>
     <div class="phone-misc-icons">
         <i
-            data-tooltip="Stuur Monnies"
+            data-tooltip="Send Money"
             data-position="left"
             class="fas fa-hand-holding-usd"
             on:keyup
@@ -126,7 +126,7 @@
     </div>
 
     <TextField
-        Title="Zoeken"
+        Title="Search"
         Icon="search"
         SubSet={FilterTransactions}
         class="phone-misc-input"
@@ -147,11 +147,11 @@
                     >
                         <div class="wenmo-card-top">
                             {#if Data.IsSender}
-                                <p style="color: #f2a365">
+                                <p style="color: var(--phone-orange)">
                                     - {FormatCurrency.format(Data.Amount)}
                                 </p>
                             {:else}
-                                <p style="color: #95ef77">
+                                <p style="color: var(--phone-green)">
                                     + {FormatCurrency.format(Data.Amount)}
                                 </p>
                             {/if}
@@ -178,7 +178,7 @@
                             <i class="fas fa-calendar" />
                             <p>
                                 {new Date(Data.Timestamp).toLocaleString(
-                                    "nl-NL",
+                                    "en-US",
                                     {
                                         timeZone: "UTC",
                                         day: "2-digit",
@@ -198,7 +198,7 @@
 
         {#if FilteredTransactions.length > 5}
             <div style="display: flex; justify-content: center; width: 100%;">
-                <Button Color="success" on:click={LoadMore}>Laad Meer</Button>
+                <Button Color="success" on:click={LoadMore}>Load More</Button>
             </div>
         {/if}
     </PaperList>
@@ -209,11 +209,11 @@
         display: flex;
         padding: 0.8vh;
         flex-direction: column;
-        background-color: #30475e;
+        background-color: var(--phone-surface);
         margin-bottom: 0.74vh;
         border-top-left-radius: 0.37vh;
         border-top-right-radius: 0.37vh;
-        border-bottom: 0.15vh solid #c8c6ca;
+        border-bottom: 0.15vh solid var(--phone-line);
     }
 
     .wenmo-card {

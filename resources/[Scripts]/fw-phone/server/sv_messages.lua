@@ -40,10 +40,10 @@ end)
 
 FW.Functions.CreateCallback("fw-phone:Server:Messages:SendMessage", function(Source, Cb, Data, UsingBurner)
     local Player = FW.Functions.GetPlayer(Source)
-    if Player == nil then Cb({Success = false, Msg = "Ongeldige Speler"}) return end
+    if Player == nil then Cb({Success = false, Msg = "Invalid Player"}) return end
 
     if not IsNetworkEnabled then
-        return Cb({Success = false, Msg = "Geen internet toegang.."})
+        return Cb({Success = false, Msg = "No internet access.."})
     end
 
     local MyPhone = UsingBurner and UsingBurner or Player.PlayerData.charinfo.phone

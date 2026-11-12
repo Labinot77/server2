@@ -73,9 +73,9 @@ export const AddSpaces = Value => {
     return Value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 };
 
-export const FormatCurrency = new Intl.NumberFormat('nl-NL', {
+export const FormatCurrency = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
 });
 
 export const CalculateTimeLeftExact = (Time) => {
@@ -88,7 +88,7 @@ export const CalculateTimeLeftExact = (Time) => {
     return {Hours: DifferenceHours, Minutes: DifferenceMins}
 }
 
-export const GetTimeLabel = (date, nowDate = Date.now(), rft = new Intl.RelativeTimeFormat('nl', { numeric: "auto" })) => {
+export const GetTimeLabel = (date, nowDate = Date.now(), rft = new Intl.RelativeTimeFormat('en', { numeric: "auto" })) => {
     const SECOND = 1000;
     const MINUTE = 60 * SECOND;
     const HOUR = 60 * MINUTE;
@@ -104,7 +104,7 @@ export const GetTimeLabel = (date, nowDate = Date.now(), rft = new Intl.Relative
         { ge: HOUR, divisor: HOUR, unit: 'hour' },
         { ge: MINUTE, divisor: MINUTE, unit: 'minute' },
         { ge: 30 * SECOND, divisor: SECOND, unit: 'seconds' },
-        { ge: 0, divisor: 1, text: 'zojuist' },
+        { ge: 0, divisor: 1, text: 'just now' },
     ];
     const now = typeof nowDate === 'object' ? nowDate.getTime() : new Date(nowDate).getTime();
     const diff = now - (typeof date === 'object' ? date : new Date(date)).getTime();
@@ -118,7 +118,7 @@ export const GetTimeLabel = (date, nowDate = Date.now(), rft = new Intl.Relative
     };
 };
 
-export const GetLongTimeLabel = (timestamp) => new Date(timestamp).toLocaleString('nl-NL', {
+export const GetLongTimeLabel = (timestamp) => new Date(timestamp).toLocaleString('en-US', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -243,3 +243,5 @@ export const GetContactsSelect = async () => {
 
     return Retval;
 }
+// Wallpapers can be an image URL or a CSS gradient.
+export const WallpaperCss = (Bg) => Bg?.includes("gradient(") ? Bg : `url(${Bg})`;

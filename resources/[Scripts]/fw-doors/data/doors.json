@@ -1,1 +1,28 @@
-{ "doors": [], "overrides": {} }
+{
+    "overrides": {},
+    "doors": [
+        {
+            "Coords": {
+                "z": 66.91,
+                "y": -470.04,
+                "x": 1137.34
+            },
+            "Access": {
+                "Gangs": [],
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ]
+            },
+            "Info": "MIRR_8462",
+            "IsLockpickable": false,
+            "Connected": [],
+            "IsGate": false,
+            "Locked": 1,
+            "CanDetcord": true,
+            "Disabled": false,
+            "Model": 1181020301
+        }
+    ]
+}

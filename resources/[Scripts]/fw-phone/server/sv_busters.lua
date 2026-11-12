@@ -34,13 +34,13 @@ FW.Functions.CreateCallback("fw-phone:Server:ClaimHeist", function(Source, Cb, D
     if Player == nil then return end
 
     if Config.Bankbusters[Data.HeistId].Expired then
-        Cb({Success = false, Msg = "Heist is verlopen."})
+        Cb({Success = false, Msg = "Heist has expired."})
         return
     end
 
     for k, v in pairs(Config.Bankbusters[Data.HeistId].Claimers) do
         if Player.PlayerData.citizenid == v then
-            Cb({Success = false, Msg = "Je hebt de heist al geclaimed."})
+            Cb({Success = false, Msg = "You already claimed this heist."})
             return
         end
     end
@@ -64,5 +64,5 @@ function GiveHeistToClaimee(HeistId)
     end
 
     TriggerEvent('fw-heists:Server:GenerateHeistCodes', Config.Bankbusters[HeistId].Id, Config.Bankbusters[HeistId].Data, Config.Bankbusters[HeistId].Label, Player.PlayerData.source)
-    TriggerEvent('fw-phone:Server:Mails:AddMail', 'Dark Market', '#A-2001', 'Je hebt succesvol toegangscodes voor een heist geclaimd. Je weet waar je heen moet.', Player.PlayerData.source)
+    TriggerEvent('fw-phone:Server:Mails:AddMail', 'Dark Market', '#A-2001', 'You successfully claimed access codes for a heist. You know where to go.', Player.PlayerData.source)
 end

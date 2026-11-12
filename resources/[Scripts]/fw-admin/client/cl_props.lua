@@ -1,7 +1,8 @@
 -- Placed props (was fw-props): streamed near the player, placed / deleted from the admin panel.
--- Exports for other resources: GetPlacedProps(), GetPropEntity(Id), GetPropIdByEntity(Entity), IsPlacingProp()
+-- Exports for other resources: GetPlacedProps(), GetPropEntity(Id), GetPropIdByEntity(Entity), IsPlacingProp(),
+-- SetPropModel(Id, Model) (local only, used by fw-dui to swap a prop to its screen copy)
 
-local Props = {} -- [Id] = { Id, Model, Coords, Rotation, Frozen, Collision, Entity }
+local Props = {} -- [Id] = { Id, Model, Coords, Rotation, Frozen, Collision, Entity, LocalModel }
 local Active, IsPlacing = false, false
 
 -- ── Helpers ────────────────────────────────────────────────────────────────
@@ -36,8 +37,9 @@ end
 local function SpawnProp(Prop)
     if Prop.Entity and DoesEntityExist(Prop.Entity) then return end
 
-    local Hash = LoadModel(Prop.Model)
-    if not Hash then return print(("[fw-admin] Invalid model for prop #%s: %s"):format(Prop.Id, Prop.Model)) end
+    local Model = Prop.LocalModel or Prop.Model
+    local Hash = LoadModel(Model)
+    if not Hash then return print(("[fw-admin] Invalid model for prop #%s: %s"):format(Prop.Id, Model)) end
 
     local Entity = CreateObjectNoOffset(Hash, Prop.Coords.x, Prop.Coords.y, Prop.Coords.z, false, false, false)
     SetEntityRotation(Entity, Prop.Rotation.x, Prop.Rotation.y, Prop.Rotation.z, 2, true)
@@ -211,3 +213,19 @@ exports('GetPropIdByEntity', function(Entity)
     end
 end)
 exports('IsPlacingProp', function() return IsPlacing end)
+
+-- Shows prop Id as another model on this client only (nil = back to its saved model). The new prop is
+-- spawned before the old one is deleted, in the same frame, so it never blinks. Returns the new entity.
+exports('SetPropModel', function(Id, Model)
+    local Prop = Props[Id]
+    if not Prop then return nil end
+    Prop.LocalModel = Model
+    if not Prop.Entity then return nil end
+
+    if not LoadModel(Model or Prop.Model) then return Prop.Entity end
+    local Old = Prop.Entity
+    Prop.Entity = nil
+    SpawnProp(Prop)
+    if DoesEntityExist(Old) then DeleteEntity(Old) end
+    return Prop.Entity
+end)

@@ -70,19 +70,19 @@ AddEventHandler("fw-phone:Server:SellVehicle", function(Data)
     if Vehicle == 0 then return end
 
     if #(GetEntityCoords(Vehicle) - GetEntityCoords(GetPlayerPed(Source))) > 5.0 then
-        return Player.Functions.Notify("Te ver van het voertuig..", "error")
+        return Player.Functions.Notify("Too far from the vehicle..", "error")
     end
 
     -- Do not allow to re-sell Gifted vehicles.
     if exports['fw-vehicles']:GetVehicleMeta(OutsideVehicles[Data.Plate], "Gifted") then
-        return Player.Functions.Notify("Je kan dit voertuig niet doorverkopen aan een speler..", "error")
+        return Player.Functions.Notify("You can't resell this vehicle to a player..", "error")
     end
 
     if #(GetEntityCoords(GetPlayerPed(Target.PlayerData.source)) - GetEntityCoords(GetPlayerPed(Source))) > 5.0 then
-        return Player.Functions.Notify("Te ver van de koper..", "error")
+        return Player.Functions.Notify("Too far from the buyer..", "error")
     end
 
-    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, "purchase-vehicle-" .. Data.Cid, "fas fa-car", { "white", "rgb(38, 50, 56)" }, "Voertuig Kopen", exports['fw-businesses']:NumberWithCommas(tonumber(Data.Amount)), false, true, "fw-phone:Server:AcceptVehicleOffer", "fw-phone:Client:RemoveNotificationById", { Id = "purchase-vehicle-" .. Data.Cid, Cid = Data.Cid, Seller = Source, Amount = Data.Amount, Plate = Data.Plate })
+    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, "purchase-vehicle-" .. Data.Cid, "fas fa-car", { "white", "rgb(38, 50, 56)" }, "Buy Vehicle", exports['fw-businesses']:NumberWithCommas(tonumber(Data.Amount)), false, true, "fw-phone:Server:AcceptVehicleOffer", "fw-phone:Client:RemoveNotificationById", { Id = "purchase-vehicle-" .. Data.Cid, Cid = Data.Cid, Seller = Source, Amount = Data.Amount, Plate = Data.Plate })
 end)
 
 RegisterNetEvent("fw-phone:Server:AcceptVehicleOffer")
@@ -94,18 +94,18 @@ AddEventHandler("fw-phone:Server:AcceptVehicleOffer", function(Data)
     local Seller = FW.Functions.GetPlayer(Data.Seller)
     if Seller == nil then return end
 
-    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Kopen...", true)
+    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Buying...", true)
 
     Citizen.SetTimeout(1000, function()
-        if exports['fw-financials']:RemoveMoneyFromAccount(Seller.PlayerData.citizenid, Seller.PlayerData.charinfo.account, Player.PlayerData.charinfo.account, Data.Amount, "PURCHASE", "Voertuig gekocht: " .. Data.Plate) then
-            TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Transactie Voltooid!", true)
+        if exports['fw-financials']:RemoveMoneyFromAccount(Seller.PlayerData.citizenid, Seller.PlayerData.charinfo.account, Player.PlayerData.charinfo.account, Data.Amount, "PURCHASE", "Vehicle bought: " .. Data.Plate) then
+            TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Transaction Completed!", true)
     
             exports['ghmattimysql']:executeSync("UPDATE `player_vehicles` SET `citizenid` = @Cid WHERE `plate` = @Plate", {
                 ['@Plate'] = Data.Plate,
                 ['@Cid'] = Player.PlayerData.citizenid
             })
     
-            exports['fw-financials']:AddMoneyToAccount(Player.PlayerData.citizenid, Player.PlayerData.charinfo.account, Seller.PlayerData.charinfo.account, Data.Amount, 'PURCHASE', 'Voertuig verkocht: ' .. Data.Plate)
+            exports['fw-financials']:AddMoneyToAccount(Player.PlayerData.citizenid, Player.PlayerData.charinfo.account, Seller.PlayerData.charinfo.account, Data.Amount, 'PURCHASE', 'Vehicle sold: ' .. Data.Plate)
 
             TriggerEvent("fw-logs:Server:Log", 'sellvehicle', "Vehicle Sold", ("User: [%s] - %s - %s\nBuyer: [%s] - %s - %s\nPlate:%s\nSold Price: %s"):format(Seller.PlayerData.source, Seller.PlayerData.citizenid, Seller.PlayerData.charinfo.firstname .. " " .. Seller.PlayerData.charinfo.lastname, Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname, Data.Plate, exports['fw-businesses']:NumberWithCommas(Data.Amount)), "green")
 
@@ -132,14 +132,14 @@ AddEventHandler("fw-phone:Server:AcceptVehicleOffer", function(Data)
                 Title = SharedData.Name .. ' - ' .. Data.Plate,
                 Content = (exports['fw-businesses']:GetVehicleRegistration()):format(SharedData.Name, Result[1].vehicle, Data.Plate, Result[1].vinnumber, Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname, Seller.PlayerData.charinfo.firstname .. ' ' .. Seller.PlayerData.charinfo.lastname, Date.day .. '/' .. Date.month .. '/' .. Date.year .. ' ' .. Date.hour .. ':' .. Date.min, exports['fw-businesses']:NumberWithCommas(tonumber(Data.Amount))),
                 Signatures = {
-                    { Signed = true, Name = 'De Staat', Timestamp = os.time() * 1000, Cid = '1001' },
+                    { Signed = true, Name = 'The State', Timestamp = os.time() * 1000, Cid = '1001' },
                     { Signed = true, Name = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname, Timestamp = os.time() * 1000, Cid = Player.PlayerData.citizenid },
                 },
                 Sharees = { Player.PlayerData.citizenid },
                 Finalized = 1,
             })
         else
-            TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Transactie Geweigerd!", true)
+            TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Transaction Declined!", true)
         end
     end)
 end)

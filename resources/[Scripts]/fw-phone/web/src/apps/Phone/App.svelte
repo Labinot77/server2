@@ -5,11 +5,12 @@
     import { AddNotification, IsEnvBrowser, Notifications, OnEvent, RemoveNotification, SendEvent, SetDropdown, SetExitHandler, ShowSuccessModal, UpdateNotification } from "../../utils/Utils"
     import AppProvider from "./AppProvider.svelte";
     import Application from "./components/Application.svelte";
+    import { HomeApps, CarShops, DockApps, BurnerApps, Hotkeys } from "./apps";
     import Container from "./Container.svelte";
     import Input from "./Modals/Input.svelte";
     import Loader from "./Modals/Loader.svelte";
     import Success from "./Modals/Success.svelte";
-    import { HasVpn, HasRacingUsb, HasPDRacingUsb, RacingAlias, InputModal, JobManager, CurrentDocument, DocumentIsDrop, LoaderModal, PlayerData, SuccessModal, Brand, EmbedsEnabled, PhoneBackground } from "./phone.stores";
+    import { HasVpn, HasRacingUsb, HasPDRacingUsb, RacingAlias, InputModal, JobManager, CurrentDocument, DocumentIsDrop, LoaderModal, PlayerData, SuccessModal, Brand, EmbedsEnabled, PhoneBackground, Settings } from "./phone.stores";
     import { ImageHoverData } from "../../stores";
 
     let PhoneVisible = IsEnvBrowser(); // Is A phone visible?
@@ -22,6 +23,7 @@
     let CurrentApp = "home" // Default: "home";
     let CurrentTime = [12, 0]
     let CurrentWeather = "EXTRASUNNY";
+    let CurrentLocation = "Los Santos";
     let UnreadApps = {};
 
     const SetCurrentApp = (App) => {
@@ -40,9 +42,6 @@
             CurrentApp = "home"
             SendEvent("SetCurrentApp", {App: "home"})
         };
-
-        // PhoneVisible = false;
-        // SendEvent("ClosePhone");
     };
 
     const ConnectNetwork = () => {
@@ -88,25 +87,6 @@
         })
     };
 
-    let IsHomeFocused = false;
-    let ShowHomeEaster = false;
-    let EasterEggTimeout;
-    const HomeEnter = () => {
-        IsHomeFocused = true;
-
-        EasterEggTimeout = setTimeout(() => {
-            if (IsHomeFocused) {
-                ShowHomeEaster = true
-            }
-        }, 1500);
-    };
-
-    const MouseLeave = () => {
-        IsHomeFocused = false;
-        ShowHomeEaster = false;
-        clearTimeout(EasterEggTimeout);
-    };
-
     const Selfie = () => {
         SendEvent("Phone/Selfie");
     };
@@ -115,8 +95,10 @@
         Brand.set(Data.Brand);
     });
 
+    let DefaultBackground = $PhoneBackground;
     OnEvent("SetPhoneBackground", (Data) => {
-        PhoneBackground.set(Data.Background);
+        DefaultBackground = Data.Background;
+        if (!$Settings.Background) PhoneBackground.set(Data.Background);
     });
 
     OnEvent("SetEmbedsEnabled", (Data) => {
@@ -136,6 +118,9 @@
         IsBurnerCurrent = Data.IsBurner;
 
         CurrentWeather = Data.Weather;
+        CurrentLocation = Data.Location || CurrentLocation;
+        Settings.set(Data.Settings || {});
+        PhoneBackground.set($Settings.Background || DefaultBackground);
         HasVpn.set(Data.HasVPN);
         HasRacingUsb.set(Data.HasRacingUsb);
         HasPDRacingUsb.set(Data.HasPDRacingUsb);
@@ -174,589 +159,294 @@
         CurrentApp = "documents";
     });
 
+    $: Shop = CarShops[CurrentNetwork];
+    $: State = { HasVpn: $HasVpn, HasRacingUsb: $HasRacingUsb, HasPDRacingUsb: $HasPDRacingUsb, Network: CurrentNetwork };
+    $: Apps = [
+        ...HomeApps.filter(A => !A.Show || A.Show(State)),
+        ...(Shop ? [{ Id: "cars", Label: "Dealership", Tooltip: Shop[0], Icon: Shop[1], Color: ["#ff5252", "#b71c1c"] }] : []),
+    ];
+
+    $: Clock = `${CurrentTime[0] % 12 || 12}:${String(CurrentTime[1]).padStart(2, "0")}`;
+    $: Meridiem = CurrentTime[0] < 12 ? "AM" : "PM";
+
+    const GoBack = () => $InputModal.Visible ? InputModal.set({ Visible: false }) : GoHome();
+    const Select = () => [...document.querySelectorAll(":hover")].pop()?.click();
+    const Keys = { y: GoHome, u: ToggleSound, Enter: Select, Backspace: GoBack };
+
+    const OnKeyDown = (e) => {
+        const El = document.activeElement;
+        if (!PhoneVisible || El?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(El?.tagName)) return;
+        const Fn = Keys[e.key.length == 1 ? e.key.toLowerCase() : e.key];
+        if (!Fn) return;
+        e.preventDefault();
+        Fn();
+    };
+
     SetExitHandler("ClosePhone", "ClosePhone", () => {
         return PhoneVisible
     });
 </script>
 
+<svelte:window on:keydown={OnKeyDown} />
+
 <div class="phone-wrapper">
-    <!-- <h1 style="margin-left: 37vh; margin-top: 1vh;">Current Network: {CurrentNetwork}</h1>
-    <h1 style="margin-left: 37vh; margin-top: 1vh;">Current App: {CurrentApp}</h1>
-    <h1 style="margin-left: 37vh; margin-top: 1vh;">Has VPN: {$HasVpn}</h1>
-
-    <h1 style="margin-left: 37vh; margin-top: 1vh;">Input Modal JSON:</h1>
-    <pre style="font-size: 1.25vh; margin-left: 37vh; margin-top: 1vh; border: 0.1vh solid rgba(0, 0, 0, 0.15); background-color: rgba(0, 0, 0, 0.05); width: fit-content; padding: 1vh;">{JSON.stringify($InputModal, undefined, 2)}</pre>
-
-    <h1 style="margin-left: 37vh; margin-top: 1vh;">Notifications JSON:</h1>
-    <pre style="font-size: 1.25vh; margin-left: 37vh; margin-top: 1vh; border: 0.1vh solid rgba(0, 0, 0, 0.15); background-color: rgba(0, 0, 0, 0.05); width: fit-content; padding: 1vh;">{JSON.stringify($Notifications, undefined, 2)}</pre> -->
-
-    <Container
-        isBurner={false}
-        class="phone-container {IsEnvBrowser() ? "phone-debug" : ""} {PhoneVisible && !IsBurnerCurrent ? "phone-visible" : ($Notifications.length > 0 ? "phone-half" : "phone-hidden")}"
-    >
-        {#if $LoaderModal}
-            <Loader/>
-        {/if}
-
-        {#if $SuccessModal}
-            <Success/>
-        {/if}
-
-        {#if $InputModal.Visible}
-            <Input/>
-        {/if}
-
-        {#if CurrentApp == "home"}
-            <div in:fade={{ duration: 250 }} class="phone-applications">
-                <Application
-                    on:click={() => { SetCurrentApp("details") }}
-                    HasUnread={UnreadApps["details"]}
-                    Tooltip="Information"
-                    style="background-image: url(./images/details.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("contacts") }}
-                    HasUnread={UnreadApps["contacts"]}
-                    Tooltip="Contacts"
-                    style="background-image: url(./images/contacts.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("calls") }}
-                    HasUnread={UnreadApps["calls"]}
-                    Tooltip="Calls"
-                    style="background-image: url(./images/calls.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("messages") }}
-                    HasUnread={UnreadApps["messages"]}
-                    Tooltip="Messages"
-                    style="background-image: url(./images/conversations.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("pinger") }}
-                    HasUnread={UnreadApps["pinger"]}
-                    Tooltip="Pinger!"
-                    style="background-image: url(./images/pinger.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("mails") }}
-                    HasUnread={UnreadApps["mails"]}
-                    Tooltip="Emails"
-                    style="background-image: url(./images/email.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("yellowpages") }}
-                    HasUnread={UnreadApps["yellowpages"]}
-                    Tooltip="Yellow Pages"
-                    style="background-image: url(./images/yellow-pages.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("twatter") }}
-                    HasUnread={UnreadApps["twatter"]}
-                    Tooltip="Twatter"
-                    style="background-image: url(./images/twitter.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("vehicles") }}
-                    HasUnread={UnreadApps["vehicles"]}
-                    Tooltip="Vehicles"
-                    style="background-image: url(./images/vehicles.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("debt") }}
-                    HasUnread={UnreadApps["debt"]}
-                    Tooltip="Debt"
-                    style="background-image: url(./images/debt.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("wenmo") }}
-                    HasUnread={UnreadApps["wenmo"]}
-                    Tooltip="Wenmo"
-                    style="background-image: url(./images/wenmo.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("documents") }}
-                    HasUnread={UnreadApps["documents"]}
-                    Tooltip="Documents"
-                    style="background-image: url(./images/documents.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("housing") }}
-                    HasUnread={UnreadApps["housing"]}
-                    Tooltip="Housing"
-                    Icon="house-user"
-                    style="background-color: #46a145"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("crypto") }}
-                    HasUnread={UnreadApps["crypto"]}
-                    Tooltip="Crypto"
-                    style="background-image: url(./images/crypto.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("jobcenter") }}
-                    HasUnread={UnreadApps["jobcenter"]}
-                    Tooltip="Jobcenter"
-                    style="background-image: url(./images/jobs.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("employment") }}
-                    HasUnread={UnreadApps["employment"]}
-                    Tooltip="Employment"
-                    style="background-image: url(./images/employment.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("news") }}
-                    HasUnread={UnreadApps["news"]}
-                    Tooltip="Weazel News"
-                    style="background-image: url(./images/news.png)"
-                />
-                <Application
-                    on:click={() => { SetCurrentApp("bin") }}
-                    HasUnread={UnreadApps["bin"]}
-                    Tooltip="Binsbergen International Network"
-                    style="background-image: url(./images/bin.png)"
-                />
-                {#if $HasPDRacingUsb}
-                    <Application
-                        on:click={() => { SetCurrentApp("time-trials") }}
-                        HasUnread={UnreadApps["time-trials"]}
-                        Tooltip="Time Trials"
-                        style="background-image: url(./images/time-trials.png)"
-                    />
-                {:else if $HasRacingUsb}
-                    <Application
-                        on:click={() => { SetCurrentApp("racing") }}
-                        HasUnread={UnreadApps["racing"]}
-                        Tooltip="Racing"
-                        style="background-image: url(./images/racing.png)"
-                    />
-                {/if}
-                {#if CurrentNetwork == "milkroad"}
-                    <Application
-                        on:click={() => { SetCurrentApp("milkroad") }}
-                        HasUnread={UnreadApps["milkroad"]}
-                        Tooltip="Milk Road"
-                        Icon="user-secret"
-                        style="background-color: #7c55bb"
-                    />
-                {/if}
-                <Application
-                    on:click={() => { SetCurrentApp("calculator") }}
-                    HasUnread={UnreadApps["calculator"]}
-                    Tooltip="Calculator"
-                    style="background-image: url(./images/calculator.png)"
-                />
-                <!-- {#if $HasVpn}
-                    <Application
-                        on:click={() => { SetCurrentApp("bankbusters") }}
-                        HasUnread={UnreadApps["bankbusters"]}
-                        Tooltip="Bank Busters"
-                        Icon="piggy-bank"
-                        style="background-color: #fdd800; color: black"
-                    />
-                {/if} -->
-                <Application
-                    on:click={() => { SetCurrentApp("doj") }}
-                    HasUnread={UnreadApps["doj"]}
-                    Tooltip="Department of Justice"
-                    Icon="gavel"
-                    style="background-color: #38489b; color: #afae19"
-                />
-                {#if $HasVpn}
-                    <Application
-                        on:click={() => { SetCurrentApp("tierup") }}
-                        HasUnread={UnreadApps["tierup"]}
-                        Tooltip="TierUp!"
-                        Icon="trophy"
-                        style="background-color: #4482c3; color: white"
-                    />
-                {/if}
-
-                <!-- Networked Apps -->
-                {#if CurrentNetwork == "pdm"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Premium Deluxe Motorsports"
-                        Icon="car-alt"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                {#if CurrentNetwork == "bennys"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Bennys Motorworks"
-                        Icon="car-alt"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                {#if CurrentNetwork == "flightschool"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Los Santos Vliegschool"
-                        Icon="car-alt"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                {#if CurrentNetwork == "lostmc"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="The Lost Holland"
-                        Icon="motorcycle"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                {#if CurrentNetwork == "losmuertos"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Muertos Motorcycle Shop"
-                        Icon="motorcycle"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                <!-- {#if CurrentNetwork == "bearlymc"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Bearly Legal MC"
-                        Icon="motorcycle"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if} -->
-
-                {#if CurrentNetwork == "deathsinners"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Death Sinners MC"
-                        Icon="motorcycle"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-
-                {#if CurrentNetwork == "darkwolves"}
-                    <Application
-                        on:click={() => { SetCurrentApp("cars") }}
-                        HasUnread={UnreadApps["cars"]}
-                        Tooltip="Dark Wolves MC"
-                        Icon="motorcycle"
-                        style="background-color: #D60000; color: #dedede"
-                    />
-                {/if}
-            </div>
-        {:else}
-            <AppProvider App={CurrentApp} />
-        {/if}
-
-        <div class="phone-topbar">
-            <div class="phone-topbar-time">
-                {CurrentTime[0] < 10 ? `0${CurrentTime[0]}` : CurrentTime[0]}:{CurrentTime[1] < 10 ? `0${CurrentTime[1]}` : CurrentTime[1]}
-            </div>
-            <div class="phone-topbar-id">{$PlayerData.Id}</div>
-            {#if IsNetworkEnabled}
-                <div class:network-active={!IsNearNetwork || CurrentNetwork} class="phone-topbar-internet" on:keyup on:click={ConnectNetwork}>
-                    <i class:fa-signal={!IsNearNetwork} class:fa-wifi={IsNearNetwork} class="fas" />
-                </div>
-            {:else}
-                <div class="phone-topbar-internet">
-                    <i class="fas fa-signal-slash"></i>
-                </div>
-            {/if}
-            <div class="phone-topbar-vpn">
-                {#if $HasVpn}
-                    <i class="fas fa-lock" />
-                {:else}
-                    <i class="fas fa-unlock" />
-                {/if}
-            </div>
-            <div class="phone-topbar-weather">
-                <i class="fas fa-{WheaterIcons[CurrentWeather]}" />
-            </div>
+    {#if PhoneVisible}
+        <div transition:fade={{ duration: 250 }} class="phone-hotkeys" style={IsBurnerCurrent ? "right: 58vh" : ""}>
+            {#each Hotkeys as [Key, Label]}
+                <div class="phone-hotkey"><span>{Key}</span><p>{Label}</p></div>
+            {/each}
         </div>
+    {/if}
 
-        <div class="phone-bottombar">
-            <div on:keyup on:click={ToggleSound} class="phone-bottombar-notifications">
-                <i data-tooltip="Geluid Uit/Aanzetten" class="fas fa-bell{SoundsMuted ? "-slash" : ""}" />
-            </div>
-            <div on:keyup on:click={GoHome} on:mouseenter={HomeEnter} on:mouseleave={MouseLeave} data-tooltip="Home" class="phone-bottombar-home">
-                {#if ShowHomeEaster}
-                    <div class="phone-bottembar-home-mint" />
-                {:else}
-                    <div class="phone-bottembar-home-circle" />
-                {/if}
-            </div>
-            <div on:keyup on:click={Selfie} class="phone-bottombar-camera">
-                <i data-tooltip="Selfie!" class="fas fa-camera" />
-            </div>
-        </div>
-    </Container>
+    {#each [false, true] as Burner}
+        <Container
+            isBurner={Burner}
+            class={Burner
+                ? `phone-container ${PhoneVisible && IsBurnerCurrent ? "phone-visible" : "phone-hidden"}`
+                : `phone-container ${IsEnvBrowser() ? "phone-debug" : ""} ${PhoneVisible && !IsBurnerCurrent ? "phone-visible" : $Notifications.length > 0 ? "phone-half" : "phone-hidden"}`}
+            style={Burner ? "right: 28vh !important;" : ""}
+            backgroundOverride={Burner && "linear-gradient(160deg, #3a4a63 0%, #141a24 100%)"}
+        >
+            {#if !Burner || (PhoneVisible && IsBurnerCurrent)}
+                {#if $LoaderModal}<Loader />{/if}
+                {#if $SuccessModal}<Success />{/if}
+                {#if $InputModal.Visible}<Input />{/if}
 
-    <Container
-        isBurner={true}
-        class="phone-container {PhoneVisible && IsBurnerCurrent ? "phone-visible" : "phone-hidden"}"
-        style="right: 28vh !important;"
-        backgroundOverride="linear-gradient(90deg, rgba(115,161,242,1) 0%, rgba(134,188,239,1) 100%)"
-    >
-        {#if PhoneVisible && IsBurnerCurrent}
-            {#if $LoaderModal}
-                <Loader/>
-            {/if}
+                {#if CurrentApp == "home"}
+                    <div in:fade={{ duration: 250 }} class="phone-home">
+                        <div class="phone-clock">{Clock} <span>{Meridiem}</span></div>
+                        <div class="phone-location">
+                            <i class="fas fa-{WheaterIcons[CurrentWeather]}" />
+                            {CurrentLocation}
+                        </div>
 
-            {#if $SuccessModal}
-                <Success/>
-            {/if}
+                        <div class="phone-applications">
+                            {#each Burner ? BurnerApps : Apps as App (App.Id)}
+                                <Application {...App} HasUnread={UnreadApps[App.Id]} on:click={() => SetCurrentApp(App.Id)} />
+                            {/each}
+                        </div>
 
-            {#if $InputModal.Visible}
-                <Input/>
-            {/if}
-
-            {#if CurrentApp == "home"}
-                <div in:fade={{ duration: 250 }} class="phone-applications">
-                    <Application
-                        on:click={() => { SetCurrentApp("calls") }}
-                        HasUnread={UnreadApps["calls"]}
-                        Tooltip="Conversations"
-                        style="background-color: #028d7f;"
-                        Icon="phone"
-                    />
-                    <Application
-                        on:click={() => { SetCurrentApp("messages") }}
-                        HasUnread={UnreadApps["messages"]}
-                        Tooltip="Messages"
-                        style="background-color: #88c347;"
-                        Icon="comment"
-                    />
-                </div>
-            {:else}
-                <AppProvider App={CurrentApp} />
-            {/if}
-
-            <div class="phone-topbar">
-                <div class="phone-topbar-time">
-                    {CurrentTime[0] < 10 ? `0${CurrentTime[0]}` : CurrentTime[0]}:{CurrentTime[1] < 10 ? `0${CurrentTime[1]}` : CurrentTime[1]}
-                </div>
-                <div class="phone-topbar-id">{$PlayerData.Id}</div>
-                {#if IsNetworkEnabled}
-                    <div class:network-active={!IsNearNetwork || CurrentNetwork} class="phone-topbar-internet" on:keyup on:click={ConnectNetwork}>
-                        <i class:fa-signal={!IsNearNetwork} class:fa-wifi={IsNearNetwork} class="fas" />
+                        {#if !Burner}
+                            <div class="phone-dock">
+                                {#each DockApps as App (App.Id)}
+                                    <div class="phone-dock-app" data-tooltip={App.Label} on:keyup on:click={() => SetCurrentApp(App.Id)}>
+                                        <i class="fas fa-{App.Icon}" />
+                                        {#if UnreadApps[App.Id]}<div class="phone-dock-unread" />{/if}
+                                    </div>
+                                {/each}
+                                <div class="phone-dock-app" data-tooltip="Selfie!" on:keyup on:click={Selfie}><i class="fas fa-camera" /></div>
+                            </div>
+                        {/if}
                     </div>
                 {:else}
-                    <div class="phone-topbar-internet">
-                        <i class="fas fa-signal-slash"></i>
-                    </div>
+                    <AppProvider App={CurrentApp} />
                 {/if}
-                <div class="phone-topbar-vpn">
-                    {#if $HasVpn}
-                        <i class="fas fa-lock" />
-                    {:else}
-                        <i class="fas fa-unlock" />
-                    {/if}
-                </div>
-                <div class="phone-topbar-weather">
-                    <i class="fas fa-{WheaterIcons[CurrentWeather]}" />
-                </div>
-            </div>
 
-            <div class="phone-bottombar">
-                <div on:keyup on:click={ToggleSound} class="phone-bottombar-notifications">
-                    <i data-tooltip="Sound Off/On" class="fas fa-bell{SoundsMuted ? "-slash" : ""}" />
+                <div class="phone-statusbar">
+                    <div class="phone-statusbar-time">{Clock} {Meridiem}</div>
+                    <div class="phone-statusbar-icons">
+                        <i on:keyup on:click={ToggleSound} data-tooltip="Notifications On/Off" class="fas fa-bell{SoundsMuted ? "-slash" : ""}" />
+                        {#if $HasVpn}<i class="fas fa-lock" />{/if}
+                        {#if IsNetworkEnabled}
+                            <i
+                                on:keyup
+                                on:click={ConnectNetwork}
+                                class:dim={IsNearNetwork && !CurrentNetwork}
+                                class="fas fa-{IsNearNetwork ? "wifi" : "signal"}"
+                            />
+                        {:else}
+                            <i class="fas fa-signal-slash dim" />
+                        {/if}
+                        <i class="fas fa-battery-full" />
+                    </div>
                 </div>
-                <div on:keyup on:click={GoHome} on:mouseenter={HomeEnter} on:mouseleave={MouseLeave} data-tooltip="Home" class="phone-bottombar-home">
-                    {#if ShowHomeEaster}
-                        <div class="phone-bottembar-home-mint" />
-                    {:else}
-                        <div class="phone-bottembar-home-circle" />
-                    {/if}
-                </div>
-                <div on:keyup on:click={Selfie} class="phone-bottombar-camera">
-                    <i data-tooltip="Selfie!" class="fas fa-camera" />
-                </div>
-            </div>
-        {/if}
-    </Container>
+
+                <div on:keyup on:click={GoHome} class="phone-home-indicator"><div /></div>
+            {/if}
+        </Container>
+    {/each}
 </div>
 
 <style>
     .phone-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
+        --phone-bg: #0e0f12;
+        --phone-surface: rgba(30, 31, 36, 0.97);
+        --phone-card: rgba(255, 255, 255, 0.07);
+        --phone-card-hover: rgba(255, 255, 255, 0.12);
+        --phone-line: rgba(255, 255, 255, 0.09);
+        --phone-muted: rgba(235, 235, 245, 0.6);
+        --phone-accent: #0a84ff;
+        --phone-green: #34c759;
+        --phone-red: #ff3b30;
+        --phone-orange: #ff9f0a;
+        --phone-radius: 1.2vh;
 
+        position: absolute;
+        inset: 0;
         font-family: Roboto;
         font-size: 1vh;
-
         color: white;
-
-        width: 100vw;
-        height: 100vh;
-
         user-select: none;
     }
 
-    .phone-bottombar {
+    /* Keybind hints, left of the phone */
+    .phone-hotkeys {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3.9vh;
-        background-color: rgba(0, 0, 0, 0.25);
-        border-top: 0.1vh solid rgba(0, 0, 0, 0.5);
+        right: 30vh;
+        bottom: 4vh;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.6vh;
     }
 
-    .phone-bottombar > .phone-bottombar-notifications {
+    .phone-hotkey {
+        display: flex;
+        gap: 0.3vh;
+        font-family: "Barlow Condensed", Roboto;
+        font-weight: 700;
+        font-size: 1.25vh;
+        letter-spacing: 0.08vh;
+        text-transform: uppercase;
+        color: #111;
+    }
+
+    .phone-hotkey > span,
+    .phone-hotkey > p {
+        margin: 0;
+        padding: 0.45vh 0.7vh;
+        border-radius: 0.25vh;
+        box-shadow: 0 0.2vh 0.5vh rgba(0, 0, 0, 0.4);
+    }
+
+    .phone-hotkey > span { min-width: 1.2vh; text-align: center; background: white; }
+    .phone-hotkey > p { min-width: 8vh; background: rgba(235, 235, 235, 0.92); }
+
+    /* Home screen */
+    .phone-home {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 50%;
-        color: white;
-        text-align: center;
-        font-size: 1.3vh;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 3.6vh;
     }
 
-    .phone-bottombar > .phone-bottombar-camera {
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 50%;
-        color: white;
-        text-align: center;
-        font-size: 1.3vh;
+    .phone-clock {
+        font-family: "Barlow Condensed", Roboto;
+        font-style: italic;
+        font-weight: 800;
+        font-size: 4.6vh;
+        line-height: 1;
+        text-shadow: 0 0.3vh 1vh rgba(0, 0, 0, 0.6);
     }
 
-    .phone-bottombar-home {
-        position: relative;
-        top: 50%;
-        left: 0;
-        right: 0;
-        transform: translateY(-50%);
-        margin: 0 auto;
-        z-index: 10;
-        width: 15%;
-        height: 1.5vh;
-        padding: 1vh 0;
-    }
+    .phone-clock > span { font-size: 3.4vh; }
 
-    .phone-bottombar-home > .phone-bottembar-home-circle {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        pointer-events: none;
-        transform: translate(-50%, -50%);
-        border: 0.2vh solid white;
-        border-radius: 50%;
-        width: 1.5vh;
-        height: 1.5vh;
-    }
-
-    .phone-bottombar-home > .phone-bottembar-home-mint {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        pointer-events: none;
-        transform: translate(-50%, -50%);
-        width: 3vh;
-        height: 3vh;
-
-        background: url(./../images/logo.svg);
-        background-size: 100%;
-        background-position: center;
-
-        animation: pulse 1s infinite linear;
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: translate(-50%, -50%) scale(0.85);
-        }
-        50% {
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-        100% {
-            transform: translate(-50%, -50%) scale(0.85);
-        }
-    }
-
-    .phone-topbar {
-        position: absolute;
-        top: 0.1vh;
-        width: 100%;
-        overflow: hidden;
-        height: 2.3vh;
-    }
-
-    .phone-topbar > .phone-topbar-time {
-        margin-top: 0.4vh;
-        margin-left: 1vh;
-        font-size: 1.2vh;
-        float: left;
-    }
-
-    .phone-topbar > .phone-topbar-id:before {
-        content: "#";
-    }
-
-    .phone-topbar > .phone-topbar-id {
-        margin-top: 0.4vh;
-        margin-left: 0.6vh;
-        font-size: 1.2vh;
-        float: left;
-    }
-
-    .phone-topbar > .phone-topbar-weather {
-        float: right;
-        margin-top: 0.4vh;
-        width: 1.95vh;
-        font-size: 1.3vh;
-    }
-
-    .phone-topbar > .phone-topbar-vpn {
-        float: right;
-        margin-top: 0.4vh;
-        width: 1.95vh;
-        font-size: 1.3vh;
-    }
-
-    .phone-topbar > .phone-topbar-vpn > .fa-unlock {
-        color: #66797e;
-    }
-
-    .phone-topbar > .phone-topbar-vpn > .fa-lock {
-        color: white;
-    }
-
-    .phone-topbar > .phone-topbar-internet {
-        float: right;
-        margin-top: 0.4vh;
-        margin-right: 0.7vh;
-        width: 1.95vh;
-        font-size: 1.3vh;
-        opacity: 0.5;
-    }
-
-    .phone-topbar > .phone-topbar-internet.network-active {
-        opacity: 1;
+    .phone-location {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7vh;
+        width: 82%;
+        margin-top: 0.8vh;
+        padding: 0.55vh 0;
+        background: rgba(0, 0, 0, 0.55);
+        font-family: "Barlow Condensed", Roboto;
+        font-style: italic;
+        font-weight: 700;
+        font-size: 1.35vh;
+        letter-spacing: 0.15vh;
+        text-transform: uppercase;
     }
 
     .phone-applications {
         display: grid;
-        grid-column-gap: 1.6vh;
-        grid-row-gap: 1.47vh;
-        grid-template-columns: 20% 20% 20% 20%;
-        grid-template-rows: 9.5% 9.5% 9.5% 9.5% 9.5% 9.5% 9.5% 9.5%;
-        margin-top: 3.8vh;
-        margin-left: .8vh;
-        width: 94.1%;
-        height: 85.5%
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: min-content;
+        row-gap: 1.5vh;
+        width: 90%;
+        flex: 1;
+        margin: 2.2vh 0 1vh;
+        overflow-y: auto;
+    }
+
+    .phone-applications::-webkit-scrollbar { display: none; }
+
+    .phone-dock {
+        display: flex;
+        justify-content: space-around;
+        width: 86%;
+        margin-bottom: 2.6vh;
+        padding: 0.9vh 0.6vh;
+        border-radius: 2.2vh;
+        background: rgba(30, 30, 34, 0.55);
+        backdrop-filter: blur(1vh);
+    }
+
+    .phone-dock-app {
+        position: relative;
+        font-size: 1.7vh;
+        padding: 0.4vh 0.7vh;
+        cursor: pointer;
+        opacity: 0.9;
+    }
+
+    .phone-dock-app:hover { opacity: 1; }
+
+    .phone-dock-unread {
+        position: absolute;
+        top: 0;
+        right: 0.2vh;
+        width: 0.8vh;
+        height: 0.8vh;
+        border-radius: 50%;
+        background: #ff3b30;
+    }
+
+    /* Status bar */
+    .phone-statusbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2.6vh;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2.2vh 0 2.6vh;
+        font-size: 1.15vh;
+        font-weight: 600;
+        z-index: 250;
+        pointer-events: none;
+    }
+
+    .phone-statusbar-icons {
+        display: flex;
+        align-items: center;
+        gap: 0.6vh;
+        pointer-events: all;
+    }
+
+    .phone-statusbar-icons > i { cursor: pointer; }
+    .phone-statusbar-icons > .dim { opacity: 0.5; }
+
+    /* Home indicator */
+    .phone-home-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.9vh 3vh 0.7vh;
+        cursor: pointer;
+        z-index: 250;
+    }
+
+    .phone-home-indicator > div {
+        width: 9vh;
+        height: 0.45vh;
+        border-radius: 0.3vh;
+        background: white;
+        opacity: 0.85;
     }
 </style>

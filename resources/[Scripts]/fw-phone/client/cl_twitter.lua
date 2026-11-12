@@ -38,7 +38,7 @@ AddEventHandler("fw-phone:Client:Twitter:PostTweet", function(TweetId, Data)
         end)
     else
         SetAppUnread("twatter")
-        if exports['fw-hud']:GetPreferenceById('Notifications.Tweet') then
+        if exports['fw-hud']:GetPreferenceById('Notifications.Tweet') and not GetPhoneSetting('MuteTwatter') then
             Notification("new-twitter-" .. TweetId, "fab fa-twitter", { "white", "#01AFFB" }, "@" .. Data.Sender, Data.Msg)
         end
     end

@@ -67,7 +67,7 @@
     {#if !$CurrentChat}
         <div class="phone-misc-icons">
             <i
-                data-tooltip="Vestuur Bericht"
+                data-tooltip="Send Message"
                 data-position="left"
                 class="fas fa-comment"
                 on:keyup
@@ -76,7 +76,7 @@
         </div>
 
         <TextField
-            Title="Zoeken"
+            Title="Search"
             Icon="search"
             SubSet={FilterChats}
             class="phone-misc-input"
@@ -113,7 +113,7 @@
         </div>
 
         <TextField
-            Title="Zoeken"
+            Title="Search"
             Icon="search"
             SubSet={FilterTexts}
             class="phone-misc-input phone-misc-input2"
@@ -121,7 +121,7 @@
 
         <div class="phone-misc-icons">
             <i
-                data-tooltip="Bellen"
+                data-tooltip="Call"
                 data-position="left"
                 class="fas fa-phone"
                 on:keyup
@@ -138,7 +138,7 @@
 
         <TextField
             Title=''
-            Placeholder="Verstuur bericht..."
+            Placeholder="Send message..."
             style="position: absolute; left: 0; right: 0; bottom: 4.7vh; margin: 0 auto; width: 89%;"
             OnSubmit={MSG.SendMessage}
         />

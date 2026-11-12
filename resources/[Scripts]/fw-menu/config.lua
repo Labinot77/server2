@@ -226,7 +226,7 @@ Config.Menu = {
         Id = "steal",
         Title = "Rob Player",
         Icon = "#citizen-action-steal",
-        Event = " fw-police:Client:Rob PlayerPlayer",
+        Event = "fw-police:Client:RobPlayer",
         Close = true,
         Enabled = function()
                 return true

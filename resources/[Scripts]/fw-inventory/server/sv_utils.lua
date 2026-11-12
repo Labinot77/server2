@@ -595,3 +595,86 @@ function SetInventoryName(FromInv, ToInv)
     return Result.affectedRows > 0
 end
 exports("SetInventoryName", SetInventoryName)
+-- ============================================================================
+--  Shared inventories: check a move against what's really in the database
+-- ============================================================================
+local function SlotStacks(InvName, Slot)
+    return exports['ghmattimysql']:executeSync("SELECT item_name, custom_type, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inv AND slot = @Slot GROUP BY item_name, custom_type", {
+        ['@Inv'] = InvName, ['@Slot'] = Slot,
+    }) or {}
+end
+
+local function ItemsWeight(Item, Amount)
+    return ((Shared.Items[Item] or {}).Weight or 0) * (Amount or 0)
+end
+
+local function InventoryWeight(InvName)
+    local Total = 0
+    for _, Row in ipairs(exports['ghmattimysql']:executeSync("SELECT item_name, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inv GROUP BY item_name", { ['@Inv'] = InvName }) or {}) do
+        Total = Total + ItemsWeight(Row.item_name, Row.amount)
+    end
+    return Total
+end
+
+local function InventoryWeightLimit(InvName)
+    if string.startsWith(InvName, 'ply-') then
+        local Target = FW.Functions.GetPlayerByCitizenId(InvName:sub(5))
+        return Target and GetMaxPlayerWeight(Target.PlayerData.inventory) or false
+    end
+    return GetSharedMaxWeight(InvName)
+end
+
+local function FitsWeight(InvName, Gain)
+    if Gain <= 0 then return true end
+    local Limit = InventoryWeightLimit(InvName)
+    return not Limit or InventoryWeight(InvName) + Gain <= Limit + 0.001
+end
+
+function ValidateAgainstDatabase(Source, Type, Data)
+    if Data.FromInv == 'Store' or Data.FromInv == 'Crafting' then return true end
+    local Changed = "Deze inventory is net veranderd, probeer het opnieuw."
+    Data.FromSlot, Data.ToSlot = tonumber(Data.FromSlot), tonumber(Data.ToSlot)
+
+    local From = SlotStacks(Data.FromInv, Data.FromSlot)
+    if #From ~= 1 or From[1].item_name ~= Data.FromItem then return false, Changed end
+    local FromType, Have = From[1].custom_type or "", From[1].amount
+    local SameSlot = Data.FromInv == Data.ToInv and Data.FromSlot == Data.ToSlot
+    local To = SameSlot and {} or SlotStacks(Data.ToInv, Data.ToSlot)
+
+    if Type == "Move" then
+        Data.Amount = math.min(math.floor(tonumber(Data.Amount) or 0), Have)
+        if Data.Amount <= 0 then return false, Changed end
+        -- Target must be empty, or the same stackable item.
+        if #To > 1 then return false, Changed end
+        if #To == 1 and (To[1].item_name ~= Data.FromItem or (To[1].custom_type or "") ~= FromType or (Shared.Items[Data.FromItem] or {}).NonStack) then
+            return false, Changed
+        end
+        if Data.FromInv ~= Data.ToInv and not FitsWeight(Data.ToInv, ItemsWeight(Data.FromItem, Data.Amount)) then
+            return false, "Dit past niet, te zwaar."
+        end
+    elseif Type == "Swap" then
+        if FromType ~= (Data.FromType or "") then return false, Changed end
+        if #To ~= 1 or To[1].item_name ~= Data.ToItem or (To[1].custom_type or "") ~= (Data.ToType or "") then return false, Changed end
+        -- Always swap the whole real stacks, whatever the client thought they were.
+        Data.FromAmount, Data.ToAmount = Have, To[1].amount
+        if Data.FromInv ~= Data.ToInv then
+            local Diff = ItemsWeight(Data.FromItem, Data.FromAmount) - ItemsWeight(Data.ToItem, Data.ToAmount)
+            if not FitsWeight(Data.ToInv, Diff) or not FitsWeight(Data.FromInv, -Diff) then
+                return false, "Dit past niet, te zwaar."
+            end
+        end
+    end
+    return true
+end
+
+-- A move was refused: redraw this player's screen from the database.
+function ResyncViewer(Source, Data)
+    local Player = FW.Functions.GetPlayer(Source)
+    if Player then Player.Functions.RefreshInventory() end
+    TriggerClientEvent("fw-inventory:Client:RefreshPlayerInventory", Source)
+    for _, InvName in ipairs({ Data.FromInv, Data.ToInv }) do
+        if type(InvName) == 'string' and InvName ~= PlayerInvName(Source) and InvName ~= 'Store' and InvName ~= 'Crafting' then
+            TriggerClientEvent("fw-inventory:Client:RefreshOther", Source, InvName, GetInventoryItems(InvName))
+        end
+    end
+end

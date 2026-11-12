@@ -74,7 +74,7 @@ AddEventHandler("fw-admin:Server:RegisterCommand", function(Data)
     local Src = source
     local Player = FW.Functions.GetPlayer(Src)
 
-    if Data.Event ~= 'Admin:Toggle:Noclip' and Data.Event ~= 'Admin:Open:Inventory' and Data.Event ~= 'Admin:Delete:Vehicle' and Data.Event ~= 'Admin:Fix:Vehicle' and Data.Event ~= 'Admin:Open:Bennys' and Data.Event ~= 'Admin:Teleport' and Data.Event ~= 'Admin:Teleport:Coords' and Data.Event ~= 'Admin:Teleport:Marker' and Data.Event ~= 'Admin:Copy:Coords' and Data.Event ~= 'Admin:Toggle:Coords' and Data.Event ~= 'Admin:Toggle:DeteLazer' and Data.Event ~= 'Admin:Toggle:Blips' and Data.Event ~= 'Admin:Toggle:Names' and Data.Event ~= 'Admin:Set:Ammo' and Data.Event ~= 'Admin:Kick:Player' and Data.Event ~= 'Admin:Ban:Player' and Data.Event ~= 'Admin:Fling:Player' and Data.Event ~= 'Admin:Toggle:Cuffs' and Data.Event ~= 'Admin:Set:Time:Weather' then
+    if Data.Event ~= 'Admin:Toggle:Noclip' and Data.Event ~= 'Admin:Open:Inventory' and Data.Event ~= 'Admin:Delete:Vehicle' and Data.Event ~= 'Admin:Fix:Vehicle' and Data.Event ~= 'Admin:Open:Bennys' and Data.Event ~= 'Admin:Teleport' and Data.Event ~= 'Admin:Teleport:Coords' and Data.Event ~= 'Admin:Teleport:Marker' and Data.Event ~= 'Admin:Copy:Coords' and Data.Event ~= 'Admin:Toggle:Coords' and Data.Event ~= 'Admin:Toggle:DeteLazer' and Data.Event ~= 'Admin:Toggle:Blips' and Data.Event ~= 'Admin:Toggle:Names' and Data.Event ~= 'Admin:Kick:Player' and Data.Event ~= 'Admin:Ban:Player' and Data.Event ~= 'Admin:Fling:Player' and Data.Event ~= 'Admin:Toggle:Cuffs' and Data.Event ~= 'Admin:Set:Time:Weather' then
         TriggerEvent('fw-logs:Server:Log', 'admin', 'Command Ran', ("User: [%s] - %s - %s \nData: ```json\n %s ```"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname, json.encode(Data, {indent = 2})), 'red')
     end
 end)
@@ -296,16 +296,6 @@ AddEventHandler('Admin:Set:High:Command', function(Result)
         TriggerClientEvent('FW:Notify', source, 'Speler is GEEN leiding gevende meer!', 'error')
         TriggerEvent('fw-logs:Server:Log', 'police', 'High Command Set', ("User: [%s] - %s - %s %s\nTarget: [%s] - %s - %s %s\nState: false"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, TPlayer.PlayerData.source, TPlayer.PlayerData.citizenid, TPlayer.PlayerData.charinfo.firstname, TPlayer.PlayerData.charinfo.lastname), 'error')
     end
-end)
-
-RegisterNetEvent('Admin:Set:Ammo')
-AddEventHandler('Admin:Set:Ammo', function(Result)
-    if not IsPlayerAdmin(source) then print(source .. " probeerde een admin optie te executen, maar hij is geen admin... Cheaterrrrrrr") return end
-    
-    local TPlayer = FW.Functions.GetPlayer(tonumber(Result.player))
-    if TPlayer == nil then return end
-
-    TriggerClientEvent('fw-weapons:Client:SetAmmo', TPlayer.PlayerData.source, tonumber(Result.amount))
 end)
 
 RegisterNetEvent('Admin:Request:Gang')

@@ -22,7 +22,6 @@
     let textfieldRef;
 
     let OrgSelect = Select && Select.length > 0 ? [...Select] : []
-    let Focused = false;
 
     const CheckIfSubmit = Event => {
         if (!OnSubmit) return;
@@ -52,13 +51,12 @@
 <div {...$$restProps} bind:this={textfieldRef} class="textfield-component-container {$$restProps?.class}">
     <p class="textfield-title">{Title}</p>
 
+    <div class="textfield-box">
     {#if Icon}
         <i class="fas fa-{Icon}"></i>
     {/if}
 
     <input
-        on:focusin={() => { Focused = true }}
-        on:focusout={() => { Focused = false }}
         on:input={(e) => {
             Value = e.target.value, RealValue = e.target.value;
 
@@ -107,12 +105,8 @@
     >
 
     {#if Select && !Icon}
-        <i class="fas fa-caret-down"></i>
+        <i class="fas fa-chevron-down"></i>
     {/if}
-    
-
-    <div class="textfield-underline" style="height: 0.1vh">
-        <div class="textfield-underline-fill" style="width: {Focused ? 100 : 0}%"></div>
     </div>
-    <p class="textfield-sub">{Sub}</p>
+    {#if Sub}<p class="textfield-sub">{Sub}</p>{/if}
 </div>

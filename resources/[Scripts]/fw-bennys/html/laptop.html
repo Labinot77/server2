@@ -236,6 +236,9 @@
     ::-webkit-scrollbar-track { background: transparent; }
 
     .hidden { display: none !important; }
+
+    /* Running as an app window on the fw-dui desktop */
+    .embedded .cursor, .embedded [data-action="close"] { display: none !important; }
 </style>
 </head>
 <body>
@@ -280,6 +283,7 @@
     };
 
     const $ = id => document.getElementById(id);
+    if (window.parent !== window) document.body.classList.add("embedded");
     const Money = v => "$" + Math.round(v || 0).toLocaleString("en-US");
     const Esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -509,9 +513,9 @@
 
     const MockAction = (Action, Data) => {
         const o = State.orders.find(x => x.Id === Data.Id);
-        if (Action === "accept" && o) { o.Status = "accepted"; o.MechanicCid = State.me.cid; o.MechanicName = State.me.name; Toast("Order geaccepteerd"); }
-        if (Action === "decline" && o) { o.Status = "cancelled"; Toast("Order geannuleerd", "error"); }
-        if (Action === "release" && o) { o.ReleasedBy = o.MechanicName; o.Status = "pending"; o.MechanicCid = null; o.MechanicName = null; Toast("Order vrijgegeven"); }
+        if (Action === "accept" && o) { o.Status = "accepted"; o.MechanicCid = State.me.cid; o.MechanicName = State.me.name; Toast("Order accepted"); }
+        if (Action === "decline" && o) { o.Status = "cancelled"; Toast("Order declined", "error"); }
+        if (Action === "release" && o) { o.ReleasedBy = o.MechanicName; o.Status = "pending"; o.MechanicCid = null; o.MechanicName = null; Toast("Order released"); }
         Render();
     };
 

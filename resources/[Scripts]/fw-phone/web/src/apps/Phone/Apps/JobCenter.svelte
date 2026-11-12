@@ -149,7 +149,7 @@
         
         <PaperList style="top: 13.5vh; height: 71%;">
             {#if IdleGroups.length > 0}
-                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Inactief</p>
+                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Inactive</p>
 
                 {#each IdleGroups as Data (Data.Id)}
                     <div class="phone-card-component">
@@ -176,7 +176,7 @@
             {/if}
 
             {#if BusyGroups.length > 0}
-                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Bezig</p>
+                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Busy</p>
 
                 {#each BusyGroups as Data (Data.Id)}
                     <div class="phone-card-component">
@@ -209,7 +209,7 @@
         {/if}
 
         <PaperList style={$JobManager.CurrentGroup.State == "Busy" ? "top: 14vh; height: 34.4vh;" : "top: 2.2vh; height: 46vh;"}>
-            <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Leider</p>
+            <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Leader</p>
             <Paper
                 Icon="user-graduate"
                 Title={$JobManager.CurrentGroup.Members[0].Name}
@@ -217,7 +217,7 @@
             />
 
             {#if $JobManager.CurrentGroup.Members.length > 1}
-                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Deelnemers</p>
+                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Participants</p>
                 {#each $JobManager.CurrentGroup.Members.slice(1) as Data, Id}
                     <Paper
                         Icon="user"
@@ -242,7 +242,7 @@
 
         <div class="phone-jobcenter-members-buttons">
             {#if $JobManager.CurrentGroup.Members[0].Cid == $PlayerData.Cid}
-                <Button Color="success" on:click={JOB.ToggleReady}>{$JobManager.CurrentGroup.State == "Busy" ? "Niet" : ""} Ready to Work</Button>
+                <Button Color="success" on:click={JOB.ToggleReady}>{$JobManager.CurrentGroup.State == "Busy" ? "Not" : ""} Ready to Work</Button>
                 <Button Color="success" on:click={JOB.DeleteGroup}>Delete Group</Button>
             {:else}
                 <Button Color="success" on:click={JOB.LeaveGroup}>Abandon Group</Button>
@@ -307,7 +307,7 @@
     /* List of Jobs */
     .phone-jobcenter-job-container {
         position: relative;
-        background-color: #30475d;
+        background-color: var(--phone-surface);
         height: max-content;
         min-height: 6vh;
         font-size: 1.4vh;
@@ -552,7 +552,7 @@
     .phone-jobcenter-tasks-container > .phone-jobcenter-tasks-list > ul > li > .jobcenter-task-content > .jobcenter-task-content-activity-task {
         width: 100%;
         position: relative;
-        background-color: #30475d;
+        background-color: var(--phone-surface);
         height: max-content;
         min-height: 4.2vh;
         padding: 0.6vh;

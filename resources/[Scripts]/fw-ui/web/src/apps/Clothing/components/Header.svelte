@@ -1,6 +1,7 @@
 <script>
     export let Path = [];
     export let Navigate = (NewPath) => {};
+    export let CanGoBack = true;
 
     const Sizes = [
         "font-size: 40px; color: white; font-weight: 700;",
@@ -10,7 +11,7 @@
 </script>
 
 <div class="header">
-    {#if Path.length > 1}
+    {#if Path.length > 1 && CanGoBack}
         <button class="back-btn" title="Go Back" on:click={() => Navigate(Path.slice(0, -1))}>&lt;</button>
     {/if}
 

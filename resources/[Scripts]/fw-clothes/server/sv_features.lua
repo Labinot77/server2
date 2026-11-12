@@ -252,12 +252,18 @@ FW.Functions.CreateCallback("fw-clothes:Server:GetJobOutfits", function(Source, 
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return Cb({ Outfits = {}, IsBoss = false }) end
 
-    local Allowed = IsJobAllowed(Player.PlayerData.job.name)
-    Cb({
-        Outfits = GetJobOutfits(Player),
-        IsBoss = Allowed and IsJobBoss(Player),
-        Allowed = Allowed,
-    })
+    -- The [G] outfit menu waits for this answer, so an error (e.g. job_outfits table missing) must not leave it hanging.
+    local Ok, Result = pcall(function()
+        local Allowed = IsJobAllowed(Player.PlayerData.job.name)
+        return { Outfits = GetJobOutfits(Player), IsBoss = Allowed and IsJobBoss(Player), Allowed = Allowed }
+    end)
+
+    if not Ok then
+        print(("^1[fw-clothes] Job outfits failed, did you run sql/fw-clothes.sql? %s^0"):format(Result))
+        Result = { Outfits = {}, IsBoss = false, Allowed = false }
+    end
+
+    Cb(Result)
 end)
 
 FW.Functions.CreateCallback("fw-clothes:Server:SaveJobOutfit", function(Source, Cb, Name, MinRank)

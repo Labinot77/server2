@@ -1,5 +1,6 @@
--- Work-order laptop. fw-dui shows laptop.html on the nearest placed laptop (range, texture, camera, cursor);
--- this file fills it with the live dashboard of the laptop's business (everyone nearby sees it).
+-- Business laptop. fw-dui shows its computer desktop on the nearest placed laptop (range, texture, camera,
+-- cursor); this file puts the apps on it: "Work Orders" (html/laptop.html, live orders of the laptop's business)
+-- and "Management" (html/management.html, see cl_management.lua).
 -- Mirror: players nearby also see what the user does on it.
 -- Laptops are fw-admin placed props inside a business Area (server/sv_orders.lua -> LoadLaptops).
 FW = FW or exports['fw-core']:GetCoreObject()
@@ -11,7 +12,30 @@ local Laptop = { Open = false, Entity = nil, Business = nil, Shown = nil, ShownB
 local Laptops = {} -- [placed prop id] = { Id, Model, Coords, Business }
 local ViewOrders = {} -- [Business] = orders, for players who aren't members
 
-local function Send(Action, Data) DUI:Send(SCREEN, Action, Data) end
+LAPTOP_SCREEN = SCREEN
+local APP = Config.Laptop.Apps.Orders.id
+local function Send(Action, Data, MirrorData) DUI:SendApp(SCREEN, APP, Action, Data, MirrorData) end
+
+-- The apps on this laptop's desktop (Open = app id to show right away). Every player gets the same dock,
+-- so watchers' screens match; the Management app itself locks for players without access.
+local function SetApps(Business, Open)
+    if not Business then return DUI:SetApps(SCREEN, {}) end
+    local Label = Config.Orders.Businesses[Business] and Config.Orders.Businesses[Business].Label or Business
+    local List = {}
+    for _, Key in ipairs({ 'Orders', 'Management' }) do
+        local App = {}
+        for K, V in pairs(Config.Laptop.Apps[Key]) do App[K] = V end
+        App.label = App.label:format(Label)
+        App.url = ('nui://%s/html/%s'):format(GetCurrentResourceName(), App.page)
+        List[#List + 1] = App
+    end
+    DUI:SetApps(SCREEN, List, Open)
+end
+
+-- For cl_management.lua: the business of the laptop in use (nil when not using one).
+function GetLaptopBusiness()
+    return Laptop.Open and Laptop.Business or nil
+end
 
 local function GetLaptopForEntity(Entity)
     local Id = GetResourceState('fw-admin') == 'started' and exports['fw-admin']:GetPropIdByEntity(Entity)
@@ -38,12 +62,14 @@ local function ShowDashboard(Business)
     end)
 end
 
--- What a laptop shows while nobody uses it: the live dashboard (locked screen if it isn't in a business Area).
+-- What a laptop shows while nobody uses it: the desktop, the player opens the app from the dock
+-- (an empty desktop if the laptop isn't in a business Area). The app runs in the background with live orders.
 local function ShowIdle(Entity)
     local Entry = GetLaptopForEntity(Entity)
     Laptop.Shown, Laptop.ShownBusiness = Entity, Entry and Entry.Business
-    if Entry then return ShowDashboard(Entry.Business) end
-    Send('idle', { text = 'Locked' })
+    SetApps(Entry and Entry.Business)
+    ManagementLock()
+    if Entry then ShowDashboard(Entry.Business) end
 end
 
 -- ── Session ────────────────────────────────────────────────────────────────
@@ -54,7 +80,9 @@ function CloseLaptop()
 
     Send('close')
     DUI:StopFocus()
-    DUI:Release(SCREEN) -- the dashboard stays on screen, the range check takes over
+    SetApps(Laptop.Business) -- back to the desktop (app windows closed), the app keeps its live orders
+    ManagementLock()
+    DUI:Release(SCREEN) -- the range check takes over
     ClearPedTasks(PlayerPedId())
     Laptop.Entity, Laptop.Business = nil, nil
 end
@@ -66,12 +94,16 @@ function OpenLaptop(Entity, Business)
     local Ped = PlayerPedId()
     TaskTurnPedToFaceEntity(Ped, Entity, 600)
 
-    if not DUI:Show(SCREEN, Entity) then
+    local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
+    if not Shown then
         Laptop.Open = false
-        return FW.Functions.Notify("Laptop kon niet worden geladen..", "error")
+        return FW.Functions.Notify("The laptop couldn't be loaded.", "error")
     end
+    Entity = ScreenEntity -- the screen copy when fw-dui swapped the laptop
+    Laptop.Entity = Entity
     if Laptop.Shown ~= Entity or Laptop.ShownBusiness ~= Business then
         Laptop.Shown, Laptop.ShownBusiness = Entity, Business
+        SetApps(Business)
         ShowDashboard(Business)
     end
 
@@ -81,6 +113,7 @@ function OpenLaptop(Entity, Business)
     TaskPlayAnim(Ped, 'anim@heists@prison_heiststation@cop_reactions', 'cop_b_idle', 3.0, 3.0, -1, 49, 0, false, false, false)
 
     DUI:Focus(SCREEN, { Mouse = true, Sensitivity = Config.Laptop.CursorSensitivity })
+    ManagementLoad(Business) -- after Focus, so players watching see it too
 end
 
 -- ── fw-dui ─────────────────────────────────────────────────────────────────
@@ -89,11 +122,12 @@ local function RegisterScreen()
     local Models = {}
     for Model in pairs(Config.Laptop.Models) do Models[#Models + 1] = Model end
     DUI:RegisterScreen(SCREEN, {
-        Url = ('nui://%s/html/laptop.html'):format(GetCurrentResourceName()),
         Models = Models,
         Distance = Config.Laptop.RenderDistance,
         Placed = true,
         Mirror = true,
+        SameInterior = true,
+        Desktop = true,
     })
 end
 
@@ -126,12 +160,12 @@ end)
 -- Live updates for whatever the screen shows (members via cl_orders.lua, everyone else via Laptop:View).
 -- Not mirrored: every watcher gets the same list from the server.
 AddEventHandler('fw-bennys:Client:Laptop:Orders', function(Business, List)
-    if Laptop.ShownBusiness == Business then DUI:Send(SCREEN, 'orders', List, false) end
+    if Laptop.ShownBusiness == Business then Send('orders', List, false) end
 end)
 
 RegisterNetEvent('fw-bennys:Client:Laptop:View', function(Business, List)
     ViewOrders[Business] = List
-    if Laptop.ShownBusiness == Business then DUI:Send(SCREEN, 'orders', List, false) end
+    if Laptop.ShownBusiness == Business then Send('orders', List, false) end
 end)
 
 -- ── Page -> client ─────────────────────────────────────────────────────────
@@ -158,11 +192,11 @@ RegisterNUICallback('laptop', function(Data, Cb)
     if Action == 'accept' or Action == 'release' or Action == 'decline' or Action == 'complete' then
         local Result = FW.SendCallback('fw-bennys:Server:Orders:Action', Action, Data.Id)
         if Result and Result.Success then
-            local Messages = { accept = 'Order geaccepteerd', release = 'Order vrijgegeven', decline = 'Order geannuleerd', complete = 'Order afgerond' }
+            local Messages = { accept = 'Order accepted', release = 'Order released', decline = 'Order declined', complete = 'Order completed' }
             Send('toast', { text = Messages[Action], type = 'success' })
             PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
         else
-            Send('toast', { text = Result and Result.Message or 'Er ging iets mis', type = 'error' })
+            Send('toast', { text = Result and Result.Message or 'Something went wrong', type = 'error' })
             PlaySoundFrontend(-1, 'ERROR', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
         end
         return Cb('ok')
@@ -174,9 +208,9 @@ RegisterNUICallback('laptop', function(Data, Cb)
         if Vehicle then
             local Coords = GetEntityCoords(Vehicle)
             SetNewWaypoint(Coords.x, Coords.y)
-            Send('toast', { text = 'Waypoint gezet naar het voertuig', type = 'success' })
+            Send('toast', { text = 'Waypoint set to the vehicle', type = 'success' })
         else
-            Send('toast', { text = 'Voertuig niet in de buurt', type = 'error' })
+            Send('toast', { text = 'Vehicle is not nearby', type = 'error' })
         end
         return Cb('ok')
     end
@@ -219,10 +253,21 @@ function LaptopCanInteract(Entity)
     return LaptopBlockReason(Entity) == nil
 end
 
+-- Laptop models + their fw-dui screen copies (the laptop showing the page is swapped to its copy).
+local function GetLaptopModels()
+    local List = {}
+    for Model in pairs(Config.Laptop.Models) do
+        List[#List + 1] = Model
+        local Variant = GetResourceState('fw-dui') == 'started' and DUI:GetVariant(Model)
+        if Variant then List[#List + 1] = Variant end
+    end
+    return List
+end
+
 local function RegisterInteractions()
     if GetResourceState('interact') ~= 'started' then return end
 
-    for Model in pairs(Config.Laptop.Models) do
+    for _, Model in ipairs(GetLaptopModels()) do
         if not Registered[Model] then
             if not IsModelValid(joaat(Model)) then
                 print(('[fw-bennys] Laptop model %s is not valid (not streamed?), skipping interaction'):format(Model))
@@ -259,7 +304,7 @@ end)
 
 local function FindNearestLaptop(Radius)
     local Coords = GetEntityCoords(PlayerPedId())
-    for Model in pairs(Config.Laptop.Models) do
+    for _, Model in ipairs(GetLaptopModels()) do
         local Entity = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, Radius, joaat(Model), false, false, false)
         if Entity ~= 0 then return Entity, Model end
     end
@@ -269,7 +314,7 @@ end
 
 RegisterCommand('workorders', function()
     local Entity = FindNearestLaptop(2.5)
-    if not Entity then return FW.Functions.Notify("Geen laptop in de buurt..", "error") end
+    if not Entity then return FW.Functions.Notify("No laptop nearby.", "error") end
 
     local Reason = LaptopBlockReason(Entity)
     if Reason then return FW.Functions.Notify("Laptop: " .. Reason, "error") end
@@ -307,7 +352,7 @@ RegisterCommand('bennysdebug', function()
 
         print('[fw-bennys] ---- laptop debug ----')
         for _, Line in ipairs(Lines) do print(Line) end
-        FW.Functions.Notify("Benny's laptop debug geprint in F8", "primary")
+        FW.Functions.Notify("Laptop debug printed in F8", "primary")
     end)
 end)
 
@@ -323,13 +368,15 @@ RegisterCommand('bennyslaptop', function()
     end
 
     local Entity = FindNearestLaptop(5.0)
-    if not Entity then return FW.Functions.Notify("Geen laptop in de buurt..", "error") end
+    if not Entity then return FW.Functions.Notify("No laptop nearby.", "error") end
 
     CreateThread(function()
-        if not DUI:Show(SCREEN, Entity) then return end
-        Laptop.Preview, Laptop.Shown, Laptop.ShownBusiness = true, Entity, nil
+        local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
+        if not Shown then return end
+        Laptop.Preview, Laptop.Shown, Laptop.ShownBusiness = true, ScreenEntity, nil
+        SetApps('Preview', true)
         Send('init', { resource = GetCurrentResourceName(), business = 'Preview', label = 'Preview', me = { cid = '', name = 'Preview' }, calibrate = true })
-        FW.Functions.Notify("Laptop preview aan (/bennyslaptop om uit te zetten)", "primary")
+        FW.Functions.Notify("Laptop preview on (/bennyslaptop to turn it off)", "primary")
     end)
 end)
 

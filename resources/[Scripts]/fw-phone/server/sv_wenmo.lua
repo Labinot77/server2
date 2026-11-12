@@ -28,19 +28,19 @@ end)
 FW.Functions.CreateCallback("fw-phone:Server:Wenmo:SendMoney", function(Source, Cb, Data)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then
-        Cb({Success = false, Msg = "Ongeldige Speler"})
+        Cb({Success = false, Msg = "Invalid Player"})
         return
     end
 
     
     local Target = FW.Functions.GetPlayerByPhone(tostring(Data.Phone))
     if Target == nil then
-        Cb({Success = false, Msg = "Ongeldige Speler"})
+        Cb({Success = false, Msg = "Invalid Player"})
         return
     end
 
     if Player.PlayerData.citizenid == Target.PlayerData.citizenid then
-        Cb({Success = false, Msg = "Je kan jezelf geen Wenmo sturen."})
+        Cb({Success = false, Msg = "You can't send Wenmo to yourself."})
         return
     end
 
@@ -49,7 +49,7 @@ FW.Functions.CreateCallback("fw-phone:Server:Wenmo:SendMoney", function(Source, 
 
     if exports['fw-financials']:RemoveMoneyFromAccount(Player.PlayerData.citizenid, Player.PlayerData.charinfo.account, Player.PlayerData.charinfo.account, tonumber(Data.Amount), 'WENMO', Comment, false) then
         exports['fw-financials']:AddMoneyToAccount(Player.PlayerData.citizenid, Player.PlayerData.charinfo.account, Target.PlayerData.charinfo.account, tonumber(Data.Amount), "WENMO", Comment)
-        TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'wenmo-deposit-' .. math.random(111, 999), 'fas fa-home', { 'white', 'rgb(38, 50, 56)' }, "Wenmo", exports['fw-businesses']:NumberWithCommas(Data.Amount) .. " werd in je rekening gestort.")
+        TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'wenmo-deposit-' .. math.random(111, 999), 'fas fa-home', { 'white', 'rgb(38, 50, 56)' }, "Wenmo", exports['fw-businesses']:NumberWithCommas(Data.Amount) .. " was deposited into your account.")
         TriggerClientEvent("fw-phone:Client:SetAppUnread", Target.PlayerData.source, "wenmo")
 
         TriggerEvent("fw-logs:Server:Log", 'wenmo', "Wenmo Transaction", ("User: [%s] - %s - %s\nTarget: [%s] - %s - %s\nAmount: %s\nComment: %s"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname, Target.PlayerData.source, Target.PlayerData.citizenid, Target.PlayerData.charinfo.firstname .. " " .. Target.PlayerData.charinfo.lastname, exports['fw-businesses']:NumberWithCommas(tonumber(Data.Amount)), Comment), "blue")
@@ -62,6 +62,6 @@ FW.Functions.CreateCallback("fw-phone:Server:Wenmo:SendMoney", function(Source, 
         })
         Cb({Success = true})
     else
-        Cb({Success = false, Msg = "Niet Genoeg Balans"})
+        Cb({Success = false, Msg = "Not Enough Balance"})
     end
 end)

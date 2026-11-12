@@ -128,7 +128,17 @@ local function GetDropForPlacement(Coords)
 end
 
 -- // Place / throw from the hand \\ --
-FW.RegisterServer("fw-inventory:Server:PlaceItem", function(Source, Slot, Amount, Coords, Heading, Thrown)
+-- Locks every pile it could merge into, so two players placing on the same pile can't take the same slot.
+RegisterLocked("fw-inventory:Server:PlaceItem", function(Source, Slot, Amount, Coords)
+    local Names = {}
+    if type(Coords) ~= 'vector3' then return Names end
+    for _, Drop in pairs(Config.Drops) do
+        if Drop.Coords and #(vector3(Drop.Coords.x, Drop.Coords.y, Drop.Coords.z) - Coords) <= Config.DropMergeDistance + 0.5 then
+            Names[#Names + 1] = Drop.Name
+        end
+    end
+    return Names
+end, function(Source, Slot, Amount, Coords, Heading, Thrown)
     local Player = FW.Functions.GetPlayer(Source)
     if not Player then return end
 
@@ -188,7 +198,9 @@ FW.RegisterServer("fw-inventory:Server:PlaceItem", function(Source, Slot, Amount
 end)
 
 -- // Pick up a single ground item \\ --
-FW.RegisterServer("fw-inventory:Server:PickupDropItem", function(Source, DropId, Slot)
+RegisterLocked("fw-inventory:Server:PickupDropItem", function(Source, DropId)
+    return { 'Drop-' .. tostring(tonumber(DropId)) }
+end, function(Source, DropId, Slot)
     local Player = FW.Functions.GetPlayer(Source)
     if not Player then return end
 
@@ -402,4 +414,38 @@ function ValidateWorldAccess(Source, Data)
         end
     end
     return true
+end
+
+-- // Ground panel above a stash / trunk \\ --
+-- Shown for shared inventories (stash, trunk, ...) while on foot; not for the ground itself,
+-- gloveboxes, stores, benches or another player's pockets.
+function ShowsGroundWith(Source, InvType, InvName)
+    if not IsSharedInventory(InvName) or InvType == 'Drop' or InvName:sub(1, 5) == 'Drop-' then return false end
+    if InvName:sub(1, 8) == 'glovebox' then return false end
+    return GetVehiclePedIsIn(GetPlayerPed(Source), false) == 0
+end
+
+-- The pile you're standing at (the fullest nearby one), else an empty spot here (reused, or new).
+function GetGroundDropName(Source)
+    local Coords = GetEntityCoords(GetPlayerPed(Source))
+    local Best, BestDist, Empty
+    for DropId, Drop in pairs(Config.Drops) do
+        if Drop.Coords then
+            local Dist = #(vector3(Drop.Coords.x, Drop.Coords.y, Drop.Coords.z) - Coords)
+            if Dist <= Config.DropOpenDistance then
+                if (Drop.ItemCount or 0) > 0 then
+                    if not BestDist or Dist < BestDist then Best, BestDist = DropId, Dist end
+                elseif not Empty then
+                    Empty = DropId
+                end
+            end
+        end
+    end
+
+    local DropId = Best or Empty
+    if not DropId then
+        DropId = NewDropId()
+        CreateNewDrop(DropId, Coords)
+    end
+    return 'Drop-' .. DropId
 end

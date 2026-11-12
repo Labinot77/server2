@@ -170,108 +170,55 @@
 <style>
     .calculator {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 100%;
-        height: 44vh;
-        background: #000;
+        inset: 5vh 0 2.4vh;
         display: flex;
-        flex-direction: column
+        flex-direction: column;
+        padding: 0 1.2vh;
     }
 
-    .calculator .calculator-display {
-        color: #fff;
-        background: #1c191c;
-        line-height: 12vh;
-        font-size: 8.8vh;
-        flex: 1 1;
+    .calculator-display {
+        position: relative;
+        flex: 1;
+        font-size: 6vh;
+        font-weight: 300;
         white-space: nowrap;
     }
 
-    .calculator .calculator-display .auto-scaling-text {
-        display: inline-block;
-        padding: 0 2.7vh;
+    .calculator-display .auto-scaling-text {
         position: absolute;
-        right: 0;
-        -webkit-transform-origin: right;
+        right: 0.8vh;
+        bottom: 0.6vh;
         transform-origin: right;
     }
 
-    .calculator .calculator-keypad {
-        display: flex
-    }
+    .calculator-keypad { display: flex; }
+    .input-keys { width: 75%; }
+    .function-keys, .digit-keys { display: flex; flex-wrap: wrap; }
+    .digit-keys { flex-wrap: wrap-reverse; }
+    .operator-keys { flex: 1; display: flex; flex-direction: column; }
 
-    .calculator .calculator-keypad .calculator-key {
-        display: block;
-        background: none;
+    .calculator-key {
+        width: calc(33.333% - 1.2vh);
+        height: 5.4vh;
+        margin: 0.6vh;
         padding: 0;
-        font-family: inherit;
-        -webkit-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        cursor: pointer;
-        outline: none;
-        width: 33.333%;
-        height: 6.4vh;
         border: none;
-        border-top: .1vh solid #777;
-        border-right: .1vh solid #666;
-        text-align: center;
-        line-height: 6.4vh
+        outline: none;
+        border-radius: 2.7vh;
+        background: #333336;
+        color: white;
+        font-family: inherit;
+        font-size: 2.4vh;
+        cursor: pointer;
+        user-select: none;
+        transition: filter 100ms;
     }
 
-    .calculator .calculator-keypad .calculator-key:active {
-        box-shadow: inset 0 0 7.4vh 0 rgba(0, 0, 0, .25)
-    }
+    .calculator-key:hover { filter: brightness(1.25); }
+    .calculator-key:active { filter: brightness(1.5); }
 
-    .calculator .calculator-keypad .input-keys {
-        width: 75%
-    }
-
-    .calculator .calculator-keypad .input-keys .digit-keys {
-        background: #e0e0e7;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap-reverse
-    }
-
-    .calculator .calculator-keypad .input-keys .digit-keys .calculator-key {
-        font-size: 3.3vh
-    }
-
-    .calculator .calculator-keypad .input-keys .digit-keys .key-0 {
-        width: 66.6666%;
-        text-align: left;
-        padding-left: 2.5vh
-    }
-
-    .calculator .calculator-keypad .input-keys .digit-keys .key-dot {
-        padding-top: 1.4vh;
-        font-size: 1.1vh
-    }
-
-    .calculator .calculator-keypad .input-keys .function-keys {
-        display: flex;
-        background: linear-gradient(180deg, #cacacc 0, #c4c2cc)
-    }
-
-    .calculator .calculator-keypad .input-keys .function-keys .calculator-key {
-        font-size: 2.9vh
-    }
-
-    .calculator .calculator-keypad .input-keys .function-keys .key-multiply {
-        line-height: 4.6vh
-    }
-
-    .calculator .calculator-keypad .operator-keys {
-        flex: 1 1;
-        background: linear-gradient(180deg, #fc9c17 0, #f77e1b)
-    }
-
-    .calculator .calculator-keypad .operator-keys .calculator-key {
-        width: 100%;
-        color: #fff;
-        border-right: 0;
-        font-size: 4.4vh
-    }
+    .function-keys .calculator-key { background: #a5a5a5; color: black; }
+    .key-0 { width: calc(66.666% - 1.2vh); text-align: left; padding-left: 2.1vh; }
+    .key-dot { font-size: 1vh; }
+    .operator-keys .calculator-key { width: calc(100% - 1.2vh); background: var(--phone-orange); font-size: 2.8vh; }
 </style>

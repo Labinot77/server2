@@ -8,6 +8,7 @@ end
 OpenInventories, WeaponBuyers = {}, {}
 ProcessingPlayers = {}
 
+
 FW.Commands.Add("inventory:reset", "Reset a inventory busy state.", {
     { name = "invname", help = "Inventory name? (For Player use /inventory:reset:ply)" }
 }, true, function(Source, Args)
@@ -114,6 +115,7 @@ end)
 
 -- Frees every inventory this player still has locked (closed, reopened, or left).
 function ReleaseInventoryLocks(Source, Except)
+    RemoveViewer(Source, Except)
     for k, v in pairs(OpenInventories) do
         if v == Source and k ~= Except then
             OpenInventories[k] = false
@@ -219,8 +221,8 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     --     OtherData.Weight = MaxWeight
     --     OtherData.Items = Config.Drops[tonumber(InvName:sub(6))].Items
     else
-        -- Locked by someone else -> busy. Locked by this player (e.g. pressed E twice) -> just reopen it.
-        if OpenInventories[InvName] and OpenInventories[InvName] ~= Source then
+        -- Another player's pockets: one searcher at a time. Stashes, trunks, ground etc. are shared (see AddViewer).
+        if IsExclusiveInventory(InvName) and OpenInventories[InvName] and OpenInventories[InvName] ~= Source then
             TriggerClientEvent("fw-inventory:Client:LoadInventory", Source, { Type = 'None', Name = 'None', Slots = 0, Weight = 0, Items = {} })
             return
         end
@@ -249,11 +251,20 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
         end
     end
 
+    -- Stash / trunk on foot: also show the ground under your feet above it.
+    local GroundName = ShowsGroundWith(Source, InvType, InvName) and GetGroundDropName(Source)
+    if GroundName then
+        OtherData.Ground = { Type = 'Drop', Name = GroundName, Slots = 40, Weight = 250.0, Items = GetInventoryItems(GroundName) }
+    end
+
     -- Anything else this player still had open (a previous open that never got closed) is freed.
     ReleaseInventoryLocks(Source, InvName)
+    if GroundName then AddViewer(GroundName, Source, 250.0) end
 
-    if InvName ~= 'Store' and InvName ~= 'Crafting' then
+    if IsExclusiveInventory(InvName) then
         OpenInventories[InvName] = Source
+    elseif IsSharedInventory(InvName) then
+        AddViewer(InvName, Source, OtherData.Weight)
     end
 
     Player.Functions.RefreshInventory()
@@ -261,7 +272,10 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     TriggerClientEvent("fw-inventory:Client:LoadInventory", Source, OtherData)
 end)
 
-FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, Data)
+RegisterLocked("fw-inventory:Server:DoItemMovement", function(Source, Type, Data)
+    local Ply = PlayerInvName(Source)
+    return { Data.FromInv == 'player' and Ply or Data.FromInv, Data.ToInv == 'player' and Ply or Data.ToInv }
+end, function(Source, Type, Data)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
 
@@ -275,6 +289,13 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
         Player.Functions.Notify(Reason, "error")
         TriggerClientEvent("fw-inventory:Client:ForceClose", Source)
         return
+    end
+
+    -- Someone else may have changed this inventory since our screen was drawn: check the database.
+    IsValid, Reason = ValidateAgainstDatabase(Source, Type, Data)
+    if not IsValid then
+        Player.Functions.Notify(Reason, "error")
+        return ResyncViewer(Source, Data)
     end
 
     -- Pockets / Backpack / Body / Accessories rules (see sv_equipment.lua).
@@ -365,14 +386,15 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
             end
         else
             ProcessingPlayers[Player.PlayerData.citizenid] = true
-            local Result = exports['ghmattimysql']:execute("UPDATE player_inventories SET `slot` = @ToSlot, inventory = @ToInv WHERE `slot` = @FromSlot AND `inventory` = @FromInv AND `item_name` = @Item LIMIT " .. Data.Amount, {
+            local Result = exports['ghmattimysql']:executeSync("UPDATE player_inventories SET `slot` = @ToSlot, inventory = @ToInv WHERE `slot` = @FromSlot AND `inventory` = @FromInv AND `item_name` = @Item LIMIT " .. Data.Amount, {
                 ['@ToSlot'] = Data.ToSlot,
                 ['@ToInv'] = Data.ToInv,
                 ['@FromSlot'] = Data.FromSlot,
                 ['@FromInv'] = Data.FromInv,
                 ['@Item'] = Data.FromItem
-            }, function()
-                Citizen.SetTimeout(10, function()
+            })
+            do
+                do
                     TriggerEvent("fw-logs:Server:Log", 'moveitem', "Item Moved", ("User: [%s] - %s - %s %s\nItem: %s [%s]\nInventory: %s [%s] -> %s [%s]"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Data.FromItem, Data.Amount, Data.FromInv, Data.FromSlot, Data.ToInv, Data.ToSlot), "blue")
 
                     -- Refresh Slots
@@ -437,8 +459,8 @@ FW.RegisterServer("fw-inventory:Server:DoItemMovement", function(Source, Type, D
                     end
 
                     ProcessingPlayers[Player.PlayerData.citizenid] = false
-                end)
-            end)
+                end
+            end
         end
     elseif Type == "Swap" then
         TriggerEvent("fw-logs:Server:Log", 'moveitem', "Item Swapped", ("User: [%s] - %s - %s %s\nItem: %s -> %s\nInventory: %s [%s] -> %s [%s]"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Data.FromItem, Data.ToItem, Data.FromInv, Data.FromSlot, Data.ToInv, Data.ToSlot), "pink")

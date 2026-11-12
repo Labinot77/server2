@@ -1,6 +1,7 @@
 <script>
     import { HasVpn, HasPDRacingUsb, HasRacingUsb } from "./phone.stores";
 
+    import Bank from "./Apps/Bank.svelte"
     import BankBusters from "./Apps/BankBusters.svelte"
     import Calculator from "./Apps/Calculator.svelte"
     import Calls from "./Apps/Calls.svelte"
@@ -21,6 +22,7 @@
     import News from "./Apps/News.svelte"
     import Pinger from "./Apps/Pinger.svelte"
     import Racing from "./Apps/Racing.svelte"
+    import Settings from "./Apps/Settings.svelte"
     import TierUp from "./Apps/TierUp.svelte"
     import Twatter from "./Apps/Twatter.svelte"
     import Vehicles from "./Apps/Vehicles.svelte"
@@ -80,6 +82,10 @@
     <TierUp />
 {:else if App == 'cars'}
     <Cars />
+{:else if App == 'bank'}
+    <Bank />
+{:else if App == 'settings'}
+    <Settings />
 {:else}
     <Default/>
 {/if}

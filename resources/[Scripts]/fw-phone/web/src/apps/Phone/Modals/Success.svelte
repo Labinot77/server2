@@ -15,7 +15,8 @@
         z-index: 999;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5)
+        background-color: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(0.6vh)
     }
 
     .phone-checkmark-container {
@@ -26,7 +27,9 @@
         height: max-content;
         padding: 4.5vh 0;
         transform: translate(-50%, -50%);
-        background-color: #30475e
+        background: var(--phone-surface);
+        border-radius: 1.8vh;
+        box-shadow: 0 1.5vh 4vh rgba(0, 0, 0, 0.55);
     }
 
     .checkmark-container {
@@ -39,7 +42,7 @@
         height: 5.6vh;
         margin: 10% auto;
         border-radius: 50%;
-        box-shadow: inset 0 0 0 #009688;
+        box-shadow: inset 0 0 0 #34c759;
         animation: CheckmarkFill .4s ease-in-out .4s forwards
     }
 
@@ -63,7 +66,7 @@
 
     @keyframes CheckmarkFill {
         to {
-            box-shadow: inset 0 0 0 3vh #009688
+            box-shadow: inset 0 0 0 3vh #34c759
         }
     }
 

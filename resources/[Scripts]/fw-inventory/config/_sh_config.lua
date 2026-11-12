@@ -27,7 +27,7 @@ Config.EquipSlots = {
     [38] = { Section = 'Body', Label = 'Keys',     Icon = 'key',                   Items = { 'keyring' },                AutoPlace = true },
     [39] = { Section = 'Body', Label = 'Wallet',   Icon = 'account_balance_wallet', Items = { 'wallet' },                AutoPlace = true },
     [40] = { Section = 'Body', Label = 'Backpack', Icon = 'backpack',              Items = { 'backpack' },               AutoPlace = false, IsBackpack = true },
-    [41] = { Section = 'Body', Label = 'Radio',    Icon = 'radio',                 Items = { 'radio' },                  AutoPlace = true },
+    [41] = { Section = 'Body', Label = 'Radio',    Icon = 'radio',                 Items = { 'radio', 'pdradio' },       AutoPlace = true },
 
     [42] = { Section = 'Accessories', Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
     [43] = { Section = 'Accessories', Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
@@ -285,6 +285,18 @@ function IsPhoneEquipped(Inventory, ItemName)
     return Item ~= nil and Item ~= false and Item.Item == (ItemName or Config.PhoneItem), Item
 end
 
+-- // Radio \\ --
+-- fw-radio only opens / stays connected while a radio (radio or pdradio) is in the BODY radio slot.
+function IsRadioEquipped(Inventory, ItemName)
+    local Slot
+    for S, SlotData in pairs(Config.EquipSlots) do
+        if SlotData.Label == 'Radio' then Slot = S break end
+    end
+    local Item = Slot and Inventory and Inventory[Slot]
+    if not Item then return false end
+    return (ItemName == nil or Item.Item == ItemName), Item
+end
+
 -- // Ground items \\ --
 -- true  = every item on the ground (and its exact placed spot) is saved in the DB
 --         (table `inventory_drops`, created automatically) and comes back after a restart.
@@ -397,3 +409,8 @@ Config.ShowLockedRecipes = true
 
 -- Inventory closes when you're moved this far (m) from where you opened it (pushed, dragged, car moved).
 Config.InventoryMoveDistance = 2.5
+
+-- Quick Stash (from coderadev/ox_inventory): compact pockets/backpack view, FULL STASH button expands it.
+-- Key: default keybind (players can change it in FiveM's key bindings). You can walk/drive while it's open,
+-- and dragging an item out of it drops it. InVehicle = true: Tab opens Quick Stash while seated in a vehicle.
+Config.QuickStash = { Key = 'K', InVehicle = false }

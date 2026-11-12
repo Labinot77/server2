@@ -9,6 +9,7 @@
     export let Path = [];
     export let RailProps = {};
     export let Navigate = (NewPath) => {};
+    export let Close = false; // set when opened with [G]: no back button, a close button instead
 
     let Outfits = [], Loading = true, Worn = null;
     let Mode = false; // "save" | "import" | "share"
@@ -79,7 +80,7 @@
 </script>
 
 <div class="column enter" style="width: 640px;">
-    <Header {Path} {Navigate} />
+    <Header {Path} {Navigate} CanGoBack={!Close} />
 
     <div style="display: flex; gap: 3px;">
         <Rails {Path} {Navigate} {...RailProps} />
@@ -88,6 +89,7 @@
             <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                 <button class="btn-accent action" style="flex: 1;" on:click={() => Toggle("save")}><Icon Name="plus" Size={16} Stroke={3} /> SAVE CURRENT OUTFIT</button>
                 <button class="btn-dark action" on:click={() => Toggle("import")}><Icon Name="download" Size={16} /> IMPORT CODE</button>
+                {#if Close}<button class="tool-btn" title="Close" style="height: auto;" on:click={Close}><Icon Name="x" Size={18} /></button>{/if}
             </div>
 
             {#if Mode == "save"}

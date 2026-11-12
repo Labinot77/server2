@@ -14,7 +14,7 @@
             Inputs: [
                 {
                     Type: "Text",
-                    Text: "Bevestig Aankoop",
+                    Text: "Confirm Purchase",
                     Data: {
                         style: "margin-top: 3vh; margin-bottom: 4vh; text-align: center; font-size: 1.5vh;"
                     },
@@ -71,7 +71,7 @@
                 Description="{Data.Costs.Amount} {Data.Costs.Label}"
                 Icon={Data.Icon}
             >
-                <i data-tooltip="Kopen" class="fas fa-hand-holding-usd" on:keyup on:click={() => { PurchaseItem(Data.Id) }} />
+                <i data-tooltip="Buy" class="fas fa-hand-holding-usd" on:keyup on:click={() => { PurchaseItem(Data.Id) }} />
             </Paper>
         {/each}
     </PaperList>

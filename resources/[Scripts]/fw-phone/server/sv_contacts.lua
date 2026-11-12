@@ -31,16 +31,16 @@ AddEventHandler("fw-phone:Server:DialContact", function(Data, UsingBurner)
     end
 
     if not IsNetworkEnabled then
-        return Player.Functions.Notify("Geen internet toegang..", "error")
+        return Player.Functions.Notify("No internet access..", "error")
     end
 
     if Data.Phone == MyPhone then
-        return Player.Functions.Notify("Het is wel heel eenzaam om met jezelf te bellen..", "error")
+        return Player.Functions.Notify("Calling yourself is pretty lonely..", "error")
     end
 
     -- Check if already in call, if so then cancel and return notify.
     if CallerSources[Source] then
-        return Player.Functions.Notify("Je zit al in een gesprek..", "error")
+        return Player.Functions.Notify("You're already in a call..", "error")
     end
 
     local CallId = FW.Shared.RandomInt(6)
@@ -59,14 +59,14 @@ AddEventHandler("fw-phone:Server:DialContact", function(Data, UsingBurner)
     -- Check if player online with that phonenumber, if it isn't than return 'Disconnected.'
     local Target = FW.Functions.GetPlayerByPhone(Data.Phone)
     if Target == nil then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
         CallerSources[Source] = nil
         return
     end
 
     -- Check if Target has a phone equipped (BODY slot), if not return 'Disconnected.'
     if not exports['fw-inventory']:HasPhoneEquipped(Target.PlayerData.source) then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
         CallerSources[Source] = nil
         return
     end
@@ -87,7 +87,7 @@ AddEventHandler("fw-phone:Server:DialContact", function(Data, UsingBurner)
     }
     
     SetCallData(CallId, false)
-    TriggerClientEvent("fw-phone:Client:Notification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, 'fas fa-phone-alt', { 'white', '#029587' }, TargetContactName, "Inkomende Oproep", false, false, "fw-phone:Server:Contacts:AnswerContact", "fw-phone:Server:Contacts:DeclineCall", { HideOnAction = false, CallId = CallId })
+    TriggerClientEvent("fw-phone:Client:Notification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, 'fas fa-phone-alt', { 'white', '#029587' }, TargetContactName, "Incoming Call", false, false, "fw-phone:Server:Contacts:AnswerContact", "fw-phone:Server:Contacts:DeclineCall", { HideOnAction = false, CallId = CallId })
     TriggerClientEvent('fw-phone:Client:AddCall', Target.PlayerData.source, { Burner = false, Incoming = true, Contact = TargetContactName, Phone = MyPhone, Timestamp = os.time() * 1000})
     
     Citizen.CreateThread(function()
@@ -112,8 +112,8 @@ AddEventHandler("fw-phone:Server:DialContact", function(Data, UsingBurner)
 
     Citizen.SetTimeout(15000, function()
         if OngoingCalls[CallId] and OngoingCalls[CallId].Dialing then
-            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
-            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
+            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
             SetCallData(CallId, true)
 
             OngoingCalls[CallId] = nil
@@ -130,12 +130,12 @@ AddEventHandler("fw-phone:Server:DialPayphone", function(Data)
     if Player == nil then return end
 
     if Data.Phone == Player.PlayerData.charinfo.phone then
-        return Player.Functions.Notify("Het is wel heel eenzaam om met jezelf te bellen..", "error")
+        return Player.Functions.Notify("Calling yourself is pretty lonely..", "error")
     end
 
     -- Check if already in call, if so then cancel and return notify.
     if CallerSources[Source] then
-        return Player.Functions.Notify("Je zit al in een gesprek..", "error")
+        return Player.Functions.Notify("You're already in a call..", "error")
     end
 
     local CallId = FW.Shared.RandomInt(6)
@@ -149,7 +149,7 @@ AddEventHandler("fw-phone:Server:DialPayphone", function(Data)
     -- Check if player online with that phonenumber, if it isn't than return 'Disconnected.'
     local Target = FW.Functions.GetPlayerByPhone(Data.Phone)
     if Target == nil then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
         CallerSources[Source] = nil
         return
     end
@@ -170,7 +170,7 @@ AddEventHandler("fw-phone:Server:DialPayphone", function(Data)
     }
 
     SetCallData(CallId, false)
-    TriggerClientEvent("fw-phone:Client:Notification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, 'fas fa-phone-alt', { 'white', '#029587' }, TargetContactName, "Inkomende Oproep", false, false, "fw-phone:Server:Contacts:AnswerContact", "fw-phone:Server:Contacts:DeclineCall", { HideOnAction = false, CallId = CallId })
+    TriggerClientEvent("fw-phone:Client:Notification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, 'fas fa-phone-alt', { 'white', '#029587' }, TargetContactName, "Incoming Call", false, false, "fw-phone:Server:Contacts:AnswerContact", "fw-phone:Server:Contacts:DeclineCall", { HideOnAction = false, CallId = CallId })
     TriggerClientEvent('fw-phone:Client:AddCall', OngoingCalls[CallId].Target, { Incoming = true, Contact = TargetContactName, Phone = Data.CallingFrom, Timestamp = os.time() * 1000})
 
     Citizen.CreateThread(function()
@@ -188,8 +188,8 @@ AddEventHandler("fw-phone:Server:DialPayphone", function(Data)
 
     Citizen.SetTimeout(15000, function()
         if OngoingCalls[CallId] and OngoingCalls[CallId].Dialing then
-            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
-            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
+            TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
             SetCallData(CallId, true)
 
             OngoingCalls[CallId] = nil
@@ -228,8 +228,8 @@ AddEventHandler("fw-phone:Server:Contacts:DeclineCall", function(Data)
     local Caller = FW.Functions.GetPlayer(OngoingCalls[Data.CallId].Caller)
     if Caller == nil then return end
 
-    TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[Data.CallId].Caller, 'contacts-dial-' .. Data.CallId, true, true, nil, 'Verbinding verbroken!', true, false)
-    TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[Data.CallId].Target, 'contacts-dial-' .. Data.CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+    TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[Data.CallId].Caller, 'contacts-dial-' .. Data.CallId, true, true, nil, 'Call Disconnected!', true, false)
+    TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[Data.CallId].Target, 'contacts-dial-' .. Data.CallId, true, true, nil, 'Call Disconnected!', true, false)
 
     SetCallData(Data.CallId, true)
 
@@ -306,14 +306,14 @@ AddEventHandler("playerDropped", function(Reason)
 
     local Caller = FW.Functions.GetPlayer(OngoingCalls[CallId].Caller)
     if Caller then
-        TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+        TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Caller, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
         TriggerClientEvent('fw-phone:Client:Contacts:SetVoice', OngoingCalls[CallId].Caller, false, Caller.PlayerData.charinfo.phone, OngoingCalls[CallId].Target)
         CallerSources[OngoingCalls[CallId].Caller] = nil
     end
 
     local Target = FW.Functions.GetPlayer(OngoingCalls[CallId].Target)
     if Target then
-        TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Verbinding verbroken!', true, false)
+        TriggerClientEvent("fw-phone:Client:UpdateNotification", OngoingCalls[CallId].Target, 'contacts-dial-' .. CallId, true, true, nil, 'Call Disconnected!', true, false)
         TriggerClientEvent('fw-phone:Client:Contacts:SetVoice', OngoingCalls[CallId].Target, false, Target.PlayerData.charinfo.phone, OngoingCalls[CallId].Target)
         CallerSources[OngoingCalls[CallId].Target] = nil
     end

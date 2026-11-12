@@ -89,6 +89,7 @@ end)
   exports.interact:AddModelInteraction({
         modelData = {
             { model = 'prop_fleeca_atm', offset = vec3(0.0, 0.0, 1.0) },
+            { model = 'prop_fleeca_atm_dui', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui screen copy
         },
         distance = 3.0,
         interactDst = 1.5,
@@ -115,8 +116,11 @@ end)
     exports.interact:AddModelInteraction({
         modelData = {
             { model = 'prop_atm_01', offset = vec3(-0.05, -0.15, 1.1) },
+            { model = 'prop_atm_01_dui', offset = vec3(-0.05, -0.15, 1.1) }, -- fw-dui screen copy
             { model = 'prop_atm_02', offset = vec3(-0.05, -0.15, 1.1) },
+            { model = 'prop_atm_02_dui', offset = vec3(-0.05, -0.15, 1.1) }, -- fw-dui screen copy
             { model = 'prop_atm_03', offset = vec3(0.0, -0.05, 1.0) },
+            { model = 'prop_atm_03_dui', offset = vec3(0.0, -0.05, 1.0) }, -- fw-dui screen copy
         },
         distance = 3.0,
         interactDst = 1.5,
@@ -132,8 +136,10 @@ end)
 
     exports.interact:AddModelInteraction({
         modelData = {
-            { model = 'prop_atm_02', offset = vec3(0.0, 0.0, 0.0)   },
+            { model = 'prop_atm_02', offset = vec3(0.0, 0.0, 0.0) },
+            { model = 'prop_atm_02_dui', offset = vec3(0.0, 0.0, 0.0) }, -- fw-dui screen copy
             { model = 'prop_atm_03', offset = vec3(0.0, 0.0, 0.0) },
+            { model = 'prop_atm_03_dui', offset = vec3(0.0, 0.0, 0.0) }, -- fw-dui screen copy
         },
         distance = 3.0,
         interactDst = 1.5,

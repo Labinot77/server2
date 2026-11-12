@@ -46,7 +46,7 @@ end)
 -- // Load bullets into a magazine (timed) \\ --
 -- Begin: validates + reserves how many go in and how long it takes.
 -- Finish: only accepted once that time has passed, then the bullets move.
-local PendingLoads = {} -- [Source] = { MagSlot, BulletSlot, Amount, Type, Ends }
+local PendingLoads = {} -- [Source] = { MagSlot, BulletSlot, Amount, Type, Start }
 
 local function CheckLoad(Player, MagSlot, BulletSlot, Amount)
     local Magazine = GetMagazine(Player, MagSlot)
@@ -77,38 +77,39 @@ FW.Functions.CreateCallback("fw-inventory:Server:BeginLoadMagazine", function(So
     local Duration = GetMagazineLoadTime(ToLoad)
     PendingLoads[Source] = {
         MagSlot = tonumber(MagSlot), BulletSlot = tonumber(BulletSlot), Amount = ToLoad,
-        Type = Magazine.CustomType, Ends = GetGameTimer() + Duration - 250, -- small allowance for latency
+        Type = Magazine.CustomType, Start = GetGameTimer(),
     }
 
-    Cb({ Success = true, Amount = ToLoad, Duration = Duration, Current = GetBullets(Magazine), Capacity = GetMagazineCapacity(Magazine.CustomType) })
+    Cb({
+        Success = true, Amount = ToLoad, Duration = Duration, Current = GetBullets(Magazine), Capacity = GetMagazineCapacity(Magazine.CustomType),
+        Base = Config.MagazineLoadTime.Base, PerBullet = Config.MagazineLoadTime.PerBullet,
+    })
 end)
 
-FW.RegisterServer("fw-inventory:Server:FinishLoadMagazine", function(Source)
-    local Player = FW.Functions.GetPlayer(Source)
-    local Pending = PendingLoads[Source]
+-- Finished or stopped early: only the rounds that had time to go in are loaded, the rest stay as bullets.
+local function CommitLoad(Source)
+    local Player, Pending = FW.Functions.GetPlayer(Source), PendingLoads[Source]
     PendingLoads[Source] = nil
     if not Player or not Pending then return end
 
-    if GetGameTimer() < Pending.Ends then return end -- finished too early: ignore
+    local Elapsed = GetGameTimer() - Pending.Start + 250 -- latency allowance
+    local Loaded = math.min(Pending.Amount, math.floor((Elapsed - Config.MagazineLoadTime.Base) / math.max(1, Config.MagazineLoadTime.PerBullet)))
+    if Loaded <= 0 then return RefreshSlots(Player, { Pending.MagSlot }) end
 
-    -- Re-check: things may have moved during the progress bar.
-    local Ok, ToLoad, Magazine, Bullets = CheckLoad(Player, Pending.MagSlot, Pending.BulletSlot, Pending.Amount)
-    if not Ok then
-        if ToLoad then Notify(Player, ToLoad) end
-        return
+    -- Re-check: things may have moved while loading.
+    local Ok, ToLoad, Magazine, Bullets = CheckLoad(Player, Pending.MagSlot, Pending.BulletSlot, Loaded)
+    if not Ok or Magazine.CustomType ~= Pending.Type then
+        if not Ok and ToLoad then Notify(Player, ToLoad) end
+        return RefreshSlots(Player, { Pending.MagSlot })
     end
-    if Magazine.CustomType ~= Pending.Type then return end
 
-    local Current = GetBullets(Magazine)
     if not Player.Functions.RemoveItem('bullets', ToLoad, Bullets.Slot, false, Bullets.CustomType) then return end
-    Player.Functions.SetItemKV('magazine', Magazine.Slot, 'Bullets', Current + ToLoad, Magazine.CustomType)
-
+    Player.Functions.SetItemKV('magazine', Magazine.Slot, 'Bullets', GetBullets(Magazine) + ToLoad, Magazine.CustomType)
     RefreshSlots(Player, { Bullets.Slot, Magazine.Slot })
-end)
+end
 
-FW.RegisterServer("fw-inventory:Server:CancelLoadMagazine", function(Source)
-    PendingLoads[Source] = nil
-end)
+FW.RegisterServer("fw-inventory:Server:FinishLoadMagazine", CommitLoad)
+FW.RegisterServer("fw-inventory:Server:CancelLoadMagazine", CommitLoad)
 
 AddEventHandler("playerDropped", function()
     PendingLoads[source] = nil

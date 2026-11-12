@@ -8,7 +8,6 @@
     export var Rows = 1;
 
     let TextArea;
-    let Focused = false;
 
     function updateTextareaHeight(event) {
         Value = TextArea.value;
@@ -25,92 +24,42 @@
     <p>{Title}</p>
     <textarea
         bind:this={TextArea}
-        on:focusin={() => {
-            Focused = true;
-        }}
-        on:focusout={() => {
-            Focused = false;
-        }}
         on:input={updateTextareaHeight}
         rows={Rows}
         placeholder={Placeholder}
         maxlength={MaxLength}>{Value}</textarea
     >
 
-    <div class="textarea-underline" style="height: 0.1vh">
-        <div
-            class="textarea-underline-fill"
-            style="width: {Focused ? 100 : 0}%"
-        />
-    </div>
-
     <p class="subtext">{Value.length}/255</p>
 </div>
 
 <style>
     .textarea-component-container {
-        position: relative;
         width: 100%;
-        height: max-content;
-        margin-bottom: 1.25vh;
-        color: rgb(200, 200, 200);
-        font-family: "Roboto";
-        font-size: 1.2vh;
-        font-weight: 500;
+        margin-bottom: 1.2vh;
+        font-size: 1.15vh;
+        color: var(--phone-muted);
     }
 
-    .textarea-component-container > p {
-        margin: 0;
-        font-size: 1.2vh;
-        width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .textarea-component-container > p.subtext {
-        font-size: 1.1vh;
-        margin-top: 0.5vh;
-        opacity: 0.8;
-        width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+    .textarea-component-container > p { margin: 0 0 0.5vh 0.3vh; font-weight: 500; }
+    .textarea-component-container > p.subtext { margin: 0.4vh 0.3vh 0 0; text-align: right; font-size: 1vh; }
 
     .textarea-component-container > textarea {
-        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 3.4vh;
+        padding: 0.9vh 1vh;
         border: none;
         outline: none;
-        background-color: transparent;
-        font-family: "Roboto";
-        font-size: 1.5vh;
-        color: rgba(200, 200, 200);
-        margin-top: 0.3vh;
         resize: none;
-        width: 100%;
+        border-radius: 1vh;
+        background: var(--phone-card);
+        color: white;
+        font-family: Roboto;
+        font-size: 1.4vh;
+        transition: box-shadow 150ms;
     }
 
-    .textarea-component-container > .textarea-underline {
-        position: absolute;
-        width: 100%;
-        height: 0.1vh;
-        background-color: rgb(180, 180, 180);
-    }
-
-    .textarea-component-container > .textarea-underline > .textarea-underline-fill {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-
-        height: 0.2vh;
-        width: 100%;
-        transition: width ease 250ms;
-
-        background-color: white;
-    }
-
-    .textarea-component-container > textarea::-webkit-scrollbar {
-        display: none;
-    }
+    .textarea-component-container > textarea:focus { box-shadow: 0 0 0 0.15vh var(--phone-accent); }
+    .textarea-component-container > textarea::-webkit-scrollbar { display: none; }
 </style>

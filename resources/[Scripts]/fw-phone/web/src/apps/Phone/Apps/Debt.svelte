@@ -128,6 +128,6 @@
         {/if}
     </PaperList>
 
-    <!-- <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Onderhoudskosten</p> -->
+    <!-- <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Maintenance Costs</p> -->
 
 </AppWrapper>

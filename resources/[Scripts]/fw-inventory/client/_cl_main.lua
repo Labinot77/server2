@@ -107,12 +107,46 @@ end)
 
 FW.AddKeybind("openInventory", 'Inventory', 'Openen', 'Tab', function(IsPressed)
     if not IsPressed then return end
-    OpenInventory()
+    OpenInventory(Config.QuickStash.InVehicle == true and IsSeatedInVehicle(PlayerPedId()))
 end)
 
--- MagazineSlot: open with the magazine loader under GROUND (used by the "magazine" item).
-PendingMagazineSlot = false
-function OpenInventory(MagazineSlot)
+-- Quick Stash: compact view with only your pockets/backpack on the right (FULL STASH expands it).
+FW.AddKeybind("quickInventory", 'Inventory', 'Quick Stash', Config.QuickStash.Key, function(IsPressed)
+    if not IsPressed then return end
+    OpenInventory(true)
+end)
+
+local QuickStashPending = false
+
+-- Quick Stash: walk / drive while it's open. The mouse stays on the inventory, so looking around,
+-- attacking, the weapon wheel and the pause menu are blocked meanwhile.
+local QuickMoving = false
+local BlockedControls = { 1, 2, 24, 25, 37, 44, 45, 47, 58, 68, 69, 70, 91, 92, 106, 114, 140, 141, 142, 143, 157, 158, 159, 160, 161, 162, 163, 164, 165, 199, 200, 257, 263, 264, 322, 331 }
+function SetQuickStashMovement(Enabled)
+    Enabled = Enabled == true
+    SetNuiFocusKeepInput(Enabled)
+    if QuickMoving == Enabled then return end
+    QuickMoving = Enabled
+    if not Enabled then return end
+
+    Citizen.CreateThread(function()
+        while QuickMoving do
+            for _, Control in ipairs(BlockedControls) do DisableControlAction(0, Control, true) end
+            DisablePlayerFiring(PlayerId(), true)
+            Citizen.Wait(0)
+        end
+    end)
+end
+
+-- FULL STASH pressed: the normal inventory, standing still again.
+RegisterNUICallback("FullStash", function(_, Cb)
+    Cb("Ok")
+    SetQuickStashMovement(false)
+    SetTimecycleModifier('hud_def_blur')
+    SetTimecycleModifierStrength(1.0)
+end)
+function OpenInventory(QuickStash)
+    if CurrentInventory then return end -- already open (keys still reach the game in Quick Stash)
     if HotbarCooldown then return end
     if IsInventoryBusy then return end
     if IsHoldingItem then return end
@@ -121,7 +155,7 @@ function OpenInventory(MagazineSlot)
     if PlayerData == nil then return end
     if PlayerData.metadata['isdead'] or PlayerData.metadata['ishandcuffed'] then return end
 
-    PendingMagazineSlot = MagazineSlot or false
+    QuickStashPending = QuickStash == true
     FW.TriggerServer('fw-inventory:Server:OpenInventory', ResolveWorldInventory())
 end
 
@@ -158,22 +192,24 @@ function ResolveWorldInventory()
     return InvType, InvName, MaxSlots, MaxWeight
 end
 
--- Magazine used from the hotbar (inventory closed): open the inventory with the loader.
--- From inside the inventory the NUI shows the loader itself, without closing anything.
+-- Using a magazine: loading is done by dragging bullets onto it in the inventory.
 RegisterNetEvent("fw-inventory:Client:OpenMagazineLoader")
-AddEventHandler("fw-inventory:Client:OpenMagazineLoader", function(Slot)
-    if CurrentInventory then
-        return SendNUIMessage({ Action = "OpenMagazinePanel", Slot = Slot })
-    end
-    OpenInventory(Slot)
+AddEventHandler("fw-inventory:Client:OpenMagazineLoader", function()
+    FW.Functions.Notify("Sleep kogels op het magazijn in je inventory om het te laden.", "primary")
 end)
 
--- Loading takes time (Config.MagazineLoadTime), with an animation. Closing the inventory cancels.
-local IsLoadingMagazine = false
+-- Loading takes time (Config.MagazineLoadTime) with an animation; the NUI shows the count going up on the slot.
+-- Clicking the magazine, closing the inventory or dying stops it; the rounds loaded so far stay in.
+local IsLoadingMagazine, StopMagazineLoad = false, false
+RegisterNUICallback("CancelMagazineLoad", function(_, Cb)
+    Cb("Ok")
+    StopMagazineLoad = true
+end)
+
 RegisterNUICallback("LoadMagazine", function(Data, Cb)
     Cb("Ok")
     if IsLoadingMagazine then return end
-    IsLoadingMagazine = true
+    IsLoadingMagazine, StopMagazineLoad = true, false
 
     Citizen.CreateThread(function()
         local Result = FW.SendCallback('fw-inventory:Server:BeginLoadMagazine', Data.MagSlot, Data.BulletSlot, Data.Amount) or {}
@@ -184,40 +220,27 @@ RegisterNUICallback("LoadMagazine", function(Data, Cb)
             return
         end
 
-        if exports['fw-progressbar']:GetTaskBarStatus() then
-            FW.Functions.Notify("Je bent al met iets bezig!", "error")
-            FW.TriggerServer('fw-inventory:Server:CancelLoadMagazine')
-            SendNUIMessage({ Action = "MagazineProgress", Cancel = true })
-            IsLoadingMagazine = false
-            return
+        Result.Action = "MagazineProgress"
+        SendNUIMessage(Result)
+
+        local Ped, Anim = PlayerPedId(), Config.MagazineLoadAnim or {}
+        if Anim.Dict then
+            RequestAnimDict(Anim.Dict)
+            local Timeout = GetGameTimer() + 1000
+            while not HasAnimDictLoaded(Anim.Dict) and GetGameTimer() < Timeout do Citizen.Wait(10) end
         end
 
-        SendNUIMessage({ Action = "MagazineProgress", Duration = Result.Duration, Amount = Result.Amount, Current = Result.Current, Capacity = Result.Capacity })
-
-        -- Closing the inventory / dying cancels the load.
-        Citizen.CreateThread(function()
-            while IsLoadingMagazine do
-                Citizen.Wait(100)
-                if IsLoadingMagazine and (not CurrentInventory or FW.Functions.GetPlayerData().metadata.isdead) then
-                    TriggerEvent("progressbar:client:cancel")
-                    break
-                end
+        local Ends = GetGameTimer() + Result.Duration
+        while GetGameTimer() < Ends and not StopMagazineLoad and CurrentInventory and not FW.Functions.GetPlayerData().metadata.isdead do
+            if Anim.Dict and not IsEntityPlayingAnim(Ped, Anim.Dict, Anim.Anim, 3) then
+                TaskPlayAnim(Ped, Anim.Dict, Anim.Anim, 8.0, -8.0, -1, Anim.Flag or 49, 0, false, false, false)
             end
-        end)
-
-        local Anim = Config.MagazineLoadAnim or {}
-        local Finished = FW.Functions.CompactProgressbar(Result.Duration, ("Kogels laden (%sx)..."):format(Result.Amount), false, true, {
-            disableMovement = true, disableCarMovement = false, disableMouse = false, disableCombat = true,
-        }, { animDict = Anim.Dict, anim = Anim.Anim, flags = Anim.Flag or 49 }, {}, {}, true)
-
-        if Finished then
-            FW.TriggerServer('fw-inventory:Server:FinishLoadMagazine')
-            SendNUIMessage({ Action = "MagazineProgress", Done = true })
-        else
-            FW.TriggerServer('fw-inventory:Server:CancelLoadMagazine')
-            SendNUIMessage({ Action = "MagazineProgress", Cancel = true })
+            Citizen.Wait(100)
         end
+        if Anim.Dict then StopAnimTask(Ped, Anim.Dict, Anim.Anim, 1.0) end
 
+        FW.TriggerServer('fw-inventory:Server:FinishLoadMagazine')
+        SendNUIMessage({ Action = "MagazineProgress", Done = true })
         IsLoadingMagazine = false
     end)
 end)
@@ -295,12 +318,17 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
     end
     SwitchPending = false
 
-    SetTimecycleModifier('hud_def_blur')
-    SetTimecycleModifierStrength(1.0)
+    if QuickStashPending then
+        SetTimecycleModifier('default') -- no blur: you can keep walking / driving
+    else
+        SetTimecycleModifier('hud_def_blur')
+        SetTimecycleModifierStrength(1.0)
+    end
 
     SetNuiFocus(true, true)
     SetCursorLocation(0.5, 0.5)
     HideGameHud()
+    SetQuickStashMovement(QuickStashPending)
 
     if OtherData then PlayOpenSound(OtherData.Type) end
 
@@ -313,15 +341,14 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
 
     SendNUIMessage({
         Action = "OpenInventory",
+        QuickStash = QuickStashPending,
         Inventory = PlyInventory,
         OtherData = OtherData,
         HasLicense = PlayerData.metadata.licenses.weapon,
         MaxWeight = GetMaxPlayerWeight(PlyInventory),
         BackpackSlots = GetUnlockedBackpackSlots(PlyInventory),
         PlayerName = PlayerData.charinfo and (PlayerData.charinfo.firstname .. ' ' .. PlayerData.charinfo.lastname) or nil,
-        MagazineSlot = PendingMagazineSlot,
     })
-    PendingMagazineSlot = false
 
     CurrentInventory = OtherData
     WatchOpenInventory(OtherData)
@@ -368,6 +395,20 @@ AddEventHandler("fw-inventory:Client:RefreshPlayerInventory", function()
     if not CurrentInventory then return end
     Citizen.Wait(100) -- let the player data update land first
     SendNUIMessage({ Action = "RefreshPlayer", Inventory = FW.Functions.GetPlayerData().inventory })
+end)
+
+-- Someone else changed the stash / trunk / ground we're looking at.
+RegisterNetEvent("fw-inventory:Client:RefreshOther")
+AddEventHandler("fw-inventory:Client:RefreshOther", function(InvName, Items)
+    if not CurrentInventory then return end
+    if CurrentInventory.Ground and CurrentInventory.Ground.Name == InvName then
+        CurrentInventory.Ground.Items = Items
+    elseif CurrentInventory.Name == InvName then
+        CurrentInventory.Items = Items
+    else
+        return
+    end
+    SendNUIMessage({ Action = "RefreshOther", Name = InvName, Items = Items })
 end)
 
 RegisterNetEvent("fw-inventory:Client:ForceClose")
@@ -502,7 +543,7 @@ end)
 -- Keeps GROUND in sync with where you are: leave the car -> ground, get in -> glovebox,
 -- get pushed / walk away from a stash, trunk or player you're searching -> ground at your new spot.
 SwitchPending = false
-local function SwitchOtherInventory()
+function SwitchOtherInventory()
     SwitchPending = true
     FW.TriggerServer('fw-inventory:Server:OpenInventory', ResolveWorldInventory())
     Citizen.SetTimeout(2000, function() SwitchPending = false end) -- server refused: try again later
@@ -549,6 +590,7 @@ function CloseInventory()
     FW.TriggerServer("fw-inventory:Server:UpdateInventory", CurrentInventory)
     
     SetTimecycleModifier('default')
+    SetQuickStashMovement(false)
     SetNuiFocus(false, false)
     RestoreGameHud()
     SendNUIMessage({ Action = "CloseInventory" })

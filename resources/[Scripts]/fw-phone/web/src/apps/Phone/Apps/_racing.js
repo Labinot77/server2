@@ -87,7 +87,7 @@ export const CreateRace = (Data) => {
             Id: "Name",
             Type: "TextField",
             Data: {
-              Title: "Event Naam",
+              Title: "Event Name",
               Icon: "user",
               Value: "",
             },
@@ -106,7 +106,7 @@ export const CreateRace = (Data) => {
             Id: "Class",
             Type: "TextField",
             Data: {
-              Title: "Voertuig Klasse",
+              Title: "Vehicle Class",
               Value: "Open",
               Select: [
                 { Text: "Open" },
@@ -186,7 +186,7 @@ export const CreateRace = (Data) => {
             Data: {
               Title: "Phasing",
               Value: "None",
-              RealValue: "Geen",
+              RealValue: "None",
               Select: [
                 { Value: "None", Text: "None" },
                 { Value: "30", Text: "30 Seconds" },
@@ -306,7 +306,7 @@ export const CreateRace = (Data) => {
             Data: {
               Title: "Phasing",
               Value: "None",
-              RealValue: "Geen",
+              RealValue: "None",
               Select: [
                 { Value: "None", Text: "None" },
                 { Value: "30", Text: "30 Seconds" },

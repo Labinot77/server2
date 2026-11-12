@@ -67,17 +67,17 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:Finalize", function(Sourc
     Document = Document[1]
 
     if Document.finalized == 1 then
-        Cb({Success = false, Msg = "Document is al afgerond."})
+        Cb({Success = false, Msg = "Document is already finalized."})
         return
     end
 
     if Document.citizenid ~= Player.PlayerData.citizenid then
-        Cb({Success = false, Msg = "Jij kan dit document niet afronden."})
+        Cb({Success = false, Msg = "You can't finalize this document."})
         return
     end
     
     if Document.type ~= 5 then
-        Cb({Success = false, Msg = "Ongeldige Document Type."})
+        Cb({Success = false, Msg = "Invalid Document Type."})
         return
     end
 
@@ -96,12 +96,12 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:RequestSignature", functi
     Document = Document[1]
 
     if Document.finalized == 0 then
-        Cb({Success = false, Msg = "Document is nog niet afgerond.."})
+        Cb({Success = false, Msg = "Document is not finalized yet.."})
         return
     end
     
     if Document.citizenid ~= Player.PlayerData.citizenid then
-        Cb({Success = false, Msg = "Jij kan geen handtekeningen aanvragen."})
+        Cb({Success = false, Msg = "You can't request signatures."})
         return
     end
     
@@ -118,13 +118,13 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:RequestSignature", functi
     end
 
     if not IsShared then
-        Cb({Success = false, Msg = "Document moet gedeeld zijn met de speler."})
+        Cb({Success = false, Msg = "Document must be shared with the player."})
         return
     end
 
     for k, v in pairs(Signatures) do
         if v.Cid == Data.Cid then
-            Cb({Success = false, Msg = "Handtekening is al aangevraagd."})
+            Cb({Success = false, Msg = "Signature already requested."})
             return
         end
     end
@@ -151,7 +151,7 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:SignDocument", function(S
     Document = Document[1]
 
     if Document.finalized == 0 then
-        Cb({Success = false, Msg = "Document is niet afgerond."})
+        Cb({Success = false, Msg = "Document is not finalized."})
         return
     end
     
@@ -180,7 +180,7 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:ShareLocal", function(Sou
     local MyCoords = GetEntityCoords(GetPlayerPed(Source))
     for k, v in pairs(FW.GetPlayers()) do
         if v.ServerId ~= Source and #(MyCoords - v.Coords) <= 3.0 then
-            TriggerClientEvent("fw-phone:Client:Notification", v.ServerId, 'view-document-' .. Data.Id, 'fas fa-folder', { 'white', 'transparent' }, 'Document Bekijken', "Een document wordt gedeeld met je.", false, true, "fw-phone:Server:Documents:AcceptShare", "", { Id = Data.Id, IsLocal = true })
+            TriggerClientEvent("fw-phone:Client:Notification", v.ServerId, 'view-document-' .. Data.Id, 'fas fa-folder', { 'white', 'transparent' }, 'View Document', "A document is being shared with you.", false, true, "fw-phone:Server:Documents:AcceptShare", "", { Id = Data.Id, IsLocal = true })
         end
     end
 
@@ -197,7 +197,7 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:AddSharee", function(Sour
     local Document = exports['ghmattimysql']:executeSync("SELECT * FROM `phone_documents` WHERE `id` = @Id", { ['@Id'] = Data.Id })
     Document = Document[1]
 
-    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'view-document-' .. Data.Id, 'fas fa-folder', { 'white', 'transparent' }, 'Document Bekijken', "Een document wordt gedeeld met je.", false, true, "fw-phone:Server:Documents:AcceptShare", "", { Id = Data.Id, IsLocal = false })
+    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'view-document-' .. Data.Id, 'fas fa-folder', { 'white', 'transparent' }, 'View Document', "A document is being shared with you.", false, true, "fw-phone:Server:Documents:AcceptShare", "", { Id = Data.Id, IsLocal = false })
 
     Cb({Success = true})
 end)
@@ -210,7 +210,7 @@ FW.Functions.CreateCallback("fw-phone:Server:Documents:DeleteDocument", function
     Document = Document[1]
 
     if Document.citizenid ~= Player.PlayerData.citizenid then
-        Cb({Success = false, Msg = "Geen toegang."})
+        Cb({Success = false, Msg = "No access."})
         return
     end
 
@@ -259,7 +259,7 @@ AddEventHandler("fw-phone:Server:Documents:AcceptShare", function(Data)
     Document.sharees = json.decode(Document.sharees)
 
     TriggerClientEvent("fw-phone:Client:Documents:ForceDocument", Source, Document)
-    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, "view-document-" .. Data.Id, true, true, false, "Openen..", true)
+    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, "view-document-" .. Data.Id, true, true, false, "Opening..", true)
 
     if not Data.IsLocal then
         table.insert(Document.sharees, Player.PlayerData.citizenid)

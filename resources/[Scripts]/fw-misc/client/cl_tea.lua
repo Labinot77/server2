@@ -8,34 +8,24 @@ local TeaZones = {
 
 function InitTea()
     for k, v in pairs(TeaZones) do
-        exports['fw-ui']:AddEyeEntry("tea_kettle_" .. k, {
-            Type = 'Zone',
-            SpriteDistance = 10.0,
-            Distance = 1.5,
-            State = false,
-            ZoneData = {
-                Center = vector3(v.x, v.y, v.z),
-                Length = 0.8,
-                Width = 0.6,
-                Data = {
-                    heading = v.w,
-                    minZ = v.z - 0.3,
-                    maxZ = v.z + 0.3
-                },
-            },
-            Options = {
+        exports.interact:AddInteraction({
+            coords = vector3(v.x, v.y, v.z),
+            distance = 10.0,
+            interactDst = 1.5,
+            name = 'tea_kettle_' .. k,
+            options = {
                 {
-                    Name = 'kettle',
-                    Icon = 'fas fa-mug-hot',
-                    Label = 'Zet de ketel op',
-                    EventType = 'Client',
-                    EventName = 'fw-misc:Client:MakeTea',
-                    EventParams = { Coords = vector3(v.x, v.y, v.z) },
-                    Enabled = function(Entity)
+                    name = 'kettle',
+                    label = 'Make tea',
+                    event = 'fw-misc:Client:MakeTea',
+                    args = {
+                        Coords = vector3(v.x, v.y, v.z)
+                    },
+                    canInteract = function()
                         return true
                     end,
-                }
-            }
+                },
+            },
         })
     end
 end
@@ -44,13 +34,13 @@ RegisterNetEvent("fw-misc:Client:MakeTea")
 AddEventHandler("fw-misc:Client:MakeTea", function(Data, Entity)
     local HasWater = exports['fw-inventory']:HasEnoughOfItem('water_bottle', 1)
     if not HasWater then
-        return FW.Functions.Notify("Je hebt water nodig voor de ketel.")
+        return FW.Functions.Notify("You need water to make tea.")
     end
 
     TaskTurnPedToFaceCoord(PlayerPedId(), Data.Coords, 1000)
     Citizen.Wait(1000)
 
-    local Finished = FW.Functions.CompactProgressbar(30000, "Een kopje thee zetten...", false, true, {disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = true}, { anim = "fullcut_cycle_v6_cokecutter", animDict = "anim@amb@business@coc@coc_unpack_cut@", flags = 0 }, {}, {}, false)
+    local Finished = FW.Functions.CompactProgressbar(30000, "Making tea...", false, true, {disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = true}, { anim = "fullcut_cycle_v6_cokecutter", animDict = "anim@amb@business@coc@coc_unpack_cut@", flags = 0 }, {}, {}, false)
 
     StopAnimTask(PlayerPedId(), "anim@amb@business@coc@coc_unpack_cut@", "fullcut_cycle_v6_cokecutter", 1.0)
     if not Finished then return end
@@ -69,7 +59,7 @@ AddEventHandler("fw-misc:Client:UsedTea", function(Item)
     local Removed = FW.SendCallback("FW:RemoveItem", 'mugoftea', 1)
     if not Removed then return end
 
-    FW.Functions.Notify("Gebruik E om een slokje thee te drinken")
+    FW.Functions.Notify("Press E to take a sip of tea, or X to stop drinking.", "success", 10000)
     exports['fw-assets']:AddProp('tea')
 
     while not HasAnimDictLoaded("amb@world_human_drinking@coffee@male@idle_a") do
@@ -86,7 +76,7 @@ AddEventHandler("fw-misc:Client:UsedTea", function(Item)
             -- Sip
             if IsControlJustPressed(0, 38) then
                 if Drinks <= 0 then
-                    FW.Functions.Notify("Kopje thee is leeg..")
+                    FW.Functions.Notify("Cup of tea is empty..")
                     goto Skip
                 end
 

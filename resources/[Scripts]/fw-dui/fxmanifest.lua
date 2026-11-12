@@ -12,3 +12,5 @@ client_scripts {
 }
 
 server_script 'server/*.lua'
+
+files { 'html/desktop/index.html' } -- shared computer desktop (apps in windows)

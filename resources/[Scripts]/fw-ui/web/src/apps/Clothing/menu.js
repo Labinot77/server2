@@ -6,9 +6,13 @@ export const MenuTabs = {
     Clothes: ["PEDS", "APPAREL"],
     Barber: ["FACE & BODY", "FACE ADJUSTMENTS", "OVERLAYS", "HAIR"],
     Tattoos: ["TATTOOS"],
+    Outfits: ["OUTFITS"], // [G] at a changing room: saved outfits only, nothing to buy
 };
 
-export const StartTab = { Creation: "FACE & BODY", Clothes: "APPAREL", Barber: "HAIR", Tattoos: "TATTOOS" };
+export const StartPath = {
+    Creation: ["FACE & BODY"], Clothes: ["APPAREL"], Barber: ["HAIR"], Tattoos: ["TATTOOS"],
+    Outfits: ["OUTFITS", "SAVED OUTFITS"],
+};
 
 // Apparel is two levels deep: folder -> item list.
 export const ApparelFolders = {
@@ -26,6 +30,7 @@ export const TabItems = {
     "OVERLAYS": ["BLEMISHES", "AGEING", "COMPLEXION", "SUN DAMAGE", "MOLES & FRECKLES", "BODY BLEMISHES", "MAKEUP", "BLUSH", "LIPSTICK"],
     "HAIR": ["STYLES", "FADES", "FACIAL HAIR", "EYEBROWS", "CHEST HAIR"],
     "TATTOOS": ["HEAD", "TORSO", "LEFT ARM", "RIGHT ARM", "LEFT LEG", "RIGHT LEG"],
+    "OUTFITS": ["SAVED OUTFITS"],
 };
 
 // Kind decides which view is used. Id is the key in Config.CurrentSkin.Clothes.

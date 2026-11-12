@@ -8,6 +8,7 @@ const ResetDrag = () => {
     $('.drag-item').css('opacity', '0.0').empty();
     $('body').removeClass('inv-dragging');
     $('.equip-target').removeClass('equip-target');
+    $('.drag-source').removeClass('drag-source');
     DragData.IsDragging = false;
 };
 
@@ -70,8 +71,8 @@ $(document).on('mousedown', '.inventory-box-slot', function(e) {
     if (DragData.IsDragging) return;
     if ($(this).hasClass('drag-item')) return;
 
-    const FromContainer = $(this).closest('.inventory-box').attr('inventory-name') != 'player' ? 'other' : 'player';
-    const FromInv = FromContainer == 'other' ? OtherInvData.Name : 'player';
+    const FromContainer = GetContainerOf(this);
+    const FromInv = GetContainerInvName(FromContainer);
     const FromSlot = $(this).attr('data-slot');
 
     const SlotData = GetContainerItems(FromContainer)[Number(FromSlot)];
@@ -84,15 +85,14 @@ $(document).on('mousedown', '.inventory-box-slot', function(e) {
         return InventoryLog('[Error]: Sluit eerst de attachments van dit wapen.');
     }
 
-    // The magazine in the loader stays put while the loader is open.
-    if (MagazineLoader && FromContainer == 'player' && Number(FromSlot) == MagazineLoader.Slot) {
-        return InventoryLog('[Error]: Dit magazijn zit in de lader.');
-    }
+    // Loading a magazine: click it to stop; it and its bullets stay put meanwhile.
+    if (FromContainer == 'player' && IsMagazineLoading(FromSlot)) return StopMagazineLoad();
+    if (FromContainer == 'player' && IsBulletsLoading(FromSlot)) return InventoryLog('[Error]: Deze kogels worden geladen.');
 
     // Quick move: Ctrl (AMOUNT) / Shift (half) to the other inventory.
     if (e.button === 0 && (window.event.ctrlKey || window.event.shiftKey)) {
         const ToContainer = FromContainer == 'player' ? 'other' : 'player';
-        const ToInv = ToContainer == 'player' ? 'player' : OtherInvData.Name;
+        const ToInv = GetContainerInvName(ToContainer);
 
         if (FromInv == 'Crafting') return;
         if (OtherInvData.Type == 'None' || !OtherInvData.Name || OtherInvData.Name == 'None') return;
@@ -155,12 +155,16 @@ $(document).on('mousedown', '.inventory-box-slot', function(e) {
     DragData.FromSlot = Number(FromSlot);
 
     $('body').addClass('inv-dragging');
+    $(this).addClass('drag-source');
 
     // Highlight where this item can be equipped.
-    // Bullets that fit the open magazine loader.
-    const LoaderMag = GetLoaderMagazine();
-    if (LoaderMag && FromContainer == 'player' && SlotData.Item == 'bullets' && SlotData.CustomType == LoaderMag.CustomType) {
-        $('.mag-load-slot').addClass('equip-target');
+    // Bullets: highlight the magazines they can go into.
+    if (FromContainer == 'player' && SlotData.Item == 'bullets' && !MagLoad) {
+        for (const [Slot, Item] of Object.entries(MyInventory)) {
+            if (Item && Item.Item == 'magazine' && Item.CustomType == SlotData.CustomType && GetMagazineBullets(Item) < GetMagazineConfig(Item.CustomType).Capacity) {
+                GetSlotElement('player', Slot).addClass('equip-target');
+            }
+        }
     }
 
     if (AttachmentPanel && FromContainer == 'player') HighlightAttachmentTarget(SlotData);
@@ -177,7 +181,7 @@ $(document).on('mousedown', '.inventory-box-slot', function(e) {
     const MoveAmount = $('#inventory-move-amount').val();
 
     if (MoveAmount > 0 && MoveAmount <= SlotData.Amount) {
-        $('.drag-item').find(".inventory-slot-info > .inventory-slot-quantity").text(`${MoveAmount}x`);
+        $('.drag-item').find(".inventory-slot-info > .inventory-slot-quantity").text(`X${MoveAmount}`);
         $('.drag-item').find(".inventory-slot-info > .inventory-slot-weight").text(`${(ItemsList[SlotData.Item].Weight * MoveAmount).toFixed(1)}`);
     };
 
@@ -192,28 +196,25 @@ $(document).on('mousedown', '.inventory-box-slot', function(e) {
 $(document).on('mouseup', 'body', async function(e) {
     const Target = $(e.target).closest('.inventory-box-slot');
 
-    // Unloading bullets from the magazine loader (magazine.js).
-    if (DragData.IsDragging && DragData.FromContainer == 'magazine') {
-        if (!Target.length || Target.hasClass('drag-item')) return ResetDrag();
-        const MagToContainer = Target.closest('.inventory-box').attr('inventory-name') != 'player' ? 'other' : 'player';
-        return FinishMagazineUnload(MagToContainer, Number(Target.attr('data-slot')));
-    }
-
     // Taking a magazine/attachment off a weapon (attachments.js).
     if (DragData.IsDragging && DragData.FromContainer == 'attachment') {
         if (!Target.length || Target.hasClass('drag-item')) return ResetDrag();
-        const AttToContainer = Target.closest('.inventory-box').attr('inventory-name') != 'player' ? 'other' : 'player';
+        const AttToContainer = GetContainerOf(Target);
         return FinishAttachmentDetach(AttToContainer, Number(Target.attr('data-slot')));
     }
 
-    // Dropped outside a slot.
+    // Dropped outside a slot. In Quick Stash, dragging an item out of the panel drops it.
     if (!Target.length || Target.hasClass('drag-item')) {
+        const QuickDrop = DragData.IsDragging && DragData.FromContainer == 'player' && $('.inventory-wrapper').hasClass('quick-stash')
+            && !$(e.target).closest('.ox-shell, .ox-footer, .inv-options, #split-modal').length;
+        const DropSlot = DragData.FromSlot;
         ResetDrag();
+        if (QuickDrop && MyInventory[DropSlot]) DropItem(DropSlot, MyInventory[DropSlot]);
         return
     };
 
-    const ToContainer = Target.closest('.inventory-box').attr('inventory-name') != 'player' ? 'other' : 'player';
-    const ToInv = ToContainer == 'other' ? OtherInvData.Name : 'player';
+    const ToContainer = GetContainerOf(Target);
+    const ToInv = GetContainerInvName(ToContainer);
     const ToSlot = Number(Target.attr('data-slot'));
 
     // Middle click: use (wearables toggle equip).
@@ -221,8 +222,8 @@ $(document).on('mouseup', 'body', async function(e) {
         const ItemData = MyInventory[ToSlot];
         if (ItemData == undefined) return;
 
-        // Magazine: show the loader right here, the inventory stays open.
-        if (ItemData.Item == 'magazine') return OpenMagazinePanel(ToSlot);
+        // Magazine: loading is drag & drop, keep the inventory open.
+        if (ItemData.Item == 'magazine') return InventoryLog('Sleep kogels op het magazijn om het te laden.');
 
         CloseInventory()
         $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot: ToSlot }));
@@ -242,6 +243,11 @@ $(document).on('mouseup', 'body', async function(e) {
     if (!FromItem) return;
 
     const ToItem = GetContainerItems(ToContainer)[ToSlot];
+
+    // Bullets on a magazine: load it (instead of swapping the two).
+    if (FromContainer == 'player' && ToContainer == 'player' && FromItem.Item == 'bullets' && ToItem && ToItem.Item == 'magazine') {
+        return LoadBulletsOnMagazineSlot(DragData.FromSlot, ToSlot);
+    }
 
     const FromItemData = GetItemData(FromItem.Item, FromItem.CustomType);
 
@@ -359,12 +365,6 @@ $(document).on('wheel', (e) => {
     if (!DragData.IsDragging) return;
 
     if (DragData.FromContainer == 'attachment') return;
-    if (DragData.FromContainer == 'magazine') {
-        const Bullets = GetMagazineBullets(GetLoaderMagazine());
-        DragData.MagAmount = (Amount > 0 && Amount <= Bullets) ? Amount : Bullets;
-        $('.drag-item').find(".inventory-slot-info > .inventory-slot-quantity").text(`${DragData.MagAmount}x`);
-        return;
-    }
 
     const FromItem = GetContainerItems(DragData.FromContainer)[DragData.FromSlot]
     if (!FromItem) return;
@@ -374,7 +374,7 @@ $(document).on('wheel', (e) => {
     if (Amount == 0) Amount = FromItem.Amount;
 
     if (Amount <= FromItem.Amount) {
-        $('.drag-item').find(".inventory-slot-info > .inventory-slot-quantity").text(`${Amount}x`);
+        $('.drag-item').find(".inventory-slot-info > .inventory-slot-quantity").text(`X${Amount}`);
         $('.drag-item').find(".inventory-slot-info > .inventory-slot-weight").text(`${(ItemData.Weight * Amount).toFixed(1)}`);
     }
 });

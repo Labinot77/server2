@@ -42,7 +42,11 @@
       <div class="ox-shell">
         <div class="ox-brand">
           <span class="ox-brand-title">Inventory</span>
-          <span class="ox-brand-sub" id="ox-player-name">Player</span>
+          <div class="ox-brand-subrow">
+            <span class="ox-brand-sub" id="ox-player-name">Player</span>
+            <span class="ox-brand-sub quick-sub">Quick Stash</span>
+            <span class="quick-btn" id="full-stash-btn">Full Stash</span>
+          </div>
         </div>
 
         <div class="ox-top">
@@ -103,6 +107,22 @@
           </div>
 
           <!-- OTHER -->
+          <div class="ox-right">
+          <!-- Ground under your feet, shown above a stash / trunk (not in a vehicle) -->
+          <div inventory-name="ground" class="inventory-box ground-layout">
+            <div class="ox-sub">
+              <div class="ox-sub-header inventory-box-header">
+                <span class="ox-sub-title inventory-box-header-name">Ground</span>
+                <span class="ox-weight inventory-box-header-weight">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM7.4 9.8h9.2c.9 0 1.7.6 1.9 1.5l2.4 8.3c.3 1.2-.6 2.4-1.9 2.4H5c-1.3 0-2.2-1.2-1.9-2.4l2.4-8.3c.2-.9 1-1.5 1.9-1.5z"/></svg>
+                  <span class="weight-now">0</span>/<span class="weight-max">250</span>
+                </span>
+              </div>
+              <div class="inventory-box-header-weightbar"><div class="weightbar-fill" style="width: 0%"></div></div>
+              <div class="inventory-box-slots ground-grid"></div>
+            </div>
+          </div>
+
           <div inventory-name="other" id="secondary-inventory" class="inventory-box other-layout">
             <div class="ox-sub ox-other">
               <div class="ox-sub-header inventory-box-header">
@@ -117,22 +137,13 @@
               <div class="inventory-box-slots other-grid"></div>
             </div>
 
-            <!-- Magazine loader (opens when you use a magazine) -->
-            <div class="ox-sub ox-magazine">
-              <div class="ox-sub-header"><span class="ox-sub-title mag-title">Pistol Magazine</span></div>
-              <div class="mag-load-slot empty">
-                <div class="inventory-slot-image"></div>
-                <div class="inventory-slot-info"><span class="inventory-slot-quantity mag-qty"></span></div>
-                <span class="material-symbols-outlined emptyicon">add</span>
-                <div class="mag-progress"><div class="mag-progress-fill"></div></div>
-              </div>
-            </div>
 
             <!-- Weapon attachments (right-click a weapon -> Attachments) -->
             <div class="ox-sub ox-attachments">
               <div class="ox-sub-header"><span class="ox-sub-title att-title">Attachments</span></div>
               <div class="att-row"></div>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -142,7 +153,7 @@
         <div class="ox-footer-item"><span class="ox-key">MMB</span> Use / Equip</div><span class="ox-footer-div">/</span>
         <div class="ox-footer-item"><span class="ox-key">Ctrl</span> + <span class="ox-key">LMB</span> Quick move</div><span class="ox-footer-div">/</span>
         <div class="ox-footer-item"><span class="ox-key">Shift</span> + <span class="ox-key">LMB</span> Half</div><span class="ox-footer-div">/</span>
-        <div class="ox-footer-item"><span class="ox-key">RMB</span> Split / Give</div><span class="ox-footer-div">/</span>
+        <div class="ox-footer-item"><span class="ox-key">RMB</span> Split / Give / Drop</div><span class="ox-footer-div">/</span>
         <div class="ox-footer-item"><span class="ox-key">Esc</span> Close</div>
       </div>
 

@@ -20,6 +20,7 @@ export const InputModal = writable({ Visible: false });
 // Preferences
 export const PhoneBackground = writable("https://i.imgur.com/3KTfLIV.jpg");
 export const EmbedsEnabled = writable(true);
+export const Settings = writable({}); // Phone settings (Background, MuteMessages, MuteTwatter)
 
 // Apps
 export const CurrentArticle = writable({})

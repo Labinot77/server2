@@ -66,21 +66,22 @@ local function HitTest(X, Y)
     end
 end
 
+-- ATM model name of an entity, also when fw-dui swapped it to its screen copy (Variant).
 local function ModelOf(Entity)
-    local Hash = GetEntityModel(Entity)
-    for Model in pairs(Config.ATM.Models) do
-        if joaat(Model) == Hash then return Model end
-    end
+    local Model = DUI:GetBaseModel(Entity)
+    return Model and Config.ATM.Models[Model] and Model or nil
 end
 
 local function GetClosestATM()
     local Coords = GetEntityCoords(PlayerPedId())
     local Closest, ClosestDist = nil, 2.0
     for Model in pairs(Config.ATM.Models) do
-        local Obj = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, ClosestDist, joaat(Model), false, false, false)
-        if Obj ~= 0 then
-            local Dist = #(Coords - GetEntityCoords(Obj))
-            if Dist <= ClosestDist then Closest, ClosestDist = Obj, Dist end
+        for _, Name in ipairs({ Model, DUI:GetVariant(Model) }) do
+            local Obj = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, ClosestDist, joaat(Name), false, false, false)
+            if Obj ~= 0 then
+                local Dist = #(Coords - GetEntityCoords(Obj))
+                if Dist <= ClosestDist then Closest, ClosestDist = Obj, Dist end
+            end
         end
     end
     return Closest
@@ -216,10 +217,12 @@ local function StartATM(Entity)
     TaskTurnPedToFaceEntity(PlayerPedId(), Entity, 800)
     Wait(600)
 
-    if not DUI:Show(SCREEN, Entity) then
+    local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
+    if not Shown then
         ATM.InSession = false
         return
     end
+    ATM.Entity = ScreenEntity -- the screen copy when fw-dui swapped the ATM
     Push()
 
     exports['fw-assets']:RequestAnimationDict('amb@prop_human_atm@male@idle_a')

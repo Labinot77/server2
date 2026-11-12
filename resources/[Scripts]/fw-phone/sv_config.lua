@@ -67,11 +67,11 @@ Config.Networks = {
     },
     {
         Id = "lostmc",
-        Name = "The Lost Holland",
+        Name = "The Lost MC",
         Center = vector3(969.19, -122.23, 74.35),
         Size = 80.0,
         Enabled = function(Source)
-            return exports['fw-businesses']:HasPlayerBusinessPermission("The Lost Holland", Source, 'VehicleSales')
+            return exports['fw-businesses']:HasPlayerBusinessPermission("The Lost MC", Source, 'VehicleSales')
         end,
     },
     {
@@ -103,11 +103,11 @@ Config.Networks = {
     },
     {
         Id = "flightschool",
-        Name = "Los Santos Vliegschool",
+        Name = "Los Santos Flight School",
         Center = vector3(-954.35, -2986.74, 14.29),
         Size = 100.0,
         Enabled = function(Source)
-            return exports['fw-businesses']:HasPlayerBusinessPermission("Los Santos Vliegschool", Source, 'VehicleSales')
+            return exports['fw-businesses']:HasPlayerBusinessPermission("Los Santos Flight School", Source, 'VehicleSales')
         end,
     },
 }

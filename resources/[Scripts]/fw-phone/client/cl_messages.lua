@@ -28,7 +28,7 @@ end)
 RegisterNetEvent("fw-phone:Client:Messages:RefreshMessagesChat")
 AddEventHandler("fw-phone:Client:Messages:RefreshMessagesChat", function(Data, Notify)
     if Notify and CurrentApp ~= 'messages' then
-        if exports['fw-hud']:GetPreferenceById('Notifications.SMS') then
+        if exports['fw-hud']:GetPreferenceById('Notifications.SMS') and not GetPhoneSetting('MuteMessages') then
             Notification("new-sms-" .. Data.Phone .. '-' .. math.random(1, 999), "fas fa-comment", { "white", "#8FC24C" }, Data.Name, Data.Message)
         end
         SetAppUnread("messages")

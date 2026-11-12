@@ -116,9 +116,10 @@
 
         padding: 0.8vh 0;
 
-        border-radius: 0.4vh;
+        border-radius: 1vh;
 
-        background-color: #2e2e2e;
+        background-color: #2a2b30;
+        box-shadow: 0 1vh 2.5vh rgba(0, 0, 0, 0.5);
     }
 
     .dropdown-container::-webkit-scrollbar {
@@ -151,6 +152,6 @@
     }
 
     .dropdown-option:hover {
-        background-color: #3e3e3e;
+        background-color: rgba(255, 255, 255, 0.08);
     }
 </style>

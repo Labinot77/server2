@@ -9,7 +9,7 @@ let ContextData = false; // { Container, Slot }
 let SplitData = false;   // { Container, Slot }
 
 const IsShopContainer = (Container) => Container != 'player' && (OtherInvData.Type == 'Store' || OtherInvData.Type == 'Crafting');
-const ContainerInvName = (Container) => Container == 'player' ? 'player' : OtherInvData.Name;
+const ContainerInvName = (Container) => GetContainerInvName(Container);
 
 const CloseContextMenu = () => {
     $('.inv-options').hide();
@@ -54,8 +54,12 @@ const BuildContextOptions = (Container, Slot, Item) => {
 
     Options.push({ Id: 'split', Label: 'Split', Icon: 'call_split', Disabled: !CanSplit });
     if (Container == 'player') Options.push({ Id: 'give', Label: 'Give', Icon: 'back_hand' });
+    if (Container == 'player') Options.push({ Id: 'drop', Label: 'Drop', Icon: 'download', Disabled: IsMagazineLoading(Slot) || IsBulletsLoading(Slot) });
 
     // Weapons: magazine + attachments that sit on the gun.
+    if (Container == 'player' && Item.Item == 'magazine') {
+        Options.push({ Id: 'unload', Label: 'Unload', Icon: 'eject', Disabled: GetMagazineBullets(Item) <= 0 || IsMagazineLoading(Slot) });
+    }
     if (Container == 'player' && ItemsList[Item.Item] && ItemsList[Item.Item].Weapon && HasAttachmentOptions(Item.Item)) {
         Options.push({ Id: 'attachments', Label: 'Attachments', Icon: 'build' });
     }
@@ -99,7 +103,7 @@ $(document).on('contextmenu', '.inventory-box-slot', function(e) {
     e.preventDefault();
     if (DragData.IsDragging || $(this).hasClass('drag-item')) return false;
 
-    const Container = $(this).closest('.inventory-box').attr('inventory-name') != 'player' ? 'other' : 'player';
+    const Container = GetContainerOf(this);
     OpenContextMenu(this, Container, Number($(this).attr('data-slot')), e.pageX, e.pageY);
     return false;
 });
@@ -124,7 +128,9 @@ $(document).on('click', '.inv-option-item', function(e) {
 
     if (Option == 'split') return OpenSplitModal(Container, Slot);
     if (Option == 'give') return GiveItem(Slot, Item);
+    if (Option == 'drop') return DropItem(Slot, Item);
     if (Option == 'attachments') return OpenAttachmentsPanel(Slot);
+    if (Option == 'unload') return UnloadMagazine(Slot);
 });
 
 // ---------------------------------------------------------------------------
@@ -235,3 +241,10 @@ window.addEventListener('message', (event) => {
         $('.place-box').hide().attr('data-mode', '');
     }
 });
+
+// Drop: at your feet, or out of the window when you're in a car (client/cl_vehicledrop.lua). AMOUNT field, else the stack.
+const DropItem = (Slot, Item) => {
+    let Amount = Number($('#inventory-move-amount').val());
+    if (!(Amount > 0) || Amount > Item.Amount) Amount = Item.Amount;
+    $.post("https://fw-inventory/DropItem", JSON.stringify({ Slot, Amount }));
+};

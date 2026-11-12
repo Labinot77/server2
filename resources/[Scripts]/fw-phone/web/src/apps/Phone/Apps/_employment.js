@@ -25,7 +25,7 @@ export const HireEmployee = () => {
                 Id: "Employee",
                 Type: "TextField",
                 Data: {
-                    Title: "BSN",
+                    Title: "CID",
                     Icon: "id-card",
                     Value: "",
                 },
@@ -89,7 +89,7 @@ export const PayExternal = () => {
                 Id: "Cid",
                 Type: "TextField",
                 Data: {
-                    Title: "BSN",
+                    Title: "CID",
                     Icon: "id-card",
                     Value: "",
                 },
@@ -101,7 +101,7 @@ export const PayExternal = () => {
                 Data: {
                     Title: "Amount",
                     Icon: "dollar-sign",
-                    Sub: "€ 0,00"
+                    Sub: "$0.00"
                 },
             },
             {
@@ -159,7 +159,7 @@ export const ChargeExternal = () => {
                 Id: "Cid",
                 Type: "TextField",
                 Data: {
-                    Title: "BSN",
+                    Title: "CID",
                     Icon: "id-card",
                     Value: "",
                 },
@@ -171,7 +171,7 @@ export const ChargeExternal = () => {
                 Data: {
                     Title: "Amount",
                     Icon: "dollar-sign",
-                    Sub: "€ 0,00"
+                    Sub: "$0.00"
                 },
             },
             {
@@ -518,14 +518,14 @@ export const PayEmployee = (Cid) => {
                 Data: {
                     Title: "Amount",
                     Icon: "dollar-sign",
-                    Sub: "€ 0,00"
+                    Sub: "$0.00"
                 },
             },
             {
                 Id: "Comment",
                 Type: "TextArea",
                 Data: {
-                    Title: "Commentaar",
+                    Title: "Comment",
                 },
             },
         ],
@@ -774,7 +774,7 @@ export const Flightschool = {
                     Id: "Cid",
                     Type: "TextField",
                     Data: {
-                        Title: "BSN",
+                        Title: "CID",
                         Icon: "id-card",
                         Value: "",
                     },

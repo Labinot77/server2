@@ -12,7 +12,7 @@ AddEventHandler("fw-phone:Server:Pinger:SendPing", function(Data)
     local PingId = math.random(1, 99999)
     Pings[PingId] = true
 
-    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'ping-request-' .. PingId, 'fas fa-map-pin', { 'white', '#FA8A6A' }, Data.IsAnon and 'Anoniem' or (Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname), "Ping Verzoek", false, true, "fw-phone:Server:Pinger:AcceptPing", "fw-phone:Server:Pinger:DeclinePing", { HideOnAction = true, Coords = GetEntityCoords(GetPlayerPed(Source)), PingId = PingId })
+    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, 'ping-request-' .. PingId, 'fas fa-map-pin', { 'white', '#FA8A6A' }, Data.IsAnon and 'Anonymous' or (Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname), "Ping Request", false, true, "fw-phone:Server:Pinger:AcceptPing", "fw-phone:Server:Pinger:DeclinePing", { HideOnAction = true, Coords = GetEntityCoords(GetPlayerPed(Source)), PingId = PingId })
 end)
 
 RegisterNetEvent("fw-phone:Server:Pinger:AcceptPing")

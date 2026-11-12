@@ -1,105 +1,60 @@
-/* .textfield-component-container:focus-within .textfield-underline {
-    border-color: white;
-} */
-
-.textfield-component-container:focus-within input {
-    color: white;
-}
-
 .textfield-component-container {
     position: relative;
-
     width: 100%;
-    height: max-content;
-
-    margin-bottom: 1.25vh;
-
-    color: rgb(200, 200, 200);
-
-    font-family: 'Roboto';
-    font-size: 1.2vh;
+    margin-bottom: 1.2vh;
+    font-family: Roboto;
+    font-size: 1.15vh;
     font-weight: 500;
-}
-
-.textfield-component-container > i {
-    position: relative;
-    top: 0;
-    left: 0;
-
-    text-align: center;
-    width: 2vh;
-
-    font-size: 1.6vh;
-}
-
-.textfield-component-container > i.right {
-    position: relative;
-    float: right;
-    top: 0.8vh;
+    color: var(--phone-muted);
 }
 
 .textfield-component-container > .textfield-title {
-    margin: 0;
-    font-size: 1.2vh;
-
-    width: 100%;
+    margin: 0 0 0.5vh 0.3vh;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .textfield-component-container > .textfield-sub {
-    font-size: 1.1vh;
-    margin-top: 0.5vh;
-    opacity: 0.8;
-
-    width: 100%;
+    margin: 0.4vh 0 0 0.3vh;
+    font-size: 1.05vh;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* white-space: nowrap; */
 }
 
-.textfield-component-container > .textfield-underline {
-    position: absolute;
-    width: 100%;
-    height: 0.1vh;
-    background-color: rgb(180, 180, 180);
+.textfield-box {
+    display: flex;
+    align-items: center;
+    gap: 0.8vh;
+    height: 3.4vh;
+    padding: 0 1vh;
+    border-radius: 1vh;
+    background: var(--phone-card);
+    transition: box-shadow 150ms;
 }
 
-.textfield-component-container > .textfield-underline > .textfield-underline-fill {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+.textfield-box:focus-within { box-shadow: 0 0 0 0.15vh var(--phone-accent); }
+.textfield-box > i { font-size: 1.3vh; color: var(--phone-muted); }
 
-    height: 0.2vh;
-    width: 100%;
-    transition: width ease 250ms;
-
-    background-color: white;
-}
-
-.textfield-component-container > input {
+.textfield-box > input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
     margin: 0;
     border: none;
     outline: none;
-
-    color: rgb(200, 200, 200);
-
-    font-family: 'Roboto';
-    font-size: 1.5vh;
-
-    margin-top: 0.3vh;
-    background-color: transparent;
-
-    height: 2.5vh;
-    width: calc(100% - 2.9vh);
+    background: transparent;
+    color: white;
+    font-family: Roboto;
+    font-size: 1.4vh;
 }
 
-.textfield-component-container > input::-webkit-outer-spin-button, input::-webkit-inner-spin-button, input::-webkit-calendar-picker-indicator {
+.textfield-box > input::placeholder { color: rgba(235, 235, 245, 0.35); }
+
+.textfield-box > input::-webkit-outer-spin-button,
+.textfield-box > input::-webkit-inner-spin-button,
+.textfield-box > input::-webkit-calendar-picker-indicator {
     display: none;
-    appearance: none;
     -webkit-appearance: none;
     margin: 0;
 }
-
-.textfield-component-container > textarea::-webkit-scrollbar { display: none; }

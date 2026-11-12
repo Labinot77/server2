@@ -71,7 +71,8 @@
         z-index: 999;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5)
+        background-color: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(0.6vh)
     }
 
     .phone-loader-container {
@@ -82,6 +83,8 @@
         height: max-content;
         padding: 3vh 0;
         transform: translate(-50%, -50%);
-        background-color: #30475e
+        background: var(--phone-surface);
+        border-radius: 1.8vh;
+        box-shadow: 0 1.5vh 4vh rgba(0, 0, 0, 0.55);
     }
 </style>

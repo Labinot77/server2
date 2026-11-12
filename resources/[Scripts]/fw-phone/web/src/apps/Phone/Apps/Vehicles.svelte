@@ -38,7 +38,7 @@
                     Id: "Cid",
                     Type: "TextField",
                     Data: {
-                        Title: "BSN",
+                        Title: "CID",
                         Icon: "id-card",
                     },
                 },
@@ -141,7 +141,7 @@
                             on:click={() => {
                                 SellVehicle(Data);
                             }}
-                            Color="warning">Verkopen</Button
+                            Color="warning">Sell</Button
                         >
                     </div>
                 {/if}
@@ -150,7 +150,7 @@
 
         {#if FilteredVehicles.length > ShowingLimit}
             <div style="display: flex; justify-content: center; width: 100%;">
-                <Button Color="success" on:click={LoadMore}>Laad Meer</Button>
+                <Button Color="success" on:click={LoadMore}>Load More</Button>
             </div>
         {/if}
     </PaperList>

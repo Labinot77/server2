@@ -76,7 +76,7 @@
                         };
                         
                         if (Data.IsCurrency) {
-                            if (Val.length == 0) return "€ 0,00";
+                            if (Val.length == 0) return "$0.00";
                             return FormatCurrency.format(Val);
                         };
 
@@ -110,7 +110,8 @@
         width: 100%;
         height: 100%;
         z-index: 100;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(0.6vh);
     }
 
     .phone-input-container {
@@ -126,7 +127,9 @@
         height: max-content;
         max-height: 70%;
         padding: 1.5vh;
-        background-color: #30475d;
+        background: var(--phone-surface);
+        border-radius: 1.8vh;
+        box-shadow: 0 1.5vh 4vh rgba(0, 0, 0, 0.55);
     }
 
     .phone-input-container::-webkit-scrollbar {

@@ -24,7 +24,6 @@ $(document).ready(function(){
                 // Backpack equipped/unequipped from outside the UI (use item, robbed, ...).
                 if (event.data.SlotId == Layout.BackpackSlot) RefreshBackpackState('player');
                 UpdateInventoryWeights('player');
-                RefreshMagazinePanel();
                 RefreshAttachmentsPanel();
                 RefreshCraftingPanel();
                 break;
@@ -49,16 +48,26 @@ $(document).ready(function(){
                 BuildInventory('player', 'Player', MyInventory, MaxPlayerSlots);
                 BuildInventory('other', OtherInvData.Type, OtherInvData.Items, OtherInvData.Slots);
 
-                if (event.data.MagazineSlot) OpenMagazinePanel(event.data.MagazineSlot); else CloseMagazinePanel();
-                if (!event.data.MagazineSlot) CloseAttachmentsPanel();
+                CloseAttachmentsPanel();
 
                 $('.actions-wrapper > .inventory-actions > #steal-money').remove();
                 if (OtherInvData.Type == 'Other Player') {
                     $('.actions-wrapper > .inventory-actions').append(`<button class="inventory-actions-btn${OtherInvData.Cash === 0 ? ' disabled' : ''}" id="steal-money">Geld Stelen</button>`)
                 }
 
-                $('.inventory-wrapper').fadeIn(100);
+                $('.inventory-wrapper').toggleClass('quick-stash', !!event.data.QuickStash).removeClass('inv-enter').fadeIn(120); void document.body.offsetWidth; $('.inventory-wrapper').addClass('inv-enter');
                 break;
+            case "RefreshOther": {
+                if (!InventoryOpen || !OtherInvData) break;
+                const Container = GroundInvData && GroundInvData.Name == event.data.Name ? 'ground' : (OtherInvData.Name == event.data.Name ? 'other' : false);
+                if (!Container) break;
+                // An item you're dragging from this inventory may be gone now: drop the drag.
+                if (DragData.IsDragging && DragData.FromContainer == Container) ResetDrag();
+                GetContainerData(Container).Items = event.data.Items || {};
+                for (let i = 1; i <= GetContainerMaxSlots(Container); i++) RenderSlot(Container, i);
+                UpdateInventoryWeights(Container);
+                break;
+            }
             case "SwapOther":
                 if (!InventoryOpen) break;
                 ResetDrag();
@@ -73,7 +82,6 @@ $(document).ready(function(){
                 ResetDrag();
                 CloseContextMenu();
                 CloseSplitModal();
-                CloseMagazinePanel();
                 CloseAttachmentsPanel();
                 $('.inventory-slot-hover').css({ opacity: 0 });
                 $('.inventory-wrapper').fadeOut(100);
@@ -109,7 +117,6 @@ $(document).ready(function(){
                 SetOtherCash(event.data.Cash);
                 break;
             case "MagazineProgress": // handled in magazine.js
-            case "OpenMagazinePanel":
                 break;
             case "PlaceHint": // handled in contextmenu.js
                 break;
@@ -133,7 +140,6 @@ const CloseInventory = () => {
     ResetDrag();
     CloseContextMenu();
     CloseSplitModal();
-    CloseMagazinePanel();
                 CloseAttachmentsPanel();
     $('.inventory-slot-hover').css('opacity', '0.0');
 };
@@ -190,10 +196,10 @@ $(document).on('mouseup', '#inventory-use', function(e){
 
     const Slot = DragData.FromSlot;
 
-    // Magazine: show the loader right here, the inventory stays open.
-    if (IsMagazineItem('player', Slot)) {
+    // Magazine: loading is drag & drop, keep the inventory open.
+    if (MyInventory[Slot] && MyInventory[Slot].Item == 'magazine') {
         ResetDrag();
-        return OpenMagazinePanel(Slot);
+        return InventoryLog('Sleep kogels op het magazijn om het te laden.');
     }
 
     CloseInventory();
@@ -205,7 +211,7 @@ $(document).on('mouseup', '#inventory-use', function(e){
 $(document).on({
     mouseover: function (e){
         var FromInv = $(this).closest('.inventory-box').attr('inventory-name');
-        var Text = GenerateItemInfo(FromInv == 'player' ? 'player' : OtherInvData.Name, $(this).attr("data-slot"));
+        var Text = GenerateItemInfo(GetContainerInvName(FromInv), $(this).attr("data-slot"));
         if (!Text) return;
 
         const Hover = $('.inventory-slot-hover');
@@ -223,3 +229,10 @@ $(document).on({
         $('.inventory-slot-hover').css({opacity: '0.0'});
     }
 }, ".inventory-box-slot");
+// Quick Stash -> full inventory.
+$(document).on('click', '#full-stash-btn', function() {
+    $.post("https://fw-inventory/FullStash");
+    $('.inventory-wrapper').removeClass('quick-stash inv-enter');
+    void document.body.offsetWidth;
+    $('.inventory-wrapper').addClass('inv-enter');
+});

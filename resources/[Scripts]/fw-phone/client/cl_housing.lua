@@ -69,11 +69,11 @@ RegisterNUICallback("Housing/SetInteractLocation", function(Data, Cb)
             if exports['fw-housing']:IsInside() or #(GetEntityCoords(PlayerPedId()) - vector3(House.Coords.x, House.Coords.y, House.Coords.z)) <= 50.0 then
                 TriggerServerEvent("fw-housing:Server:SetInteractLocation", Data.HouseId or CurrentHouse.Id, Data.Interaction, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()), exports['fw-housing']:IsInside())
             else
-                FW.Functions.Notify("Dit is te ver..", "error")
+                FW.Functions.Notify("This is too far..", "error")
             end
         end
     elseif Data.Interaction == "Garage" then
-        if exports['fw-housing']:IsInside() then return FW.Functions.Notify("Garage moet wel buiten staan he..", "error") end
+        if exports['fw-housing']:IsInside() then return FW.Functions.Notify("The garage has to be outside..", "error") end
         TriggerServerEvent("fw-housing:Server:SetInteractLocation", Data.HouseId or CurrentHouse.Id, Data.Interaction, GetEntityCoords(PlayerPedId()), GetEntityHeading(PlayerPedId()))
     else
         if CurrentHouse and (not Data.HouseId or Data.HouseId == CurrentHouse.Id) and exports['fw-housing']:IsInside() then

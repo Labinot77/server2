@@ -41,10 +41,20 @@ Config.Orders = {
 -- How the page gets on each model's screen (texture / render target, resolution, camera) is set in fw-dui/config/sh_config.lua.
 Config.Laptop = {
     Models = {
+        ['prop_laptop_jimmy'] = true,
+        ['prop_laptop_lester2'] = true,
+        ['as_prop_as_laptop_01a'] = true,
         ['custom_laptop_01'] = true,
     },
 
     CursorSensitivity = 14.0,
+
+    -- Apps on the laptop's desktop (fw-dui). %s in a label = the business label.
+    Apps = {
+        Orders = { id = 'orders', label = 'Work Orders', icon = 'fas fa-car-mechanic', color = 'linear-gradient(160deg, #3fd8e6, #1b9fb0)', page = 'laptop.html' },
+        -- Hire, fire, pay, roles, bank access. Only the owner and roles with a management permission can use it.
+        Management = { id = 'management', label = '%s Management', icon = 'fas fa-briefcase', color = 'linear-gradient(160deg, #ffa53a, #f47a17)', page = 'management.html' },
+    },
 
     -- The nearest laptop within this many metres shows the live dashboard (members) or the locked screen.
     RenderDistance = 15.0,

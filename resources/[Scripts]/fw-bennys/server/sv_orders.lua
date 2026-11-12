@@ -28,6 +28,9 @@ local function GetMembers(Business)
     return Members
 end
 
+-- Called by sv_management.lua after hiring / firing, so membership updates right away.
+function ClearBusinessCache(Business) BusinessCache[Business] = nil end
+
 local function IsMember(Source, Business)
     if not Config.Orders.Businesses[Business] then return false end
     local Player = FW.Functions.GetPlayer(Source)
@@ -180,7 +183,7 @@ local PendingSaves = {} -- [OrderId] = { Owner, Mechanic, Final, Expires }
 local function RequestModsSnapshot(Order, Mechanic, Final)
     local Vehicle = GetOrderVehicle(Order)
     if not Vehicle then
-        if Mechanic then Notify(Mechanic, "Voertuig niet gevonden, mods konden niet worden opgeslagen..", 'error') end
+        if Mechanic then Notify(Mechanic, "Vehicle not found, the mods could not be saved.", 'error') end
         return false
     end
 
@@ -221,8 +224,8 @@ RegisterNetEvent('fw-bennys:Server:Orders:SaveMods', function(OrderId, Mods)
     print(('[fw-bennys] Order #%d mods %s for %s'):format(Order.Id, Saved and 'saved' or 'NOT saved (not an owned vehicle)', Plate))
 
     if Final then
-        local Text = Saved and ("Order #%d afgerond, mods zijn opgeslagen."):format(Order.Id)
-            or ("Order #%d afgerond, maar %s is geen eigen voertuig: mods zijn niet opgeslagen."):format(Order.Id, Plate)
+        local Text = Saved and ("Order #%d completed, the mods are saved."):format(Order.Id)
+            or ("Order #%d completed, but %s is not an owned vehicle: the mods were not saved."):format(Order.Id, Plate)
         if Pending.Mechanic then Notify(Pending.Mechanic, Text, Saved and 'success' or 'error') end
         TriggerEvent('fw-logs:Server:Log', 'bennysMenu', 'Order Completed', ("Order: #%d\nPlate: %s\nCustomer: %s\nMechanic: %s\nSaved: %s\nMods: ```json\n%s```"):format(Order.Id, Plate, Order.CustomerName, tostring(Order.MechanicName), tostring(Saved), json.encode(Mods)), 'green')
     end
@@ -271,14 +274,14 @@ RegisterNetEvent('fw-bennys:Server:Orders:Create', function(Business, Receipt, N
 
     local Vehicle = NetworkGetEntityFromNetworkId(NetId or 0)
     if Vehicle == 0 or not DoesEntityExist(Vehicle) then
-        return Notify(Source, "Voertuig niet gevonden..", 'error')
+        return Notify(Source, "Vehicle not found.", 'error')
     end
 
     -- One open order per vehicle.
     local Plate = GetVehicleNumberPlateText(Vehicle):gsub('^%s*(.-)%s*$', '%1')
     for _, Order in pairs(Orders) do
         if Order.Plate == Plate and (Order.Status == 'pending' or Order.Status == 'accepted') then
-            return Notify(Source, ("Er staat al een order open voor dit voertuig (#%d).."):format(Order.Id), 'error')
+            return Notify(Source, ("There is already an open order for this vehicle (#%d)."):format(Order.Id), 'error')
         end
     end
 
@@ -321,18 +324,18 @@ RegisterNetEvent('fw-bennys:Server:Orders:Create', function(Business, Receipt, N
         local Row = DB:executeSync("SELECT `id` FROM `bennys_orders` WHERE `customer_cid` = ? ORDER BY `id` DESC LIMIT 1", { Order.CustomerCid })
         Order.Id = Row and Row[1] and Row[1].id
     end
-    if not Order.Id then return Notify(Source, "Order kon niet worden aangemaakt..", 'error') end
+    if not Order.Id then return Notify(Source, "The order could not be created.", 'error') end
 
     Orders[Order.Id] = Order
     print(('[fw-bennys] Order #%d created for %s (%s) at %s - $%d'):format(Order.Id, Order.CustomerName, Order.Plate, Business, Total))
 
-    Notify(Source, ("Order #%d is verstuurd naar %s. Een monteur gaat ermee aan de slag."):format(Order.Id, Business), 'success')
+    Notify(Source, ("Order #%d was sent to %s. A mechanic will get to work on it."):format(Order.Id, Business), 'success')
 
     local Members = GetMembers(Business)
     for _, Data in pairs(FW.GetPlayers()) do
         local Member = FW.Functions.GetPlayer(Data.ServerId)
         if Member and Members[Member.PlayerData.citizenid] then
-            Notify(Data.ServerId, ("Nieuwe werkorder #%d: %s (%s)"):format(Order.Id, Order.Model, Order.Plate), 'primary')
+            Notify(Data.ServerId, ("New work order #%d: %s (%s)"):format(Order.Id, Order.Model, Order.Plate), 'primary')
         end
     end
 
@@ -364,22 +367,22 @@ end)
 FW.Functions.CreateCallback('fw-bennys:Server:Orders:Action', function(Source, Cb, Action, Id)
     local Player = FW.Functions.GetPlayer(Source)
     local Order = Orders[tonumber(Id)]
-    if not Player or not Order then return Cb({ Success = false, Message = 'Order niet gevonden' }) end
-    if not IsMember(Source, Order.Business) then return Cb({ Success = false, Message = 'Geen toegang' }) end
+    if not Player or not Order then return Cb({ Success = false, Message = 'Order not found' }) end
+    if not IsMember(Source, Order.Business) then return Cb({ Success = false, Message = 'No access' }) end
 
     local Cid = Player.PlayerData.citizenid
     local Mine = Order.MechanicCid == Cid
 
     if Action == 'accept' then
-        if Order.Status ~= 'pending' then return Cb({ Success = false, Message = 'Order is al opgepakt' }) end
+        if Order.Status ~= 'pending' then return Cb({ Success = false, Message = 'This order was already taken' }) end
         Order.Status = 'accepted'
         Order.MechanicCid = Cid
         Order.MechanicName = PlayerName(Player)
         Order.ReleasedBy = nil
-        NotifyCustomer(Order, ("Je order #%d is opgepakt door %s."):format(Order.Id, Order.MechanicName), 'success')
+        NotifyCustomer(Order, ("Your order #%d was taken by %s."):format(Order.Id, Order.MechanicName), 'success')
     elseif Action == 'release' then
         -- Unassign: installed items stay installed, so another mechanic continues where this one left off.
-        if Order.Status ~= 'accepted' or not Mine then return Cb({ Success = false, Message = 'Dit is niet jouw order' }) end
+        if Order.Status ~= 'accepted' or not Mine then return Cb({ Success = false, Message = 'This is not your order' }) end
         Order.Status = 'pending'
         Order.MechanicCid = nil
         Order.MechanicName = nil
@@ -392,21 +395,21 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:Action', function(Source, C
         for _, Data in pairs(FW.GetPlayers()) do
             local Member = FW.Functions.GetPlayer(Data.ServerId)
             if Data.ServerId ~= Source and Member and Members[Member.PlayerData.citizenid] then
-                Notify(Data.ServerId, ("Order #%d (%s) is weer beschikbaar - %d/%d geïnstalleerd."):format(Order.Id, Order.Plate, Done, #Order.Items), 'primary')
+                Notify(Data.ServerId, ("Order #%d (%s) is available again - %d/%d installed."):format(Order.Id, Order.Plate, Done, #Order.Items), 'primary')
             end
         end
     elseif Action == 'decline' then
-        if Order.Status ~= 'pending' and not (Order.Status == 'accepted' and Mine) then return Cb({ Success = false, Message = 'Kan deze order niet weigeren' }) end
+        if Order.Status ~= 'pending' and not (Order.Status == 'accepted' and Mine) then return Cb({ Success = false, Message = 'This order cannot be declined' }) end
         Order.Status = 'cancelled'
         Order.MechanicCid = Order.MechanicCid or Cid
         Order.MechanicName = Order.MechanicName or PlayerName(Player)
         -- TODO: refund the customer for items that were not installed.
-        NotifyCustomer(Order, ("Je order #%d bij %s is geannuleerd."):format(Order.Id, Order.Business), 'error')
+        NotifyCustomer(Order, ("Your order #%d at %s was cancelled."):format(Order.Id, Order.Business), 'error')
     elseif Action == 'complete' then
-        if Order.Status ~= 'accepted' or not Mine then return Cb({ Success = false, Message = 'Dit is niet jouw order' }) end
-        if not AllInstalled(Order) then return Cb({ Success = false, Message = 'Nog niet alles is geïnstalleerd' }) end
+        if Order.Status ~= 'accepted' or not Mine then return Cb({ Success = false, Message = 'This is not your order' }) end
+        if not AllInstalled(Order) then return Cb({ Success = false, Message = 'Not everything is installed yet' }) end
         Order.Status = 'completed'
-        NotifyCustomer(Order, ("Je voertuig (%s) is klaar! Order #%d is afgerond."):format(Order.Plate, Order.Id), 'success')
+        NotifyCustomer(Order, ("Your vehicle (%s) is ready! Order #%d is completed."):format(Order.Plate, Order.Id), 'success')
         RequestModsSnapshot(Order, Source, true)
     else
         return Cb({ Success = false, Message = 'Onbekende actie' })
@@ -423,18 +426,18 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:InstallItem', function(Sour
     local Player = FW.Functions.GetPlayer(Source)
     local Order = Orders[tonumber(Id)]
     Index = tonumber(Index)
-    if not Player or not Order or not Index then return Cb({ Success = false, Message = 'Order niet gevonden' }) end
-    if Order.Status ~= 'accepted' or Order.MechanicCid ~= Player.PlayerData.citizenid then return Cb({ Success = false, Message = 'Dit is niet jouw order' }) end
+    if not Player or not Order or not Index then return Cb({ Success = false, Message = 'Order not found' }) end
+    if Order.Status ~= 'accepted' or Order.MechanicCid ~= Player.PlayerData.citizenid then return Cb({ Success = false, Message = 'This is not your order' }) end
 
     local Item = Order.Items[Index]
-    if not Item then return Cb({ Success = false, Message = 'Onderdeel niet gevonden' }) end
-    if Item.Installed then return Cb({ Success = false, Message = 'Al geïnstalleerd' }) end
+    if not Item then return Cb({ Success = false, Message = 'Part not found' }) end
+    if Item.Installed then return Cb({ Success = false, Message = 'Already installed' }) end
 
     local Vehicle = GetOrderVehicle(Order)
-    if not Vehicle then return Cb({ Success = false, Message = 'Voertuig niet gevonden' }) end
+    if not Vehicle then return Cb({ Success = false, Message = 'Vehicle not found' }) end
 
     local Distance = #(GetEntityCoords(GetPlayerPed(Source)) - GetEntityCoords(Vehicle))
-    if Distance > Config.Orders.MaxInstallDistance then return Cb({ Success = false, Message = 'Je staat te ver van het voertuig' }) end
+    if Distance > Config.Orders.MaxInstallDistance then return Cb({ Success = false, Message = 'You are too far from the vehicle' }) end
 
     Item.Installed = true
     Item.InstalledBy = PlayerName(Player)
@@ -450,7 +453,7 @@ FW.Functions.CreateCallback('fw-bennys:Server:Orders:InstallItem', function(Sour
 
     if Finished then
         Order.Status = 'completed'
-        NotifyCustomer(Order, ("Je voertuig (%s) is klaar! Order #%d is afgerond."):format(Order.Plate, Order.Id), 'success')
+        NotifyCustomer(Order, ("Your vehicle (%s) is ready! Order #%d is completed."):format(Order.Plate, Order.Id), 'success')
     end
 
     Save(Order)

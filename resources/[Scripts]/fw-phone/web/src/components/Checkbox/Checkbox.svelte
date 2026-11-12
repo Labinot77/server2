@@ -1,28 +1,50 @@
 <script>
-    export var Title = '';
-    export var Checked = false;
-    export var className = '';
-
-    import './Checkbox.css';
-
-    var ChangeCheckbox = () => {
-        Checked = !Checked;
-    }
+    export let Title = "";
+    export let Checked = false;
+    export let className = "";
 </script>
 
-<div class="ui-checkbox-container {className}">
-    <label on:keyup on:click={ChangeCheckbox} for="" class="ui-checkbox" style="width: auto; max-width: max-content;">
-        <span class="ui-checkbox-root {Checked ? 'ui-checkbox-active': ''}" aria-disabled="false">
-            <span class="ui-checkbox-label">
-                {#if Checked}
-                    <input class="ui-checkbox-input" type="checkbox" data-indeterminate="false" value="" checked>
-                    <svg class="ui-checkbox-icon" focusable="false" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                {:else}
-                    <input class="ui-checkbox-input" type="checkbox" data-indeterminate="false" value="">
-                    <svg class="ui-checkbox-icon" focusable="false" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path></svg>
-                {/if}
-            </span>
-        </span>
-        <span class="ui-checkbox-text">{Title}</span>
-    </label>
+<div class="ui-switch {className}" on:keyup on:click={() => (Checked = !Checked)}>
+    <span>{Title}</span>
+    <div class="ui-switch-track" class:on={Checked}><div class="ui-switch-thumb" /></div>
 </div>
+
+<style>
+    .ui-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1vh;
+        width: 100%;
+        margin-bottom: 1vh;
+        font-size: 1.35vh;
+        color: white;
+        cursor: pointer;
+    }
+
+    .ui-switch-track {
+        flex-shrink: 0;
+        position: relative;
+        width: 4.2vh;
+        height: 2.5vh;
+        border-radius: 1.25vh;
+        background: rgba(120, 120, 128, 0.36);
+        transition: background 200ms;
+    }
+
+    .ui-switch-track.on { background: var(--phone-green); }
+
+    .ui-switch-thumb {
+        position: absolute;
+        top: 0.2vh;
+        left: 0.2vh;
+        width: 2.1vh;
+        height: 2.1vh;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 0.2vh 0.4vh rgba(0, 0, 0, 0.3);
+        transition: transform 200ms;
+    }
+
+    .ui-switch-track.on > .ui-switch-thumb { transform: translateX(1.7vh); }
+</style>

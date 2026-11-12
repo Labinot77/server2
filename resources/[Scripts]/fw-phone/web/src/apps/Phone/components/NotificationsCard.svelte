@@ -141,7 +141,7 @@
         <div class="app">
             <p>{Title}</p>
         </div>
-        <p>zojuist</p>
+        <p>just now</p>
     </div>
     <div class="phone-notification-message">
         <div class="text">
@@ -149,12 +149,12 @@
         </div>
         <div class="actions">
             {#if HasReject}
-                <div on:keyup on:click={OnReject} data-tooltip="Weigeren" class="tooltip phone-notification-action action-reject">
+                <div on:keyup on:click={OnReject} data-tooltip="Decline" class="tooltip phone-notification-action action-reject">
                     <i class="fas fa-times-circle" />
                 </div>
             {/if}
             {#if HasAccept}
-                <div on:keyup on:click={OnAccept} data-tooltip="Accepteren" class="tooltip phone-notification-action action-accept">
+                <div on:keyup on:click={OnAccept} data-tooltip="Accept" class="tooltip phone-notification-action action-accept">
                     <i class="fas fa-check-circle" />
                 </div>
             {/if}
@@ -166,15 +166,17 @@
     .phone-notification {
         width: calc(100% - 2.96vh);
         height: 100%;
-        padding: 0.5vh 0.64vh;
-        border-radius: 0.7vh;
+        padding: 0.8vh 1vh;
+        border-radius: 1.6vh;
         color: white;
         max-width: 20.8vw;
         cursor: pointer;
         margin-bottom: 0.7vh;
         opacity: 1;
         transform: translateY(0);
-        background-color: rgba(53, 49, 52, 0.95);
+        background-color: rgba(38, 38, 43, 0.9);
+        backdrop-filter: blur(1.5vh);
+        box-shadow: 0 0.6vh 1.6vh rgba(0, 0, 0, 0.35);
     }
 
     .phone-notification-in {
@@ -207,7 +209,7 @@
 
     .phone-notification > .phone-notification-title > .icon {
         position: relative;
-        border-radius: 0.45vh;
+        border-radius: 0.6vh;
         width: 2.3vh;
         height: 2.3vh;
         margin-right: 0.4vw;
@@ -229,7 +231,7 @@
 
     .phone-notification > .phone-notification-title > .app {
         flex: 1 1;
-        text-transform: uppercase;
+        font-weight: 600;
         overflow: hidden;
     }
 
@@ -280,7 +282,7 @@
         > .phone-notification-message
         > .actions
         > .action-accept {
-        color: #aed581;
+        color: var(--phone-green);
     }
 
     .phone-notification

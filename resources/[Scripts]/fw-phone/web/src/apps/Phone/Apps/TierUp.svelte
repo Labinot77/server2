@@ -61,7 +61,7 @@
                     Id: "Cid",
                     Type: "TextField",
                     Data: {
-                        Title: "BSN",
+                        Title: "CID",
                         Icon: "id-card",
                         Value: "",
                     },
@@ -110,7 +110,7 @@
             Inputs: [
                 {
                     Type: "Text",
-                    Text: "Weet je zeker dat je de groep wilt verlaten?",
+                    Text: "Are you sure you want to leave the group?",
                     Data: {
                         style: "margin-top: 3vh; margin-bottom: 4vh; text-align: center; font-size: 1.5vh;"
                     },
@@ -159,7 +159,7 @@
             Inputs: [
                 {
                     Type: "Text",
-                    Text: "Weet je zeker dat je de groep wilt verwijden?",
+                    Text: "Are you sure you want to delete the group?",
                     Data: {
                         style: "margin-top: 3vh; margin-bottom: 4vh; text-align: center; font-size: 1.5vh;"
                     },
@@ -242,7 +242,7 @@
             Inputs: [
                 {
                     Type: "Text",
-                    Text: "Weet je zeker dat je de groep eigenaarschap wilt overdragen?",
+                    Text: "Are you sure you want to transfer group ownership?",
                     Data: {
                         style: "margin-top: 3vh; margin-bottom: 4vh; text-align: center; font-size: 1.5vh;"
                     },
@@ -290,20 +290,20 @@
 
         Retval.push({
             Icon: "user-plus",
-            Text: "Uitnodigen",
+            Text: "Invite",
             Cb: AddParticipant,
         });
 
         if (CurrentGroup.members[0].Cid != $PlayerData.Cid) {
             Retval.push({
                 Icon: "sign-out",
-                Text: "Verlaten",
+                Text: "Leave",
                 Cb: LeaveGroup,
             });
         } else {
             Retval.push({
                 Icon: "trash-alt",
-                Text: "Verwijderen",
+                Text: "Delete",
                 Cb: DeleteGroup,
             });
         }
@@ -353,7 +353,7 @@
                     Color="success"
                     style="margin: 0 auto; margin-top: 1vh;"
                     on:click={CreateGroup}
-                >Groep Aanmaken</Button>
+                >Create Group</Button>
             </div>
         {:else}
             <Paper
@@ -363,7 +363,7 @@
             />
 
             {#if CurrentGroup.members.length > 1}
-                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Deelnemers</p>
+                <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Participants</p>
 
                 {#each CurrentGroup.members.slice(1) as Data, Key}
                     <Paper
@@ -378,7 +378,7 @@
                             on:keyup on:click={() => { KickMember(Data) }}
                         />
                         <i
-                            data-tooltip="Eigenschap overdragen"
+                            data-tooltip="Transfer Ownership"
                             class="fas fa-user-graduate"
                             on:keyup on:click={() => { TransferOwnership(Data) }}
                         />
@@ -420,7 +420,7 @@
 
     .tierup-progress-bar {
         width: 67%;
-        background-color: #30475e;
+        background-color: var(--phone-surface);
 
         border-radius: 5vh;
 

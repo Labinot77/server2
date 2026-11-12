@@ -83,13 +83,13 @@
     <div class="phone-housing-keys">
         <div class="phone-housing-keys-container">
             <p style="font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Add:</p>
-            <TextField Title="BSN" Icon="id-card" bind:RealValue={AddingKeyCid} />
+            <TextField Title="CID" Icon="id-card" bind:RealValue={AddingKeyCid} />
             <div class="phone-housing-keys-buttons">
                 <Button Color="warning" on:click={CloseKeyholder}>Back</Button>
                 <Button Color="success" on:click={() => { HOUSING.AddKeyholder(EditingKeys, AddingKeyCid, Keyholders.length), CloseKeyholder() }} >Confirm</Button>
             </div>
             <hr style="margin: 1vh 0px;">
-            <TextField Placeholder="Verwijderen" Title="" Select={Keyholders} ReadOnly={true} bind:Value={RemoveKeyCid} />
+            <TextField Placeholder="Delete" Title="" Select={Keyholders} ReadOnly={true} bind:Value={RemoveKeyCid} />
             <div class="phone-housing-keys-buttons">
                 <Button Color="warning" on:click={CloseKeyholder}>Back</Button>
                 <Button Color="success" on:click={() => { HOUSING.RemoveKeyholder(EditingKeys, RemoveKeyCid), CloseKeyholder() }} >Confirm</Button>
@@ -181,7 +181,7 @@
                 </div>
 
                 {#if Houses.some(House => House.IsOwner)}
-                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">In Bezit</p>
+                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Owned</p>
 
                     {#each Houses.filter(Val => Val.IsOwner) as Data (Data.Id)}
                         <Paper
@@ -190,16 +190,16 @@
                             Description={Data.Adress}
                             HasActions={true}
                         >
-                            <i on:keyup on:click={() => { HOUSING.Locate(Data) }} data-tooltip="Zet GPS" class="fas fa-map-marked" />
+                            <i on:keyup on:click={() => { HOUSING.Locate(Data) }} data-tooltip="Set GPS" class="fas fa-map-marked" />
                             <i on:keyup on:click={() => { ToggleLock(Data.Id) }} data-tooltip={Data.Locked ? "Ontgrendelen" : "Vergrendelen"} class="fas fa-{Data.Locked ? "lock" : "lock-open"}"/>
-                            <i on:keyup on:click={() => { ToggleEditing(Data.Id) }} data-tooltip="Eigendom Bewerken" class="fas fa-edit" />
-                            <i on:keyup on:click={() => { EditKeys(Data.Id) }} data-tooltip="Sleutels" class="fas fa-key" />
+                            <i on:keyup on:click={() => { ToggleEditing(Data.Id) }} data-tooltip="Edit Property" class="fas fa-edit" />
+                            <i on:keyup on:click={() => { EditKeys(Data.Id) }} data-tooltip="Keys" class="fas fa-key" />
                         </Paper>
                     {/each}
                 {/if}
 
                 {#if Houses.some(House => !House.IsOwner)}
-                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Toegang Tot</p>
+                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Access To</p>
 
                     {#each Houses.filter(Val => !Val.IsOwner) as Data (Data.Id)}
                         <Paper
@@ -208,9 +208,9 @@
                             Description={Data.Adress}
                             HasActions={true}
                         >
-                            <i on:keyup on:click={() => { HOUSING.Locate(Data) }} data-tooltip="Zet GPS" class="fas fa-map-marked" />
+                            <i on:keyup on:click={() => { HOUSING.Locate(Data) }} data-tooltip="Set GPS" class="fas fa-map-marked" />
                             <i on:keyup on:click={() => { ToggleLock(Data.Id) }} data-tooltip={Data.Locked ? "Ontgrendelen" : "Vergrendelen"} class="fas fa-{Data.Locked ? "lock" : "lock-open"}"/>
-                            <i on:keyup on:click={() => { ToggleEditing(Data.Id) }} data-tooltip="Eigendom Bewerken" class="fas fa-edit" />
+                            <i on:keyup on:click={() => { ToggleEditing(Data.Id) }} data-tooltip="Edit Property" class="fas fa-edit" />
                         </Paper>
                     {/each}
                 {/if}
@@ -280,8 +280,8 @@
     }
 
     .phone-housing-option-active {
-        color: #95ef77 !important;
-        box-shadow: inset 0 -0.2vh 0 #95ef77
+        color: var(--phone-green) !important;
+        box-shadow: inset 0 -0.2vh 0 var(--phone-green)
     }
 
     .phone-housing-keys {
@@ -305,7 +305,7 @@
         height: max-content;
         max-height: 70%;
         padding: 1.5vh;
-        background-color: #30475d
+        background-color: var(--phone-surface)
     }
 
     .phone-housing-keys-container::-webkit-scrollbar { display: none }

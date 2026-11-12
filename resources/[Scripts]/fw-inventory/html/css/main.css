@@ -481,7 +481,6 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
     background-size: 100vh 100%;
 }
 .inventory-slot-quality.broken { width: 100% !important; background: var(--danger); }
-.inventory-box-slot:has(.inventory-slot-quality.broken) { background-color: rgba(120, 20, 24, 0.55); }
 
 .inventory-slot-price {
     position: absolute;
@@ -1005,30 +1004,24 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 #steal-money.disabled { opacity: 0.35; pointer-events: none; }
 
 /* ==========================================================================
-   Magazine loader (below GROUND)
+   Magazine loading (in the slot)
    ========================================================================== */
-.ox-magazine { display: none; margin-top: 2vh; }
-.mag-load-slot {
-    position: relative;
-    width: var(--size);
-    height: var(--size);
-    border: 1px dashed rgba(240, 180, 41, 0.5);
-    background-color: rgba(10, 13, 15, 0.86);
-    background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 4px);
-    overflow: hidden;
-    cursor: grab;
+/* Magazine loading: thin ring around the magazine and the bullets, running down with the remaining bullets. */
+.inventory-box-slot.mag-loading { cursor: pointer; }
+.inventory-box-slot.mag-loading .inventory-slot-image { opacity: 0.4; }
+.inventory-box-slot.mag-loading .inventory-slot-name { opacity: 0.55; }
+.mag-loader {
+    position: absolute;
+    top: 46%; left: 50%;
+    width: 3.4vh; height: 3.4vh;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    overflow: visible;
+    pointer-events: none;
+    z-index: 3;
 }
-.mag-load-slot * { pointer-events: none; }
-.mag-load-slot:hover { border-color: #fff; }
-.mag-load-slot .emptyicon { display: none; }
-.mag-load-slot.empty .emptyicon { display: block; }
-.mag-load-slot.empty .inventory-slot-image { opacity: 0.25; }
-.mag-load-slot.full { border-style: solid; border-color: #3ddc97; }
-.mag-load-slot.loading { cursor: progress; border-style: solid; border-color: #f0b429; }
-.mag-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.5vh; background: rgba(255, 255, 255, 0.08); display: none; }
-.mag-load-slot.loading .mag-progress { display: block; }
-.mag-progress-fill { height: 100%; width: 0%; background: #f0b429; }
-.inventory-box-slot.mag-active { border-color: #f0b429 !important; box-shadow: inset 0 0 1.2vh rgba(240, 180, 41, 0.3); }
+.mag-loader circle { fill: none; stroke-width: 2.6; }
+.mag-loader-track { stroke: rgba(255, 255, 255, 0.18); }
+.mag-loader-arc { stroke: #178a55; stroke-linecap: round; transition: stroke-dashoffset 0.06s linear; }
 .inventory-slot-quantity.mag-qty { color: #f0b429; }
 .inventory-slot-quantity.mag-qty.empty { color: rgba(255, 255, 255, 0.45); }
 
@@ -1058,3 +1051,158 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 .att-slot.locked .emptyicon, .att-slot.locked .emptylabel { opacity: 0.45; }
 .place-box[data-mode="give"] .place-give { display: flex; }
 .place-give .ox-key { background: #2fd0ee; }
+
+/* ==========================================================================
+   Slot look: image + count only, broken items red with a diamond marker
+   ========================================================================== */
+.inventory-box-slot::before { display: none; }
+.inventory-box-slot.has-item {
+    background-color: #15191c;
+    background-image: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.05), transparent 70%);
+    border-color: rgba(255, 255, 255, 0.07);
+}
+.inventory-box-slot .inventory-slot-image { top: 10%; left: 12%; width: 76%; height: 76%; }
+.inventory-box-slot .inventory-slot-info {
+    top: auto; left: auto;
+    right: 0.6vh; bottom: 0.45vh;
+    font-size: 1.45vh;
+    color: rgba(255, 255, 255, 0.85);
+}
+.inventory-box-slot .mag-qty { color: rgba(255, 255, 255, 0.85); }
+.inventory-box-slot .mag-qty.empty { color: rgba(255, 255, 255, 0.45); }
+
+.slot-broken-icon { display: none; }
+.inventory-box-slot.is-broken {
+    border-color: rgba(214, 48, 49, 0.75);
+    background-image: radial-gradient(circle at 50% 45%, rgba(214, 48, 49, 0.32), rgba(120, 20, 24, 0.18) 75%);
+}
+.inventory-box-slot.is-broken .slot-broken-icon {
+    display: block;
+    position: absolute;
+    top: 0.55vh; right: 0.55vh;
+    width: 0.9vh; height: 0.9vh;
+    border: 0.18vh solid #d63031;
+    transform: rotate(45deg);
+    z-index: 3;
+}
+.inventory-box-slot.is-broken .slot-broken-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0.18vh;
+    background: #d63031;
+}
+
+/* ==========================================================================
+   Attachment slots: same look as normal slots (image + count, name in the tooltip)
+   ========================================================================== */
+.att-slot .inventory-slot-image { top: 10%; left: 12%; width: 76%; height: 76%; }
+.att-slot .inventory-slot-info { top: auto; left: auto; right: 0.6vh; bottom: 0.45vh; font-size: 1.45vh; }
+.att-slot .mag-qty { color: rgba(255, 255, 255, 0.85); }
+.att-slot .mag-qty.empty { color: rgba(255, 255, 255, 0.45); }
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+/* Opening: panels slide up and fade in, one after another. */
+@keyframes inv-rise { from { opacity: 0; transform: translateY(1.6vh); } to { opacity: 1; transform: none; } }
+.inv-enter .ox-brand, .inv-enter .ox-top, .inv-enter .ox-equip, .inv-enter .ox-carry,
+.inv-enter .inventory-box[inventory-name="other"], .inv-enter .ox-footer { animation: inv-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.inv-enter .ox-top { animation-delay: 0.03s; }
+.inv-enter .ox-equip { animation-delay: 0.05s; }
+.inv-enter .ox-carry { animation-delay: 0.09s; }
+.inv-enter .inventory-box[inventory-name="other"] { animation-delay: 0.13s; }
+.inv-enter .ox-footer { animation-delay: 0.17s; }
+
+/* Weight bar: color eases as it fills, a pulse when you're over the limit. */
+.weightbar-fill { transition: background-color 0.3s ease; }
+@keyframes inv-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.inventory-box-header-weight.overweight { animation: inv-pulse 0.9s ease-in-out infinite; }
+
+/* Hover: image lifts a little. */
+.inventory-box-slot .inventory-slot-image, .att-slot .inventory-slot-image { transition: transform 0.15s ease; }
+.inventory-box-slot.has-item:hover .inventory-slot-image, .att-slot:not(.empty):hover .inventory-slot-image { transform: scale(1.07); }
+
+/* Dragging: the slot you picked up from fades. */
+.inventory-box-slot.drag-source { opacity: 0.4; transition: opacity 0.12s ease; }
+
+/* Menus and panels pop in. */
+@keyframes inv-pop-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+.inv-options, #split-modal > *, .ox-attachments { animation: inv-pop-in 0.14s ease-out; }
+.inventory-slot-hover { transition: opacity 0.12s ease; }
+
+/* ==========================================================================
+   Quick Stash (from coderadev/ox_inventory): only pockets + backpack on the right
+   ========================================================================== */
+.ox-brand-subrow { display: flex; align-items: center; gap: 1vh; }
+.quick-sub, .quick-btn { display: none; }
+.quick-btn {
+    margin-top: 0.35vh;
+    padding: 0.35vh 0.9vh;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 1.15vh;
+    font-weight: 800;
+    font-style: italic;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    color: #cfd8e3;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.quick-btn:hover { background: #fff; color: #000; }
+
+.inventory-wrapper.quick-stash {
+    --size: 7.4vh;
+    --carry-w: calc(5 * var(--size) + 4 * var(--gap));
+    background: none;
+}
+.inventory-wrapper.quick-stash::after { display: none; }
+.inventory-wrapper.quick-stash::before {
+    left: 0; right: 0; top: 0; bottom: 0;
+    width: auto;
+    background:
+        linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        radial-gradient(circle, rgba(40, 90, 130, 0.3) 0%, rgba(10, 30, 50, 0.7) 100%);
+    background-size: 100% 4px, 100% 100%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 55%, #000 75%);
+}
+
+.quick-stash .ox-top,
+.quick-stash .ox-equip,
+.quick-stash .inventory-box[inventory-name="other"],
+.quick-stash #ox-player-name { display: none !important; }
+.quick-stash .quick-sub { display: inline; }
+.quick-stash .quick-btn { display: inline-block; }
+
+.quick-stash .ox-shell {
+    position: absolute;
+    right: var(--pad-x);
+    grid-template-columns: var(--carry-w);
+    z-index: 1;
+}
+.quick-stash .inv-container { grid-template-columns: var(--carry-w); }
+.quick-stash .player-layout { width: var(--carry-w); }
+.quick-stash .ox-carry {
+    width: calc(var(--carry-w) + 1vh); /* room for the scrollbar */
+    max-height: calc(100vh - 3.7vh - 12vh - 7.4vh);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.quick-stash .ox-carry .ox-sub { width: var(--carry-w); }
+.quick-stash .ox-carry::-webkit-scrollbar { width: 0.4vh; }
+.quick-stash .ox-carry::-webkit-scrollbar-thumb { background: var(--slot-line); }
+.quick-stash .ox-footer > :nth-child(n+5):nth-child(-n+8) { display: none; } /* hide quick move + half */
+
+/* ==========================================================================
+   Ground above a stash / trunk
+   ========================================================================== */
+.ox-right { display: flex; flex-direction: column; gap: 2vh; width: var(--right-w); }
+.ground-layout { display: none; width: var(--right-w); }
+.ground-grid {
+    max-height: calc(2 * var(--size) + var(--gap));
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.ox-right.has-ground .other-grid { max-height: calc(4 * var(--size) + 3 * var(--gap)); }
+.inv-enter .ground-layout { animation: inv-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) 0.11s both; }
+.quick-stash .ox-right { display: none !important; }

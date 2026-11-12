@@ -161,7 +161,7 @@ export const CheckCurrentLocation = async () => {
         Inputs: [
             {
                 Type: "Text",
-                Text: "Adress:",
+                Text: "Address:",
                 Data: { style: "font-size: 1.3vh;" }
             },
             {
@@ -262,7 +262,7 @@ export const SellHousing = async () => {
           Id: "Cid",
           Type: "TextField",
           Data: {
-            Title: "BSN",
+            Title: "CID",
             Icon: "id-card",
             Value: "",
           },
@@ -376,7 +376,7 @@ export const EditHousing = async () => {
                 Data: {
                     Title: "Price",
                     Icon: "sign",
-                    Sub: "€ 0,00",
+                    Sub: "$0.00",
                     Type: "number"
                 },
             },

@@ -139,7 +139,7 @@ local function InstallItem(OrderId, Index)
     if not Item or Item.Installed then return end
 
     local Vehicle = FindOrderVehicle(Order.NetId, Order.Plate)
-    if not Vehicle then return FW.Functions.Notify("Voertuig niet gevonden..", "error") end
+    if not Vehicle then return FW.Functions.Notify("Vehicle not found.", "error") end
 
     Busy = true
     local Ped = PlayerPedId()
@@ -171,14 +171,14 @@ local function InstallItem(OrderId, Index)
         return FW.Functions.Notify(Result and Result.Message or "Installeren mislukt..", "error")
     end
 
-    FW.Functions.Notify(Result.Finished and ("Order #%d is afgerond!"):format(OrderId) or ("%s geïnstalleerd."):format(Item.Label), "success")
+    FW.Functions.Notify(Result.Finished and ("Order #%d is completed!"):format(OrderId) or ("%s installed."):format(Item.Label), "success")
 end
 
 -- Hand the order back to the pool; installed items stay installed for the next mechanic.
 function UnassignOrder(OrderId)
     local Result = FW.SendCallback('fw-bennys:Server:Orders:Action', 'release', OrderId)
     if Result and Result.Success then
-        FW.Functions.Notify(("Je bent niet meer toegewezen aan order #%d. Een andere monteur kan verder."):format(OrderId), "primary")
+        FW.Functions.Notify(("You are no longer assigned to order #%d. Another mechanic can take over."):format(OrderId), "primary")
     else
         FW.Functions.Notify(Result and Result.Message or "Er ging iets mis..", "error")
     end

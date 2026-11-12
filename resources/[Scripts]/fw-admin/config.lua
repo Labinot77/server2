@@ -553,27 +553,6 @@ Config.AdminMenus = {
     },
     {
         Category = 'user',
-        Id = 'requestAmmo',
-        Name = 'Spawn Ammo',
-        Event = 'Admin:Set:Ammo',
-        EventType = "Server",
-        Collapse = true,
-        Options = {
-            {
-                Id = 'player',
-                Name = 'Target (Not Required):',
-                Type = 'input-choice',
-            },
-            {
-                Id = 'amount',
-                Name = 'Amount',
-                Type = 'input-text',
-                InputType = 'number',
-            },
-        },
-    },
-    {
-        Category = 'user',
         Id = 'kick',
         Name = 'Kick',
         Event = 'Admin:Kick:Player',

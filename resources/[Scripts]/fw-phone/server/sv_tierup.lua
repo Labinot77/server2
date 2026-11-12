@@ -18,7 +18,7 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:CreateGroup", function(Sourc
     if Player == nil then return end
 
     if IsPlayerInGroup(Player.PlayerData.citizenid) then
-        Cb({ Success = false, Msg = "Je zit al in een groep!" })
+        Cb({ Success = false, Msg = "You're already in a group!" })
         return
     end
 
@@ -35,27 +35,27 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:InviteParticipate", function
 
     local Target = FW.Functions.GetPlayerByCitizenId(Data.Cid)
     if Target == nil then
-        Cb({ Success = false, Msg = "Ongeldige Speler" })
+        Cb({ Success = false, Msg = "Invalid Player" })
         return
     end
 
     if not IsPlayerInGroup(Player.PlayerData.citizenid) then
-        Cb({ Success = false, Msg = "Je zit niet in een groep!" })
+        Cb({ Success = false, Msg = "You're not in a group!" })
         return
     end
 
     if IsPlayerInGroup(Target.PlayerData.citizenid) then
-        Cb({ Success = false, Msg = "Speler zit al in een groep!" })
+        Cb({ Success = false, Msg = "Player is already in a group!" })
         return
     end
 
     local Group = GetPlayerGroup(Player.PlayerData.citizenid)
     if Group.members[1].Cid ~= Player.PlayerData.citizenid then
-        Cb({ Success = false, Msg = "Alleen de eigenaar kan dit doen!" })
+        Cb({ Success = false, Msg = "Only the owner can do this!" })
         return
     end
 
-    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, "tierup-invite-" .. Target.PlayerData.citizenid, "fas fa-trophy", { "white", "transparent" }, "TierUp! Uitnodiging", Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname .. " heeft je uitgenodigd om deel te nemen aan een TierUp-groep!", false, true, "fw-phone:Server:TierUp:AcceptInvite", "fw-phone:Client:RemoveNotificationById", { Id = "tierup-invite-" .. Target.PlayerData.citizenid, GroupId = Group.id })
+    TriggerClientEvent("fw-phone:Client:Notification", Target.PlayerData.source, "tierup-invite-" .. Target.PlayerData.citizenid, "fas fa-trophy", { "white", "transparent" }, "TierUp! Invite", Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname .. " has invited you to join a TierUp group!", false, true, "fw-phone:Server:TierUp:AcceptInvite", "fw-phone:Client:RemoveNotificationById", { Id = "tierup-invite-" .. Target.PlayerData.citizenid, GroupId = Group.id })
 
     if GroupInvitations[Group.id] == nil then
         GroupInvitations[Group.id] = {}
@@ -72,7 +72,7 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:LeaveGroup", function(Source
 
     local Group = GetPlayerGroup(Player.PlayerData.citizenid)
     if not Group or Group == nil then
-        Cb({ Success = false, Msg = "Je zit niet in een groep!" })
+        Cb({ Success = false, Msg = "You're not in a group!" })
         return
     end
 
@@ -97,12 +97,12 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:KickMember", function(Source
 
     local Group = GetPlayerGroup(Player.PlayerData.citizenid)
     if not Group or Group == nil then
-        Cb({ Success = false, Msg = "Je zit niet in een groep!" })
+        Cb({ Success = false, Msg = "You're not in a group!" })
         return
     end
 
     if Group.members[1].Cid ~= Player.PlayerData.citizenid then
-        Cb({ Success = false, Msg = "Alleen de eigenaar kan dit doen!" })
+        Cb({ Success = false, Msg = "Only the owner can do this!" })
     end
 
     for k, v in pairs(Group.members) do
@@ -126,12 +126,12 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:TransferOwnership", function
 
     local Group = GetPlayerGroup(Player.PlayerData.citizenid)
     if not Group or Group == nil then
-        Cb({ Success = false, Msg = "Je zit niet in een groep!" })
+        Cb({ Success = false, Msg = "You're not in a group!" })
         return
     end
 
     if Group.members[1].Cid ~= Player.PlayerData.citizenid then
-        Cb({ Success = false, Msg = "Alleen de eigenaar kan dit doen!" })
+        Cb({ Success = false, Msg = "Only the owner can do this!" })
     end
 
     for k, v in pairs(Group.members) do
@@ -156,13 +156,13 @@ FW.Functions.CreateCallback("fw-phone:Server:TierUp:DeleteGroup", function(Sourc
     if Player == nil then return end
 
     if not IsPlayerInGroup(Player.PlayerData.citizenid) then
-        Cb({ Success = false, Msg = "Je zit niet in een groep!" })
+        Cb({ Success = false, Msg = "You're not in a group!" })
         return
     end
 
     local Group = GetPlayerGroup(Player.PlayerData.citizenid)
     if Group.members[1].Cid ~= Player.PlayerData.citizenid then
-        Cb({ Success = false, Msg = "Alleen de eigenaar kan dit doen!" })
+        Cb({ Success = false, Msg = "Only the owner can do this!" })
     end
 
     exports['ghmattimysql']:executeSync("DELETE FROM `phone_tierup` WHERE `id` = @Id", {
@@ -178,22 +178,22 @@ AddEventHandler("fw-phone:Server:TierUp:AcceptInvite", function(Data)
 
     local Player = FW.Functions.GetPlayer(Source)
     if not Player then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Ongeldige Uitnodiging!", true)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Invalid Invite!", true)
         return
     end
 
     local Group = GetGroupById(Data.GroupId)
     if not Group or Group == nil then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Ongeldige Uitnodiging!", true)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Invalid Invite!", true)
         return
     end
 
     if not GroupInvitations[Data.GroupId] or not GroupInvitations[Data.GroupId][Player.PlayerData.citizenid] then
-        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Ongeldige Uitnodiging!", true)
+        TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Invalid Invite!", true)
         return
     end
 
-    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Uitnodiging geaccepteerd.", true)
+    TriggerClientEvent('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Invite accepted.", true)
 
     table.insert(Group.members, {Cid = Player.PlayerData.citizenid})
 

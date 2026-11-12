@@ -1,137 +1,122 @@
 <script>
     import { onMount } from "svelte";
     import { LicensesLocale } from "../../../config";
-    import { FormatCurrency, SendEvent } from "../../../utils/Utils";
+    import { FormatCurrency, FormatPhone, SendEvent } from "../../../utils/Utils";
     import { PlayerData } from "../phone.stores";
 
     import AppWrapper from "../components/AppWrapper.svelte";
+    import AppHeader from "../components/AppHeader.svelte";
 
-    let MyLicenses = [];
+    let MyLicenses = {};
 
     onMount(() => {
         SendEvent("Details/GetLicenses", {}, (Success, Data) => {
-            if (!Success) return;
-            MyLicenses = Data;
-        })
-    })
+            if (Success) MyLicenses = Data;
+        });
+    });
+
+    $: Info = [
+        ["id-card", "CID", $PlayerData?.Cid, "#0a84ff"],
+        ["university", "Bank Number", $PlayerData?.BankId, "#30d158"],
+        ["mobile-alt", "Phone Number", FormatPhone($PlayerData?.PhoneNumber || ""), "#5e5ce6"],
+    ];
+
+    $: Money = [
+        ["wallet", "Cash", $PlayerData?.Cash, "#acd680"],
+        ["piggy-bank", "Bank", $PlayerData?.Bank, "#53cee5"],
+        ["dice-three", "Casino", $PlayerData?.Casino, "#fd4083"],
+    ];
+
+    $: Licenses = Object.entries(MyLicenses).filter(([Type, Has]) => Type != "weapon" || Has);
 </script>
 
 <AppWrapper>
-    <div class="phone-details-list">
-        <div data-tooltip="BSN" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-id-card" />
-            <p>{$PlayerData?.Cid}</p>
+    <AppHeader Title="Details" />
+
+    <div class="details">
+        <div class="group">
+            {#each Info as [Icon, Label, Value, Color]}
+                <div class="row">
+                    <span><i class="fas fa-{Icon}" style="color: {Color}" /> {Label}</span>
+                    <span class="muted">{Value ?? "-"}</span>
+                </div>
+            {/each}
         </div>
-        <div data-tooltip="Bank Number" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-university" />
-            <p>{$PlayerData?.BankId}</p>
+
+        <div class="money">
+            {#each Money as [Icon, Label, Value, Color]}
+                <div class="money-card">
+                    <i class="fas fa-{Icon}" style="color: {Color}" />
+                    <p class="muted">{Label}</p>
+                    <p class="amount">{FormatCurrency.format(Value || 0)}</p>
+                </div>
+            {/each}
         </div>
-        <div data-tooltip="Phone Number" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-mobile" />
-            <p>{$PlayerData?.PhoneNumber}</p>
-        </div>
-        <div data-tooltip="Cash" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-wallet" style="color: #acd680;" />
-            <p>{FormatCurrency.format($PlayerData?.Cash)}</p>
-        </div>
-        <div data-tooltip="Bank" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-piggy-bank" style="color: #53cee5;" />
-            <p>{FormatCurrency.format($PlayerData?.Bank)}</p>
-        </div>
-        <div data-tooltip="Casino" data-position="top" class="phone-details-list-item">
-            <i class="fas fa-dice-three" style="color: #fd4083;" />
-            <p>{FormatCurrency.format($PlayerData?.Casino)}</p>
-        </div>
-    </div>
-    <div class="phone-details-licenses">
-        <p>License</p>
-        <div class="phone-details-licenses-cards">
-            {#each Object.entries(MyLicenses) as Data, Id}
-                {#if Data[0] != "weapon" || Data[1] == true}
-                    <div class="phone-details-licenses-item">
-                        <p>{LicensesLocale[Data[0]]}</p>
-                        <i class="fas fa-{Data[1] ? "check-circle" : "times-circle"}" />
-                    </div>
-                {/if}
+
+        <p class="label">Licenses</p>
+        <div class="group">
+            {#each Licenses as [Type, Has]}
+                <div class="row">
+                    <span>{LicensesLocale[Type] || Type}</span>
+                    <i class="fas fa-{Has ? "check-circle" : "times-circle"}" style="color: var(--phone-{Has ? "green" : "red"})" />
+                </div>
             {/each}
         </div>
     </div>
 </AppWrapper>
 
 <style>
-    .phone-details-list {
-        position: relative;
-        top: 3.0vh;
-        left: 0;
-        right: 0;
-        margin: 0 auto;
-        height: max-content;
-        width: 87%
+    p { margin: 0; }
+    .muted { color: var(--phone-muted); }
+
+    .details {
+        height: calc(100% - 10vh);
+        padding: 0 5% 3vh;
+        overflow-y: auto;
     }
 
-    .phone-details-list > .phone-details-list-item {
+    .details::-webkit-scrollbar { display: none; }
+
+    .group {
+        padding: 0.4vh 1.2vh;
+        border-radius: var(--phone-radius);
+        background: var(--phone-card);
+    }
+
+    .row {
         display: flex;
-        height: 3vh;
-        line-height: 3.3vh;
-        margin-bottom: 1.4vh
+        align-items: center;
+        justify-content: space-between;
+        min-height: 3.6vh;
+        font-size: 1.35vh;
+        border-bottom: 0.1vh solid var(--phone-line);
     }
 
-    .phone-details-list > .phone-details-list-item > i {
-        width: 3.5vh;
-        text-align: center;
-        font-size: 3vh
+    .row:last-child { border-bottom: none; }
+    .row i { width: 2vh; margin-right: 0.6vh; text-align: center; }
+
+    .money {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8vh;
+        margin-top: 1.2vh;
     }
 
-    .phone-details-list > .phone-details-list-item > p {
-        position: relative;
-        left: 1.5vh;
-        margin: 0;
-        color: white;
-        font-size: 1.8vh;
-        font-weight: bold
+    .money-card {
+        padding: 1vh;
+        border-radius: var(--phone-radius);
+        background: var(--phone-card);
+        font-size: 1.1vh;
     }
 
-    .phone-details-licenses {
-        position: relative;
-        top: 4vh;
-        left: 0;
-        right: 0;
-        margin: 0 auto;
-        width: 87%
-    }
+    .money-card > i { font-size: 1.8vh; margin-bottom: 0.8vh; }
+    .amount { margin-top: 0.2vh; font-size: 1.3vh; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
 
-    .phone-details-licenses > p {
-        text-align: center;
-        font-size: 2.2vh;
-        margin-bottom: 1.8vh
-    }
-
-    .phone-details-licenses-cards {
-        position: relative
-    }
-
-    .phone-details-licenses-item {
-        position: relative;
-        clear: both;
-        overflow: hidden;
-        margin-bottom: 0.5vh
-    }
-
-    .phone-details-licenses-item > p {
-        float: left;
-        margin: 0;
-        line-height: 2.15vh;
-        font-size: 1.5vh
-    }
-
-    .phone-details-licenses-item > i {
-        float: right;
-        font-size: 2vh;
-        color: #95ef77;
-        line-height: 2.15vh
-    }
-
-    .phone-details-licenses-item > i.fa-times-circle {
-        color: #f2a365
+    .label {
+        margin: 1.8vh 0 0.6vh 1vh;
+        font-size: 1.1vh;
+        text-transform: uppercase;
+        letter-spacing: 0.05vh;
+        color: var(--phone-muted);
     }
 </style>

@@ -66,7 +66,7 @@
 <style>
     .phone-mails-item {
         position: relative;
-        background-color: #30475d;
+        background-color: var(--phone-surface);
         font-size: 1.3vh;
         font-family: "Roboto";
         font-weight: 400;

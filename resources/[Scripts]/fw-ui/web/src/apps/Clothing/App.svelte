@@ -1,18 +1,14 @@
 <script>
     // Clothing / barber / tattoo / character creation menu.
     // Layout and look ported from illenium-appearance (Codera UI), driven by fw-clothes.
-    import "@fontsource/bebas-neue/400.css";
-    import "@fontsource/oswald/400.css";
-    import "@fontsource/oswald/500.css";
-    import "@fontsource/oswald/700.css";
-    import "@fontsource/barlow-condensed/600.css";
+    import "./fonts/fonts.css";
     import "./clothing.css";
 
     import { onMount } from "svelte";
     import AppWrapper from "../../components/AppWrapper.svelte";
     import { IsEnvBrowser, OnEvent } from "../../utils";
     import { Visible, MenuType, Values, Skin, Blocked, Meta, Price, Post, RefreshPrice } from "./clothing.store";
-    import { MenuTabs, StartTab, ApparelFolders, TabItems, Leaves } from "./menu";
+    import { MenuTabs, StartPath, ApparelFolders, TabItems, Leaves } from "./menu";
 
     import Navigation from "./components/Navigation.svelte";
     import Sidebar from "./components/Sidebar.svelte";
@@ -36,7 +32,7 @@
 
         MenuType.set(Data.Type || "Creation");
         Price.set(0);
-        Path = [StartTab[Data.Type] || Tabs[0]];
+        Path = StartPath[Data.Type] || StartPath.Creation;
         Focus("character");
     });
 
@@ -73,7 +69,10 @@
 
     const Focus = (Where) => Post("Clothing/SetCameraFocus", { Focus: Where });
 
+    $: OutfitsOnly = $MenuType == "Outfits";
+
     const Navigate = (NewPath) => {
+        if (OutfitsOnly) return; // single view, nothing to navigate to
         Path = NewPath;
         const NewLabel = NewPath.length >= (NewPath[0] == "APPAREL" ? 3 : 2) ? NewPath[NewPath.length - 1] : null;
         if (NewLabel && Leaves[NewLabel]) return Focus(Leaves[NewLabel].Cam);
@@ -114,10 +113,11 @@
 
         const Key = Event.key.toLowerCase();
         if (Event.key == "Escape") {
+            if (OutfitsOnly) return Discard();
             Modal = Modal ? false : "exit";
         } else if (Event.key == "Tab" || Event.key == "Enter") {
             Event.preventDefault();
-            if (!Modal) Confirm();
+            if (!Modal && !OutfitsOnly) Confirm();
         } else if (Modal) {
             return;
         } else if (Key == "q") {
@@ -159,7 +159,7 @@
             TattooNames: { Torso: ["MP_Bea_M_Back_000", "MP_Bea_M_Chest_000", "MP_Bea_M_Chest_001", "MP_Biker_Tat_000_M", "MP_Biker_Tat_001_M", "MP_Biker_Tat_003_M", "MP_Biker_Tat_005_M", "MP_Biker_Tat_006_M"] } }));
         MenuType.set(Type);
         Visible.set(true);
-        Path = [StartTab[Type]];
+        Path = StartPath[Type];
         RefreshPrice();
     };
 </script>
@@ -169,13 +169,13 @@
 <AppWrapper AppName="Clothing" Focused={$Visible}>
     {#if $Visible}
         <div class="fwc" style="zoom: {Scale}; width: {Width}px;">
-            <Navigation Tabs={Tabs} Active={ActiveTab} Select={SelectTab} Money={$Meta.Money} ShowMoney={!$Meta.IsFree} />
+            <Navigation Tabs={Tabs} Active={ActiveTab} Select={SelectTab} Money={$Meta.Money} ShowMoney={!$Meta.IsFree && !OutfitsOnly} />
 
             {#key Path.join("/")}
                 {#if !Leaf}
                     <Sidebar {Path} Items={SidebarItems} {Navigate} />
                 {:else if Leaf.Kind == "outfits"}
-                    <Outfits {Path} {RailProps} {Navigate} />
+                    <Outfits {Path} RailProps={OutfitsOnly ? {} : RailProps} {Navigate} Close={OutfitsOnly && Discard} />
                 {:else if Leaf.Kind == "headblend" || Leaf.Kind == "features"}
                     <Sliders {Path} {Leaf} {RailProps} {Navigate} />
                 {:else}
@@ -193,12 +193,14 @@
                 <Toggles />
             {/if}
 
-            <Keybinds CheckoutLabel={Free ? "SAVE" : "CHECKOUT"} />
+            <Keybinds CheckoutLabel={OutfitsOnly ? false : Free ? "SAVE" : "CHECKOUT"} />
+            {#if !OutfitsOnly}
             <Checkout
                 Total={$Price} IsFree={$Meta.IsFree} Money={$Meta.Money} {Modal}
                 CanDiscard={$MenuType != "Creation"}
                 {Confirm} {Pay} {Discard} CloseModal={() => (Modal = false)}
             />
+            {/if}
         </div>
     {/if}
 </AppWrapper>

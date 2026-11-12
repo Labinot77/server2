@@ -33,9 +33,9 @@
 
 
     const Statuses = [
-        { Text: "Bezet" },
-        { Text: "In Rechtszaak" },
-        { Text: "Beschikbaar" }
+        { Text: "Occupied" },
+        { Text: "In Court" },
+        { Text: "Available" }
     ];
 
     onMount(() => {
@@ -55,7 +55,7 @@
 
 <AppWrapper>
     <TextField
-        Title='Zoeken'
+        Title='Search'
         Icon='search'
         class="phone-misc-input"
         SubSet={FilterUsers}
@@ -88,12 +88,12 @@
     
     <PaperList style="top: 14vh; height: 42.4vh">
         {#if Mayors.length > 0}
-            <p>Burgemeester</p>
+            <p>Mayor</p>
             {#each Mayors as Data, Id}
                 <div class="phone-doj-item">
                     <p class="name">{Data.CharName}</p>
                     <p class="status">{Data.Status}</p>
-                    <p data-tooltip="Bellen" class="call">
+                    <p data-tooltip="Call" class="call">
                         {#if Data.Status == 'Beschikbaar'}
                             <i on:keyup on:click={() => CallUser(Data.Number)} class="fas fa-phone"></i>
                         {:else}
@@ -106,12 +106,12 @@
         {/if}
 
         {#if Judges.length > 0}
-            <p>Rechter(s)</p>
+            <p>Judge(s)</p>
             {#each Judges as Data, Id}
                 <div class="phone-doj-item">
                     <p class="name">{Data.CharName}</p>
                     <p class="status">{Data.Status}</p>
-                    <p data-tooltip="Bellen" class="call">
+                    <p data-tooltip="Call" class="call">
                         {#if Data.Status == 'Beschikbaar'}
                             <i on:keyup on:click={() => CallUser(Data.Number)} class="fas fa-phone"></i>
                         {:else}
@@ -124,12 +124,12 @@
         {/if}
 
         {#if Lawyers.length > 0}
-            <p>Advocaten</p>
+            <p>Lawyers</p>
             {#each Lawyers as Data, Id}
                 <div class="phone-doj-item">
                     <p class="name">{Data.CharName}</p>
                     <p class="status">{Data.Status}</p>
-                    <p data-tooltip="Bellen" class="call">
+                    <p data-tooltip="Call" class="call">
                         {#if Data.Status == 'Beschikbaar'}
                             <i on:keyup on:click={() => CallUser(Data.Number)} class="fas fa-phone"></i>
                         {:else}
@@ -142,12 +142,12 @@
         {/if}
 
         {#if Clerks.length > 0}
-            <p>Griffier(s)</p>
+            <p>Clerk(s)</p>
             {#each Clerks as Data, Id}
                 <div class="phone-doj-item">
                     <p class="name">{Data.CharName}</p>
                     <p class="status">{Data.Status}</p>
-                    <p data-tooltip="Bellen" class="call">
+                    <p data-tooltip="Call" class="call">
                         {#if Data.Status == 'Beschikbaar'}
                             <i on:keyup on:click={() => CallUser(Data.Number)} class="fas fa-phone"></i>
                         {:else}

@@ -12,11 +12,28 @@ local function SetInteractDisabled(Disabled)
     if GetResourceState('interact') == 'started' then exports['interact']:Disable(Disabled) end
 end
 
+-- The ESC that closed the screen is still held when controls come back, and GTA opens the pause menu
+-- (Settings) on it. Keep the pause keys blocked until ESC is released, plus a short moment.
+local function BlockPauseMenu()
+    CreateThread(function()
+        local Until = GetGameTimer() + 300
+        while GetGameTimer() < Until or IsDisabledControlPressed(0, 200) or IsDisabledControlPressed(0, 322) do
+            DisableControlAction(0, 199, true) -- P
+            DisableControlAction(0, 200, true) -- ESC
+            DisableControlAction(0, 322, true) -- ESC (frontend)
+            if IsPauseMenuActive() then SetPauseMenuActive(false) end
+            Wait(0)
+        end
+    end)
+end
+
 function StopFocus()
     if not Focused then return end
+    BlockPauseMenu()
     local F = Focused
     Focused = nil
     MirrorStop(F.S)
+    DesktopCursor(F.S, nil, nil, false)
 
     -- Easing back into first person plays GTA's switch effect, so cut straight back there.
     local FirstPerson = GetFollowPedCamViewMode() == 4
@@ -60,7 +77,8 @@ local function Focus(Name, Options)
             HideHudAndRadarThisFrame()
 
             local Closed = not S.Entity or not DoesEntityExist(S.Entity) or IsEntityDead(PlayerPedId())
-                or (F.Closeable and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25)))
+                or (F.Closeable and not IsNuiFocused() -- an input dialog (fw-ui) is open: ESC is for that dialog
+                    and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25)))
             if Closed then
                 StopFocus()
                 TriggerEvent('fw-dui:Client:Closed', Name)
@@ -75,6 +93,7 @@ local function Focus(Name, Options)
                 Last = Key
                 if Options.Mouse then
                     SendDuiMouseMove(S.Dui, math.floor(F.X / 100 * S.Width), math.floor(F.Y / 100 * S.Height))
+                    DesktopCursor(S, F.X, F.Y, true)
                     MirrorPush(S, { 'move', F.X, F.Y })
                 else
                     TriggerEvent('fw-dui:Client:Cursor', Name, F.X, F.Y)

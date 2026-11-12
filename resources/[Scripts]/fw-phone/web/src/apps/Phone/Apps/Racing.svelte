@@ -127,7 +127,7 @@
         <PaperList style="top: 8vh; height: 48.3vh;">
             {#if CurrentTab == 'Races'} <!-- List of Pending, Active and Completed races -->
                 {#if $Races.some(Val => Val.State == "Pending")}
-                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Afwachting</p>
+                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Pending</p>
 
                     {#each $Races.filter(Val => Val.State == "Pending") as Data (Data.Id)}
                         <RacingPaper
@@ -186,7 +186,7 @@
                 {/if}
 
                 {#if $Races.some(Val => Val.State == "Active")}
-                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Actief</p>
+                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Active</p>
 
                     {#each $Races.filter(Val => Val.State == "Active") as Data (Data.Id)}
                         <RacingPaper
@@ -217,7 +217,7 @@
                 {/if}
 
                 {#if $Races.some(Val => Val.State == "Completed")}
-                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Voltooid</p>
+                    <p style="margin-bottom: 1.4vh; font-size: 1.5vh; font-family: Roboto; font-weight: 400; line-height: 1.43; letter-spacing: 0.005vh;">Completed</p>
 
                     {#each $Races.filter(Val => Val.State == "Completed") as Data (Data.Id)}
                         <RacingPaper
@@ -391,8 +391,8 @@
     }
 
     .phone-racing-option-active {
-        color: #95ef77 !important;
-        box-shadow: inset 0 -0.2vh 0 #95ef77
+        color: var(--phone-green) !important;
+        box-shadow: inset 0 -0.2vh 0 var(--phone-green)
     }
 
     table {
@@ -400,12 +400,12 @@
     }
 
     th {
-        border-bottom: .1vh solid #454b52;
+        border-bottom: .1vh solid var(--phone-line);
         padding: 1vh .5vh;
     }
 
     td {
-        border-bottom: .1vh solid #454b52;
+        border-bottom: .1vh solid var(--phone-line);
         padding: 1vh .5vh;
     }
 </style>

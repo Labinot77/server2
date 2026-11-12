@@ -77,13 +77,13 @@ RegisterNUICallback("JobCenter/CheckOut", function(Data, Cb)
 end)
 
 RegisterNUICallback("JobCenter/CreateGroup", function(Data, Cb)
-    Notification("jobcenter-create-group", "fas fa-people-carry", { "white", "rgb(144, 202, 249)" }, "Groep Aanmaken", "Even geduld...")
+    Notification("jobcenter-create-group", "fas fa-people-carry", { "white", "rgb(144, 202, 249)" }, "Create Group", "Please wait...")
     Citizen.Wait(250)
 
     local MyJob = exports['fw-jobmanager']:GetMyJob()
     local Result = FW.SendCallback("fw-jobmanager:Server:CreateGroup", MyJob.CurrentJob)
     
-    UpdateNotification("jobcenter-create-group", false, false, "Verzoek om te Joinen", "Verzoek geaccepteerd!", false)
+    UpdateNotification("jobcenter-create-group", false, false, "Request to Join", "Request accepted!", false)
     Cb(Result)
 end)
 

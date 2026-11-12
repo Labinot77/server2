@@ -7,7 +7,9 @@ Config.GiveMaxDistance = 4.0 -- server tolerance (client uses Config.GiveDistanc
 
 local function Notify(Player, Text, Type) Player.Functions.Notify(Text, Type or "error") end
 
-FW.RegisterServer("fw-inventory:Server:GiveHeldItem", function(Source, TargetSource, Slot, Amount)
+RegisterLocked("fw-inventory:Server:GiveHeldItem", function(Source, TargetSource)
+    return { PlayerInvName(tonumber(TargetSource)) }
+end, function(Source, TargetSource, Slot, Amount)
     local Player = FW.Functions.GetPlayer(Source)
     if not Player then return end
 

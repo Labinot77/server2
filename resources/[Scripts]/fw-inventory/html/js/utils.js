@@ -27,10 +27,31 @@ const GetItemData = (ItemName, CustomType, ItemInfo) => {
     return ItemData;
 };
 
+// Images that fail to load (imgur blocks FiveM, missing png...) fall back to the base item's image,
+// then to a placeholder, so a slot is never empty. Each url is probed once.
+const PlaceholderImage = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="10" y="10" width="44" height="44" rx="6" fill="none" stroke="#ffffff55" stroke-width="3"/><text x="32" y="42" font-size="26" font-family="Arial" font-weight="700" fill="#ffffff77" text-anchor="middle">?</text></svg>');
+const ImageFallback = {};
+
+const ResolveImage = (Url, ItemName) => {
+    while (ImageFallback[Url]) Url = ImageFallback[Url];
+    if (Url == PlaceholderImage || Url in ImageFallback) return Url;
+
+    ImageFallback[Url] = null; // probing
+    const Probe = new Image();
+    Probe.onerror = () => {
+        const Base = ItemsList[ItemName] && ItemsList[ItemName].Image && `./img/items/${ItemsList[ItemName].Image}`;
+        const Next = ResolveImage(Base && Base != Url ? Base : PlaceholderImage, ItemName);
+        ImageFallback[Url] = Next;
+        $('.inventory-slot-image, .split-img').filter((_, El) => El.style.backgroundImage.includes(Url)).css('background-image', `url("${Next}")`);
+        $('img').filter((_, El) => El.getAttribute('src') == Url).attr('src', Next);
+    };
+    Probe.src = Url;
+    return Url;
+};
+
 const GetItemImage = (ItemName, CustomType, ItemInfo) => {
     const ItemData = GetItemData(ItemName, CustomType, ItemInfo);
-    if (ItemData.IsExternImage) return ItemData.Image;
-    return `./img/items/${ItemData.Image}`;
+    return ResolveImage(ItemData.IsExternImage ? ItemData.Image : `./img/items/${ItemData.Image}`, ItemName);
 };
 
 const CalculateQuality = (ItemName, CreateDate) => {
@@ -135,14 +156,19 @@ const ValidatePlayerSlot = (Items, Slot, ItemName, Amount) => {
     return [true];
 };
 
-// 'player' | 'other'  ->  data / element / rules
-const GetContainerItems = (Container) => Container == 'player' ? MyInventory : OtherInvData.Items;
+// 'player' | 'other' | 'ground'  ->  data / element / rules
+// 'ground' is the ground under your feet, shown above a stash / trunk (OtherInvData.Ground).
+let GroundInvData = false;
+const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : OtherInvData;
+const GetContainerOf = (Element) => $(Element).closest('.inventory-box').attr('inventory-name') || 'other';
+const GetContainerInvName = (Container) => Container == 'player' ? 'player' : GetContainerData(Container).Name;
+const GetContainerItems = (Container) => Container == 'player' ? MyInventory : (GetContainerData(Container).Items || {});
 const GetContainerBox = (Container) => $(`.inventory-box[inventory-name="${Container}"]`);
 const IsPlayerContainer = (Container) => Container == 'player' || (Container == 'other' && !!OtherInvData.IsPlayer);
-const GetContainerMaxSlots = (Container) => Container == 'player' ? Layout.MaxPlayerSlots : OtherInvData.Slots;
+const GetContainerMaxSlots = (Container) => Container == 'player' ? Layout.MaxPlayerSlots : GetContainerData(Container).Slots;
 const GetContainerMaxWeight = (Container) => {
     if (IsPlayerContainer(Container)) return GetPlayerMaxWeight(GetContainerItems(Container));
-    return OtherInvData.Weight;
+    return GetContainerData(Container).Weight;
 };
 
 const CanRemoveBackpack = (Items, LeavesInventory) => {
@@ -255,13 +281,16 @@ const UpdateInventoryWeights = (InvContainer) => {
     const Max = GetContainerMaxWeight(InvContainer) || 1;
     const Percentage = Math.min((Weight * 100) / Max, 100);
 
-    Inventory.find('.weight-now').first().text(Weight.toFixed(1));
+    // Count the weight up/down instead of jumping.
+    const Now = Inventory.find('.weight-now').first();
+    if (!Now.data('anim')) Now.data('anim', { W: Number(Now.text()) || 0 });
+    $(Now.data('anim')).stop(true).animate({ W: Weight }, { duration: 400, easing: 'swing', step: (W) => Now.text(W.toFixed(1)), complete: () => Now.text(Weight.toFixed(1)) });
     Inventory.find('.weight-max').first().text(Number(Max).toFixed(1));
     Inventory.find('.inventory-box-header-weight').first().toggleClass('overweight', Weight > Max);
 
     const Fill = Inventory.find('.weightbar-fill').first();
     Fill.toggleClass('heavy', Percentage >= 75 && Percentage < 95).toggleClass('full', Percentage >= 95);
-    Fill.stop(true, true).animate({ width: `${Percentage}%` }, 250);
+    Fill.stop(true).animate({ width: `${Percentage}%` }, 450, 'swing');
 };
 
 // ============================================================================
@@ -299,10 +328,8 @@ const BuildSlotHtml = (Container, Slot, Item) => {
         `;
     }
 
-    const QualityData = CalculateQuality(Item.Item, Item.CreateDate);
-
-    // Magazines show how full they are instead of "1x".
-    let Quantity = `<span class="inventory-slot-quantity">${Item.Amount}x</span>`;
+    // Image + count only (name, weight and quality are in the tooltip). Count shows from 2 up, magazines show 7/12.
+    let Quantity = Item.Amount > 1 ? `<span class="inventory-slot-quantity">X${Item.Amount}</span>` : '';
     if (Item.Item == 'magazine' && Layout.Magazines && Layout.Magazines[Item.CustomType]) {
         const Bullets = Math.max(0, Math.floor(Number(Item.Info && Item.Info.Bullets) || 0));
         Quantity = `<span class="inventory-slot-quantity mag-qty${Bullets == 0 ? ' empty' : ''}">${Bullets}/${Layout.Magazines[Item.CustomType].Capacity}</span>`;
@@ -310,11 +337,12 @@ const BuildSlotHtml = (Container, Slot, Item) => {
 
     return Html + `
         <div class="inventory-slot-image" style="background-image: url(${GetItemImage(Item.Item, Item.CustomType, Item.Info)})"></div>
-        <div class="inventory-slot-info">${Quantity}<span class="inventory-slot-weight">${Weight}</span></div>
-        <div class="inventory-slot-name">${ItemData.Label}</div>
-        <div class="${QualityData.Class}" style="width: ${QualityData.Percentage}%; background: ${GetQualityColor(QualityData.Percentage)}"></div>
+        <div class="inventory-slot-info">${Quantity}</div>
+        <span class="slot-broken-icon"></span>
     `;
 };
+
+const IsItemBroken = (Item) => !!(Item && ItemsList[Item.Item] && CalculateQuality(Item.Item, Item.CreateDate).Percentage <= 0);
 
 const RenderSlot = (Container, Slot) => {
     const Element = GetSlotElement(Container, Slot);
@@ -325,6 +353,7 @@ const RenderSlot = (Container, Slot) => {
 
     Element.html(BuildSlotHtml(Container, Slot, Item));
     Element.toggleClass('has-item', !!(Item && ItemsList[Item.Item]));
+    Element.toggleClass('is-broken', IsItemBroken(Item) && !(Container != 'player' && OtherInvData.Type == 'Store'));
     Element.toggleClass('locked', !!(IsPlayer && !IsBackpackSlotUnlocked(GetContainerItems(Container), Slot)));
 };
 
@@ -384,8 +413,25 @@ const BuildOtherPlayerInventory = (Grid) => {
     RefreshBackpackState('other');
 };
 
+// Ground panel above a stash / trunk. Hidden when there's no ground to show (in a vehicle, ground itself, stores...).
+const BuildGroundInventory = () => {
+    GroundInvData = OtherInvData && OtherInvData.Ground ? OtherInvData.Ground : false;
+    const Box = GetContainerBox('ground');
+    const Grid = Box.find('.inventory-box-slots').empty();
+    $('.ox-right').toggleClass('has-ground', !!GroundInvData);
+    if (!GroundInvData) return Box.hide();
+
+    Box.show();
+    for (let i = 1; i <= GroundInvData.Slots; i++) {
+        Grid.append(SlotElementHtml(i));
+        RenderSlot('ground', i);
+    }
+    UpdateInventoryWeights('ground');
+};
+
 const BuildInventory = (InvContainer, InvType, Items, MaxSlots) => {
     if (InvContainer == 'player') return BuildPlayerInventory();
+    BuildGroundInventory();
 
     const Inventory = GetContainerBox('other');
     const Grid = Inventory.find('.inventory-box-slots').empty().removeClass('is-player inventory-craft-slots is-crafting');
@@ -506,7 +552,7 @@ const GetItemTypeLabel = (Container, Slot, ItemData) => {
 };
 
 const GenerateItemInfo = (InvName, SlotId) => {
-    const Container = InvName == 'player' ? 'player' : 'other';
+    const Container = InvName == 'player' ? 'player' : (GroundInvData && InvName == GroundInvData.Name ? 'ground' : 'other');
     const Item = GetContainerItems(Container)[SlotId];
     if (!Item || !ItemsList[Item.Item]) return false;
 

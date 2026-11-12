@@ -12,7 +12,7 @@ AddEventHandler("fw-phone:Client:AddContactSuggestion", function(Data)
     if CurrentApp == 'contacts' then
         Contacts.SetSuggestedContacts()
     else
-        Notification("new-contact-suggestion-" .. ContactId, "fas fa-phone-alt", { "white", "#029587" }, Data.Name, "Contact gegevens gedeeld.")
+        Notification("new-contact-suggestion-" .. ContactId, "fas fa-phone-alt", { "white", "#029587" }, Data.Name, "Contact details shared.")
         SetAppUnread("contacts")
     end
 end)

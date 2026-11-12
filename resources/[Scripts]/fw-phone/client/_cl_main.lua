@@ -47,8 +47,8 @@ NotificationsIds, IsPhoneOpen, UsingBurner, InCamera = {}, false, false, false
 
 -- Loops
 Citizen.CreateThread(function()
-    FW.AddKeybind("openMobile", "Telefoon", "Openen", "M", OpenPhone)
-    FW.AddKeybind("phoneAnwser", "Telefoon", "Opnemen", "", function(IsPressed)
+    FW.AddKeybind("openMobile", "Phone", "Open", "M", OpenPhone)
+    FW.AddKeybind("phoneAnwser", "Phone", "Answer", "", function(IsPressed)
         if not IsPressed then return end
 
         local PlayerData = FW.Functions.GetPlayerData()
@@ -58,7 +58,7 @@ Citizen.CreateThread(function()
         TriggerServerEvent('fw-phone:Server:Contacts:AnswerContact', {CallId = CallData.CallId})
     end)
 
-    FW.AddKeybind("phoneDecline", "Telefoon", "Ophangen", "", function(IsPressed)
+    FW.AddKeybind("phoneDecline", "Phone", "Hang Up", "", function(IsPressed)
         if not IsPressed then return end
 
         local PlayerData = FW.Functions.GetPlayerData()
@@ -239,7 +239,7 @@ function InitPhone(Crashed)
     local HasUnreadConversations = FW.SendCallback("fw-phone:Server:HasUnreadConversations")
     if HasUnreadConversations then
         SetAppUnread("messages")
-        FW.Functions.Notify("Je hebt ongelezen berichten.")
+        FW.Functions.Notify("You have unread messages.")
     end
 
     if Crashed then
@@ -265,7 +265,7 @@ function OpenPhone(IsPressed, IsBurner)
     elseif not exports['fw-inventory']:HasPhoneEquipped() then
         -- Phone in pockets/backpack doesn't count, it has to be in the BODY phone slot.
         if exports['fw-inventory']:HasEnoughOfItem('phone', 1) then
-            FW.Functions.Notify("Rust je telefoon uit in je BODY vak om hem te gebruiken.", "error")
+            FW.Functions.Notify("Equip your phone in your BODY slot to use it.", "error")
         end
         return
     end
@@ -341,6 +341,7 @@ function OpenPhone(IsPressed, IsBurner)
     end
 
     local Time = exports['fw-sync']:GetCurrentTime()
+    local Coords = GetEntityCoords(PlayerPedId())
     SendNUIMessage({
         Action = "OpenPhone",
         IsBurner = IsBurner,
@@ -350,9 +351,12 @@ function OpenPhone(IsPressed, IsBurner)
         RacingAlias = RacingAlias,
         Weather = exports['fw-sync']:GetCurrentWeather(),
         Time = {Time.Hour, Time.Minute},
+        Location = GetLabelText(GetNameOfZone(Coords.x, Coords.y, Coords.z)),
         IsNearNetwork = GetNearNetwork(),
         IsNetworkEnabled = IsNetworkEnabled,
+        Settings = PhoneSettings,
         PlayerData = {
+            Name = PlayerData.charinfo.firstname .. ' ' .. PlayerData.charinfo.lastname,
             Id = PlayerData.source,
             Cid = PlayerData.citizenid,
             BankId = PlayerData.charinfo.account,

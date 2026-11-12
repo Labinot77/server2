@@ -39,7 +39,7 @@
                     IsPhone: true,
                     ContactPicker: true,
                     Data: {
-                        Title: "Phone Nummer",
+                        Title: "Phone Number",
                         Icon: "phone",
                         Value: Data.Phone,
                         Select: await GetContactsSelect(),
@@ -68,7 +68,7 @@
                     IsPhone: true,
                     ContactPicker: true,
                     Data: {
-                        Title: "Phone Nummer",
+                        Title: "Phone Number",
                         Icon: "phone",
                         Value: Data.Phone,
                         Select: await GetContactsSelect(),
@@ -117,7 +117,7 @@
                     Type: "TextField",
                     IsPhone: true,
                     Data: {
-                        Title: "Phone Nummer",
+                        Title: "Phone Number",
                         Icon: "phone",
                         Type: "number",
                         Value: Data.Phone,

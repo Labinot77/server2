@@ -24,8 +24,10 @@
         <div class="hint"><span class="key">A</span><span class="key">D</span><span>TURN</span></div>
         <span class="sep">/</span>
         <div class="hint"><img src={LocalImage("keys/keyboard_escape.png")} alt="ESC" /><span>EXIT</span></div>
-        <span class="sep">/</span>
-        <div class="hint"><img src={LocalImage("keys/keyboard_tab.png")} alt="TAB" /><span>{CheckoutLabel}</span></div>
+        {#if CheckoutLabel}
+            <span class="sep">/</span>
+            <div class="hint"><img src={LocalImage("keys/keyboard_tab.png")} alt="TAB" /><span>{CheckoutLabel}</span></div>
+        {/if}
     </div>
 </div>
 

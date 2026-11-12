@@ -119,6 +119,17 @@ Config.EyeEntries = {
                 end,
             },
             {
+                Name = "autocare_check_vehicle",
+                Icon = "fas fa-cog",
+                Label = "Voertuig Controleren",
+                EventType = "Client",
+                EventName = "fw-businesses:Client:AutoCare:CheckVehicle",
+                EventParams = {},
+                Enabled = function(Entity)
+                    return exports["fw-businesses"]:IsAutocare()
+                end,
+            },
+            {
                 Name = 'postop_grab_goods',
                 Label = 'Goederen Pakken',
                 Icon = 'fas fa-box-open',

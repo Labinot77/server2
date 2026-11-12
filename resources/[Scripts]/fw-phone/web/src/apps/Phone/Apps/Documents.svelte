@@ -50,7 +50,7 @@
                 items: [ 'heading', '|', 'bold', 'italic', '|', 'blockQuote', '|', 'undo', 'redo', '|', 'numberedList', 'bulletedList', '|', 'insertTable' ],
                 shouldNotGroupWhenFull: true,
             },
-            placeholder: "Begin met typen...",
+            placeholder: "Start typing...",
         }).then(Editor => {
             window.editor = Editor;
             LoaderModal.set(false);
@@ -96,20 +96,20 @@
 
         Options.push({
             Icon: "share-alt",
-            Text: "Delen (Lokaal)",
+            Text: "Share (Local)",
             Cb: DOCS.SessionShareDocument,
         })
 
         Options.push({
             Icon: "share",
-            Text: "Delen (Permanent)",
+            Text: "Share (Permanent)",
             Cb: DOCS.PermanentShareDocument,
         })
 
         if ($CurrentDocument.finalized) {
             Options.push({
                 Icon: "pen-nib",
-                Text: "Handtekeningen",
+                Text: "Signatures",
                 Cb: () => {
                     ShowingSignatures = true;
                 },
@@ -117,7 +117,7 @@
         } else if ($CurrentDocument.type == 5 && !$CurrentDocument.finalized) {
             Options.push({
                 Icon: "stamp",
-                Text: "Afronden",
+                Text: "Finalize",
                 Cb: DOCS.FinalizeDocument,
             })
         };
@@ -125,7 +125,7 @@
         if ($CurrentDocument.citizenid == $PlayerData.Cid) {
             Options.push({
                 Icon: "trash",
-                Text: "Verwijderen",
+                Text: "Delete",
                 Cb: DOCS.DeleteDocument,
             })
         }
@@ -171,7 +171,7 @@
         {#if CreateableDocumentTypes.includes(CurrentDocumentType)}
             <div class="phone-misc-icons">
                 <i
-                    data-tooltip="Nieuw Document"
+                    data-tooltip="New Document"
                     data-position="left"
                     class="fas fa-edit"
                     on:keyup
@@ -185,7 +185,7 @@
         {/if}
 
         <TextField
-            Title="Zoeken"
+            Title="Search"
             Icon="search"
             SubSet={FilterDocuments}
             class="phone-misc-input"
@@ -223,7 +223,7 @@
         </div>
 
         <TextField
-            Title="Titel"
+            Title="Title"
             Icon="tags"
             bind:Value={$CurrentDocument.title}
             class="phone-misc-input phone-misc-input2"
@@ -233,7 +233,7 @@
         <div class="phone-misc-icons">
             {#if CreatingDocument}
                 <i
-                    data-tooltip="Opslaan"
+                    data-tooltip="Save"
                     data-position="left"
                     class="fas fa-cloud-upload"
                     on:keyup
@@ -243,7 +243,7 @@
                 {#if !$CurrentDocument.finalized}
                     {#if $CurrentDocument.citizenid == $PlayerData.Cid && !$CurrentDocument.editing}
                         <i
-                            data-tooltip="Document Bewerken"
+                            data-tooltip="Edit Document"
                             data-position="left"
                             class="fas fa-pencil"
                             on:keyup
@@ -254,7 +254,7 @@
                         />
                     {:else if $CurrentDocument.editing}
                         <i
-                            data-tooltip="Opslaan"
+                            data-tooltip="Save"
                             data-position="left"
                             class="fas fa-cloud-upload"
                             on:keyup
@@ -294,10 +294,10 @@
 
         <div class="phone-documents-signatures-buttons">
             {#if $CurrentDocument.signatures.some(Data => Data.Cid === $PlayerData.Cid && Data.Signed === false)}
-                <Button on:click={DOCS.SignDocument} Color="success">Document Ondertekenen</Button>
+                <Button on:click={DOCS.SignDocument} Color="success">Sign Document</Button>
             {/if}
             {#if $CurrentDocument.citizenid == $PlayerData.Cid}
-                <Button on:click={DOCS.RequestSignature} Color="warning">Handtekening Aanvragen</Button>
+                <Button on:click={DOCS.RequestSignature} Color="warning">Request Signature</Button>
             {/if}
         </div>
 
@@ -317,7 +317,7 @@
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
-        background-color: #30475e;
+        background-color: var(--phone-surface);
         height: max-content;
         padding: 0 1vh;
         font-size: 1.4vh;
@@ -325,7 +325,7 @@
         margin-bottom: 0.74vh;
         border-top-left-radius: 0.37vh;
         border-top-right-radius: 0.37vh;
-        border-bottom: 0.15vh solid #c8c6ca
+        border-bottom: 0.15vh solid var(--phone-line)
     }
 
     .phone-container-box-tiny > p {

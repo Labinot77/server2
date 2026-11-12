@@ -188,7 +188,7 @@
         />
 
         <div class="phone-misc-icons">
-            {#if $CurrentBusiness.business_name == 'Los Santos Vliegschool'}
+            {#if $CurrentBusiness.business_name == 'Los Santos Flight School'}
                 <i
                     data-tooltip="Give/Take away License"
                     data-position="left"

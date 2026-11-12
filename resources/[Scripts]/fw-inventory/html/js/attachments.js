@@ -49,7 +49,6 @@ const CloseAttachmentsPanel = () => {
 };
 
 const OpenAttachmentsPanel = (Slot) => {
-    if (typeof CloseMagazinePanel == 'function') CloseMagazinePanel();
     const Weapon = MyInventory[Number(Slot)];
     if (!Weapon) return;
 
@@ -87,17 +86,15 @@ const RefreshAttachmentsPanel = () => {
             const Ammo = Math.max(0, Math.floor(Number(Info.Ammo) || 0));
             Inner += `
                 <div class="inventory-slot-image" style="background-image: url(${GetItemImage('magazine', Info.Mag)})"></div>
-                <div class="inventory-slot-info"><span class="inventory-slot-quantity mag-qty${Ammo == 0 ? ' empty' : ''}">${Ammo}/${Layout.Magazines[Info.Mag].Capacity}</span></div>
-                <div class="inventory-slot-name">${GetItemData('magazine', Info.Mag).Label}</div>`;
+                <div class="inventory-slot-info"><span class="inventory-slot-quantity mag-qty${Ammo == 0 ? ' empty' : ''}">${Ammo}/${Layout.Magazines[Info.Mag].Capacity}</span></div>`;
         } else if (Attached[Slot.Kind] && ItemsList[Attached[Slot.Kind].Item]) {
             Empty = false;
             const A = Attached[Slot.Kind];
             Inner += `
-                <div class="inventory-slot-image" style="background-image: url(${GetItemImage(A.Item, A.CustomType, A.Info)})"></div>
-                <div class="inventory-slot-name">${GetItemData(A.Item, A.CustomType, A.Info).Label}</div>`;
+                <div class="inventory-slot-image" style="background-image: url(${GetItemImage(A.Item, A.CustomType, A.Info)})"></div>`;
         }
 
-        Row.append(`<div class="att-slot${Empty ? ' empty' : ''}${Locked ? ' locked' : ''}" data-kind="${Slot.Kind}" title="${Locked ? 'Dit wapen heeft hier geen plek voor' : Slot.Label}">${Inner}</div>`);
+        Row.append(`<div class="att-slot${Empty ? ' empty' : ''}${Locked ? ' locked' : ''}" data-kind="${Slot.Kind}" title="${Locked ? 'Dit wapen heeft hier geen plek voor' : (Empty ? Slot.Label : `${Slot.Label}: ${Slot.Kind == 'Magazine' ? GetItemData('magazine', Info.Mag).Label : GetItemData(Attached[Slot.Kind].Item, Attached[Slot.Kind].CustomType).Label}`)}">${Inner}</div>`);
     }
 
     $('.inventory-box-slot.att-active').removeClass('att-active');
@@ -122,7 +119,7 @@ const HighlightAttachmentTarget = (Item) => {
 
 // --- Attach: drop on a slot -------------------------------------------------
 $(document).on('mouseup', '.att-slot', function(e) {
-    if (!DragData.IsDragging || DragData.FromContainer == 'attachment' || DragData.FromContainer == 'magazine') return;
+    if (!DragData.IsDragging || DragData.FromContainer == 'attachment') return;
 
     const Weapon = GetPanelWeapon();
     const FromItem = DragData.FromContainer == 'player' ? MyInventory[DragData.FromSlot] : false;
