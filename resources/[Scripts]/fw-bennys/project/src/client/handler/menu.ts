@@ -11,9 +11,9 @@ let Labels: Record<string, { Label: string; Option: string }> = {};
 let FrameTick: ReturnType<typeof setTick> | null = null;
 let OrderBusiness: string | undefined;
 
-// Speedometer + minimap (fw-hud). Never let a missing/old fw-hud break the menu.
+// Whole fw-hud (status, speedometer, minimap). Never let a missing/old fw-hud break the menu.
 const SetVehicleHud = (Visible: boolean) => {
-    try { exp['fw-hud'].SetVehicleHudBlocked(!Visible); } catch { /* fw-hud not running */ }
+    try { exp['fw-hud'].SetHudBlocked(Visible ? false : "all"); } catch { /* fw-hud not running */ }
 };
 
 const VehicleName = (Vehicle: number) => {
