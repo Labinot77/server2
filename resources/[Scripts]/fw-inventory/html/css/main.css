@@ -1,6 +1,6 @@
 /* ==========================================================================
    fw-inventory — ox_inventory style
-   Layout:  [ BODY | ACCESSORIES ]  [ POCKETS / BACKPACK ]  [ OTHER ]
+   Layout:  [ BODY | CLOTHING ]  [ POCKETS / BACKPACK ]  [ OTHER ]
    ========================================================================== */
 
 :root {
@@ -222,7 +222,8 @@ body.inv-dragging .ox-dropzone:hover { background: rgba(47, 208, 238, 0.25); bor
 }
 
 .player-layout { display: flex; gap: var(--col-gap); width: var(--left-w); }
-.ox-equip { width: var(--equip-w); display: flex; flex-direction: column; gap: 2vh; }
+.ox-equip { width: var(--equip-w); display: flex; flex-direction: column; gap: 2vh; max-height: calc(100vh - 14vh); overflow-y: auto; }
+.ox-equip::-webkit-scrollbar { width: 0; }
 .ox-carry { width: var(--carry-w); display: flex; flex-direction: column; gap: 2vh; }
 .other-layout { width: var(--right-w); }
 
@@ -349,7 +350,7 @@ body.inv-dragging .ox-dropzone:hover { background: rgba(47, 208, 238, 0.25); bor
 .body-grid .inventory-box-slot,
 .acc-grid .inventory-box-slot,
 .other-section[data-section="Body"] .inventory-box-slot,
-.other-section[data-section="Accessories"] .inventory-box-slot {
+.other-section[data-section="Clothing"] .inventory-box-slot {
     background-color: rgba(70, 92, 94, 0.3);
     background-image: none;
     border-color: rgba(120, 175, 185, 0.2);
@@ -357,7 +358,7 @@ body.inv-dragging .ox-dropzone:hover { background: rgba(47, 208, 238, 0.25); bor
 .body-grid .inventory-box-slot::before,
 .acc-grid .inventory-box-slot::before,
 .other-section[data-section="Body"] .inventory-box-slot::before,
-.other-section[data-section="Accessories"] .inventory-box-slot::before { display: none; }
+.other-section[data-section="Clothing"] .inventory-box-slot::before { display: none; }
 
 .emptyicon {
     position: absolute;

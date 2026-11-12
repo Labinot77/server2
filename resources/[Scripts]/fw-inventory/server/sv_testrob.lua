@@ -32,9 +32,9 @@ local DummyItems = {
     { Slot = 36, Item = 'id_card', Amount = 1, Info = { citizenid = Config.TestRob.CitizenId, firstname = 'John', lastname = 'Doe', birthdate = '1990-01-01', gender = 'Man', nationality = 'Nederlands' } },
     { Slot = 37, Item = 'phone', Amount = 1 },
     { Slot = 38, Item = 'keyring', Amount = 1 },
-    { Slot = 39, Item = 'wallet', Amount = 1 },
+    { Slot = 39, Item = 'pdwatch', Amount = 1 },
     { Slot = 40, Item = 'backpack', Amount = 1, Backpack = true },
-    -- Accessories
+    -- Clothing
     { Slot = 42, Item = 'hat', Amount = 1, Info = { Prop = 12, Texture = 0 } },
     { Slot = 43, Item = 'mask', Amount = 1, Info = { Prop = 52, Texture = 0 } },
     { Slot = 46, Item = 'watch', Amount = 1 },

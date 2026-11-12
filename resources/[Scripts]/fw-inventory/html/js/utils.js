@@ -396,7 +396,7 @@ const BuildPlayerInventory = () => {
     RefreshBackpackState('player');
 };
 
-const SectionTitles = { Pockets: 'Pockets', Backpack: 'Backpack', Body: 'Body', Accessories: 'Accessories' };
+const SectionTitles = { Pockets: 'Pockets', Backpack: 'Backpack', Body: 'Body', Clothing: 'Clothing' };
 
 const BuildOtherPlayerInventory = (Grid) => {
     Grid.addClass('is-player');

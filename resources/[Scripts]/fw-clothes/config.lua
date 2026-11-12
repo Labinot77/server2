@@ -70,6 +70,26 @@ Config.FreeComponents = {
     Bags = true, Vest = true, Shoes = true,
 }
 
+-- Clothing that exists as an inventory item (ComponentId -> item name). Buying one gives the item, equipped.
+-- Pieces not in Config.FreeComponents may only change for free when they match the equipped item.
+Config.ClothingItems = {
+    Hat = 'hat', Masks = 'mask', Glasses = 'glasses', Earrings = 'earrings', Watches = 'watch',
+    Jacket = 'shirt', Undershirt = 'undershirt', Arms = 'gloves', Pants = 'pants', Shoes = 'shoes',
+    Scarfs = 'chain', Bracelets = 'bracelet',
+}
+
+-- Drawable a component falls back to when its item is taken off (props always go to -1, the rest to 0).
+Config.NakedClothes = {
+    Male   = { Jacket = 15, Undershirt = 15, Arms = 15, Pants = 61, Shoes = 34 },
+    Female = { Jacket = 15, Undershirt = 14, Arms = 15, Pants = 15, Shoes = 35 },
+}
+
+function GetNakedValue(Model, ComponentId)
+    if Config.ClothingTypes[ComponentId].Prop ~= nil then return -1 end
+    local Gender = (Model == "mp_f_freemode_01" or Model == GetHashKey("mp_f_freemode_01")) and "Female" or "Male"
+    return Config.NakedClothes[Gender][ComponentId] or 0
+end
+
 Config.CameraSettings = {
     { Fov = 20.0, AttachZ =  0.65, AttachOffset = 1.5, WidthOffset = 0.15 },
     { Fov = 30.0, AttachZ =  0.40, AttachOffset = 2.0, WidthOffset = 0.30 },
@@ -85,6 +105,13 @@ Config.FacewearAnimations = {
     Vest = { "clothingtie", "try_tie_negative_a" },
     Earrings = { "mp_masks@on_foot", "put_on_mask" },
     Watches = { "clothingtie", "try_tie_negative_a" },
+    Jacket = { "clothingtie", "try_tie_negative_a" },
+    Undershirt = { "clothingtie", "try_tie_negative_a" },
+    Arms = { "nmt_3_rcm-10", "cs_nigel_dual-10" },
+    Pants = { "re@construction", "out_of_breath" },
+    Shoes = { "random@domestic", "pickup_low" },
+    Scarfs = { "clothingtie", "try_tie_positive_a" },
+    Bracelets = { "nmt_3_rcm-10", "cs_nigel_dual-10" },
 }
 
 Config.ChangeRooms = {

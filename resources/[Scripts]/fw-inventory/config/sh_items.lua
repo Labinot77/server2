@@ -7,7 +7,7 @@ Shared.Items["repairhammer"] = {
     Name = "repairhammer",
     Label = "(DEV) Repair Hammer",
     Image = "w_sledgehammer.png",
-    Description = "Abuser",
+    Description = "Aboeser",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.0,
@@ -21,9 +21,9 @@ Shared.Items["repairhammer"] = {
 
 Shared.Items["pistolparts"] = {
     Name = "pistolparts",
-    Label = "Pistol Parts",
+    Label = "Pistool Onderdelen",
     Image = "w_pistol_parts.png",
-    Description = "Illegal pistol components.",
+    Description = "Illegale pistool componenten.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -37,9 +37,9 @@ Shared.Items["pistolparts"] = {
 
 Shared.Items["shotgunparts"] = {
     Name = "shotgunparts",
-    Label = "Shotgun Parts",
+    Label = "Shotgun Onderdelen",
     Image = "w_shotgun_parts.png",
-    Description = "Illegal shotgun components.",
+    Description = "Illegale shotgun componenten.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -55,7 +55,7 @@ Shared.Items["riflebody"] = {
     Name = "riflebody",
     Label = "Rifle Body",
     Image = "w_rifle_body.png",
-    Description = "Illegal rifle components.",
+    Description = "Illegale rifle componenten.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -69,9 +69,9 @@ Shared.Items["riflebody"] = {
 
 Shared.Items["smgbody"] = {
     Name = "smgbody",
-    Label = "SMG Body",
+    Label = "Smg Body",
     Image = "w_smg_body.png",
-    Description = "Illegal SMG components.",
+    Description = "Illegale smg componenten.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -85,9 +85,9 @@ Shared.Items["smgbody"] = {
 
 Shared.Items["weapon_huntingrifle"] = {
     Name = "weapon_huntingrifle",
-    Label = "Hunting Rifle",
+    Label = "Jaag Geweer",
     Image = "w_huntingrifle.png",
-    Description = "Please use this to shoot animals only.",
+    Description = "Alleen dieren mee schieten dankjewel.",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -103,7 +103,7 @@ Shared.Items["weapon_empgun"] = {
     Name = "weapon_empgun",
     Label = "(PD) EMP Gun",
     Image = "w_empgun.png",
-    Description = "There goes your ride.",
+    Description = "Daar gaat je waggie",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -119,7 +119,7 @@ Shared.Items["weapon_remington"] = {
     Name = "weapon_remington",
     Label = "(PD) Pump Shotgun",
     Image = "w_remington.png",
-    Description = "This thing will blow your head off if you're not careful.",
+    Description = "Dit ding blaast je kop eraf als je niet op past..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -156,7 +156,7 @@ Shared.Items["weapon_rubberslug"] = {
     Name = "weapon_rubberslug",
     Label = "(PD) Rubber Shotgun",
     Image = "w_rubberslug.png",
-    Description = "Is this a rubber shotgun, or does it shoot rubber?",
+    Description = "Is dit een rubbere shotgun, of schiet dit rubber?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -172,7 +172,7 @@ Shared.Items["weapon_m4"] = {
     Name = "weapon_m4",
     Label = "(PD) Tactical Rifle",
     Image = "w_m4.png",
-    Description = "Compensating for something?",
+    Description = "Compensatiegedrag?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -188,7 +188,7 @@ Shared.Items["weapon_scar"] = {
     Name = "weapon_scar",
     Label = "(PD) Heavy Rifle",
     Image = "w_scar.png",
-    Description = "Did this thing come from Fortnite?",
+    Description = "Komt dit ding uit fortnut?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -225,7 +225,7 @@ Shared.Items["weapon_m70"] = {
     Name = "weapon_m70",
     Label = "Military Rifle",
     Image = "w_m70.png",
-    Description = "Looks nice!",
+    Description = "Ziet er leuk uit!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -246,7 +246,7 @@ Shared.Items["weapon_ak47"] = {
     Name = "weapon_ak47",
     Label = "Assault Rifle",
     Image = "w_ak47.png",
-    Description = "Ratatata, am I in the ghetto?",
+    Description = "Ratatata, ben ik in de ghetto?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -262,7 +262,7 @@ Shared.Items["weapon_ak74"] = {
     Name = "weapon_ak74",
     Label = "Assault Rifle Mk2",
     Image = "w_ak74.png",
-    Description = "Ratatata, am I in the ghetto?",
+    Description = "Ratatata, ben ik in de ghetto?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 17.0,
@@ -283,7 +283,7 @@ Shared.Items["weapon_rpk"] = {
     Name = "weapon_rpk",
     Label = "Machine Gun",
     Image = "w_rpk.png",
-    Description = "Am I supposed to shoot zombies with this?",
+    Description = "Moet ik hiermee zombies afschieten?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 36.0,
@@ -299,7 +299,7 @@ Shared.Items["weapon_mpx"] = {
     Name = "weapon_mpx",
     Label = "(PD) PDW",
     Image = "w_mpx.png",
-    Description = "Looks like a nice weapon..",
+    Description = "Ziet eruit als een mooie wapen..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -315,7 +315,7 @@ Shared.Items["weapon_draco"] = {
     Name = "weapon_draco",
     Label = "SMG Mk2",
     Image = "w_draco.png",
-    Description = "Does a dragon come out of this?",
+    Description = "Komt hier een draak uit?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -336,7 +336,7 @@ Shared.Items["weapon_mp5"] = {
     Name = "weapon_mp5",
     Label = "SMG",
     Image = "w_mp5.png",
-    Description = "This thing is getting out of hand.",
+    Description = "Dit ding loopt uit de hand.",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -357,7 +357,7 @@ Shared.Items["weapon_mp7"] = {
     Name = "weapon_mp7",
     Label = "(PD) Tactical SMG",
     Image = "w_mp7.png",
-    Description = "Is this the MP5, but with a little more compensation?",
+    Description = "Is dit de MP5 maar dan met compensatiegedrag?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -373,7 +373,7 @@ Shared.Items["weapon_mac10"] = {
     Name = "weapon_mac10",
     Label = "Mini SMG",
     Image = "w_mac10.png",
-    Description = "Is this a menu at McDonald's?",
+    Description = "Is dit een menu bij de Mac Donalds?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -394,7 +394,7 @@ Shared.Items["weapon_uzi"] = {
     Name = "weapon_uzi",
     Label = "Micro SMG",
     Image = "w_uzi.png",
-    Description = "Looks like an Uzi..",
+    Description = "Ziet eruit als een Uzi..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.5,
@@ -415,7 +415,7 @@ Shared.Items["weapon_colt"] = {
     Name = "weapon_colt",
     Label = "Ceramic Pistol",
     Image = "w_colt.png",
-    Description = "I think this one is from COD?",
+    Description = "Deze komt uit COD geloof ik?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -436,7 +436,7 @@ Shared.Items["weapon_beretta"] = {
     Name = "weapon_beretta",
     Label = "Combat Pistol",
     Image = "w_beretta.png",
-    Description = "Looks like a pretty fierce gun..",
+    Description = "Ziet eruit als een pittige gun..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -478,7 +478,7 @@ Shared.Items["weapon_python"] = {
     Name = "weapon_python",
     Label = "Double-Action Revolver",
     Image = "w_python.png",
-    Description = "Does this weapon come from the Wild West?",
+    Description = "Komt dit wapen uit het oude westen?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -510,7 +510,7 @@ Shared.Items["weapon_heavypistol"] = {
     Name = "weapon_heavypistol",
     Label = "Heavy Pistol",
     Image = "w_heavypistol.png",
-    Description = "Wow, this thing is really heavy!",
+    Description = "Jeetje, dit ding ligt echt zwaar!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 11.0,
@@ -531,7 +531,7 @@ Shared.Items["weapon_glock"] = {
     Name = "weapon_glock",
     Label = "(PD) Pistol",
     Image = "w_glock.png",
-    Description = "For the real gangsters!",
+    Description = "Voor de echte gangsters!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -563,7 +563,7 @@ Shared.Items["weapon_fn502"] = {
     Name = "weapon_fn502",
     Label = "SNS Pistol",
     Image = "w_fn502.png",
-    Description = "For the real gangsters!",
+    Description = "Voor de echte gangsters!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -584,7 +584,7 @@ Shared.Items["weapon_glock18c"] = {
     Name = "weapon_glock18c",
     Label = "AP Pistol",
     Image = "w_appistol.png",
-    Description = "For real gangsters, but automatic, so a little less badass.",
+    Description = "Voor de echte gangsters, maar dan automatisch, dus iets minder stoer.",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -604,7 +604,7 @@ Shared.Items["weapon_taser"] = {
     Name = "weapon_taser",
     Label = "(PD) Taser",
     Image = "w_taser.png",
-    Description = "Nothing like having a few prongs stuck in your back. Lovely!",
+    Description = "Lekker met een paar pinnetjes in je rug, heerluk!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -620,7 +620,7 @@ Shared.Items["weapon_paintball"] = {
     Name = "weapon_paintball",
     Label = "Paintball Gun",
     Image = "w_paintball.png",
-    Description = "Is this what you paint with?",
+    Description = "Is dit waar je mee schildert?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 8.5,
@@ -636,7 +636,7 @@ Shared.Items["weapon_katana"] = {
     Name = "weapon_katana",
     Label = "Katana",
     Image = "w_katana.png",
-    Description = "Is this the REAL Hattori Hanzō katana?",
+    Description = "Is dit de ECHTE Hattori Hanzō katana?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -650,9 +650,9 @@ Shared.Items["weapon_katana"] = {
 
 Shared.Items["weapon_bat"] = {
     Name = "weapon_bat",
-    Label = "Club",
+    Label = "Knuppel",
     Image = "w_bat.png",
-    Description = "You're such a club..",
+    Description = "Jij bent echt een knuppel..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 14,
@@ -668,7 +668,7 @@ Shared.Items["weapon_machete"] = {
     Name = "weapon_machete",
     Label = "Machete",
     Image = "w_machete.png",
-    Description = "Shank on your hip",
+    Description = "Shank op hip",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15,
@@ -684,7 +684,7 @@ Shared.Items["weapon_sledgeham"] = {
     Name = "weapon_sledgeham",
     Label = "Sledgehammer",
     Image = "w_sledgehammer.png",
-    Description = "I think this one is from Miley Cyrus's song Wrecking Ball!",
+    Description = "Volgensmij komt deze uit het liedje Wrecking Ball van Miley Cyrus!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -700,7 +700,7 @@ Shared.Items["weapon_flashlight"] = {
     Name = "weapon_flashlight",
     Label = "Flashlight",
     Image = "w_flashlight.png",
-    Description = "Isn't this something you play with?",
+    Description = "Is dit niet dat een waar je mee speelt?",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -716,7 +716,7 @@ Shared.Items["weapon_nightstick"] = {
     Name = "weapon_nightstick",
     Label = "(PD) Baton",
     Image = "w_nightstick.png",
-    Description = "Good for your backside.",
+    Description = "Goed voor in de anus.",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4,
@@ -732,7 +732,7 @@ Shared.Items["weapon_switchblade"] = {
     Name = "weapon_switchblade",
     Label = "Shank",
     Image = "w_shank.png",
-    Description = "Fresh off the press from England.",
+    Description = "Vers van de pers uit engeland.",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -748,7 +748,7 @@ Shared.Items["weapon_shiv"] = {
     Name = "weapon_shiv",
     Label = "Shiv",
     Image = "w_shiv.png",
-    Description = "For the little troublemakers in prison..",
+    Description = "Voor de boefjes in de gevangenis..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -767,7 +767,7 @@ Shared.Items["weapon_wrench"] = {
     Name = "weapon_wrench",
     Label = "Pipe Wrench",
     Image = "w_wrench.png",
-    Description = "One good hit on the wrong pipe and it's all over.",
+    Description = "Een goeie tik tegen de verkeerde pijp en het is afgelopen.",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -781,7 +781,7 @@ Shared.Items["weapon_wrench"] = {
 
 Shared.Items["weapon_poolcue"] = {
     Name = "weapon_poolcue",
-    Label = "Pool Cue",
+    Label = "Biljartkeu",
     Image = "w_poolcue.png",
     Description = "",
     Weapon = true, Illegal = false,
@@ -797,7 +797,7 @@ Shared.Items["weapon_poolcue"] = {
 
 Shared.Items["weapon_hammer"] = {
     Name = "weapon_hammer",
-    Label = "Hammer",
+    Label = "Hamer",
     Image = "w_hammer.png",
     Description = "",
     Weapon = true, Illegal = false,
@@ -813,7 +813,7 @@ Shared.Items["weapon_hammer"] = {
 
 Shared.Items["weapon_crowbar"] = {
     Name = "weapon_crowbar",
-    Label = "Crowbar",
+    Label = "Koevoet",
     Image = "w_crowbar.png",
     Description = "",
     Weapon = true, Illegal = false,
@@ -831,7 +831,7 @@ Shared.Items["weapon_bats"] = {
     Name = "weapon_bats",
     Label = "Wooden Bat",
     Image = "w_bat.png",
-    Description = "Honestly, I just play basketball with this..",
+    Description = "Heel eerlijk, ik speel hier gewoon basketbal mee..",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -845,9 +845,9 @@ Shared.Items["weapon_bats"] = {
 
 Shared.Items["weapon_shoe"] = {
     Name = "weapon_shoe",
-    Label = "Shoe",
+    Label = "Schoen",
     Image = "w_shoes.png",
-    Description = "Don't smell it, it might stink..",
+    Description = "Niet ruiken, kan stinken..",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -861,9 +861,9 @@ Shared.Items["weapon_shoe"] = {
 
 Shared.Items["weapon_snowball"] = {
     Name = "weapon_snowball",
-    Label = "Snowball",
+    Label = "Sneeuwbal",
     Image = "w_snowball.png",
-    Description = "It's a ball made of snow.",
+    Description = "Dit is een bal, van sneeuw.",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0.0,
@@ -877,9 +877,9 @@ Shared.Items["weapon_snowball"] = {
 
 Shared.Items["weapon_snowballlauncher"] = {
     Name = "weapon_snowballlauncher",
-    Label = "Snowball Launcher",
+    Label = "Sneeuwbal Launcher",
     Image = "w_snowballlauncher.png",
-    Description = "This thing shoots snowballs.",
+    Description = "Dit ding schiet sneeuwballen.",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -893,9 +893,9 @@ Shared.Items["weapon_snowballlauncher"] = {
 
 Shared.Items["weapon_banana"] = {
     Name = "weapon_banana",
-    Label = "Banana",
+    Label = "Banaan",
     Image = "banana.png",
-    Description = "At least you have something to suck on...",
+    Description = "Kan je toch nog op iets sabbelen...",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -909,9 +909,9 @@ Shared.Items["weapon_banana"] = {
 
 Shared.Items["weapon_brick"] = {
     Name = "weapon_brick",
-    Label = "Brick",
+    Label = "Baksteen",
     Image = "brick.png",
-    Description = "Bob the Builder, can we fix it!",
+    Description = "Bob de Bouwer kunnen wij het maken!",
     Weapon = true, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 5.0,
@@ -925,9 +925,9 @@ Shared.Items["weapon_brick"] = {
 
 Shared.Items["weapon_grenade"] = {
     Name = "weapon_grenade",
-    Label = "Grenade",
+    Label = "Granaat",
     Image = "w_grenade.png",
-    Description = "I think this thing goes boom!",
+    Description = "Dit doet boem volgensmij!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 5.0,
@@ -947,7 +947,7 @@ Shared.Items["weapon_stickybomb"] = {
     Name = "weapon_stickybomb",
     Label = "Sticky Bomb",
     Image = "w_c4.png",
-    Description = "BOOM!",
+    Description = "BIEM!",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.0,
@@ -961,9 +961,9 @@ Shared.Items["weapon_stickybomb"] = {
 
 Shared.Items["silencer_oilcan"] = {
     Name = "silencer_oilcan",
-    Label = "Oil Filter",
+    Label = "Olie Filter",
     Image = "oilcan.png",
-    Description = "Old, used oil filter. Doesn't look like it'll last long.",
+    Description = "Oud, gebruikte olie filter. Lijkt niet lang mee te gaan.",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.0,
@@ -982,7 +982,7 @@ Shared.Items["att_muzzlebrake"] = {
     Name = "att_muzzlebrake",
     Label = "Muzzle Brake",
     Image = "att-muzzlebrake.png",
-    Description = "Reduces recoil. Attach it to your weapon through Attachments.",
+    Description = "Minder terugslag. Zet hem op je wapen via Attachments.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 1.0,
@@ -997,7 +997,7 @@ Shared.Items["att_grip"] = {
     Name = "att_grip",
     Label = "Grip",
     Image = "att-grip.png",
-    Description = "A foregrip for better control. Attach it to your weapon through Attachments.",
+    Description = "Voorgreep voor meer controle. Zet hem op je wapen via Attachments.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.8,
@@ -1012,7 +1012,7 @@ Shared.Items["att_sight"] = {
     Name = "att_sight",
     Label = "Sight",
     Image = "att-sight.png",
-    Description = "Scope / holographic sight. Attach it to your weapon through Attachments.",
+    Description = "Richtkijker / holo sight. Zet hem op je wapen via Attachments.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.8,
@@ -1027,7 +1027,7 @@ Shared.Items["silencer"] = {
     Name = "silencer",
     Label = "Silencer",
     Image = "silencer.png",
-    Description = "A pretty high-quality little silencer..",
+    Description = "High quality Dempertje wel hoor..",
     Weapon = true, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15.0,
@@ -1064,7 +1064,7 @@ Shared.Items["hacking_device"] = {
     Name = "hacking_device",
     Label = "Tracker Disabling Tool",
     Image = "hacking_device.png",
-    Description = "Connect this and keep driving.",
+    Description = "Sluit deze aan en blijf in rijden.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -1082,9 +1082,9 @@ Shared.Items["hacking_device"] = {
 
 Shared.Items["security_hacking_device"] = {
     Name = "security_hacking_device",
-    Label = "Security System Hacking Device",
+    Label = "Beveiligings Systeem Hacking Apperaat",
     Image = "security_hacking_device.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -1104,7 +1104,7 @@ Shared.Items["fake_plate"] = {
     Name = "fake_plate",
     Label = "Fake Plate Kit",
     Image = "fake_plate.png",
-    Description = "Used to change a vehicle's license plate - single use..",
+    Description = "Gebruikt om een voertuig zijn kenteken te veranderen - 1 time use..",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1132,9 +1132,9 @@ Shared.Items["ammo"] = {
 
 Shared.Items["magazine"] = {
     Name = "magazine",
-    Label = "Magazine",
+    Label = "Magazijn",
     Image = "mag-pistol.png",
-    Description = "Use it to load bullets. Press [R] while holding your weapon to reload.",
+    Description = "Gebruik hem om kogels te laden. Druk [R] met je wapen om te herladen.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true, -- every magazine keeps its own bullet count (Info.Bullets)
     IsBag = false, Weight = 0.3,
@@ -1147,9 +1147,9 @@ Shared.Items["magazine"] = {
 
 Shared.Items["bullets"] = {
     Name = "bullets",
-    Label = "Bullets",
+    Label = "Kogels",
     Image = "bullets-pistol.png",
-    Description = "Loose bullets. Load them into a magazine of the same type.",
+    Description = "Losse kogels. Laad ze in een magazijn van hetzelfde type.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.02,
@@ -1162,9 +1162,9 @@ Shared.Items["bullets"] = {
 
 Shared.Items["herion_syringe"] = {
     Name = "herion_syringe",
-    Label = "Syringe",
+    Label = "Spuit",
     Image = "herion_sryinge.png",
-    Description = "This thing injects, just like you.",
+    Description = "Dit ding spuit, net zoals jij.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -1177,9 +1177,9 @@ Shared.Items["herion_syringe"] = {
 
 Shared.Items["narcose_syringe"] = {
     Name = "narcose_syringe",
-    Label = "Anesthetic Syringe",
+    Label = "Narcose Spuit",
     Image = "narcose_syringe.png",
-    Description = "An anesthetic syringe..",
+    Description = "Een narcose spuit..",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -1192,9 +1192,9 @@ Shared.Items["narcose_syringe"] = {
 
 Shared.Items["handcuffs"] = {
     Name = "handcuffs",
-    Label = "Handcuffs",
+    Label = "Handboeien",
     Image = "cuffs.png",
-    Description = "Please keep me out of the bedroom..",
+    Description = "Houd me alsjeblieft uit de slaapkamer..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -1211,7 +1211,7 @@ Shared.Items["lockpick"] = {
     Name = "lockpick",
     Label = "Lockpick Set",
     Image = "lockpick.png",
-    Description = "Works wonders, if you know how to use it..",
+    Description = "Doet wonderen, als je weet wat je er mee moet..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -1228,9 +1228,9 @@ Shared.Items["lockpick"] = {
 
 Shared.Items["megaphone"] = {
     Name = "megaphone",
-    Label = "Megaphone",
+    Label = "Megafoon",
     Image = "megaphone.png",
-    Description = "Don't talk so loudly..",
+    Description = "Niet zo hard praten..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.2,
@@ -1247,9 +1247,9 @@ Shared.Items["megaphone"] = {
 
 Shared.Items["radio"] = {
     Name = "radio",
-    Label = "Standard Radio",
+    Label = "Standaard Radio",
     Image = "radio.png",
-    Description = "Use this to talk to each other over specific frequencies. If you're caught committing a crime, you'll lose it..",
+    Description = "Dit gebruik je dus om met elkaar te babbelen over bepaalde frequenties, maar als je gepakt wordt tijdens een misdaad ben je hem wel kwijt..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -1267,9 +1267,9 @@ Shared.Items["radio"] = {
 
 Shared.Items["pdradio"] = {
     Name = "pdradio",
-    Label = "(PD) Walkie-Talkie",
+    Label = "(PD) Portofoon",
     Image = "radio.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -1289,7 +1289,7 @@ Shared.Items["pdcamera"] = {
     Name = "pdcamera",
     Label = "(PD) Camera",
     Image = "camera.png",
-    Description = "Does this thing even work? Just use your smartphone instead..<br/><br/>Equipment issued by the government (PD/EMS).",
+    Description = "Werkt dit ding nog? Pak anders maar je smartphone..<br/><br/>Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 1,
@@ -1302,9 +1302,9 @@ Shared.Items["pdcamera"] = {
 
 Shared.Items["bloodvial"] = {
     Name = "bloodvial",
-    Label = "Blood Sample",
+    Label = "Bloed Monster",
     Image = "bloodvial.png",
-    Description = "A blood sample?",
+    Description = "Een monster van bloed?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.0,
@@ -1319,7 +1319,7 @@ Shared.Items["armor"] = {
     Name = "armor",
     Label = "Chest Armor",
     Image = "armor.png",
-    Description = "Now that shank won't hurt as much..",
+    Description = "Nu voel je die shank niet meer zo erg..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 37,
@@ -1338,7 +1338,7 @@ Shared.Items["heavyarmor"] = {
     Name = "heavyarmor",
     Label = "(PD) Chest Armor",
     Image = "armor.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 37,
@@ -1351,9 +1351,9 @@ Shared.Items["heavyarmor"] = {
 
 Shared.Items["lighter"] = {
     Name = "lighter",
-    Label = "Lighter",
+    Label = "Aansteker",
     Image = "lighter.png",
-    Description = "Be careful with those fireworks..",
+    Description = "Pas nou op met dat vuurwerk..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1366,9 +1366,9 @@ Shared.Items["lighter"] = {
 
 Shared.Items["binoculars"] = {
     Name = "binoculars",
-    Label = "Binoculars",
+    Label = "Verrekijker",
     Image = "binoculars.png",
-    Description = "Peeping on the neighbors..",
+    Description = "Gluren bij de buren..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 5,
@@ -1381,9 +1381,9 @@ Shared.Items["binoculars"] = {
 
 Shared.Items["nitrous"] = {
     Name = "nitrous",
-    Label = "Nitrous Bottle",
+    Label = "Nitro Fles",
     Image = "nitrous.png",
-    Description = "Floor it with that little bottle..",
+    Description = "Gassen met die lollie..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 35,
@@ -1399,9 +1399,9 @@ Shared.Items["nitrous"] = {
 
 Shared.Items["pickaxe"] = {
     Name = "pickaxe",
-    Label = "Mining Pickaxe",
+    Label = "Mijn Pikhouweel",
     Image = "pickaxe.png",
-    Description = "Time to do some good old Minecrafting..",
+    Description = "Lekker mijnkraften..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 20,
@@ -1414,9 +1414,9 @@ Shared.Items["pickaxe"] = {
 
 Shared.Items["repairkit"] = {
     Name = "repairkit",
-    Label = "Repair Kit",
+    Label = "Repareer Kit",
     Image = "repairkit.png",
-    Description = "A box full of tools.",
+    Description = "Een kistje vol met gereedschap.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -1431,9 +1431,9 @@ Shared.Items["repairkit"] = {
 
 Shared.Items["tirekit"] = {
     Name = "tirekit",
-    Label = "Tire Repair Kit",
+    Label = "Band Repareer Set",
     Image = "tirekit.png",
-    Description = "For patching up some tires.",
+    Description = "Om wat bandjes te plakken.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 5,
@@ -1446,9 +1446,9 @@ Shared.Items["tirekit"] = {
 
 Shared.Items["harness"] = {
     Name = "harness",
-    Label = "Racing Harness",
+    Label = "Race Harnas",
     Image = "harness.png",
-    Description = "So you don't get YEETED out anymore..",
+    Description = "Zodat je niet meer GEYEET wordt..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -1463,9 +1463,9 @@ Shared.Items["harness"] = {
 
 Shared.Items["advlockpick"] = {
     Name = "advlockpick",
-    Label = "Advanced Lockpick",
+    Label = "Grote Lock Pick",
     Image = "advlockpick.png",
-    Description = "Works wonders, if you know how to use it..",
+    Description = "Doet wonderen, als je weet wat je er mee moet..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 3,
@@ -1485,7 +1485,7 @@ Shared.Items["electronickit"] = {
     Name = "electronickit",
     Label = "Electronic Kit",
     Image = "electronickit.png",
-    Description = "Some kind of motherboard?!?",
+    Description = "Een soort van moederbord?!?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 15,
@@ -1500,9 +1500,9 @@ Shared.Items["electronickit"] = {
 
 Shared.Items["markedbills"] = {
     Name = "markedbills",
-    Label = "Marked Money",
+    Label = "Inked Geld",
     Image = "markedbills.png",
-    Description = "A little bag of ink?",
+    Description = "Een tasje met inkt?",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false, HasProp = true,
     IsBag = false, Weight = 0,
@@ -1515,9 +1515,9 @@ Shared.Items["markedbills"] = {
 
 Shared.Items["inkedmoneybag"] = {
     Name = "inkedmoneybag",
-    Label = "Bag of Marked Money",
+    Label = "Tas Inked Geld",
     Image = "markedbills.png",
-    Description = "There's quite a bit of cash in here.. Let the bag cool down for the next few days..",
+    Description = "Hier zit best wel wat €€€ in.. Laat de tas de komende dagen eerst maar eens afkoelen..",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false, HasProp = true,
     IsBag = false, Weight = 0,
@@ -1530,9 +1530,9 @@ Shared.Items["inkedmoneybag"] = {
 
 Shared.Items["rolex"] = {
     Name = "rolex",
-    Label = "Gold Watch",
+    Label = "Goud Klokje",
     Image = "gold-rolex.png",
-    Description = "Does this thing work?",
+    Description = "Werkt dit ding?",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.5,
@@ -1545,9 +1545,9 @@ Shared.Items["rolex"] = {
 
 Shared.Items["goldchain"] = {
     Name = "goldchain",
-    Label = "Gold Chain",
+    Label = "Gouden Ketting",
     Image = "gold-necklace.png",
-    Description = "What a beautiful gold chain.",
+    Description = "Wat een mooie gouden ketting is dit toch.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -1560,9 +1560,9 @@ Shared.Items["goldchain"] = {
 
 Shared.Items["goldbar"] = {
     Name = "goldbar",
-    Label = "Gold Bar",
+    Label = "Goudstaaf",
     Image = "gold-bar.png",
-    Description = "A big, thick, heavy bar of gold.",
+    Description = "Dikke grote zware staaf van goud.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 6,
@@ -1577,9 +1577,9 @@ Shared.Items["goldbar"] = {
 
 Shared.Items["goldnugget"] = {
     Name = "goldnugget",
-    Label = "Gold Nugget",
+    Label = "Goudklompje",
     Image = "goldnugget.png",
-    Description = "A nugget of gold.",
+    Description = "Een klompje van goud.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -1594,9 +1594,9 @@ Shared.Items["goldnugget"] = {
 
 Shared.Items["golddust"] = {
     Name = "golddust",
-    Label = "Gold Dust",
+    Label = "Goudstof",
     Image = "golddust.png",
-    Description = "Can you make a curtain with this?",
+    Description = "Kan je hiermee een gordijn maken?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1609,9 +1609,9 @@ Shared.Items["golddust"] = {
 
 Shared.Items["diamond-blue"] = {
     Name = "diamond-blue",
-    Label = "Blue Diamond",
+    Label = "Blauwe Diamant",
     Image = "diamond-blue.png",
-    Description = "A blue diamond? Is it real?",
+    Description = "Een blauwe diamant? Is die wel echt?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1624,9 +1624,9 @@ Shared.Items["diamond-blue"] = {
 
 Shared.Items["diamond-yellow"] = {
     Name = "diamond-yellow",
-    Label = "Yellow Diamond",
+    Label = "Gele Diamant",
     Image = "diamond-yellow.png",
-    Description = "Who pissed on this diamond?",
+    Description = "Wie heeft er over deze diamant heen gepist?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1639,7 +1639,7 @@ Shared.Items["diamond-yellow"] = {
 
 Shared.Items["cult-necklace"] = {
     Name = "cult-necklace",
-    Label = "Cult Necklace",
+    Label = "Cult Ketting",
     Image = "cult-necklace.png",
     Description = "A cult is a religion with no political power",
     Weapon = false, Illegal = false,
@@ -1654,9 +1654,9 @@ Shared.Items["cult-necklace"] = {
 
 Shared.Items["white-pearl"] = {
     Name = "white-pearl",
-    Label = "White Pearl",
+    Label = "Witte Parel",
     Image = "white-pearl.png",
-    Description = "Trapped in an oyster, freed for sale.",
+    Description = "Gevangen in een oester bevrijd voor verkoop",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.5,
@@ -1669,9 +1669,9 @@ Shared.Items["white-pearl"] = {
 
 Shared.Items["diamond-skull"] = {
     Name = "diamond-skull",
-    Label = "Diamond Skull",
+    Label = "Diamanten Schedel",
     Image = "diamond-skull.png",
-    Description = "How many diamonds are on my head?",
+    Description = "Hoeveel diamanten zitten erop mijn hoofd?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -1684,9 +1684,9 @@ Shared.Items["diamond-skull"] = {
 
 Shared.Items["diamond-chessboard"] = {
     Name = "diamond-chessboard",
-    Label = "Chessboard",
+    Label = "Schaakbord",
     Image = "diamond-chessboard.png",
-    Description = "An expensive game of chess..",
+    Description = "Duur potje schaken..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 10,
@@ -1699,9 +1699,9 @@ Shared.Items["diamond-chessboard"] = {
 
 Shared.Items["heirloom"] = {
     Name = "heirloom",
-    Label = "Signet Ring",
+    Label = "Zegelring",
     Image = "heirloom.png",
-    Description = "Champion!!!!",
+    Description = "Kampioen!!!!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1.5,
@@ -1714,9 +1714,9 @@ Shared.Items["heirloom"] = {
 
 Shared.Items["platinum-record"] = {
     Name = "platinum-record",
-    Label = "Platinum Record",
+    Label = "Platina Plaat",
     Image = "platinum-record.png",
-    Description = "A small hit...",
+    Description = "Klein hitje...",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 10,
@@ -1729,9 +1729,9 @@ Shared.Items["platinum-record"] = {
 
 Shared.Items["gold-record"] = {
     Name = "gold-record",
-    Label = "Gold Record",
+    Label = "Gouden Plaat",
     Image = "gold-record.png",
-    Description = "A little hit....",
+    Description = "Hitje....",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 10,
@@ -1744,9 +1744,9 @@ Shared.Items["gold-record"] = {
 
 Shared.Items["diamond-record"] = {
     Name = "diamond-record",
-    Label = "Diamond Record",
+    Label = "Diamanten Plaat",
     Image = "diamond-record.png",
-    Description = "A big hit....",
+    Description = "Groot hitje....",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 10,
@@ -1761,7 +1761,7 @@ Shared.Items["diamond"] = {
     Name = "diamond",
     Label = "Diamant",
     Image = "diamond.png",
-    Description = "A diamond from 1918.. Wow, what a beauty.",
+    Description = "Een diamant uit 1918.. Poh mooi ding",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -1776,7 +1776,7 @@ Shared.Items["stolen-tv"] = {
     Name = "stolen-tv",
     Label = "Flat Panel TV",
     Image = "stolen-tv.png",
-    Description = "What a flat thing..",
+    Description = "Wat een plat ding..",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 50,
@@ -1791,7 +1791,7 @@ Shared.Items["stolen-pc"] = {
     Name = "stolen-pc",
     Label = "Computer",
     Image = "stolen-pc.png",
-    Description = "Good for a few roleplay sessions.",
+    Description = "Goed voor een paar rollenspel sessies.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 50,
@@ -1804,9 +1804,9 @@ Shared.Items["stolen-pc"] = {
 
 Shared.Items["stolen-micro"] = {
     Name = "stolen-micro",
-    Label = "Microwave",
+    Label = "Magnetron",
     Image = "stolen-micro.png",
-    Description = "Perfect with some popcorn. Delicious.",
+    Description = "Popcorn erbij heerluk.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 50,
@@ -1819,9 +1819,9 @@ Shared.Items["stolen-micro"] = {
 
 Shared.Items["wheelchair"] = {
     Name = "wheelchair",
-    Label = "Wheelchair",
+    Label = "Rolstoel",
     Image = "wheelchair.png",
-    Description = "Are you crippled or something?",
+    Description = "Ben je mank ofzo?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 20,
@@ -1834,9 +1834,9 @@ Shared.Items["wheelchair"] = {
 
 Shared.Items["scootmobile"] = {
     Name = "scootmobile",
-    Label = "Mobility Scooter",
+    Label = "Scootmobiel",
     Image = "scootmobile.png",
-    Description = "For those old fat guys.",
+    Description = "Voor die ouwe vetzakken",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 30,
@@ -1849,9 +1849,9 @@ Shared.Items["scootmobile"] = {
 
 Shared.Items["oxy-box"] = {
     Name = "oxy-box",
-    Label = "Suspicious Package",
+    Label = "Verdacht Pakket",
     Image = "oxy-box.png",
-    Description = "Package covered in tape and milk stickers. Marked for confiscation.",
+    Description = "Pakket bedekt met plakband en melkstickers. Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 25,
@@ -1864,9 +1864,9 @@ Shared.Items["oxy-box"] = {
 
 Shared.Items["money-roll"] = {
     Name = "money-roll",
-    Label = "Roll of Cash",
+    Label = "Geld Rolletje",
     Image = "money-roll.png",
-    Description = "This isn't a Euro? Am I supposed to put cocaine in here or something?",
+    Description = "Dit is geen Euro? Moet ik hier cocaine tussen stoppen ofzo?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.02,
@@ -1879,9 +1879,9 @@ Shared.Items["money-roll"] = {
 
 Shared.Items["recycle-mats"] = {
     Name = "recycle-mats",
-    Label = "Recyclable Materials",
+    Label = "Recycle Materiaal",
     Image = "recycle-mats.png",
-    Description = "A box full of recyclable stuff..",
+    Description = "Een bak met recyclebaar spullen..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.5,
@@ -1896,7 +1896,7 @@ Shared.Items["plastic"] = {
     Name = "plastic",
     Label = "Plastic",
     Image = "plastic.png",
-    Description = "Don't throw this on the street!",
+    Description = "Niet op straat gooien he!",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1911,9 +1911,9 @@ Shared.Items["plastic"] = {
 
 Shared.Items["metalscrap"] = {
     Name = "metalscrap",
-    Label = "Metal Scrap",
+    Label = "Metaal schroot",
     Image = "metalscrap.png",
-    Description = "You can probably make something sturdy with this.",
+    Description = "Hier kun je vast iets stevigs mee maken.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1930,7 +1930,7 @@ Shared.Items["copper"] = {
     Name = "copper",
     Label = "Koper",
     Image = "copper.png",
-    Description = "A useful piece of metal that you can probably put to good use.",
+    Description = "Handig stukje metaal wat je vast wel kunt gebruiken.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1947,7 +1947,7 @@ Shared.Items["aluminum"] = {
     Name = "aluminum",
     Label = "Aluminum",
     Image = "aluminum.png",
-    Description = "A useful piece of metal that you can probably put to good use.",
+    Description = "Handig stukje metaal wat je vast wel kunt gebruiken.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1962,9 +1962,9 @@ Shared.Items["aluminum"] = {
 
 Shared.Items["steel"] = {
     Name = "steel",
-    Label = "Steel",
+    Label = "Staal",
     Image = "steel.png",
-    Description = "A useful piece of metal that you can probably put to good use.",
+    Description = "Handig stukje metaal wat je vast wel kunt gebruiken.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1981,7 +1981,7 @@ Shared.Items["rubber"] = {
     Name = "rubber",
     Label = "Rubber",
     Image = "rubber.png",
-    Description = "A juicy piece of rubber..",
+    Description = "Sappig stukje rubber..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -1996,9 +1996,9 @@ Shared.Items["rubber"] = {
 
 Shared.Items["glass"] = {
     Name = "glass",
-    Label = "Sheet of Glass",
+    Label = "Glasplaat",
     Image = "glassplate.png",
-    Description = "It's quite fragile.. Be careful.",
+    Description = "Het is nogal breekbaar.. Kijk uit.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -2013,9 +2013,9 @@ Shared.Items["glass"] = {
 
 Shared.Items["electronics"] = {
     Name = "electronics",
-    Label = "Electronics",
+    Label = "Electronica",
     Image = "electronics.png",
-    Description = "Can I build a computer with this?",
+    Description = "Kan ik hier een computer mee maken?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.04,
@@ -2032,7 +2032,7 @@ Shared.Items["heavy-thermite"] = {
     Name = "heavy-thermite",
     Label = "Thermite Charge",
     Image = "hthermite.png",
-    Description = "Wow, this is extremely flammable..",
+    Description = "Wow dit is heel erg vlambaar..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 6,
@@ -2051,9 +2051,9 @@ Shared.Items["heavy-thermite"] = {
 
 Shared.Items["coin"] = {
     Name = "coin",
-    Label = "Lucky Coin",
+    Label = "Geluks Muntje",
     Image = "coin.png",
-    Description = "Will a lucky coin bring you good luck??",
+    Description = "Een geluks muntje zal het jouw geluk geven??",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0,
@@ -2066,9 +2066,9 @@ Shared.Items["coin"] = {
 
 Shared.Items["dice"] = {
     Name = "dice",
-    Label = "Dice",
+    Label = "Dobbel Stenen",
     Image = "dice.png",
-    Description = "A set of dice for a little gambling.",
+    Description = "Setje dobbel stenen lekker gokkuhh.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -2081,9 +2081,9 @@ Shared.Items["dice"] = {
 
 Shared.Items["jail-food"] = {
     Name = "jail-food",
-    Label = "Food Tray",
+    Label = "Dienblad Eten",
     Image = "jailfood.png",
-    Description = "Looks just as bad as the police's aim..",
+    Description = "Ziet er net zo slecht uit als de Politie hun aim..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 25,
@@ -2096,9 +2096,9 @@ Shared.Items["jail-food"] = {
 
 Shared.Items["bandage"] = {
     Name = "bandage",
-    Label = "Bandage",
+    Label = "Verband",
     Image = "bandage.png",
-    Description = "Bandages for minor wounds and bleeding.",
+    Description = "Verband voor je kleine wondjes en bloedingen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = .25,
@@ -2113,7 +2113,7 @@ Shared.Items["ifak"] = {
     Name = "ifak",
     Label = "(PD) IFAK",
     Image = "ifak.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.25,
@@ -2128,7 +2128,7 @@ Shared.Items["medkit"] = {
     Name = "medkit",
     Label = "(PD) Medical Kit",
     Image = "medkit.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.25,
@@ -2156,9 +2156,9 @@ Shared.Items["oxy"] = {
 
 Shared.Items["lsd-strip"] = {
     Name = "lsd-strip",
-    Label = "Postage Stamp",
+    Label = "Postzegel",
     Image = "postzegel.png",
-    Description = "Where is the mail going?",
+    Description = "Waar gaat de post heen?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2173,7 +2173,7 @@ Shared.Items["joint"] = {
     Name = "joint",
     Label = "3g Joint",
     Image = "joint.png",
-    Description = "A joint to enjoy.",
+    Description = "Een jonko voor op de lip.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.2,
@@ -2191,7 +2191,7 @@ Shared.Items["customjoint"] = {
     Name = "customjoint",
     Label = "3g Joint",
     Image = "joint.png",
-    Description = "A joint to enjoy.",
+    Description = "Een jonko voor op de lip.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.2,
@@ -2204,9 +2204,9 @@ Shared.Items["customjoint"] = {
 
 Shared.Items["health-pack"] = {
     Name = "health-pack",
-    Label = "First Aid Kit",
+    Label = "EHBO Koffer",
     Image = "bandage.png",
-    Description = "Something for first aid?",
+    Description = "Iets met EHBO?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 10,
@@ -2238,9 +2238,9 @@ Shared.Items["bong"] = {
 
 Shared.Items["phone"] = {
     Name = "phone",
-    Label = "Phone",
+    Label = "Telefoon",
     Image = "phone.png",
-    Description = "To call the girlfriend you don't have..",
+    Description = "Om je vriendin te bellen die je niet hebt..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 5,
@@ -2259,7 +2259,7 @@ Shared.Items["burnerphone"] = {
     Name = "phone",
     Label = "Burner Telefoon",
     Image = "phone.png",
-    Description = "A disposable phone for calls and texts only. - Marked for confiscation.",
+    Description = "Wegwerp telefoon om alleen mee te bellen en te SMSen. - Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 1,
@@ -2278,7 +2278,7 @@ Shared.Items["sandwich"] = {
     Name = "sandwich",
     Label = "Sandwich",
     Image = "bread.png",
-    Description = "A sandwich with filling.",
+    Description = "Een broodje met beleg.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -2293,7 +2293,7 @@ Shared.Items["water_bottle"] = {
     Name = "water_bottle",
     Label = "Water",
     Image = "water.png",
-    Description = "Have a refreshing drink.",
+    Description = "Eventjes lekker drinken.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2306,9 +2306,9 @@ Shared.Items["water_bottle"] = {
 
 Shared.Items["slushy"] = {
     Name = "slushy",
-    Label = "The best slushy ever",
+    Label = "De beste slushy ooit",
     Image = "slushy.png",
-    Description = "The only thing that tastes good in prison.. It's a pretty heavy cup, though..",
+    Description = "Het enigste wat lekker smaakt in de gevangenis.. Wel een zware beker..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 15,
@@ -2323,7 +2323,7 @@ Shared.Items["kurkakola"] = {
     Name = "kurkakola",
     Label = "E-Cola",
     Image = "ecola.png",
-    Description = "A can of E-Cola. Pretty tasty.",
+    Description = "Blikie E-cola lekker hoor.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2338,7 +2338,7 @@ Shared.Items["sprunk"] = {
     Name = "sprunk",
     Label = "Sprunk",
     Image = "sprunk.png",
-    Description = "Want some Sprunk with that?",
+    Description = "Sprunkie dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2353,7 +2353,7 @@ Shared.Items["whiskey"] = {
     Name = "whiskey",
     Label = "Whiskey",
     Image = "whiskey.png",
-    Description = "Best served with ice cubes.",
+    Description = "Het lekkerst met ijsklontjes.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 5,
@@ -2368,7 +2368,7 @@ Shared.Items["beer"] = {
     Name = "beer",
     Label = "Bier",
     Image = "beer.png",
-    Description = "Want a beer with that?",
+    Description = "Biertje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2383,7 +2383,7 @@ Shared.Items["beer-heineken"] = {
     Name = "beer-heineken",
     Label = "Heineken",
     Image = "beer-heineken.png",
-    Description = "Want a beer with that?",
+    Description = "Biertje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2398,7 +2398,7 @@ Shared.Items["beer-hertogjan"] = {
     Name = "beer-hertogjan",
     Label = "Hertog Jan",
     Image = "beer-hertogjan.png",
-    Description = "Want a beer with that?",
+    Description = "Biertje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2413,7 +2413,7 @@ Shared.Items["beer-grolsch"] = {
     Name = "beer-grolsch",
     Label = "Grolsch",
     Image = "beer-grolsch.png",
-    Description = "Want a beer with that?",
+    Description = "Biertje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2426,9 +2426,9 @@ Shared.Items["beer-grolsch"] = {
 
 Shared.Items["red-wine"] = {
     Name = "red-wine",
-    Label = "Red Wine",
+    Label = "Rode wijn",
     Image = "red-wine.png",
-    Description = "Want a glass of red wine?",
+    Description = "Rood wijntje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2441,9 +2441,9 @@ Shared.Items["red-wine"] = {
 
 Shared.Items["white-wine"] = {
     Name = "white-wine",
-    Label = "White Wine",
+    Label = "Witte wijn",
     Image = "white-wine.png",
-    Description = "Want a glass of white wine?",
+    Description = "Wit wijntje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2458,7 +2458,7 @@ Shared.Items["bacardi"] = {
     Name = "bacardi",
     Label = "Bacardi",
     Image = "bacardi.png",
-    Description = "Want some Bacardi?",
+    Description = "Bacardi dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2473,7 +2473,7 @@ Shared.Items["vodka"] = {
     Name = "vodka",
     Label = "Vodka",
     Image = "vodka.png",
-    Description = "Want some vodka?",
+    Description = "Vodka dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2486,9 +2486,9 @@ Shared.Items["vodka"] = {
 
 Shared.Items["goldstrike"] = {
     Name = "goldstrike",
-    Label = "Goldstrike Shot",
+    Label = "Shotje Goldstrike",
     Image = "goldstrike.png",
-    Description = "Want a shot?",
+    Description = "Shotje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2501,9 +2501,9 @@ Shared.Items["goldstrike"] = {
 
 Shared.Items["flugel"] = {
     Name = "flugel",
-    Label = "Flugel Shot",
+    Label = "Shotje Flugel",
     Image = "flugel.png",
-    Description = "Want a shot?",
+    Description = "Shotje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2516,9 +2516,9 @@ Shared.Items["flugel"] = {
 
 Shared.Items["goldstrike"] = {
     Name = "goldstrike",
-    Label = "Tequila Shot",
+    Label = "Shotje Tequila",
     Image = "tequila.png",
-    Description = "Want a shot?",
+    Description = "Shotje dr bij?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2533,7 +2533,7 @@ Shared.Items["cocktail-split"] = {
     Name = "cocktail-split",
     Label = "Split",
     Image = "cocktail-split.png",
-    Description = "Oohhh, a COCKtail.",
+    Description = "Oehhh een COCKtail.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2548,7 +2548,7 @@ Shared.Items["cocktail-pinacolada"] = {
     Name = "cocktail-pinacolada",
     Label = "Pina Colada",
     Image = "cocktail-pinacolada.png",
-    Description = "Oohhh, a COCKtail.",
+    Description = "Oehhh een COCKtail.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2563,7 +2563,7 @@ Shared.Items["cocktail-aperolspritz"] = {
     Name = "cocktail-aperolspritz",
     Label = "Aperol Spritz",
     Image = "cocktail-aperolspritz.png",
-    Description = "Oohhh, a COCKtail.",
+    Description = "Oehhh een COCKtail.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2576,9 +2576,9 @@ Shared.Items["cocktail-aperolspritz"] = {
 
 Shared.Items["chocolade"] = {
     Name = "chocolade",
-    Label = "Chocolate Bar",
+    Label = "Chocolade Reep",
     Image = "chocolade.png",
-    Description = "A chocolate bar. Careful, you'll get fat!",
+    Description = "Een chocolade reep pasop straks word je nog dik.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2593,7 +2593,7 @@ Shared.Items["coffee"] = {
     Name = "coffee",
     Label = "Koffie",
     Image = "coffee.png",
-    Description = "Great for the morning.",
+    Description = "Lekker voor in de ochtend.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2606,9 +2606,9 @@ Shared.Items["coffee"] = {
 
 Shared.Items["420-choco"] = {
     Name = "420-choco",
-    Label = "420 Chocolate Bar",
+    Label = "420 Chocolade Reep",
     Image = "420-choco.png",
-    Description = "Is this bar from Jonko Jay?",
+    Description = "Is deze reep van Jonko Jay?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.2,
@@ -2623,7 +2623,7 @@ Shared.Items["chips"] = {
     Name = "chips",
     Label = "Chips",
     Image = "chips.png",
-    Description = "Tasty chips.",
+    Description = "Lekker chipie.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2636,9 +2636,9 @@ Shared.Items["chips"] = {
 
 Shared.Items["macncheese"] = {
     Name = "macncheese",
-    Label = "Mac and Cheese",
+    Label = "Mac en Cheese",
     Image = "macncheese.png",
-    Description = "Just like Grandma used to make.. Delicious!",
+    Description = "Net zoals Oma hem maakte.. Heerlijk!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2653,7 +2653,7 @@ Shared.Items["fristi"] = {
     Name = "fristi",
     Label = "Fristi",
     Image = "Fristi.png",
-    Description = "Pink poison?",
+    Description = "Rooskleurig vergif?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2668,7 +2668,7 @@ Shared.Items["chocomelk"] = {
     Name = "chocomelk",
     Label = "chocomelk",
     Image = "chocomelk.png",
-    Description = "Liquid poop in a bottle",
+    Description = "Vloeibare poep in een flesje",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2683,7 +2683,7 @@ Shared.Items["fernandes"] = {
     Name = "fernandes",
     Label = "Fernandes",
     Image = "fernandes.png",
-    Description = "Nice and sweet.",
+    Description = "Lekker zoet",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2696,9 +2696,9 @@ Shared.Items["fernandes"] = {
 
 Shared.Items["mint"] = {
     Name = "mint",
-    Label = "Peppermint",
+    Label = "Pepermint",
     Image = "pepermint.png",
-    Description = "Freshen up your stinky breath.",
+    Description = "Je stinkende bek opfrissen",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2713,7 +2713,7 @@ Shared.Items["cocktail-1"] = {
     Name = "cocktail-1",
     Label = "Naughty Bullet",
     Image = "cocktail-1.png",
-    Description = "Oohhh, a COCKtail.",
+    Description = "Oehhh een COCKtail.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2728,7 +2728,7 @@ Shared.Items["cocktail-2"] = {
     Name = "cocktail-2",
     Label = "Arju(n) Hot",
     Image = "cocktail-2.png",
-    Description = "This is very, very pink.",
+    Description = "Dit is wel heel erg roze.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2743,7 +2743,7 @@ Shared.Items["cocktail-3"] = {
     Name = "cocktail-3",
     Label = "Noahs Ark",
     Image = "cocktail-3.png",
-    Description = "Looks tasty and tropical.",
+    Description = "Ziet er wel lekker en tropisch uit.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2756,9 +2756,9 @@ Shared.Items["cocktail-3"] = {
 
 Shared.Items["scuba-gear"] = {
     Name = "scuba-gear",
-    Label = "Diving Gear",
+    Label = "Duik Spullen",
     Image = "scuba-gear.png",
-    Description = "Hope you don't suffocate..",
+    Description = "Hoop dat je niet stikt..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 45,
@@ -2771,9 +2771,9 @@ Shared.Items["scuba-gear"] = {
 
 Shared.Items["fishingrod"] = {
     Name = "fishingrod",
-    Label = "Fishing Rod",
+    Label = "Vis Hengel",
     Image = "fishingrod.png",
-    Description = "Time to do some fishing..",
+    Description = "Even lekker hengelen..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -2801,9 +2801,9 @@ Shared.Items["fish"] = {
 
 Shared.Items["plasticbag"] = {
     Name = "plasticbag",
-    Label = "Plastic Bag",
+    Label = "Plastic zak",
     Image = "plasticbag.png",
-    Description = "Put the bag over your head and go, right??",
+    Description = "Zak over de hoofd en gaan, toch??",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -2816,9 +2816,9 @@ Shared.Items["plasticbag"] = {
 
 Shared.Items["shoe"] = {
     Name = "shoe",
-    Label = "Old Shoe",
+    Label = "Oude Schoen",
     Image = "shoe.png",
-    Description = "Quite a sporty little model.",
+    Description = "Sportief moddeletje wel hoor.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -2831,9 +2831,9 @@ Shared.Items["shoe"] = {
 
 Shared.Items["hunting-knife"] = {
     Name = "hunting-knife",
-    Label = "Hunting Knife",
+    Label = "Jacht Mes",
     Image = "hunting-knife.png",
-    Description = "Don't play around with it like The Knife Goes Chop Chop Chop..",
+    Description = "Niet The Knife Goes Chop Chop Chop mee spelen he..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 11,
@@ -2846,9 +2846,9 @@ Shared.Items["hunting-knife"] = {
 
 Shared.Items["hunting-bait"] = {
     Name = "hunting-bait",
-    Label = "Bait",
+    Label = "Lok Voer",
     Image = "hunting-bait.png",
-    Description = "I don't think this is for human consumption.",
+    Description = "Dit is niet voor menselijke consumptie denk ik.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -2861,9 +2861,9 @@ Shared.Items["hunting-bait"] = {
 
 Shared.Items["hunting-carcass-one"] = {
     Name = "hunting-carcass-one",
-    Label = "Poor-Quality Carcass",
+    Label = "Slecht Karkas",
     Image = "hunting-carcass1.png",
-    Description = "What is this? Did you shoot the animal with an AK?",
+    Description = "Wat is dit? Heb je het dier met en AK beschoten?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 50,
@@ -2876,9 +2876,9 @@ Shared.Items["hunting-carcass-one"] = {
 
 Shared.Items["hunting-carcass-two"] = {
     Name = "hunting-carcass-two",
-    Label = "Average-Quality Carcass",
+    Label = "Normaal Karkas",
     Image = "hunting-carcass2.png",
-    Description = "Not a bad carcass, actually..",
+    Description = "Opzich geen slecht karkas..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 50,
@@ -2891,9 +2891,9 @@ Shared.Items["hunting-carcass-two"] = {
 
 Shared.Items["hunting-carcass-three"] = {
     Name = "hunting-carcass-three",
-    Label = "Perfect Carcass",
+    Label = "Perfect Karkas",
     Image = "hunting-carcass3.png",
-    Description = "This could make a decent profit..",
+    Description = "Dit kan nog wel een goeie winst leveren..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 50,
@@ -2906,7 +2906,7 @@ Shared.Items["hunting-carcass-three"] = {
 
 Shared.Items["hunting-carcass-four"] = {
     Name = "hunting-carcass-four",
-    Label = "Perfect Carcass",
+    Label = "Perfect Karkas",
     Image = "hunting-carcass4.png",
     Description = "Is dit karkas wel legaal?",
     Weapon = false, Illegal = false,
@@ -2921,9 +2921,9 @@ Shared.Items["hunting-carcass-four"] = {
 
 Shared.Items["licence"] = {
     Name = "licence",
-    Label = "Permit",
+    Label = "Vergunning",
     Image = "licence.png",
-    Description = "Official documents.",
+    Description = "Officiele documenten.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -2936,9 +2936,9 @@ Shared.Items["licence"] = {
 
 Shared.Items["id_card"] = {
     Name = "id_card",
-    Label = "ID Card",
+    Label = "Identiteits Kaart",
     Image = "license-id.png",
-    Description = "A card containing all your personal information.",
+    Description = "Een kaart waar al je gegevens op staat.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -2951,9 +2951,9 @@ Shared.Items["id_card"] = {
 
 Shared.Items["driver_license"] = {
     Name = "driver_license",
-    Label = "Driver's License",
+    Label = "Rijbewijs",
     Image = "license-drive.png",
-    Description = "Proof that you are allowed to drive a vehicle.",
+    Description = "Bewijs om aan te tonen dat je een voertuig kunt besturen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -2966,9 +2966,9 @@ Shared.Items["driver_license"] = {
 
 Shared.Items["big-repair"] = {
     Name = "big-repair",
-    Label = "Large Repair Kit",
+    Label = "Grote Repareer Kit",
     Image = "big-repair.png",
-    Description = "A large repair kit.",
+    Description = "Een grote reparatie set.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 20,
@@ -2984,9 +2984,9 @@ Shared.Items["big-repair"] = {
 
 Shared.Items["walkstick"] = {
     Name = "walkstick",
-    Label = "Walking Cane",
+    Label = "Loopstok",
     Image = "walkstick.png",
-    Description = "For the old men.",
+    Description = "Voor de oude mannen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -3001,7 +3001,7 @@ Shared.Items["jerry_can"] = {
     Name = "jerry_can",
     Label = "Jerrycan",
     Image = "jerry_can.png",
-    Description = "I usually take a sniff of this. I love it.",
+    Description = "Ik ruik hier meestal aan vind ik heerluk.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 8,
@@ -3016,7 +3016,7 @@ Shared.Items["parachute"] = {
     Name = "parachute",
     Label = "Parachute",
     Image = "parachute.png",
-    Description = "For the real daredevils.",
+    Description = "Voor de echte waaghalsen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 30,
@@ -3029,9 +3029,9 @@ Shared.Items["parachute"] = {
 
 Shared.Items["moneybag"] = {
     Name = "moneybag",
-    Label = "Bag of Money",
+    Label = "Tas met geld",
     Image = "moneybag.png",
-    Description = "I think there's some money in here.",
+    Description = "Hier zit wat geld in denk ik.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -3044,9 +3044,9 @@ Shared.Items["moneybag"] = {
 
 Shared.Items["rentalpapers"] = {
     Name = "rentalpapers",
-    Label = "Rental Documents",
+    Label = "Huur Papieren",
     Image = "rentalpapers.png",
-    Description = "Proof of payment. Use this to get an extra set of keys.",
+    Description = "Bewijs van betaling. Gebruik om een extra setje sleutels te krijgen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -3059,9 +3059,9 @@ Shared.Items["rentalpapers"] = {
 
 Shared.Items["xray-brain"] = {
     Name = "xray-brain",
-    Label = "Brain MRI",
+    Label = "Hersen MRI",
     Image = "xray-hersen.png",
-    Description = "Someone's brain MRI.",
+    Description = "Een hersen MRI van iemand.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -3076,7 +3076,7 @@ Shared.Items["xray-arm"] = {
     Name = "xray-arm",
     Label = "Arm X-ray",
     Image = "xray-arm.png",
-    Description = "Someone's arm X-ray.",
+    Description = "Een arm x-ray van iemand.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -3089,9 +3089,9 @@ Shared.Items["xray-arm"] = {
 
 Shared.Items["teddy"] = {
     Name = "teddy",
-    Label = "Teddy Bear",
+    Label = "Teddy Beer",
     Image = "teddy.png",
-    Description = "Hug me.",
+    Description = "Knuffel me.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -3106,7 +3106,7 @@ Shared.Items["melissa-teddy"] = {
     Name = "melissa-teddy",
     Label = "Teddie",
     Image = "melissa-teddy.png",
-    Description = "I'd keep the zipper closed..",
+    Description = "Ik zou de rits dichtlaten..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -3119,9 +3119,9 @@ Shared.Items["melissa-teddy"] = {
 
 Shared.Items["umbrella"] = {
     Name = "umbrella",
-    Label = "Umbrella",
+    Label = "Paraplu",
     Image = "umbrella.png",
-    Description = "To avoid getting too wet..",
+    Description = "Om minder nat te worden..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.5,
@@ -3134,9 +3134,9 @@ Shared.Items["umbrella"] = {
 
 Shared.Items["hat"] = {
     Name = "hat",
-    Label = "Cap",
+    Label = "Petje",
     Image = "hat.png",
-    Description = "A little hat.",
+    Description = "Een hoedje.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3149,9 +3149,9 @@ Shared.Items["hat"] = {
 
 Shared.Items["mask"] = {
     Name = "mask",
-    Label = "Mask",
+    Label = "Masker",
     Image = "mask.png",
-    Description = "A little mask.",
+    Description = "Een maskertje",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3164,9 +3164,9 @@ Shared.Items["mask"] = {
 
 Shared.Items["glasses"] = {
     Name = "glasses",
-    Label = "Glasses",
+    Label = "Bril",
     Image = "glasses.png",
-    Description = "A pair of glasses.",
+    Description = "Een brilletje",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3179,9 +3179,9 @@ Shared.Items["glasses"] = {
 
 Shared.Items["earrings"] = {
     Name = "earrings",
-    Label = "Earrings",
+    Label = "Oorbellen",
     Image = "white-pearl.png",
-    Description = "A pair of earrings.",
+    Description = "Een paar oorbellen.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.5,
@@ -3194,9 +3194,9 @@ Shared.Items["earrings"] = {
 
 Shared.Items["watch"] = {
     Name = "watch",
-    Label = "Watch",
+    Label = "Horloge",
     Image = "m_watch.png",
-    Description = "What time is it?",
+    Description = "Hoe laat is het?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.5,
@@ -3207,11 +3207,116 @@ Shared.Items["watch"] = {
     InsertInto = {},
 }
 
+Shared.Items["shirt"] = {
+    Name = "shirt",
+    Label = "Shirt",
+    Image = "shirt.png",
+    Description = "Een shirt of jas.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 1,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["undershirt"] = {
+    Name = "undershirt",
+    Label = "Onderhemd",
+    Image = "undershirt.png",
+    Description = "Gaat onder je shirt.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 0.5,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["gloves"] = {
+    Name = "gloves",
+    Label = "Handschoenen",
+    Image = "gloves.png",
+    Description = "Warme handen.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 0.5,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["pants"] = {
+    Name = "pants",
+    Label = "Broek",
+    Image = "pants.png",
+    Description = "Een broek.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 1,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["shoes"] = {
+    Name = "shoes",
+    Label = "Schoenen",
+    Image = "w_shoes.png",
+    Description = "Een paar schoenen.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 1,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["chain"] = {
+    Name = "chain",
+    Label = "Ketting",
+    Image = "gold-necklace.png",
+    Description = "Een ketting.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 0.5,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["bracelet"] = {
+    Name = "bracelet",
+    Label = "Armband",
+    Image = "bracelet.png",
+    Description = "Een armband.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true,
+    IsBag = false, Weight = 0.5,
+    Price = 10,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
 Shared.Items["wallet"] = {
     Name = "wallet",
-    Label = "Wallet",
+    Label = "Portemonnee",
     Image = "wallet.png",
-    Description = "A wallet.",
+    Description = "Een portemonnee.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0.5,
@@ -3224,9 +3329,9 @@ Shared.Items["wallet"] = {
 
 Shared.Items["keyring"] = {
     Name = "keyring",
-    Label = "Key Ring",
+    Label = "Sleutelbos",
     Image = "keyfob.png",
-    Description = "All your keys on one ring.",
+    Description = "Al je sleutels aan één ring.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.5,
@@ -3239,9 +3344,9 @@ Shared.Items["keyring"] = {
 
 Shared.Items["backpack"] = {
     Name = "backpack",
-    Label = "Backpack",
+    Label = "Rugzak",
     Image = "duffel-bag.png",
-    Description = "Equip it in your BODY slot to gain extra slots and carrying capacity.",
+    Description = "Rust hem uit in je BODY vak om extra slots en gewicht te krijgen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = true, Weight = 2.0,
@@ -3256,7 +3361,7 @@ Shared.Items["hairtie"] = {
     Name = "hairtie",
     Label = "Scrunchie",
     Image = "scrunchie.png",
-    Description = "We all know what this is really for...",
+    Description = "We weten allemaal waarvoor dit daadwerkelijk is...",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -3271,7 +3376,7 @@ Shared.Items["vpn"] = {
     Name = "vpn",
     Label = "VPN",
     Image = "vpn.png",
-    Description = "Can I use this to connect through other countries?",
+    Description = "Kan ik hiermee verbinden met andere landen?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 5,
@@ -3301,7 +3406,7 @@ Shared.Items["spikestrip"] = {
     Name = "spikestrip",
     Label = "(PD) Spijkermat",
     Image = "spikestrip.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 12,
@@ -3314,9 +3419,9 @@ Shared.Items["spikestrip"] = {
 
 Shared.Items["welcome"] = {
     Name = "welcome",
-    Label = "Welcome Gift",
+    Label = "Welkomstcadeau",
     Image = "welcome.png",
-    Description = "A gift for a new citizen!",
+    Description = "Een cadeau voor een nieuwe burger!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -3329,9 +3434,9 @@ Shared.Items["welcome"] = {
 
 Shared.Items["bitterbal"] = {
     Name = "bitterbal",
-    Label = "Dutch Meatball",
+    Label = "Bitterbal",
     Image = "bitterbal.png",
-    Description = "A tasty Dutch meatball.",
+    Description = "Lekker bitterballetje.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -3344,9 +3449,9 @@ Shared.Items["bitterbal"] = {
 
 Shared.Items["frikandel"] = {
     Name = "frikandel",
-    Label = "Frikandel Sandwich",
+    Label = "Broodje Frikandel",
     Image = "frikandel.png",
-    Description = "A tasty frikandel.",
+    Description = "Lekker frikandelletje",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -3359,9 +3464,9 @@ Shared.Items["frikandel"] = {
 
 Shared.Items["car-polish"] = {
     Name = "car-polish",
-    Label = "Fantastic Cleaning Kit",
+    Label = "Fantastische Poets Set",
     Image = "car-polish.png",
-    Description = "To keep your car sparkling clean..",
+    Description = "Om je auto glitterend schoon te houden..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -3377,9 +3482,9 @@ Shared.Items["car-polish"] = {
 
 Shared.Items["cannabiscup"] = {
     Name = "cannabiscup",
-    Label = "Trophy",
+    Label = "Troffee",
     Image = "cannabiscup.png",
-    Description = "A real winner, that's you!",
+    Description = "Een echte winnaar, dat ben jij!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3394,7 +3499,7 @@ Shared.Items["cannabiscup"] = {
 --     Name = "printer",
 --     Label = "Printer",
 --     Image = "printer.png",
---     Description = "Something involving ink and paper...",
+--     Description = "Iets met inkt en wat papier...",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = true,
 --     IsBag = false, Weight = 30,
@@ -3414,7 +3519,7 @@ Shared.Items["cannabiscup"] = {
 --     Name = "printer-pack-paper",
 --     Label = "Printer Pak Papier",
 --     Image = "printer-pack-paper.png",
---     Description = "A pack with some sheets of paper..",
+--     Description = "Een pak, met wat papiertjes..",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = true,
 --     IsBag = false, Weight = 7,
@@ -3431,7 +3536,7 @@ Shared.Items["cannabiscup"] = {
 --     Name = "printer-paper",
 --     Label = "Printer Papier",
 --     Image = "printer-paper.png",
---     Description = "What will you print on the paper this time?",
+--     Description = "Wat zal je dit keer op het papier afdrukken?",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = false,
 --     IsBag = false, Weight = 1,
@@ -3444,9 +3549,9 @@ Shared.Items["cannabiscup"] = {
 
 Shared.Items["nightvision"] = {
     Name = "nightvision",
-    Label = "Night Vision Goggles",
+    Label = "Nachtkijker",
     Image = "nightvision.png",
-    Description = "Mil-Spec. High price, low quality.",
+    Description = "Mil-Spec. Hoge prijs, lage kwaliteit.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -3461,7 +3566,7 @@ Shared.Items["ingredient"] = {
     Name = "ingredient",
     Label = "Ingredient",
     Image = "ingredient.png",
-    Description = "Used to prepare food.",
+    Description = "Wordt gebruikt om voedsel te maken.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.5,
@@ -3656,7 +3761,7 @@ Shared.Items["tcg-binder"] = {
     Name = "tcg-binder",
     Label = "Trading Card Binder",
     Image = "tcg-binder.png",
-    Description = "A binder for storing all your trading cards.",
+    Description = "Een binder om alle Trading Cards in te stoppen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -3791,7 +3896,7 @@ Shared.Items["business-ticket"] = {
     Name = "business-ticket",
     Label = "Bestelling Bon",
     Image = "business-ticket.png",
-    Description = "This receipt contains an order that needs to be prepared quickly!",
+    Description = "Hier staat een bestelling op die snel gemaakt moet worden!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.15,
@@ -3804,9 +3909,9 @@ Shared.Items["business-ticket"] = {
 
 Shared.Items["worstenbroodje"] = {
     Name = "worstenbroodje",
-    Label = "Sausage Roll",
+    Label = "Worstenbroodje",
     Image = "sausageroll.png",
-    Description = "A sausage roll with a touch of Brabant.",
+    Description = "Een broodje met een Brabants tintje.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -3819,9 +3924,9 @@ Shared.Items["worstenbroodje"] = {
 
 Shared.Items["moneycase"] = {
     Name = "moneycase",
-    Label = "Suitcase",
+    Label = "Koffer",
     Image = "moneycase.png",
-    Description = "Holds around €50k in large bills.",
+    Description = "Goed voor zo'n €50k in grote biljetten",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 10,
@@ -3834,9 +3939,9 @@ Shared.Items["moneycase"] = {
 
 Shared.Items["advmoneycase"] = {
     Name = "advmoneycase",
-    Label = "Large Suitcase",
+    Label = "Grote Koffer",
     Image = "advmoneycase.png",
-    Description = "Holds around €100k in large bills.",
+    Description = "Goed voor zo'n €100k in grote biljetten",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 20,
@@ -3851,7 +3956,7 @@ Shared.Items["explosive"] = {
     Name = "explosive",
     Label = "Explosief",
     Image = "explosive.png",
-    Description = "Be careful with those fireworks..",
+    Description = "Pas nou op met dat vuurwerk..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 15,
@@ -3869,9 +3974,9 @@ Shared.Items["explosive"] = {
 
 Shared.Items["business-bag"] = {
     Name = "business-bag",
-    Label = "Company Bag",
+    Label = "Bedrijfs Tas",
     Image = "business-bag.png",
-    Description = "There's some nice stuff in here.",
+    Description = "Hier zitten lekkere spulletjes in.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = true, Weight = 1,
@@ -3886,7 +3991,7 @@ Shared.Items["zombie-antidote"] = {
     Name = "zombie-antidote",
     Label = "Infect Antidote",
     Image = "syringe.png",
-    Description = "A syringe filled with some green stuff..",
+    Description = "Een spuit met wat groene spul erin..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3899,9 +4004,9 @@ Shared.Items["zombie-antidote"] = {
 
 Shared.Items["receipt"] = {
     Name = "receipt",
-    Label = "Receipt",
+    Label = "Bonnetje",
     Image = "business-ticket.png",
-    Description = "A receipt with some codes written on it..",
+    Description = "Een bonnetje met wat codes erop geschreven..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -3916,7 +4021,7 @@ Shared.Items["yacht-pad"] = {
     Name = "yacht-pad",
     Label = "Pepega Pad",
     Image = "yacht-pad.png",
-    Description = "Preconfigured to access certain systems. Marked for confiscation.",
+    Description = "Voorgeconfigureerd voor toegang tot bepaalde systemen. Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -3929,9 +4034,9 @@ Shared.Items["yacht-pad"] = {
 
 Shared.Items["heist-codes"] = {
     Name = "heist-codes",
-    Label = "Access Codes",
+    Label = "Autorisatiecodes",
     Image = "business-ticket.png",
-    Description = "Temporary code used to disable certain security systems. Marked for confiscation.",
+    Description = "Tijdelijke code om bepaalde beveiligings systemen uit te schakelen. Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -4021,7 +4126,7 @@ Shared.Items["detcord"] = {
     Name = "detcord",
     Label = "(PD) Det. Cord",
     Image = "detcord.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5.0,
@@ -4049,9 +4154,9 @@ Shared.Items["cryptostick"] = {
 
 Shared.Items["farming-seed"] = {
     Name = "farming-seed",
-    Label = "Seed",
+    Label = "Zaadje",
     Image = "farming-seed.png",
-    Description = "Seeds.",
+    Description = "Zaad.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4064,9 +4169,9 @@ Shared.Items["farming-seed"] = {
 
 Shared.Items["farming-seedbag"] = {
     Name = "farming-seedbag",
-    Label = "Bag of Seeds",
+    Label = "Zak Zaad",
     Image = "farming-seedbag.png",
-    Description = "A bag of seeds 💦. Keep your seed collection safe with you.",
+    Description = "Een zak met zaad 💦. Bewaar je verzameling zaadjes veilig bij jezelf.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true,
     IsBag = true, Weight = 1,
@@ -4079,9 +4184,9 @@ Shared.Items["farming-seedbag"] = {
 
 Shared.Items["producebasket"] = {
     Name = "producebasket",
-    Label = "Fruit Basket",
+    Label = "Fruitmand",
     Image = "producebasket.png",
-    Description = "A hand-woven basket for storing the produce from your harvest.",
+    Description = "Een handgeweven mand om de opbrengsten van je oogst in te bewaren.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true,
     IsBag = true, Weight = 5,
@@ -4094,7 +4199,7 @@ Shared.Items["producebasket"] = {
 
 Shared.Items["farming-wateringcan"] = {
     Name = "farming-wateringcan",
-    Label = "Watering Can",
+    Label = "Gieter",
     Image = "farming-wateringcan.png",
     Description = "Water?",
     Weapon = false, Illegal = true,
@@ -4109,9 +4214,9 @@ Shared.Items["farming-wateringcan"] = {
 
 Shared.Items["farming-pitchfork"] = {
     Name = "farming-pitchfork",
-    Label = "Pitchfork",
+    Label = "Hooivork",
     Image = "farming-pitchfork.png",
-    Description = "A pitchfork to stick up your backside.",
+    Description = "Hooivork, om in je poepert te steken.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -4124,9 +4229,9 @@ Shared.Items["farming-pitchfork"] = {
 
 Shared.Items["farming-hoe"] = {
     Name = "farming-hoe",
-    Label = "Hoe",
+    Label = "Schoffel",
     Image = "farming-hoe.png",
-    Description = "Can be used to plant multiple seeds at once.",
+    Description = "Kan gebruikt worden om meerdere zaadjes tegelijk te plaatsen.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -4139,9 +4244,9 @@ Shared.Items["farming-hoe"] = {
 
 Shared.Items["gang-chain"] = {
     Name = "gang-chain",
-    Label = "Loser Necklace",
+    Label = "Ketting: Loser",
     Image = "gold-necklace.png",
-    Description = "You're a loser if you wear this necklace..",
+    Description = "Je bent een loser als je deze ketting hebt..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1.0,
@@ -4158,9 +4263,9 @@ Shared.Items["gang-chain"] = {
 
 Shared.Items["identification-badge"] = {
     Name = "identification-badge",
-    Label = "Work ID",
+    Label = "Pas",
     Image = "badge.png",
-    Description = "An ID card proving that you work somewhere.",
+    Description = "Een pas om te identificeren dat je ergens werkt.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0,
@@ -4173,9 +4278,9 @@ Shared.Items["identification-badge"] = {
 
 Shared.Items["newscamera"] = {
     Name = "newscamera",
-    Label = "News Camera",
+    Label = "Nieuws Camera",
     Image = "newscamera.png",
-    Description = "A little dusty.",
+    Description = "Een beetje stoffig.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 11,
@@ -4188,9 +4293,9 @@ Shared.Items["newscamera"] = {
 
 Shared.Items["newsmic"] = {
     Name = "newsmic",
-    Label = "News Microphone",
+    Label = "Nieuws Microfoon",
     Image = "newsmic.png",
-    Description = "Is this thing on?",
+    Description = "Staat dit ding aan?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -4203,9 +4308,9 @@ Shared.Items["newsmic"] = {
 
 Shared.Items["goldpan"] = {
     Name = "goldpan",
-    Label = "Gold Pan",
+    Label = "Pan voor Goud",
     Image = "goldpan.png",
-    Description = "Nice piece of equipment.",
+    Description = "Mooi ding.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -4218,9 +4323,9 @@ Shared.Items["goldpan"] = {
 
 Shared.Items["jewelry-part"] = {
     Name = "jewelry-part",
-    Label = "Jewelry Component",
+    Label = "Juweel Onderdeel",
     Image = "jewelry-part.png",
-    Description = "A jewelry component. You could get a fair amount of money for selling this!",
+    Description = "Een onderdeel van een juweel, als je dit verkoopt kan dit nog best wel wat geld opbrengen!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4237,7 +4342,7 @@ Shared.Items["lawnchair"] = {
     Name = "lawnchair",
     Label = "Lawnchair",
     Image = "lawnchair.png",
-    Description = "Perfect for relaxing in your backyard.",
+    Description = "Lekker zitten in je achtertuintje.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 0.85,
@@ -4251,9 +4356,9 @@ Shared.Items["lawnchair"] = {
 -- Weed
 Shared.Items["fertilizer"] = {
     Name = "fertilizer",
-    Label = "Manure",
+    Label = "Mest",
     Image = "fertilizer.png",
-    Description = "Did you poop in this?",
+    Description = "Heb jij hierin gescheten?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2.5,
@@ -4271,9 +4376,9 @@ Shared.Items["fertilizer"] = {
 
 Shared.Items["weed-seed-male"] = {
     Name = "weed-seed-male",
-    Label = "Weed Seed (Male)",
+    Label = "Wiet Zaadje (M)",
     Image = "weed-seeds.png",
-    Description = "Let my young ones grow!",
+    Description = "Laat mijn jongeren groeien!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1.5,
@@ -4286,9 +4391,9 @@ Shared.Items["weed-seed-male"] = {
 
 Shared.Items["weed-seed-female"] = {
     Name = "weed-seed-female",
-    Label = "Weed Seed (Female)",
+    Label = "Wiet Zaadje (V)",
     Image = "weed-seeds.png",
-    Description = "Let my young ones grow!",
+    Description = "Laat mijn jongeren groeien!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1.5,
@@ -4301,9 +4406,9 @@ Shared.Items["weed-seed-female"] = {
 
 Shared.Items["weed-branch"] = {
     Name = "weed-branch",
-    Label = "Weed Branch",
+    Label = "Wiet Tak",
     Image = "weed-branch.png",
-    Description = "The best smell ever!!!",
+    Description = "De beste geur ooit!!!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false, HasProp = true,
     IsBag = false, Weight = 25.0,
@@ -4316,9 +4421,9 @@ Shared.Items["weed-branch"] = {
 
 Shared.Items["weed-dried-bud-one"] = {
     Name = "weed-dried-bud-one",
-    Label = "Dried Bud (7g)",
+    Label = "Gedroogde Knop (7g)",
     Image = "weed-dried-bud-one.png",
-    Description = "The best smell ever!!!",
+    Description = "De beste geur ooit!!!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5.0,
@@ -4331,9 +4436,9 @@ Shared.Items["weed-dried-bud-one"] = {
 
 Shared.Items["weed-dried-bud-two"] = {
     Name = "weed-dried-bud-two",
-    Label = "Dried Bud (3g)",
+    Label = "Gedroogde Knop (3g)",
     Image = "weed-dried-bud-one.png",
-    Description = "The best smell ever!!!",
+    Description = "De beste geur ooit!!!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3.0,
@@ -4350,7 +4455,7 @@ Shared.Items["weed-bag"] = {
     Name = "weed-bag",
     Label = "Zakje (7g)",
     Image = "weed-bagged.png",
-    Description = "Sold on the streets, yo.",
+    Description = "Verkocht op straat yo.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.7,
@@ -4368,7 +4473,7 @@ Shared.Items["weed-bag-1g"] = {
     Name = "weed-bag-1g",
     Label = "Zakje (1g)",
     Image = "weed-bagged.png",
-    Description = "Sold on the streets, yo.",
+    Description = "Verkocht op straat yo.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.7,
@@ -4384,9 +4489,9 @@ Shared.Items["weed-bag-1g"] = {
 
 Shared.Items["rolling-paper"] = {
     Name = "rolling-paper",
-    Label = "Rolling Papers",
+    Label = "Vloei Papier",
     Image = "rollingpaper.png",
-    Description = "Required to roll joints!",
+    Description = "Vereist om joints te rollen!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.3,
@@ -4399,9 +4504,9 @@ Shared.Items["rolling-paper"] = {
 
 Shared.Items["emptybaggies"] = {
     Name = "emptybaggies",
-    Label = "Empty Bags",
+    Label = "Lege Zakjes",
     Image = "m_emptybaggies.png",
-    Description = "Why is this empty?!",
+    Description = "Waarom is dit leeg?!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.1,
@@ -4416,9 +4521,9 @@ Shared.Items["emptybaggies"] = {
 
 Shared.Items["scales"] = {
     Name = "scales",
-    Label = "Scale",
+    Label = "Weegschaal",
     Image = "scales.png",
-    Description = "Is this even accurate?!",
+    Description = "Is dit wel accuraat?!",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 2.5,
@@ -4435,7 +4540,7 @@ Shared.Items["scales"] = {
 
 Shared.Items["generic-mechanic-part"] = {
     Name = "generic-mechanic-part",
-    Label = "Mechanical Part",
+    Label = "Mechanisch Deel",
     Image = "generic-mechanic-part-a.png",
     Description = "",
     Weapon = false, Illegal = false,
@@ -4450,9 +4555,9 @@ Shared.Items["generic-mechanic-part"] = {
 
 Shared.Items["vehicle-clutch"] = {
     Name = "vehicle-clutch",
-    Label = "Clutch (?)",
+    Label = "Koppeling (?)",
     Image = "clutch-a.png",
-    Description = "Unknown-Class Clutch",
+    Description = "Koppeling Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4465,9 +4570,9 @@ Shared.Items["vehicle-clutch"] = {
 
 Shared.Items["vehicle-axle"] = {
     Name = "vehicle-axle",
-    Label = "Driveshaft (?)",
+    Label = "Aandrijfas (?)",
     Image = "axle-a.png",
-    Description = "Unknown-Class Driveshaft",
+    Description = "Aandrijfas Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4480,9 +4585,9 @@ Shared.Items["vehicle-axle"] = {
 
 Shared.Items["vehicle-brakes"] = {
     Name = "vehicle-brakes",
-    Label = "Brakes (?)",
+    Label = "Remmen (?)",
     Image = "brakes-a.png",
-    Description = "Unknown-Class Brakes",
+    Description = "Remmen Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4495,9 +4600,9 @@ Shared.Items["vehicle-brakes"] = {
 
 Shared.Items["vehicle-engine"] = {
     Name = "vehicle-engine",
-    Label = "Engine (?)",
+    Label = "Motor (?)",
     Image = "engine-a.png",
-    Description = "Unknown-Class Engine",
+    Description = "Motor Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4510,9 +4615,9 @@ Shared.Items["vehicle-engine"] = {
 
 Shared.Items["vehicle-injectors"] = {
     Name = "vehicle-injectors",
-    Label = "Injectors (?)",
+    Label = "Injectoren (?)",
     Image = "injectors-a.png",
-    Description = "Unknown-Class Fuel Injectors",
+    Description = "Brandstof Injectoren Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4525,9 +4630,9 @@ Shared.Items["vehicle-injectors"] = {
 
 Shared.Items["vehicle-transmission"] = {
     Name = "vehicle-transmission",
-    Label = "Transmission (?)",
+    Label = "Transmissie (?)",
     Image = "transmission-a.png",
-    Description = "Unknown-Class Transmission",
+    Description = "Transmissie Klasse Onbekend",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -4538,12 +4643,12 @@ Shared.Items["vehicle-transmission"] = {
     InsertInto = {},
 }
 
--- Version 2.1
+-- 2.1
 Shared.Items["gang-spray"] = {
     Name = "gang-spray",
-    Label = "Spray Can",
+    Label = "Spuitbus",
     Image = "spraycan.png",
-    Description = "A spray can.",
+    Description = "Een spuitbus.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 2,
@@ -4556,9 +4661,9 @@ Shared.Items["gang-spray"] = {
 
 Shared.Items["scrubbingcloth"] = {
     Name = "scrubbingcloth",
-    Label = "Scrubbing Cloth",
+    Label = "Schrobdoek",
     Image = "scrubbingcloth.png",
-    Description = "Seems to dry out quickly..",
+    Description = "Lijkt snel op te drogen..",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 35,
@@ -4571,7 +4676,7 @@ Shared.Items["scrubbingcloth"] = {
 
 Shared.Items["mugoftea"] = {
     Name = "mugoftea",
-    Label = "Mug of Tea",
+    Label = "Mok met Thee",
     Image = "mugoftea.png",
     Description = "Slurp, slurp...",
     Weapon = false, Illegal = false,
@@ -4586,9 +4691,9 @@ Shared.Items["mugoftea"] = {
 
 -- Shared.Items["casino-member"] = {
 --     Name = "casino-member",
---     Label = "Casino Membership",
+--     Label = "Casino Lidmaatschap",
 --     Image = "casino_member.png",
---     Description = "All the games, all the fun. Diamond Casino.",
+--     Description = "Alle spelletjes, al het plezier. Diamond Casino.",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = true,
 --     IsBag = false, Weight = 1,
@@ -4601,9 +4706,9 @@ Shared.Items["mugoftea"] = {
 
 -- Shared.Items["casino-vip"] = {
 --     Name = "casino-vip",
---     Label = "High Roller Membership",
+--     Label = "High Roller Lidmaatschap",
 --     Image = "casino_member_high.png",
---     Description = "Spend even more cash. Diamond Casino.",
+--     Description = "Meer doekoes uitgeven. Diamond Casino.",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = true,
 --     IsBag = false, Weight = 1,
@@ -4616,7 +4721,7 @@ Shared.Items["mugoftea"] = {
 
 -- Shared.Items["casino-loyalty"] = {
 --     Name = "casino-loyalty",
---     Label = "Loyalty Membership",
+--     Label = "Loyalty Lidmaatschap",
 --     Image = "casino_member.png",
 --     Description = "%gamba",
 --     Weapon = false, Illegal = false,
@@ -4631,9 +4736,9 @@ Shared.Items["mugoftea"] = {
 
 -- Shared.Items["casino-free-ticket"] = {
 --     Name = "casino-free-ticket",
---     Label = "Free Spin!",
+--     Label = "Gratis Spin!",
 --     Image = "casino_spin.png",
---     Description = "Free! Free! Spin!",
+--     Description = "Gratis! Gratis! Spin!",
 --     Weapon = false, Illegal = false,
 --     Metal = false, NonStack = true,
 --     IsBag = false, Weight = 1,
@@ -4647,9 +4752,9 @@ Shared.Items["mugoftea"] = {
 -- Drugs
 Shared.Items["cocainebrick"] = {
     Name = "cocainebrick",
-    Label = "Airtight Cocaine Brick (1kg)",
+    Label = "Luchtdichte Cocaïne Brick (1kg)",
     Image = "cocainebrick.png",
-    Description = "Good stuff, bro.",
+    Description = "Goeie shit neef",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false, HasProp = true,
     IsBag = false, Weight = 20,
@@ -4662,9 +4767,9 @@ Shared.Items["cocainebrick"] = {
 
 Shared.Items["10gcocaine"] = {
     Name = "10gcocaine",
-    Label = "10g Cocaine",
+    Label = "10g Cocaïne",
     Image = "cocainebaggy.png",
-    Description = "Smells like high-quality coke.",
+    Description = "Ruikt naar hoge kwaliteit kook.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4681,7 +4786,7 @@ Shared.Items["5gcocaine"] = {
     Name = "5gcocaine",
     Label = "Coke Baggy (5g)",
     Image = "cocainebaggy.png",
-    Description = "I think you could make drywall with this.",
+    Description = "Volgensmij kan je hiermee gipsplaten maken.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4696,7 +4801,7 @@ Shared.Items["5gcrack"] = {
     Name = "5gcrack",
     Label = "5g Crack",
     Image = "crackbaggy.png",
-    Description = "Little crack treats.. anyone hungry?",
+    Description = "Poffertjes Crackertjes.. trek?",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4714,7 +4819,7 @@ Shared.Items["bakingsoda"] = {
     Name = "bakingsoda",
     Label = "Baking Soda",
     Image = "bakingsoda.png",
-    Description = "You should sprinkle this on pancakes. Delicious!",
+    Description = "Dit moet je strooien op de pannenkoeken, goddelijk!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4729,7 +4834,7 @@ Shared.Items["ammonium-bicarbonate"] = {
     Name = "ammonium-bicarbonate",
     Label = "Ammonium Bicarbonate",
     Image = "ammonium-bicarbonate.png",
-    Description = "Very good at breaking things down. This compound has many names, reflecting its long history.",
+    Description = "Heel goed in dingen afbreken. Deze verbinding heeft vele namen, die zijn lange geschiedenis weerspiegelen",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -4760,9 +4865,9 @@ Shared.Items["crackpipe"] = {
 
 Shared.Items["methusb"] = {
     Name = "methusb",
-    Label = "USB Device",
+    Label = "USB-apparaat",
     Image = "heist-usb-black.png",
-    Description = "I wonder what you could do with this?",
+    Description = "Wat zou je hier nou toch mee kunnen?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -4775,9 +4880,9 @@ Shared.Items["methusb"] = {
 
 Shared.Items["methtable"] = {
     Name = "methtable",
-    Label = "A Table",
+    Label = "Een Tafel",
     Image = "methtable.png",
-    Description = "Looks like a table you can place.",
+    Description = "Ziet eruit als een tafel die je kan plaatsen.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 50,
@@ -4790,9 +4895,9 @@ Shared.Items["methtable"] = {
 
 Shared.Items["methbatch"] = {
     Name = "methbatch",
-    Label = "Batch of Raw Meth",
+    Label = "Batch Rauwe Meth",
     Image = "methbatch.png",
-    Description = "Crystalline. Should be stored somewhere cool and dry to harden.",
+    Description = "Kristalachtig. Moet ergens koel en droog worden opgeslagen om uit te harden.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 15,
@@ -4805,9 +4910,9 @@ Shared.Items["methbatch"] = {
 
 Shared.Items["methcured"] = {
     Name = "methcured",
-    Label = "Batch of Cured Meth",
+    Label = "Batch Uitgeharde Meth",
     Image = "methcured.png",
-    Description = "Ready for bagging!",
+    Description = "Klaar voor de zakjes!",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 15,
@@ -4837,7 +4942,7 @@ Shared.Items["methpipe"] = {
     Name = "methpipe",
     Label = "Meth Pipe",
     Image = "methpipe.png",
-    Description = "Good stuff, bro.",
+    Description = "Goeie shit neef",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 5,
@@ -4853,9 +4958,9 @@ Shared.Items["methpipe"] = {
 
 Shared.Items["floorcleaner"] = {
     Name = "floorcleaner",
-    Label = "Floor Cleaner",
+    Label = "Vloerreiniger",
     Image = "floorcleaner.png",
-    Description = "A bottle of floor cleaner containing a large amount of hard drugs..",
+    Description = "Een flesje vloerreiniger met een grote hoeveelheid hard-drugs erin..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 5,
@@ -4869,9 +4974,9 @@ Shared.Items["floorcleaner"] = {
 -- Beehives
 Shared.Items["bee-wax"] = {
     Name = "bee-wax",
-    Label = "Beeswax",
+    Label = "Bijenwas",
     Image = "bee-wax.png",
-    Description = "This is really sticky, what the heck..",
+    Description = "Dit plakt wel echt veel wtf..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.75,
@@ -4884,9 +4989,9 @@ Shared.Items["bee-wax"] = {
 
 Shared.Items["bee-queen"] = {
     Name = "bee-queen",
-    Label = "Queen Bee",
+    Label = "Bijen Koningin",
     Image = "bee-queen.png",
-    Description = "Looks like this is the queen!",
+    Description = "Ziet er naar uit dat dit de koningin is!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.15,
@@ -4899,7 +5004,7 @@ Shared.Items["bee-queen"] = {
 
 Shared.Items["beehive"] = {
     Name = "beehive",
-    Label = "Beehive",
+    Label = "Bijenkorf",
     Image = "beehive.png",
     Description = "ZZZzzzZZZZzzzzzzzz..",
     Weapon = false, Illegal = false,
@@ -4914,9 +5019,9 @@ Shared.Items["beehive"] = {
 
 Shared.Items["carwax"] = {
     Name = "carwax",
-    Label = "Car Wash Kit",
+    Label = "Autowas Set",
     Image = "carwax.png",
-    Description = "Spread beeswax over your car so it doesn't get dirty as quickly..",
+    Description = "Lekker bijenwas over je auto heen smeren zodat hij minder snel vies wordt..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -4934,7 +5039,7 @@ Shared.Items["carwax"] = {
 -- Stealing rims hehe
 Shared.Items["screwdriver"] = {
     Name = "screwdriver",
-    Label = "Screwdriver",
+    Label = "Schroevendraaier",
     Image = "screwdriver.png",
     Description = "",
     Weapon = false, Illegal = false,
@@ -4949,9 +5054,9 @@ Shared.Items["screwdriver"] = {
 
 Shared.Items["stolen-vehicle-rim"] = {
     Name = "stolen-vehicle-rim",
-    Label = "Vehicle Rim",
+    Label = "Voertuig Velg",
     Image = "stolen-vehicle-rim.png",
-    Description = "Looks like a wheel rim?",
+    Description = "Ziet eruit als een velg?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -4964,9 +5069,9 @@ Shared.Items["stolen-vehicle-rim"] = {
 
 Shared.Items["evidence"] = {
     Name = "evidence",
-    Label = "Evidence Marker",
+    Label = "Bewijs Markering",
     Image = "evidence-yellow.png",
-    Description = "Use to mark evidence.",
+    Description = "Gebruik om bewijs te markeren.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0.15,
@@ -4979,9 +5084,9 @@ Shared.Items["evidence"] = {
 
 Shared.Items["evidence-collected"] = {
     Name = "evidence-collected",
-    Label = "Evidence Marker",
+    Label = "Bewijs Markering",
     Image = "evidence-yellow.png",
-    Description = "Use to mark evidence.",
+    Description = "Gebruik om bewijs te markeren.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0.15,
@@ -4994,9 +5099,9 @@ Shared.Items["evidence-collected"] = {
 
 Shared.Items["dna-reader"] = {
     Name = "dna-reader",
-    Label = "(PD) DNA Reader",
+    Label = "(PD) DNA-lezer",
     Image = "dna-reader.png",
-    Description = "Can be used to read DNA.<br/><br/>Equipment issued by the government (PD/EMS).",
+    Description = "Kan gebruikt worden om DNA uit te lezen.<br/><br/>Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 15,
@@ -5009,9 +5114,9 @@ Shared.Items["dna-reader"] = {
 
 Shared.Items["tow-rope"] = {
     Name = "tow-rope",
-    Label = "Tow Rope",
+    Label = "Sleeptouw",
     Image = "tow-rope.png",
-    Description = "You can attach it to a car, but perhaps to other things as well..?",
+    Description = "Kan je aan een auto koppelen, maar misschien ook aan andere dingen..?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -5024,9 +5129,9 @@ Shared.Items["tow-rope"] = {
 
 Shared.Items["atm-blackbox"] = {
     Name = "atm-blackbox",
-    Label = "Black Box",
+    Label = "Zwarte Doos",
     Image = "atm-blackbox.png",
-    Description = "How did you manage to pull this thing out of the wall..?",
+    Description = "Hoe heb je dit ding nou weer uit de muur getrokken..?",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 100,
@@ -5040,9 +5145,9 @@ Shared.Items["atm-blackbox"] = {
 -- Heists rework
 Shared.Items["heist-loot"] = {
     Name = "heist-loot",
-    Label = "Valuable Goods",
+    Label = "Waardevolle Goederen",
     Image = "valuable-goods.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5055,9 +5160,9 @@ Shared.Items["heist-loot"] = {
 
 Shared.Items["heist-loot-usb"] = {
     Name = "heist-loot-usb",
-    Label = "USB Device",
+    Label = "USB-apparaat",
     Image = "h_usb_device.png",
-    Description = "I think this contains some illegal crypto.. Marked for confiscation.",
+    Description = "Ik denk dat hier wat illegale Crypto op staat.. Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = true,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5072,7 +5177,7 @@ Shared.Items["heist-usb"] = {
     Name = "heist-usb",
     Label = "USB",
     Image = "heist-usb-green.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 10,
@@ -5087,7 +5192,7 @@ Shared.Items["heist-laptop"] = {
     Name = "heist-laptop",
     Label = "Laptop",
     Image = "heist-laptop-green.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5282,7 +5387,7 @@ Shared.Items["heist-safecracking"] = {
     Name = "heist-safecracking",
     Label = "Safe Cracking Tool",
     Image = "h_safecracking.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5295,9 +5400,9 @@ Shared.Items["heist-safecracking"] = {
 
 Shared.Items["heist-safe-codes"] = {
     Name = "heist-safe-codes",
-    Label = "Private Note",
+    Label = "Prive Notitie",
     Image = "business-ticket.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -5310,9 +5415,9 @@ Shared.Items["heist-safe-codes"] = {
 
 Shared.Items["gruppe6"] = {
     Name = "gruppe6",
-    Label = "G6 Card",
+    Label = "G6 Kaart",
     Image = "gruppe6.png",
-    Description = "Looks useful..",
+    Description = "Ziet er handig uit..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -5326,9 +5431,9 @@ Shared.Items["gruppe6"] = {
 -- Racing
 Shared.Items["racing-usb"] = {
     Name = "racing-usb",
-    Label = "Phone USB",
+    Label = "Telefoon USB",
     Image = "c_racing_usb.png",
-    Description = "Marked for confiscation.",
+    Description = "Gemarkeerd voor inbeslagname.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -5341,9 +5446,9 @@ Shared.Items["racing-usb"] = {
 
 Shared.Items["racing-usb-pd"] = {
     Name = "racing-usb-pd",
-    Label = "(PD) Phone USB",
+    Label = "(PD) Telefoon USB",
     Image = "c_racing_usb.png",
-    Description = "Gives you access to the Time Trials app.",
+    Description = "Geeft je toegang tot de Time Trials app",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -5358,7 +5463,7 @@ Shared.Items["adrenaline"] = {
     Name = "adrenaline",
     Label = "Adrenaline Pen",
     Image = "adrenaline.png",
-    Description = "Not a ballpoint pen, but a pen full of adrenaline.",
+    Description = "Geen bal pen, maar een pen vol adrenaline.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5373,7 +5478,7 @@ Shared.Items["ibuprofen"] = {
     Name = "ibuprofen",
     Label = "Ibuprofen 400mg",
     Image = "ibuprofen.png",
-    Description = "A box of ibuprofen tablets. Available only with a prescription from Crusade Medical Center.",
+    Description = "Een doosje met pilletjes ibuprofen. Alleen verkrijgbaar met een recept van het Crusade Medical Center.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5388,7 +5493,7 @@ Shared.Items["ketamine"] = {
     Name = "ketamine",
     Label = "Ketamine 200mg",
     Image = "ketamine.png",
-    Description = "A good anesthetic, though it's for pussies.. Available only with a prescription from Crusade Medical Center.",
+    Description = "Goed verdovingsmiddeltje, wel voor pussies tho.. Alleen verkrijgbaar met een recept van het Crusade Medical Center.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5403,7 +5508,7 @@ Shared.Items["melatonin"] = {
     Name = "melatonin",
     Label = "Melatonine 299mcg",
     Image = "melatonin.png",
-    Description = "Sleep tight, you sausage.",
+    Description = "Slaapwel frikandel.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5418,7 +5523,7 @@ Shared.Items["morphine"] = {
     Name = "morphine",
     Label = "Morfine 15mg",
     Image = "morphine.png",
-    Description = "Time to get nice and drowsy. Bring it on. Available only with a prescription from Crusade Medical Center.",
+    Description = "Tijd om lekker suf te worden, kom maar op hoor. Alleen verkrijgbaar met een recept van het Crusade Medical Center.",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5433,7 +5538,7 @@ Shared.Items["painkillers"] = {
     Name = "painkillers",
     Label = "Paracetamol 500mg",
     Image = "painkillers.png",
-    Description = "I heard that if you take 20 of these, you'll get a stomach ache and then sleep very well..",
+    Description = "Ik heb gehoord dat als je er 20 slikt je wat buikpijn krijgt en daarna heerlijk gaat slapen..",
     Weapon = false, Illegal = true,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 3,
@@ -5446,9 +5551,9 @@ Shared.Items["painkillers"] = {
 
 Shared.Items["food-box"] = {
     Name = "food-box",
-    Label = "Bag of Food",
+    Label = "Tas met Voedsel",
     Image = "food-box.png",
-    Description = "Ooh, if I were you, I'd sneak a little taste!",
+    Description = "Oehh ik zou er wat uitsnoepen als ik jou was!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,
     IsBag = false, Weight = 25,
@@ -5461,9 +5566,9 @@ Shared.Items["food-box"] = {
 
 Shared.Items["metaldetector"] = {
     Name = "metaldetector",
-    Label = "Metal Detector",
+    Label = "Metaaldetector",
     Image = "metaldetector.png",
-    Description = "If the internet is to be believed, you can use this to find gold diggers..",
+    Description = "Als ik het internet moet geloven, kan je hiermee golddiggers vinden..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 20,
@@ -5481,9 +5586,9 @@ Shared.Items["metaldetector"] = {
 
 Shared.Items["trowel"] = {
     Name = "trowel",
-    Label = "Trowel",
+    Label = "Troffel",
     Image = "trowel.png",
-    Description = "Useful for digging small holes..",
+    Description = "Handig voor het graven van gaatjes..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 2,
@@ -5496,7 +5601,7 @@ Shared.Items["trowel"] = {
 
 Shared.Items["heavy-cutters"] = {
     Name = "heavy-cutters",
-    Label = "Bolt Cutters",
+    Label = "Betonschaar",
     Image = "heavy-cutters.png",
     Description = "",
     Weapon = false, Illegal = false,
@@ -5514,7 +5619,7 @@ Shared.Items["polaroid-camera"] = {
     Name = "polaroid-camera",
     Label = "Polaroid Camera",
     Image = "m_polaroid_camera.png",
-    Description = "Time to take some snapshots..",
+    Description = "Lekker wat kiekjes maken..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 10,
@@ -5533,7 +5638,7 @@ Shared.Items["polaroid-paper"] = {
     Name = "polaroid-paper",
     Label = "Polaroid Film",
     Image = "m_polaroid_paper.png",
-    Description = "I think you'll need this to take a snapshot..",
+    Description = "Dit heb je denk ik wel nodig om een kiekje te maken..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5550,7 +5655,7 @@ Shared.Items["polaroid-photo"] = {
     Name = "polaroid-photo",
     Label = "Polaroid Photo",
     Image = "m_polaroid_photo.png",
-    Description = "A photo taken with a Polaroid camera.",
+    Description = "Een foto gemaakt met een polaroid camera.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1,
@@ -5565,7 +5670,7 @@ Shared.Items["polaroid-binder"] = {
     Name = "polaroid-binder",
     Label = "Polaroid Photobook",
     Image = "m_polaroid_binder.png",
-    Description = "A photo album for Polaroid pictures.",
+    Description = "Een fotoboek voor polaroid fotos",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 5,
@@ -5583,7 +5688,7 @@ Shared.Items["polaroid-battery"] = {
     Name = "polaroid-battery",
     Label = "Polaroid Battery Pack",
     Image = "m_polaroid_battery.png",
-    Description = "A battery pack for a Polaroid camera.",
+    Description = "Een batterij voor een polaroid",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5598,9 +5703,9 @@ Shared.Items["polaroid-battery"] = {
 
 Shared.Items["pdwatch"] = {
     Name = "pdwatch",
-    Label = "(PD) Watch & Compass",
+    Label = "PD Horloge & Kompas",
     Image = "m_watch.png",
-    Description = "Equipment issued by the government (PD/EMS).",
+    Description = "Door de overheid (PD/EMS) uitgegeven apparatuur",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0.0,
@@ -5613,7 +5718,7 @@ Shared.Items["pdwatch"] = {
 
 Shared.Items["book"] = {
     Name = "book",
-    Label = "Book",
+    Label = "Boek",
     Image = "book.png",
     Description = "",
     Weapon = false, Illegal = false,
@@ -5628,9 +5733,9 @@ Shared.Items["book"] = {
 
 Shared.Items["paper"] = {
     Name = "paper",
-    Label = "Paper",
+    Label = "Papier",
     Image = "paper.png",
-    Description = "Paper for writing a book.",
+    Description = "Papier om een boek mee te schrijven.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 1.0,
@@ -5645,7 +5750,7 @@ Shared.Items["walkman"] = {
     Name = "walkman",
     Label = "Walkman",
     Image = "walkman.png",
-    Description = "A blast from the past: an old device for listening to old-school music..",
+    Description = "Dit brengt de nostalgie naar boven, een oud apparaatje om naar oude lullen muziek te luisten..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 1.0,
@@ -5661,9 +5766,9 @@ Shared.Items["walkman"] = {
 
 Shared.Items["musictape"] = {
     Name = "musictape",
-    Label = "Cassette Tape",
+    Label = "Cassettebandje",
     Image = "musictape.png",
-    Description = "An empty cassette tape..",
+    Description = "Een leeg cassettebandje..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true,
     IsBag = false, Weight = 0.0,
@@ -5679,9 +5784,9 @@ Shared.Items["musictape"] = {
 
 Shared.Items["goldbanana"] = {
     Name = "goldbanana",
-    Label = "Golden Banana",
+    Label = "Gouden Banaan",
     Image = "goldbanana.png",
-    Description = "At least you have something to suck on...",
+    Description = "Kan je toch nog op iets sabbelen...",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = true,
     IsBag = false, Weight = 4.5,
@@ -5697,7 +5802,7 @@ Shared.Items["arcadetoken"] = {
     Name = "arcadetoken",
     Label = "Arcade Token",
     Image = "arcadetoken.png",
-    Description = "You can insert this into the arcade machines at Cooper's Arcade.",
+    Description = "Deze kan je gebruiken om in de arcade machines te stoppen bij Coopers Arcade.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 1,
@@ -5711,9 +5816,9 @@ Shared.Items["arcadetoken"] = {
 
 Shared.Items["notepad"] = {
     Name = "notepad",
-    Label = "Notepad",
+    Label = "Notitieblok",
     Image = "notepad.png",
-    Description = "A notepad with 10 pages..",
+    Description = "Een notitieblok met 10 paginas..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -5727,9 +5832,9 @@ Shared.Items["notepad"] = {
 
 Shared.Items["notepad-page"] = {
     Name = "notepad-page",
-    Label = "A Note",
+    Label = "Een Briefje",
     Image = "notepad-page.png",
-    Description = "A note with some writing on it?",
+    Description = "Een briefje met tekst?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -5743,9 +5848,9 @@ Shared.Items["notepad-page"] = {
 
 Shared.Items["antique-vase"] = {
     Name = "antique-vase",
-    Label = "Antique Vase",
+    Label = "Antieke Vaas",
     Image = "antique-vase-1.png",
-    Description = "An antique vase. I'd sell it!",
+    Description = "Een antieke vaas, ik zou 'm verkopen!",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -5759,9 +5864,9 @@ Shared.Items["antique-vase"] = {
 
 Shared.Items["painting"] = {
     Name = "painting",
-    Label = "Painting",
+    Label = "Schilderij",
     Image = "painting-1.png",
-    Description = "Is this finger paint?",
+    Description = "Is dit vingerverf?",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 2,
@@ -5775,9 +5880,9 @@ Shared.Items["painting"] = {
 
 Shared.Items["panicbutton"] = {
     Name = "panicbutton",
-    Label = "Panic Button",
+    Label = "Noodknop",
     Image = "panicbutton.png",
-    Description = "Use this to send an emergency alert.",
+    Description = "Gebruik om een noodknop te vesturen.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 0,
@@ -5793,7 +5898,7 @@ Shared.Items["radioscanner"] = {
     Name = "radioscanner",
     Label = "Radio Scanner",
     Image = "radioscanner.png",
-    Description = "A little device for picking up random radio communications..",
+    Description = "Een apperaatje om willekeurige radio communicatie op te pakken..",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = false,
     IsBag = false, Weight = 15.0,

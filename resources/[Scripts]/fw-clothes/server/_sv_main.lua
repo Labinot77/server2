@@ -80,6 +80,18 @@ FW.Functions.CreateCallback("fw-clothes:Server:GetPlayerOutfits", function(Sourc
     Cb(Retval)
 end)
 
+-- Clothing slots mirror what you wear (after buying clothes or wearing an outfit):
+-- a worn piece replaces the item in its slot (or is given), a piece you don't wear is deleted from its slot.
+function SyncClothingItems(Source, Skin)
+    for ComponentId, ItemName in pairs(Config.ClothingItems) do
+        local Worn = Skin.Clothes[ComponentId]
+        if type(Worn) == "table" then
+            local IsWorn = Worn[1] ~= GetNakedValue(Skin.Model, ComponentId)
+            exports['fw-inventory']:SetEquippedClothing(Source, ItemName, IsWorn and { Prop = Worn[1], Texture = Worn[2] })
+        end
+    end
+end
+
 FW.Functions.CreateCallback("fw-clothes:Server:PurchaseClothes", function(Source, Cb, PaymentType, _ClientPrice, NewSkin)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return end
@@ -106,6 +118,7 @@ FW.Functions.CreateCallback("fw-clothes:Server:PurchaseClothes", function(Source
     end
 
     Player.Functions.SetSkin({ Model = NewSkin.Model, Clothes = NewSkin.Clothes })
+    SyncClothingItems(Source, NewSkin)
 
     Cb({Success = true})
 end)
@@ -114,7 +127,7 @@ FW.RegisterServer("fw-clothes:Server:SetOutfit", function(Source, NewSkin)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil or type(NewSkin) ~= "table" or type(NewSkin.Clothes) ~= "table" then return end
 
-    local IsFree, Component = IsFreeSkinChange(Player.PlayerData.skin, NewSkin)
+    local IsFree, Component = IsFreeSkinChange(Player.PlayerData.skin, NewSkin, Source)
     if not IsFree then
         TriggerEvent('fw-logs:Server:Log', 'anticheat', 'Clothes', ('%s (%s) tried to change `%s` without paying.'):format(GetPlayerName(Source), Player.PlayerData.citizenid, tostring(Component or "Model")), 'red')
         TriggerClientEvent("fw-clothes:Client:LoadSkin", Source, nil)
@@ -240,8 +253,8 @@ FW.Commands.Add("v1", "Doe je vest aan", {}, false, function(Source, Args)
     TriggerClientEvent('fw-clothes:Client:ToggleFacewear', Source, 'Vest', true, true)
 end)
 
--- Using an accessory item equips it into its ACCESSORIES slot (or takes it off when already equipped).
-for _, ItemName in pairs({ 'hat', 'mask', 'glasses', 'earrings', 'watch' }) do
+-- Using a clothing item equips it into its slot (or takes it off when already equipped).
+for _, ItemName in pairs(Config.ClothingItems) do
     FW.Functions.CreateUsableItem(ItemName, function(Source, Item)
         local Player = FW.Functions.GetPlayer(Source)
         if Player == nil or Player.Functions.GetItemBySlot(Item.Slot) == nil then return end

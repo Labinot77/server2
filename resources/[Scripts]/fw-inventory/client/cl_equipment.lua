@@ -1,14 +1,17 @@
 -- // Equipment sync \\ --
--- Watches the Body / Accessories slots of the local player and applies the effect
+-- Watches the Body / Clothing slots of the local player and applies the effect
 -- of whatever is in them. Because it diffs PlayerData.inventory on every update,
 -- it works no matter HOW an item got moved: drag & drop, use-item, being robbed,
 -- admin /clearinv, RemoveItem from another resource, ...
 
 local LastEquipment = nil -- [Slot] = signature string | false
+local LastInfo = {} -- [Slot] = Info of the item that was equipped
 
+-- Only what matters for the ped: re-encoding the whole Info could reorder keys and re-apply items for nothing.
 local function Signature(Item)
     if not Item then return false end
-    return Item.Item .. '|' .. (Item.CustomType or '') .. '|' .. json.encode(Item.Info or {})
+    local Info = Item.Info or {}
+    return ('%s|%s|%s|%s'):format(Item.Item, Item.CustomType or '', tostring(Info.Prop), tostring(Info.Texture))
 end
 
 local function GetBackpackClothing(Item)
@@ -30,9 +33,13 @@ local function ApplySlot(Slot, SlotData, Item, IsInitial)
         if Item then
             TriggerEvent('fw-clothes:Client:SetAccessory', SlotData.Clothing, Item.Info or {}, not IsInitial)
         elseif not IsInitial then
-            -- Never strip clothing on login, only on an actual unequip.
-            TriggerEvent('fw-clothes:Client:SetAccessory', SlotData.Clothing, false, true)
+            -- Never strip clothing on login, only on an actual unequip (and only what that item put on).
+            TriggerEvent('fw-clothes:Client:SetAccessory', SlotData.Clothing, false, true, LastInfo[Slot])
         end
+    end
+
+    if SlotData.Minimap then
+        TriggerEvent('fw-hud:Client:SetWatchMinimap', Item ~= nil)
     end
 
     if SlotData.IsBackpack then
@@ -67,6 +74,7 @@ function SyncEquipment(Inventory, IsInitial)
         if IsInitial or LastEquipment[Slot] ~= Sig then
             ApplySlot(Slot, SlotData, Item, IsInitial)
         end
+        LastInfo[Slot] = Item and Item.Info or nil
     end
 
     LastEquipment = NewState

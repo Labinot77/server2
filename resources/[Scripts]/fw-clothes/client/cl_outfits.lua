@@ -234,11 +234,11 @@ AddEventHandler("fw-clothes:Client:ToggleFacewear", function(ComponentId, State,
     IsRemovingFacewear = false
 end)
 
--- Called by fw-inventory whenever an Accessory (or backpack) slot changes.
--- ItemInfo = { Prop = drawable, Texture = texture } to wear it, false to take it off.
+-- Called by fw-inventory whenever a Clothing (or backpack) slot changes.
+-- ItemInfo = { Prop = drawable, Texture = texture } to wear it, false to take it off (PrevInfo = the item taken off).
 local IsAnimatingAccessory = false
 RegisterNetEvent("fw-clothes:Client:SetAccessory")
-AddEventHandler("fw-clothes:Client:SetAccessory", function(ComponentId, ItemInfo, Animate)
+AddEventHandler("fw-clothes:Client:SetAccessory", function(ComponentId, ItemInfo, Animate, PrevInfo)
     local TypeData = Config.ClothingTypes[ComponentId]
     if TypeData == nil then return end
     if not Config.CurrentSkin or not Config.CurrentSkin.Clothes then return end -- Skin not loaded yet.
@@ -246,6 +246,9 @@ AddEventHandler("fw-clothes:Client:SetAccessory", function(ComponentId, ItemInfo
     if Config.CurrentSkin.Clothes[ComponentId] == nil then
         Config.CurrentSkin.Clothes[ComponentId] = { TypeData.Prop ~= nil and -1 or 0, 0 }
     end
+
+    -- Taking an item off only removes what that item put on (e.g. not the piece of an outfit you just changed into).
+    if not ItemInfo and PrevInfo and PrevInfo.Prop ~= nil and Config.CurrentSkin.Clothes[ComponentId][1] ~= PrevInfo.Prop then return end
 
     local Ped = PlayerPedId()
     local FacewearAnim = Config.FacewearAnimations[ComponentId]
@@ -271,13 +274,14 @@ AddEventHandler("fw-clothes:Client:SetAccessory", function(ComponentId, ItemInfo
             SetPedComponentVariation(Ped, TypeData.Drawable, Config.CurrentSkin.Clothes[ComponentId][1], Config.CurrentSkin.Clothes[ComponentId][2], TypeData.ColorType or 0)
         end
     else
-        Config.CurrentSkin.Clothes[ComponentId][1] = TypeData.Prop ~= nil and -1 or 0
+        local Naked = GetNakedValue(Config.CurrentSkin.Model, ComponentId)
+        Config.CurrentSkin.Clothes[ComponentId][1] = Naked
         Config.CurrentSkin.Clothes[ComponentId][2] = 0
 
         if TypeData.Prop ~= nil then
             ClearPedProp(Ped, TypeData.Prop)
         elseif TypeData.Drawable ~= nil then
-            SetPedComponentVariation(Ped, TypeData.Drawable, 0, 0, TypeData.ColorType or 0)
+            SetPedComponentVariation(Ped, TypeData.Drawable, Naked, 0, TypeData.ColorType or 0)
         end
     end
 

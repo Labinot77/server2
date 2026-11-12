@@ -3,7 +3,7 @@ let HasWeaponsLicense = false;
 let OtherInvData = {}, MyInventory = {};
 let InventoryOpen = false;
 let MaxPlayerWeight = 250.0; // Base weight, the backpack adds on top (see GetContainerMaxWeight).
-let MaxPlayerSlots = 46;
+let MaxPlayerSlots = 53;
 
 // Mirrors Config.SlotLayout / Config.EquipSlots / Config.Backpacks from config/_sh_config.lua.
 // Overwritten by the Lua side on load (SetItemsList -> Layout), these are just defaults.
@@ -16,29 +16,36 @@ let Layout = {
         Pockets: [1, 15],
         Backpack: [16, 35],
         Body: [36, 41],
-        Accessories: [42, 46],
+        Clothing: [42, 53],
     },
     EquipSlots: [
         { Slot: 36, Section: 'Body', Label: 'ID Card', Icon: 'badge', Items: ['id_card'] },
         { Slot: 37, Section: 'Body', Label: 'Phone', Icon: 'smartphone', Items: ['phone', 'burnerphone'] },
         { Slot: 38, Section: 'Body', Label: 'Keys', Icon: 'key', Items: ['keyring'] },
-        { Slot: 39, Section: 'Body', Label: 'Wallet', Icon: 'account_balance_wallet', Items: ['wallet'] },
+        { Slot: 39, Section: 'Body', Label: 'PD Watch', Icon: 'watch', Items: ['pdwatch'] },
         { Slot: 40, Section: 'Body', Label: 'Backpack', Icon: 'backpack', Items: ['backpack'], IsBackpack: true },
         { Slot: 41, Section: 'Body', Label: 'Radio', Icon: 'radio', Items: ['radio'] },
-        { Slot: 42, Section: 'Accessories', Label: 'Hat', Icon: 'styler', Items: ['hat'] },
-        { Slot: 43, Section: 'Accessories', Label: 'Mask', Icon: 'masks', Items: ['mask'] },
-        { Slot: 44, Section: 'Accessories', Label: 'Glasses', Icon: 'eyeglasses', Items: ['glasses'] },
-        { Slot: 45, Section: 'Accessories', Label: 'Earrings', Icon: 'diamond', Items: ['earrings'] },
-        { Slot: 46, Section: 'Accessories', Label: 'Watch', Icon: 'watch', Items: ['watch'] },
+        { Slot: 42, Section: 'Clothing', Label: 'Hat', Icon: 'styler', Items: ['hat'] },
+        { Slot: 43, Section: 'Clothing', Label: 'Mask', Icon: 'masks', Items: ['mask'] },
+        { Slot: 44, Section: 'Clothing', Label: 'Glasses', Icon: 'eyeglasses', Items: ['glasses'] },
+        { Slot: 45, Section: 'Clothing', Label: 'Earrings', Icon: 'diamond', Items: ['earrings'] },
+        { Slot: 46, Section: 'Clothing', Label: 'Watch', Icon: 'watch', Items: ['watch'] },
+        { Slot: 47, Section: 'Clothing', Label: 'Shirt', Icon: 'apparel', Items: ['shirt'] },
+        { Slot: 48, Section: 'Clothing', Label: 'Undershirt', Icon: 'checkroom', Items: ['undershirt'] },
+        { Slot: 49, Section: 'Clothing', Label: 'Gloves', Icon: 'back_hand', Items: ['gloves'] },
+        { Slot: 50, Section: 'Clothing', Label: 'Pants', Icon: 'accessibility_new', Items: ['pants'] },
+        { Slot: 51, Section: 'Clothing', Label: 'Shoes', Icon: 'steps', Items: ['shoes'] },
+        { Slot: 52, Section: 'Clothing', Label: 'Chain', Icon: 'link', Items: ['chain'] },
+        { Slot: 53, Section: 'Clothing', Label: 'Bracelet', Icon: 'trip_origin', Items: ['bracelet'] },
     ],
     Backpacks: [
         { Name: 'backpack', Weight: 100.0, Slots: 20 },
     ],
     BackpackSlot: 40,
     MaxPlayerWeight: 250.0,
-    MaxPlayerSlots: 45,
+    MaxPlayerSlots: 53,
 };
-const SectionOrder = ['Pockets', 'Backpack', 'Body', 'Accessories'];
+const SectionOrder = ['Pockets', 'Backpack', 'Body', 'Clothing'];
 let PlayerCash = 0;
 let IgnoredIntoInvDrag = ['Store', 'Crafting'];
 

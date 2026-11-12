@@ -298,7 +298,7 @@ end, function(Source, Type, Data)
         return ResyncViewer(Source, Data)
     end
 
-    -- Pockets / Backpack / Body / Accessories rules (see sv_equipment.lua).
+    -- Pockets / Backpack / Body / Clothing rules (see sv_equipment.lua).
     IsValid, Reason = ValidateItemMovement(Type, Data)
     if not IsValid then
         Player.Functions.Notify(Reason or "Dat kan niet.", "error")

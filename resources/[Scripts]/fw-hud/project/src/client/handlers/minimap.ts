@@ -9,9 +9,15 @@ const HiddenDisplays = [0, 3]; // hidden / main map only (4 still shows on the m
 const GpsRouteNative = "0xF3162836C28F9DA5"; // GET_POS_ALONG_GPS_TYPE_ROUTE
 
 let MinimapVisible = false;
+let WatchEquipped = false; // PD watch in the inventory BODY slot (fw-inventory).
 let LastSentVisible: boolean | null = null;
 
-const MinimapWanted = () => MinimapVisible && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
+const MinimapWanted = () => (MinimapVisible || WatchEquipped) && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
+
+on("fw-hud:Client:SetWatchMinimap", (Equipped: boolean) => {
+    WatchEquipped = !!Equipped;
+    UpdateMinimapVisibility();
+});
 
 export const UpdateMinimapVisibility = (Force: boolean = false) => {
     const Wanted = MinimapWanted();

@@ -270,7 +270,7 @@ $(document).on('mouseup', 'body', async function(e) {
     if (ToItem && FromItem.CustomType && FromItem.CustomType != ToItem.CustomType) MoveType = "Swap"; // If not the same custom type, swap.
     if (ToItem && FromItem.Item == ToItem.Item && FromItemData.NonStack) MoveType = "Swap"; // If the same item, but not stackable, swap.
 
-    // Pockets / Backpack / Body / Accessories rules.
+    // Pockets / Backpack / Body / Clothing rules.
     const [IsValid, Reason, ClampedAmount] = ValidateMovement(FromContainer, ToContainer, DragData.FromSlot, ToSlot, FromItem, ToItem, MoveAmount, MoveType);
     if (!IsValid) {
         FlashSlot(Target, false);

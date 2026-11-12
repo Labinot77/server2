@@ -4,7 +4,7 @@ Shared = Shared or {}
 Config.Drops = {}
 
 Config.MaxPlayerWeight = 250.0 -- Base carry weight (pockets + body + accessories).
-Config.MaxPlayerSlots = 46
+Config.MaxPlayerSlots = 53
 
 -- // Player inventory layout \\ --
 -- Every section lives inside the same 'ply-<citizenid>' inventory, so all existing
@@ -12,28 +12,37 @@ Config.MaxPlayerSlots = 46
 Config.SlotLayout = {
     Pockets     = { 1, 15 },  -- Always available.
     Backpack    = { 16, 35 }, -- Only usable while a backpack is equipped in the backpack body slot.
-    Body        = { 36, 41 }, -- ID card, phone, keys, wallet, backpack, radio.
-    Accessories = { 42, 46 }, -- Clothing props, applied on the ped when equipped.
+    Body        = { 36, 41 }, -- ID card, phone, keys, PD watch, backpack, radio.
+    Clothing    = { 42, 53 }, -- Clothing + accessories, applied on the ped when equipped.
 }
 
 -- Rules per equipment slot.
 --  Items     : item names allowed in this slot.
---  Clothing  : fw-clothes ComponentId that gets applied when equipped (accessories only).
+--  Clothing  : fw-clothes ComponentId that gets applied when equipped.
+--  Minimap   : shows the minimap while something is equipped here.
 --  AutoPlace : when an item is given (AddItem without slot) it goes here first if empty.
 --  Icon      : Material Symbols icon shown on the empty slot.
 Config.EquipSlots = {
     [36] = { Section = 'Body', Label = 'ID Card',  Icon = 'badge',                 Items = { 'id_card' },                AutoPlace = true },
     [37] = { Section = 'Body', Label = 'Phone',    Icon = 'smartphone',            Items = { 'phone', 'burnerphone' },   AutoPlace = true },
     [38] = { Section = 'Body', Label = 'Keys',     Icon = 'key',                   Items = { 'keyring' },                AutoPlace = true },
-    [39] = { Section = 'Body', Label = 'Wallet',   Icon = 'account_balance_wallet', Items = { 'wallet' },                AutoPlace = true },
+    [39] = { Section = 'Body', Label = 'PD Watch', Icon = 'watch',                 Items = { 'pdwatch' },                AutoPlace = true, Minimap = true },
     [40] = { Section = 'Body', Label = 'Backpack', Icon = 'backpack',              Items = { 'backpack' },               AutoPlace = false, IsBackpack = true },
     [41] = { Section = 'Body', Label = 'Radio',    Icon = 'radio',                 Items = { 'radio', 'pdradio' },       AutoPlace = true },
 
-    [42] = { Section = 'Accessories', Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
-    [43] = { Section = 'Accessories', Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
-    [44] = { Section = 'Accessories', Label = 'Glasses',  Icon = 'eyeglasses', Items = { 'glasses' },  Clothing = 'Glasses' },
-    [45] = { Section = 'Accessories', Label = 'Earrings', Icon = 'diamond',    Items = { 'earrings' }, Clothing = 'Earrings' },
-    [46] = { Section = 'Accessories', Label = 'Watch',    Icon = 'watch',      Items = { 'watch' },    Clothing = 'Watches' },
+    [42] = { Section = 'Clothing',    Label = 'Hat',      Icon = 'styler',     Items = { 'hat' },      Clothing = 'Hat' },
+    [43] = { Section = 'Clothing',    Label = 'Mask',     Icon = 'masks',      Items = { 'mask' },     Clothing = 'Masks' },
+    [44] = { Section = 'Clothing',    Label = 'Glasses',  Icon = 'eyeglasses', Items = { 'glasses' },  Clothing = 'Glasses' },
+    [45] = { Section = 'Clothing',    Label = 'Earrings', Icon = 'diamond',    Items = { 'earrings' }, Clothing = 'Earrings' },
+    [46] = { Section = 'Clothing',    Label = 'Watch',    Icon = 'watch',      Items = { 'watch' },    Clothing = 'Watches' },
+
+    [47] = { Section = 'Clothing', Label = 'Shirt',      Icon = 'apparel',           Items = { 'shirt' },      Clothing = 'Jacket' },
+    [48] = { Section = 'Clothing', Label = 'Undershirt', Icon = 'checkroom',         Items = { 'undershirt' }, Clothing = 'Undershirt' },
+    [49] = { Section = 'Clothing', Label = 'Gloves',     Icon = 'back_hand',         Items = { 'gloves' },     Clothing = 'Arms' },
+    [50] = { Section = 'Clothing', Label = 'Pants',      Icon = 'accessibility_new', Items = { 'pants' },      Clothing = 'Pants' },
+    [51] = { Section = 'Clothing', Label = 'Shoes',      Icon = 'steps',             Items = { 'shoes' },      Clothing = 'Shoes' },
+    [52] = { Section = 'Clothing', Label = 'Chain',      Icon = 'link',              Items = { 'chain' },      Clothing = 'Scarfs' },
+    [53] = { Section = 'Clothing', Label = 'Bracelet',   Icon = 'trip_origin',       Items = { 'bracelet' },   Clothing = 'Bracelets' },
 }
 
 -- Items that can be equipped in the backpack slot.

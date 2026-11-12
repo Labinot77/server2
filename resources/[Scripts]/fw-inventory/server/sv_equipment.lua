@@ -1,4 +1,4 @@
--- // Equipment (Body / Accessories / Backpack) \\ --
+-- // Equipment (Body / Clothing / Backpack) \\ --
 -- Slot layout + rules live in config/_sh_config.lua (Config.SlotLayout / Config.EquipSlots / Config.Backpacks).
 -- Visual effects (props, clothing) are applied client-side in client/cl_equipment.lua,
 -- which reacts to every change in the equipment slots.
@@ -164,6 +164,22 @@ function EquipItem(Source, FromSlot)
 end
 exports("EquipItem", EquipItem)
 
+-- Sets the item in an equip slot: Info = put this item there (replacing whatever was there), false = empty the slot.
+function SetEquippedClothing(Source, ItemName, Info)
+    local Player = FW.Functions.GetPlayer(Source)
+    local Slot = GetEquipSlotForItem(ItemName)
+    if not Player or not Slot then return false end
+
+    local Current = Player.PlayerData.inventory[Slot]
+    if Current and Info and Current.Item == ItemName and Current.Info and Current.Info.Prop == Info.Prop and Current.Info.Texture == Info.Texture then
+        return true -- Already equipped.
+    end
+
+    if Current then Player.Functions.RemoveItem(Current.Item, 1, Slot, false) end
+    return not Info or Player.Functions.AddItem(ItemName, 1, Slot, Info, false)
+end
+exports("SetEquippedClothing", SetEquippedClothing)
+
 -- Moves whatever is in an equip slot back into pockets/backpack.
 function UnequipSlot(Source, Slot)
     local Player = FW.Functions.GetPlayer(Source)
@@ -260,7 +276,7 @@ function RelocateInvalidItems(Player)
     end
 
     local Moved = 0
-    for Slot = Config.SlotLayout.Accessories[2] - 1, Config.SlotLayout.Body[2], -1 do
+    for Slot = Config.SlotLayout.Clothing[2] - 1, Config.SlotLayout.Body[2], -1 do
         local Item, Next = Work[Slot], Slot + 1
         if Item and not CanItemGoInSlot(Item.Item, Slot) and CanItemGoInSlot(Item.Item, Next) and not Work[Next] then
             MoveWholeSlot(InvName, Slot, Next)
@@ -312,7 +328,7 @@ end)
 -- Wearable/equipable items: using them toggles the equip slot.
 Citizen.CreateThread(function()
     -- Body items that have no other use.
-    for _, ItemName in pairs({ 'wallet', 'keyring', 'backpack' }) do
+    for _, ItemName in pairs({ 'pdwatch', 'keyring', 'backpack' }) do
         FW.Functions.CreateUsableItem(ItemName, function(Source, Item)
             ToggleEquipItem(Source, Item.Slot)
         end)

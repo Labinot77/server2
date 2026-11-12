@@ -94,8 +94,17 @@ function ValidateSkin(Source, Skin)
     return true
 end
 
--- Only free components (props, hair colour) may differ, model must stay the same.
-function IsFreeSkinChange(OldSkin, NewSkin)
+-- Item clothing is free when it matches the equipped item, or when it's taken off.
+local function IsWornItem(Source, Model, ComponentId, Value)
+    if type(Value) ~= "table" then return false end
+    if Value[1] == GetNakedValue(Model, ComponentId) then return true end
+
+    local Item = Source and exports['fw-inventory']:GetEquippedItem(Source, ComponentId)
+    return Item and Item.Info and Item.Info.Prop == Value[1] and Item.Info.Texture == Value[2] or false
+end
+
+-- Only free components (props, hair colour, worn items) may differ, model must stay the same.
+function IsFreeSkinChange(OldSkin, NewSkin, Source)
     if not OldSkin or not OldSkin.Clothes then return true end
     if OldSkin.Model ~= NewSkin.Model then return false end
 
@@ -105,7 +114,7 @@ function IsFreeSkinChange(OldSkin, NewSkin)
 
     for k in pairs(Keys) do
         local A, B = OldSkin.Clothes[k], NewSkin.Clothes[k]
-        if not DeepEqual(A, B) and not Config.FreeComponents[k] then
+        if not DeepEqual(A, B) and not Config.FreeComponents[k] and not (Config.ClothingItems[k] and IsWornItem(Source, NewSkin.Model, k, B)) then
             if k == "Hair" and type(A) == "table" and type(B) == "table" and A[1] == B[1] and A[2] == B[2] then
                 -- Only hair colour changed (hair dye).
             else
@@ -189,6 +198,13 @@ end)
 
 -- // Wear a saved outfit (server side, so outfits can't be used to sneak in free clothes) \\ --
 
+-- Fill the clothing slots with the outfit. Delayed so the client has applied the outfit first,
+-- otherwise removing the old items would strip the clothes it is still comparing against.
+local function SyncOutfitItems(Source, Skin)
+    Citizen.Wait(1000)
+    SyncClothingItems(Source, Skin)
+end
+
 FW.Functions.CreateCallback("fw-clothes:Server:WearOutfit", function(Source, Cb, OutfitId)
     local Player = FW.Functions.GetPlayer(Source)
     if Player == nil then return Cb(false) end
@@ -207,6 +223,7 @@ FW.Functions.CreateCallback("fw-clothes:Server:WearOutfit", function(Source, Cb,
 
     Player.Functions.SetSkin(NewSkin)
     Cb(NewSkin)
+    SyncOutfitItems(Source, NewSkin)
 end)
 
 -- // Job outfits (illenium "boss managed outfits") \\ --
@@ -323,4 +340,5 @@ FW.Functions.CreateCallback("fw-clothes:Server:WearJobOutfit", function(Source, 
 
     Player.Functions.SetSkin(Skin)
     Cb(Skin)
+    SyncOutfitItems(Source, Skin)
 end)
