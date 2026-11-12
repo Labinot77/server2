@@ -136,10 +136,11 @@ end)
 
     exports.interact:AddModelInteraction({
         modelData = {
-            { model = 'prop_atm_02', offset = vec3(0.0, 0.0, 0.0) },
-            { model = 'prop_atm_02_dui', offset = vec3(0.0, 0.0, 0.0) }, -- fw-dui screen copy
-            { model = 'prop_atm_03', offset = vec3(0.0, 0.0, 0.0) },
-            { model = 'prop_atm_03_dui', offset = vec3(0.0, 0.0, 0.0) }, -- fw-dui screen copy
+            -- No offset: keeps the ATM offset set above (a new offset would overwrite it)
+            { model = 'prop_atm_02' },
+            { model = 'prop_atm_02_dui' }, -- fw-dui screen copy
+            { model = 'prop_atm_03' },
+            { model = 'prop_atm_03_dui' }, -- fw-dui screen copy
         },
         distance = 3.0,
         interactDst = 1.5,
@@ -149,9 +150,9 @@ end)
                 canInteract = function(entity, coords, args)
                     return exports['fw-heists']:GetAttachingRope()
                 end,
-              action = function(entity, coords, args)
-    OpenATM(entity)
-end,
+                action = function(entity, coords, args)
+                    TriggerEvent('fw-heists:Client:AttachATM', {})
+                end,
             },
         },
     })
