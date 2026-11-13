@@ -2,9 +2,15 @@ import { Hud } from "../../shared/config";
 import { exp, SendUIMessage } from "../../shared/utils";
 import { FW } from "../client";
 import { CurrentBuffs } from "./buffs";
+import { IsHudBlocked } from "./blockers";
+
+let HudWanted = true;
+const SyncHudVisibility = () => SendUIMessage("Hud", "SetVisibility", HudWanted && !IsHudBlocked());
+on("fw-hud:Client:OnBlockersChanged", SyncHudVisibility);
 
 export const SetHudVisibleState = (Visible: boolean) => {
-    SendUIMessage("Hud", "SetVisibility", Visible)
+    HudWanted = Visible;
+    SyncHudVisibility();
 };
 
 export const GetHudId = (Id: string): number => {

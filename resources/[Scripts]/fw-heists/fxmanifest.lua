@@ -17,3 +17,5 @@ server_scripts {
     'config/*',
     'server/**/*',
 }
+
+files { 'html/**/*' } -- DUI apps (fleeca laptop + terminal)

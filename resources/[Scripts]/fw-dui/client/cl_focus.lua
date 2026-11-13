@@ -42,6 +42,7 @@ function StopFocus()
 
     FreezeEntityPosition(PlayerPedId(), false)
     SetInteractDisabled(false)
+    LocalPlayer.state:set('duiFocus', false, false)
     TriggerEvent('hud:client:ToggleHUD', true)
 end
 
@@ -67,6 +68,8 @@ local function Focus(Name, Options)
 
     FreezeEntityPosition(PlayerPedId(), true)
     SetInteractDisabled(true)
+    -- Other resources skip their keys while this is set (fw-core FW.AddKeybind, fw-inventory hotbar).
+    LocalPlayer.state:set('duiFocus', true, false)
     TriggerEvent('hud:client:ToggleHUD', false)
 
     CreateThread(function()
@@ -78,7 +81,7 @@ local function Focus(Name, Options)
 
             local Closed = not S.Entity or not DoesEntityExist(S.Entity) or IsEntityDead(PlayerPedId())
                 or (F.Closeable and not IsNuiFocused() -- an input dialog (fw-ui) is open: ESC is for that dialog
-                    and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25)))
+                    and (IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 25))) -- ESC / right click (Backspace types)
             if Closed then
                 StopFocus()
                 TriggerEvent('fw-dui:Client:Closed', Name)

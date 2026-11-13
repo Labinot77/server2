@@ -6,6 +6,7 @@
 import { Config, HudSettingsBrand } from "../../shared/config";
 import { RegisterNUICallback, SendUIMessage, SetUIFocus } from "../../shared/utils";
 import { FW, LoggedIn } from "../client";
+import { ForceMinimapSync } from "./minimap";
 
 const KvpKey = "fw-hud_hudsettings";
 
@@ -190,17 +191,10 @@ RegisterNUICallback("HudSettings/Close", (Data: any, Cb: Function) => {
 });
 
 RegisterNUICallback("HudSettings/Save", (Data: any, Cb: Function) => {
-    const Previous = Settings.layout.compass;
     Settings = Sanitize(Data, Defaults);
     Save();
 
     emit("fw-hud:Client:OnHudSettingsUpdate", Settings);
-
-    const Compass = Settings.layout.compass;
-    if (Compass.x != Previous.x || Compass.y != Previous.y || Compass.scale != Previous.scale) {
-        emit("fw-hud:Client:ApplyMinimapLayout");
-    };
-
     Cb("Ok");
 });
 
@@ -211,11 +205,9 @@ RegisterNUICallback("HudSettings/Reset", (Data: { Scope?: string }, Cb: Function
     } else {
         Settings = DeepCopy(Defaults);
         Save();
-        ExecuteCommand("minimapcal auto"); // also clears the minimap calibration
     };
 
     emit("fw-hud:Client:OnHudSettingsUpdate", Settings);
-    emit("fw-hud:Client:ApplyMinimapLayout");
 
     Cb({ Settings, Brand: HudSettingsBrand });
 });
@@ -224,8 +216,7 @@ RegisterNUICallback("HudSettings/Calibrate", (Data: any, Cb: Function) => {
     CloseMenu();
     Cb("Ok");
 
-    ExecuteCommand("minimapcal auto");
-    ExecuteCommand("minimapcal debug");
+    ForceMinimapSync(); // the UI draws the map, so "calibrate" just re-syncs it
 });
 
 RegisterNUICallback("HudSettings/Cinematic", (Data: any, Cb: Function) => {

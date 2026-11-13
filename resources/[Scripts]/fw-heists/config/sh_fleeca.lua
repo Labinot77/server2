@@ -59,6 +59,20 @@ Config.Fleeca = {
             "FLEECA_LEGIONSQUARE_TO_VAULT",
             "FLEECA_LEGIONSQUARE_VAULT_GATE"
         },
+        -- Advanced robbery (config/sh_fleeca_advanced.lua). Replaces thermite + lockpick for this bank.
+        Advanced = {
+            Name = 'Legion Square',
+            Terminal = vector3(147.22, -1041.10, 29.15), -- the monitor closest to this point is the terminal (/duiprop prop_monitor_01a)
+            Notes = { -- sticky note spots, NoteCount of them get a note, one has the real password
+                vector4(146.68, -1038.38, 29.37, 276.23),
+                vector4(146.68, -1039.38, 29.37, 276.23),
+                vector4(145.68, -1038.38, 29.37, 276.23),
+            },
+            Doors = { -- in order. Keypad = interact point; without one the code goes in the StaffDoor keypad prop
+                { Label = 'Security office door', Desc = 'Lobby to security office keypad.', DoorId = 1 }, -- keypad prop at StaffDoor
+                { Label = 'Vault corridor door', Desc = 'Security office to vault corridor keypad.', DoorId = 2, Keypad = vector3(144.70, -1042.80, 29.64) },
+            },
+        },
         Zones = {
             -- Gate Hack
             {

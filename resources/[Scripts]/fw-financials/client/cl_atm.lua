@@ -203,6 +203,13 @@ local function OnClick(Id)
     end
 end
 
+-- Keyboard (fw-dui typing): digits, Backspace and Enter on the withdraw screen.
+AddEventHandler('fw-dui:Client:Key', function(Name, Key)
+    if Name ~= SCREEN or not ATM.InSession or ATM.State.screen ~= 'withdraw' then return end
+    local Id = Key:match('^%d$') and 'key_' .. Key or (Key == 'Backspace' and 'key_del') or (Key == 'Enter' and 'submit')
+    if Id then OnClick(Id) end
+end)
+
 -- ── Session ────────────────────────────────────────────────────────────────
 
 local function StartATM(Entity)

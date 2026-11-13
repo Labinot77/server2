@@ -1,4 +1,5 @@
-FW.RegisterServer("fw-heists:Server:Fleeca:Reset", function(Source, FleecaId)
+-- Starts the robbery: cooldown + everything back to normal after 90 minutes. Also used by sv_fleeca_advanced.lua.
+function StartFleecaRobbery(Source, FleecaId)
     if Config.Fleeca[FleecaId] == nil then return end
 
     local CidToAdd = nil
@@ -29,8 +30,14 @@ FW.RegisterServer("fw-heists:Server:Fleeca:Reset", function(Source, FleecaId)
             Config.Fleeca[FleecaId].Robber = nil
         end
 
+        TriggerEvent("fw-heists:Server:Fleeca:OnReset", FleecaId)
         print("[HEISTS]: Fleeca " .. tostring(FleecaId) .. " Reset")
     end)
+end
+
+FW.RegisterServer("fw-heists:Server:Fleeca:Reset", function(Source, FleecaId)
+    if Config.Fleeca[FleecaId] and Config.Fleeca[FleecaId].Advanced then return end -- started by the network hack
+    StartFleecaRobbery(Source, FleecaId)
 end)
 
 FW.RegisterServer("fw-heists:Server:Fleeca:GetLoot", function(Source, FleecaId, LootId)

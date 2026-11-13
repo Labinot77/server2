@@ -3,12 +3,14 @@ local FleecaPowerBox = false
 RegisterNetEvent("fw-items:Clent:Used:HeavyThermite")
 AddEventHandler("fw-items:Clent:Used:HeavyThermite", function()
     if FleecaPowerBox then
+        if Config.Fleeca[FleecaPowerBox].Advanced then return end -- cut + hacked instead (cl_fleeca_advanced.lua)
+
         if DataManager.Get(GetFleecaPrefix(FleecaPowerBox) .. "powerbox", 0) == 1 then
             return FW.Functions.Notify("Ziet er verbrand uit..", "error")
         end
 
         if DataManager.Get("HeistsDisabled", 0) == 1 then
-            returnFW.Functions.Notify("Je kan dit nu niet doen..", "error")
+            return FW.Functions.Notify("Je kan dit nu niet doen..", "error")
         end
     
         if CurrentCops < Config.RequiredCopsFleeca or DataManager.Get("GlobalCooldown", false) == true then
@@ -87,7 +89,7 @@ end)
 RegisterNetEvent("fw-items:Client:UseLockpick")
 AddEventHandler("fw-items:Client:UseLockpick", function(IsAdvanced)
     local FleecaId, BankData = GetCurrentFleeca()
-    if not FleecaId then
+    if not FleecaId or BankData.Advanced then -- advanced banks open this door with an access code
         return
     end
 
@@ -275,6 +277,8 @@ Citizen.CreateThread(function()
             minZ = Bank.PowerBox[5],
             maxZ = Bank.PowerBox[6],
         }, function(IsInside, Zone, Points)
+            if Config.Fleeca[Zone.data.FleecaId].Advanced then return end -- interact points (cl_fleeca_advanced.lua)
+
             if IsInside then
                 FleecaPowerBox = Zone.data.FleecaId
                 exports['fw-ui']:ShowInteraction('Elektriciteitskast')

@@ -137,6 +137,7 @@ local function RegisterScreen()
         Distance = Config.Laptop.RenderDistance,
         Placed = true,
         Mirror = true,
+        MirrorKeys = true, -- nothing secret typed here, watchers see the real text
         SameInterior = true,
         Desktop = true,
     })

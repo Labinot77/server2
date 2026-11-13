@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GridBreaker</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; cursor: none; user-select: none; }
+    body { font-family: "Consolas", "Courier New", monospace; color: #c9d4e3; background: radial-gradient(ellipse at 50% 0%, #1a2433 0%, #0a0e14 70%); display: flex; flex-direction: column; padding: 2.2vh 2.5vw; gap: 1.6vh; }
+    header { display: flex; align-items: center; gap: 1.2vw; }
+    .logo { font-size: 3.4vh; font-weight: 800; color: #ffd43b; letter-spacing: 0.2vw; text-shadow: 0 0 12px rgba(255, 212, 59, 0.5); }
+    .sub { font-size: 1.7vh; color: #6b7a90; }
+    .round { margin-left: auto; font-size: 2vh; color: #8fa3bf; }
+    .bar { height: 0.8vh; border-radius: 1vh; background: #1c2635; overflow: hidden; }
+    .bar div { height: 100%; width: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd43b); transition: width 0.25s linear; }
+    .status { font-size: 1.9vh; color: #8fa3bf; min-height: 2.4vh; }
+    .status.ok { color: #69db7c; } .status.bad { color: #ff6b6b; }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; gap: 1vw; }
+    .grid { display: grid; gap: 0.5vh; }
+    .tile { width: var(--t); height: var(--t); border-radius: 0.8vh; background: #121a26; border: 1px solid #1f2b3d; transition: transform 0.12s ease; }
+    .tile:hover { border-color: #ffd43b; }
+    .tile svg { width: 100%; height: 100%; transition: transform 0.15s ease; }
+    .tile line, .tile circle { stroke: #34415a; fill: #34415a; }
+    .tile.on line, .tile.on circle { stroke: #ffd43b; fill: #ffd43b; filter: drop-shadow(0 0 4px #ffd43b); }
+    .side { display: grid; gap: 0.5vh; }
+    .side div { width: calc(var(--t) * 0.6); height: var(--t); display: flex; align-items: center; justify-content: center; font-size: 3vh; color: transparent; }
+    .side .src { color: #ffd43b; text-shadow: 0 0 10px #ffd43b; }
+    .side .dst { color: #ff6b6b; } .side .dst.on { color: #69db7c; text-shadow: 0 0 10px #69db7c; }
+    .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5vh; background: rgba(8, 11, 16, 0.92); font-size: 2.4vh; }
+    .overlay b { font-size: 4.5vh; color: #ffd43b; }
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">⚡ GRIDBREAKER</div>
+        <div class="sub">FLEECA-NET // branch power relay</div>
+        <div class="round" id="round"></div>
+    </header>
+    <div class="bar"><div id="time"></div></div>
+    <div class="status" id="status">Rotate the tiles to route power from the source to the relay.</div>
+    <main>
+        <div class="side" id="left"></div>
+        <div class="grid" id="grid"></div>
+        <div class="side" id="right"></div>
+    </main>
+    <div class="overlay" id="overlay"><b>STANDBY</b><span>Waiting for uplink…</span></div>
+
+<script>
+    // Tiles are bitmasks of their open sides: N=1 E=2 S=4 W=8. Power enters the source tile from the left edge
+    // and has to leave the target tile on the right edge. The puzzle comes from a seed, so players watching
+    // (fw-dui mirror) get the same grid and replayed clicks.
+    const $ = id => document.getElementById(id);
+    const N = 1, E = 2, S = 4, W = 8;
+    const Dirs = [[N, -1, 0, S], [E, 0, 1, W], [S, 1, 0, N], [W, 0, -1, E]];
+    const Rot = M => ((M << 1) | (M >> 3)) & 15;
+    let G = null, Timer = null;
+
+    const Rng = Seed => () => { Seed |= 0; Seed = Seed + 0x6D2B79F5 | 0; let T = Math.imul(Seed ^ Seed >>> 15, 1 | Seed); T = T + Math.imul(T ^ T >>> 7, 61 | T) ^ T; return ((T ^ T >>> 14) >>> 0) / 4294967296; };
+
+    const Post = (Action, Data = {}) => fetch("https://fw-heists/fleecaLaptop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ Action, ...Data }) }).catch(() => {});
+
+    const Build = () => {
+        const { rows: R, cols: C, rand } = G;
+        const Pick = A => A[Math.floor(rand() * A.length)];
+        G.src = Math.floor(rand() * R); G.dst = Math.floor(rand() * R);
+        let Mask;
+
+        // Random DFS from source to target; the stack is the path. Retry until it's long enough to be fun.
+        for (let Try = 0; Try < 50; Try++) {
+            Mask = Array.from({ length: R }, () => Array(C).fill(0));
+            const Seen = new Set([`${G.src},0`]), Stack = [[G.src, 0]];
+            while (Stack.length) {
+                const [r, c] = Stack[Stack.length - 1];
+                if (r === G.dst && c === C - 1) break;
+                const Next = Dirs.map(D => [r + D[1], c + D[2]]).filter(([y, x]) => y >= 0 && y < R && x >= 0 && x < C && !Seen.has(`${y},${x}`)).sort(() => rand() - 0.5);
+                if (!Next.length) { Stack.pop(); continue; }
+                Seen.add(`${Next[0][0]},${Next[0][1]}`);
+                Stack.push(Next[0]);
+            }
+            if (Stack.length < C + 2 && Try < 49) continue;
+            for (let i = 0; i < Stack.length - 1; i++) {
+                const [r, c] = Stack[i], [y, x] = Stack[i + 1];
+                const D = Dirs.find(D => r + D[1] === y && c + D[2] === x);
+                Mask[r][c] |= D[0]; Mask[y][x] |= D[3];
+            }
+            break;
+        }
+        Mask[G.src][0] |= W; Mask[G.dst][C - 1] |= E;
+
+        // Filler tiles + scramble every tile
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+            if (!Mask[r][c]) Mask[r][c] = Pick([3, 3, 5, 5, 7, 1]);
+            for (let i = Math.floor(rand() * 4); i > 0; i--) Mask[r][c] = Rot(Mask[r][c]);
+        }
+        G.mask = Mask;
+        if (Flow().done) { Mask[G.src][0] = Rot(Mask[G.src][0]); } // never start solved
+    };
+
+    // Which tiles carry power
+    const Flow = () => {
+        const { rows: R, cols: C, mask } = G;
+        const On = new Set();
+        if (mask[G.src][0] & W) {
+            const Queue = [[G.src, 0]];
+            On.add(`${G.src},0`);
+            while (Queue.length) {
+                const [r, c] = Queue.shift();
+                for (const [Bit, dy, dx, Back] of Dirs) {
+                    const y = r + dy, x = c + dx;
+                    if (!(mask[r][c] & Bit) || y < 0 || y >= R || x < 0 || x >= C || On.has(`${y},${x}`) || !(mask[y][x] & Back)) continue;
+                    On.add(`${y},${x}`); Queue.push([y, x]);
+                }
+            }
+        }
+        return { on: On, done: On.has(`${G.dst},${C - 1}`) && (mask[G.dst][C - 1] & E) > 0 };
+    };
+
+    const Svg = M => `<svg viewBox="0 0 100 100">${[[N, 50, 0], [E, 100, 50], [S, 50, 100], [W, 0, 50]].filter(([B]) => M & B)
+        .map(([, x, y]) => `<line x1="50" y1="50" x2="${x}" y2="${y}" stroke-width="14" stroke-linecap="round"/>`).join("")}<circle cx="50" cy="50" r="11"/></svg>`;
+
+    const Render = () => {
+        const { rows: R, cols: C } = G, F = Flow();
+        document.documentElement.style.setProperty("--t", `min(${62 / R}vh, ${70 / C}vw)`);
+        $("grid").style.gridTemplateColumns = `repeat(${C}, auto)`;
+        $("grid").innerHTML = "";
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+            const T = document.createElement("div");
+            T.className = "tile" + (F.on.has(`${r},${c}`) ? " on" : "");
+            T.innerHTML = Svg(G.mask[r][c]);
+            T.addEventListener("click", () => Turn(r, c));
+            $("grid").appendChild(T);
+        }
+        $("left").innerHTML = Array.from({ length: R }, (_, r) => `<div class="${r === G.src ? "src" : ""}">⚡</div>`).join("");
+        $("right").innerHTML = Array.from({ length: R }, (_, r) => `<div class="${r === G.dst ? "dst" + (F.done ? " on" : "") : ""}">◉</div>`).join("");
+        return F.done;
+    };
+
+    const Turn = (r, c) => {
+        if (!G || G.locked) return;
+        G.mask[r][c] = Rot(G.mask[r][c]);
+        if (!Render()) return;
+        G.locked = true;
+        Status(`Relay ${G.round}/${G.rounds} rerouted.`, "ok");
+        setTimeout(() => G.round < G.rounds ? Round(G.round + 1) : End(true), 900);
+    };
+
+    const Status = (Text, Cls = "") => { $("status").textContent = Text; $("status").className = "status " + Cls; };
+
+    const Round = N => {
+        Object.assign(G, { round: N, locked: false, left: G.time });
+        Build(); Render();
+        $("round").textContent = `RELAY ${N}/${G.rounds}`;
+        Status("Rotate the tiles to route power from the source to the relay.");
+        clearInterval(Timer);
+        $("time").style.width = "100%";
+        Timer = setInterval(() => {
+            if (G.locked) return;
+            G.left -= 0.25;
+            $("time").style.width = `${Math.max(0, G.left / G.time * 100)}%`;
+            if (G.left <= 0) End(false);
+        }, 250);
+    };
+
+    const End = Ok => {
+        clearInterval(Timer);
+        G.locked = true;
+        $("overlay").classList.remove("hidden");
+        $("overlay").innerHTML = Ok ? `<b style="color:#69db7c">NETWORK DOWN</b><span>Branch security offline.</span>` : `<b style="color:#ff6b6b">TRACE DETECTED</b><span>Connection terminated.</span>`;
+        Post("result", { Success: Ok });
+    };
+
+    window.addEventListener("message", E => {
+        let M = E.data;
+        if (typeof M === "string") { try { M = JSON.parse(M); } catch { return; } }
+        if (!M || M.action !== "start") return;
+        const D = M.data;
+        G = { rows: D.rows || 5, cols: D.cols || 7, rounds: D.rounds || 3, time: D.time || 45, rand: Rng(D.seed || 1) };
+        $("overlay").classList.add("hidden");
+        Round(1);
+    });
+
+    if (location.search.includes("mock")) window.postMessage({ action: "start", data: { seed: 1234, rounds: 3, time: 45, cols: 7, rows: 5 } }, "*");
+</script>
+</body>
+</html>

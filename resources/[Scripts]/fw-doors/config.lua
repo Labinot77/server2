@@ -5585,7 +5585,7 @@ Config.Doors = {
     {
         Info = 'FLEECA_LEGIONSQUARE_SERVICE',
         Coords = vector3(145.37, -1041.94, 29.53),
-        Model = -147325430,
+        Model = -131754413,
         Locked = 1,
         IsGate = false,
         CanDetcord = false,

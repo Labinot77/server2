@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fw-mainmenu</title>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.15.4/css/all.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,600;1,700;1,800&display=swap" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <!-- Map (GTA's own pause-map textures, tiled) -->
+        <div id="viewport">
+            <!-- low-res level (always loaded) under the sharp level for the current zoom -->
+            <div id="tiles-bg" class="tile-level"></div>
+            <div id="tiles-cur" class="tile-level"></div>
+            <svg id="route-layer" xmlns="http://www.w3.org/2000/svg">
+                <polyline id="route-outline" points="" />
+                <polyline id="route-line" points="" />
+            </svg>
+            <div id="marker-layer"></div>
+            <div id="tooltip" class="hidden"></div>
+        </div>
+
+        <!-- Zone / street under the cursor + route distance -->
+        <div id="location">
+            <span class="loc-sub">Location</span>
+            <span class="loc-zone" id="loc-zone">-</span>
+            <span class="loc-street" id="loc-street"></span>
+            <span class="loc-route hidden" id="loc-route"><i class="fas fa-route"></i><span id="loc-route-text"></span></span>
+        </div>
+
+        <!-- Legend panel -->
+        <aside id="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span class="panel-sub">Filter</span>
+                    <span class="panel-main">Locations</span>
+                </div>
+                <label class="search">
+                    <i class="fas fa-search"></i>
+                    <input id="search" type="text" placeholder="Search" spellcheck="false" autocomplete="off" />
+                </label>
+            </div>
+
+            <div id="you-row" class="row you">
+                <span class="row-icon"><i class="fas fa-location-arrow you-arrow"></i></span>
+                <span class="row-label">You</span>
+            </div>
+
+            <div id="legend"></div>
+        </aside>
+
+        <!-- Key hints -->
+        <div id="hints">
+            <div class="hint"><span class="key icon"><i class="fas fa-mouse"></i></span><span>Set Waypoint</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key icon"><i class="fas fa-caret-up"></i></span><span>Prev Blip</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key icon"><i class="fas fa-caret-down"></i></span><span>Next Blip</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key icon"><i class="fas fa-arrows-alt-h"></i></span><span>Cycle Blip</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key">PGUP</span><span class="plus">+</span><span class="key">PGDN</span><span>Zoom</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key">T</span><span>Toggle Blip</span></div>
+            <span class="sep">/</span>
+            <div class="hint"><span class="key">ESC</span><span id="exit-label">Back</span></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

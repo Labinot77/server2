@@ -58,7 +58,7 @@ Citizen.CreateThread(function()
         DisableControlAction(0, 164, true)
         DisableControlAction(0, 165, true)
 
-        local CanUseItem = not IsInventoryBusy
+        local CanUseItem = not IsInventoryBusy and not LocalPlayer.state.duiFocus -- 1-5 type on a DUI screen
         if CanUseItem and IsDisabledControlJustReleased(0, 157) then -- Slot 1
             if not HotbarCooldown and not FW.Functions.GetPlayerData().metadata.isdead and not FW.Functions.GetPlayerData().metadata.ishandcuffed then
                 FW.TriggerServer('fw-inventory:Server:UseItem', 1)

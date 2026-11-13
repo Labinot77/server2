@@ -13,4 +13,7 @@ client_scripts {
 
 server_script 'server/*.lua'
 
-files { 'html/desktop/index.html' } -- shared computer desktop (apps in windows)
+files {
+    'html/desktop/index.html', -- shared computer desktop (apps in windows)
+    'html/keys.js',            -- typing helper for pages (see cl_keys.lua)
+}

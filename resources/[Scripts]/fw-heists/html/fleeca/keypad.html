@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Keypad</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; cursor: none; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vh;
+           background: radial-gradient(ellipse at center, #0f2a14 0%, #050c06 80%); color: #57ff7a;
+           font-family: "Consolas", "Courier New", monospace; text-shadow: 0 0 1.5vh rgba(87, 255, 122, 0.7); }
+    .label { font-size: 14vh; letter-spacing: 1.5vh; opacity: 0.8; }
+    .code { font-size: 30vh; letter-spacing: 3vh; min-height: 34vh; line-height: 34vh; white-space: nowrap; }
+    .code .cur { animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    body.granted { color: #57ff7a; } body.denied { color: #ff4d4d; text-shadow: 0 0 1.5vh rgba(255, 77, 77, 0.7); }
+</style>
+</head>
+<body>
+    <div class="label" id="label">ENTER CODE</div>
+    <div class="code" id="code"></div>
+<script>
+    const Labels = { idle: "ENTER CODE", granted: "ACCESS GRANTED", denied: "ACCESS DENIED" };
+    const Render = ({ length = 0, status = "idle" }) => {
+        document.body.className = status;
+        document.getElementById("label").textContent = Labels[status] || Labels.idle;
+        document.getElementById("code").innerHTML = status === "idle" ? "*".repeat(length) + '<span class="cur">_</span>' : "";
+    };
+    window.addEventListener("message", E => {
+        let M = E.data;
+        if (typeof M === "string") { try { M = JSON.parse(M); } catch { return; } }
+        if (M && M.action === "state") Render(M.data || {});
+    });
+    Render({});
+</script>
+</body>
+</html>

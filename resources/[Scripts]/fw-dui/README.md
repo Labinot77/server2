@@ -37,6 +37,22 @@ Other events: `fw-dui:Client:Hidden (Name)`, `fw-dui:Client:Closed (Name)`, and 
 `DUI:SetCloseable(false)` blocks leaving (e.g. while an ATM transaction runs).
 Screens are removed automatically when the resource that registered them stops.
 
+## Typing
+While a screen is focused the keyboard types on it (`client/cl_keys.lua`: every key is a key mapping, so it works with
+game controls disabled; held keys repeat, shift gives capitals/symbols). Backspace types now, ESC / right click leave.
+- Pages: include `<script src="nui://fw-dui/html/keys.js"></script>`, click an `<input>` / `<textarea>` and type
+  (React inputs too). Every key is also a `dui:key` window event (`detail` = key). The desktop forwards keys to the app in front.
+- Lua (hit-tested pages like the ATM): `AddEventHandler('fw-dui:Client:Key', function(Name, Key) end)`.
+- Keys: one character, or `Backspace` / `Enter` / `Delete` / `ArrowLeft` / `ArrowRight`. `Focus(Name, { Keyboard = false })` turns it off.
+- Watchers (Mirror) get `*` for characters unless the screen has `MirrorKeys = true`.
+- While focused `LocalPlayer.state.duiFocus` is true: fw-core `FW.AddKeybind` (phone, inventory, ...) and the fw-inventory
+  hotbar ignore keys. Other resources with their own key mappings: check that flag too.
+- Holding a key repeats at `Config.KeyRepeat` (Delay / Rate in ms).
+
+## One prop out of several (Anchor)
+`Anchor = vector3(...)` uses only the prop closest to that point, e.g. one of the four monitors on a bank desk.
+`/duiprop <model>` prints the coords of the nearest prop of a model.
+
 ## Mirror (others see your screen)
 Register with `Mirror = true` and players within `Config.MirrorDistance` see what the user does on it:
 cursor, clicks and every `Send`. `DUI:Send(Name, Action, Data, MirrorData)` lets you send watchers

@@ -64,7 +64,16 @@ function FindNearest(S, Coords)
         if Dist <= BestDist then Best, BestModel, BestDist = Entity, Model, Dist end
     end
 
-    if S.Placed then
+    if S.Anchor then
+        -- Only the one prop closest to the anchor point (e.g. one monitor of the four on a bank desk)
+        local Pick, PickModel, PickDist = nil, nil, 3.0
+        for Hash, Model in pairs(S.Models) do
+            local Entity = GetClosestObjectOfType(S.Anchor.x, S.Anchor.y, S.Anchor.z, PickDist, Hash, false, false, false)
+            local Dist = Entity ~= 0 and #(S.Anchor - GetEntityCoords(Entity))
+            if Dist and Dist <= PickDist then Pick, PickModel, PickDist = Entity, Model, Dist end
+        end
+        if Pick then Check(Pick, PickModel) end
+    elseif S.Placed then
         for _, Prop in pairs(GetPlacedProps()) do
             local Model = S.Models[joaat(Prop.Model)]
             if Model and Prop.Entity and DoesEntityExist(Prop.Entity) then Check(Prop.Entity, Model) end
@@ -225,13 +234,16 @@ end
     Mirror   = true: players nearby see what the user does on it (cursor, clicks, Send messages)
     SameInterior = true: only props in the interior the player is in (houses next to each other)
     Desktop  = true: the shared computer desktop (html/desktop) as the page, apps set with SetApps
+    Anchor   = vector3: only the prop closest to this point (within 3m) is used
+    MirrorKeys = true: watchers get the typed characters (default: * so passwords don't leak)
 ]]
 local function RegisterScreen(Name, Options)
     if Screens[Name] then Destroy(Screens[Name]) end
 
     local S = {
         Name = Name, Url = Options.Url or (Options.Desktop and DESKTOP_URL), Desktop = Options.Desktop == true, Distance = Options.Distance or 15.0, Placed = Options.Placed == true, Mirror = Options.Mirror == true,
-        SameInterior = Options.SameInterior == true,
+        SameInterior = Options.SameInterior == true, MirrorKeys = Options.MirrorKeys == true,
+        Anchor = Options.Anchor and vector3(Options.Anchor.x, Options.Anchor.y, Options.Anchor.z),
         Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {},
     }
     for _, Model in ipairs(Options.Models or {}) do
@@ -356,6 +368,28 @@ AddEventHandler('onResourceStop', function(Resource)
         if Self or S.Owner == Resource then Destroy(S) end
     end
 end)
+
+-- /duiprop <model>: coords of the nearest prop of that model (for Anchor / config coords)
+RegisterCommand('duiprop', function(_, Args)
+    local C = GetEntityCoords(PlayerPedId())
+    local Entity = GetClosestObjectOfType(C.x, C.y, C.z, 5.0, joaat(Args[1] or ''), false, false, false)
+    if Entity == 0 then return print('[fw-dui] none within 5m') end
+    local P = GetEntityCoords(Entity)
+    print(('[fw-dui] %s: vector3(%.2f, %.2f, %.2f), heading %.1f'):format(Args[1], P.x, P.y, P.z, GetEntityHeading(Entity)))
+end, false)
+
+-- /duitex <screen> <texture> [dict]: try another screen texture / .ytd live, e.g. when the prop still shows its
+-- normal screen. Paste what works into config/sh_config.lua (Texture, Dict). Lasts until the resource restarts.
+RegisterCommand('duitex', function(_, Args)
+    local S = Screens[Args[1] or '']
+    local M = S and S.Model
+    if not M or not Args[2] then return print('[fw-dui] usage: /duitex <screen> <texture> [dict]  (stand at the prop so the page is on it)') end
+    local Old = M.Dict or M.Variant or M.Name
+    RemoveReplaceTexture(Old, M.Texture)
+    M.Texture, M.Dict = Args[2], Args[3] or M.Dict
+    AddReplaceTexture(M.Dict or M.Variant or M.Name, M.Texture, 'fw_dui', S.Tex)
+    print(('[fw-dui] %s: Texture = \'%s\', Dict = \'%s\''):format(S.Name, M.Texture, M.Dict or M.Variant or M.Name))
+end, false)
 
 -- /duidebug: what every screen is doing (F8). Black screen? Check Loaded, the URL and the texture lines.
 RegisterCommand('duidebug', function()

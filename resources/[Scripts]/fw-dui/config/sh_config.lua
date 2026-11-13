@@ -10,6 +10,9 @@ Config.Camera = {
 
 Config.CursorSensitivity = 14.0
 
+-- Holding a key while typing on a screen: first repeat after Delay ms, then one every Rate ms.
+Config.KeyRepeat = { Delay = 550, Rate = 130 }
+
 -- Screens registered with Mirror = true: players within this range see what the user does on it.
 Config.MirrorDistance = 20.0
 
@@ -41,6 +44,21 @@ Config.Models = {
 
     -- House computers (one per house, all the same model)
     ['house_monitor_01'] = { Variant = 'house_monitor_01_dui', Texture = 'house_monitor_screen_01_dui', Specular = 'house_monitor_screen_01_dui_s', Resolution = { 1280, 720 } },
+
+    -- Fleeca lobby terminal (fw-heists, advanced Fleeca). fw-heists spawns the _dui copy directly, so only that
+    -- monitor shows the page (same idea as the ATMs). The copy's screen texture is prop_moniter_dekstop_01_dui.
+    ['prop_monitor_01a'] = {
+        Variant = 'prop_monitor_01a_dui', Texture = 'prop_monitor_desktop_01_dui', Resolution = { 1280, 960 },
+        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
+    },
+
+    -- Fleeca staff door keypad (fw-heists). Only the display is the page, typing is on the keyboard.
+    -- Still the normal LOCKED display? The texture is in another .ytd or has another name: find the display
+    -- material in CodeWalker and test it live with /duitex fleeca_keypad <texture> <dict>, then set Texture / Dict.
+    ['hei_prop_hei_keypad_01'] = {
+        Variant = 'hei_prop_hei_keypad_01_dui', Texture = 'hei_keypad_screen_dui', Resolution = { 512, 256 },
+        Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
+    },
 
     -- ATMs (fw-financials)
     ['prop_fleeca_atm'] = {

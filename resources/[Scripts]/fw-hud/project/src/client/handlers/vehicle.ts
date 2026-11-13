@@ -4,6 +4,7 @@ import { FW } from "../client";
 import { StartCompass, StopCompass } from "./compass";
 import { GetHudId, SetHudValue, SetHudVisibleState } from "./hud";
 import { SetMinimapVisible } from "./minimap";
+import { IsVehicleHudBlocked } from "./blockers";
 
 const VehicleThread = new Thread("tick", 50);
 const IgnoreBeltClasses: number[] = [8, 13]
@@ -38,6 +39,10 @@ const IsLocked = (Vehicle: number): boolean => {
 //     return !!GetIsVehicleElectric(Vehicle) || ElectricModels.includes(GetEntityModel(Vehicle));
 // };
 
+// Speedometer: shown while in a vehicle, unless a blocker (phone, inventory, Benny's) is active.
+const SyncVehicleVisibility = () => SendUIMessage("Hud", "SetVehicleVisibility", {Visible: VehicleHudState && !IsVehicleHudBlocked()});
+on("fw-hud:Client:OnBlockersChanged", SyncVehicleVisibility);
+
 const HideVehicleHud = () => {
     const WasInHeliCam = exp['fw-police'].IsInHeliCam();
 
@@ -45,7 +50,7 @@ const HideVehicleHud = () => {
     Cache = null;
     SetMinimapVisible(false);
     StopCompass();
-    SendUIMessage("Hud", "SetVehicleVisibility", {Visible: false});
+    SyncVehicleVisibility();
 
     if (WasInHeliCam) SetHudVisibleState(false);
 };
@@ -53,36 +58,24 @@ const HideVehicleHud = () => {
 exp("HideVehicleHud", HideVehicleHud);
 
 const ShowVehicleHud = () => {
-     VehicleHudState = true;
-        SendUIMessage("Hud", "SetVehicleVisibility", {Visible: true});
-        StartCompass();
-        SetMinimapVisible(true);
-        SetHudVisibleState(true);
-}
+    VehicleHudState = true;
+    SyncVehicleVisibility();
+    StartCompass();
+    SetMinimapVisible(true);
+    SetHudVisibleState(true);
+};
 exp("ShowVehicleHud", ShowVehicleHud);
-
-// Lets other resources (e.g. Benny's) hide the speedometer + minimap while their UI is open.
-let VehicleHudBlocked = false;
-exp("SetVehicleHudBlocked", (Blocked: boolean) => {
-    VehicleHudBlocked = !!Blocked;
-    if (VehicleHudBlocked && VehicleHudState) HideVehicleHud();
-});
-
 
 VehicleThread.addHook('active', () => {
     const Ped = PlayerPedId();
     const Vehicle = GetVehiclePedIsIn(Ped, false);
 
-if (Vehicle == 0 || IsPauseMenuActive() || VehicleHudBlocked || exp['fw-police'].IsInHeliCam()) {
-    if (VehicleHudState) HideVehicleHud();
-    return;
-};
+    if (Vehicle == 0 || IsPauseMenuActive() || exp['fw-police'].IsInHeliCam()) {
+        if (VehicleHudState) HideVehicleHud();
+        return;
+    };
 
-
-
-        if (!VehicleHudState) {
-            ShowVehicleHud();
-        };
+    if (!VehicleHudState) ShowVehicleHud();
 
     const FuelLevel = exp['fw-vehicles'].GetVehicleMeta(Vehicle, "Fuel") || 0;
     if (FuelLevel > 0 && FuelLevel < 10 && LastFuelWarning - GetGameTimer() < 0) {

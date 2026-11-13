@@ -98,6 +98,18 @@
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
     .toast.error { background: var(--bad); color: white; }
 
+    .modal { position: absolute; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center; background: rgba(5, 6, 8, 0.75); }
+    .modal form { width: 420px; padding: 22px; background: var(--panel); border-top: 2px solid var(--accent); display: flex; flex-direction: column; gap: 12px; }
+    .modal h3 { font-size: 22px; }
+    .modal label { font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .modal input { width: 100%; margin-top: 4px; padding: 10px 12px; font: 600 17px "Barlow Semi Condensed", sans-serif; color: white;
+                   background: var(--panel-2); border: 1px solid var(--line); outline: 0; cursor: none; }
+    .modal input:focus { border-color: var(--accent); }
+    .modal .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .modal .row { background: none; padding: 0; border: 0; }
+    .modal button.btn { border: 0; cursor: none; font: italic 800 16px "Barlow Semi Condensed", sans-serif; text-transform: uppercase; }
+    .modal input::-webkit-inner-spin-button { display: none; }
+
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: rgba(63, 216, 230, 0.5); }
     .hidden { display: none !important; }
@@ -121,6 +133,7 @@
 
     <div class="lock" id="lock"><i class="fas fa-lock"></i><p class="italic">Management</p><span id="lockText">Use the laptop to manage the business</span></div>
     <div class="toast" id="toast"></div>
+    <div class="modal hidden" id="modal"><form id="form"></form></div>
 
 <script>
     const PERM_LABELS = {
@@ -135,7 +148,7 @@
     const Money = v => "$" + Math.round(v || 0).toLocaleString("en-US");
     const Can = P => S.view && S.view.Perms && S.view.Perms[P];
 
-    // Page -> client (fw-bennys handles it; typed values are asked with an input dialog there).
+    // Page -> client (fw-bennys handles it). Typed values come from the form below (fw-dui keyboard).
     const Post = (Action, Data = {}) => {
         if (S.mock) return;
         fetch("https://fw-bennys/management", { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8" }, body: JSON.stringify({ Action, ...Data }) });
@@ -268,6 +281,35 @@
         $("lock").classList.remove("hidden");
     };
 
+    // ── Form (typed on the screen, fw-dui keys.js) ──────────────────────────
+
+    const FIELDS = {
+        Cid: { label: "State ID", type: "text" },
+        Amount: { label: "Amount ($)", type: "number" },
+        Comment: { label: "Comment", type: "text" },
+        Name: { label: "Role name", type: "text" },
+    };
+    let FormAction = null;
+    const Form = (Title, Fields, Action, Extra = {}) => {
+        FormAction = { Action, Extra, Fields };
+        $("form").innerHTML = `<h3 class="italic">${Esc(Title)}</h3>${Fields.map(F => `<div><label>${FIELDS[F].label}</label>
+            <input name="${F}" type="${FIELDS[F].type}" maxlength="${F === "Comment" ? 60 : 24}" autocomplete="off" spellcheck="false"></div>`).join("")}
+            <div class="row"><div class="btn" data-act="formCancel">Cancel</div><button type="submit" class="btn">Confirm</button></div>`;
+        $("modal").classList.remove("hidden");
+        $("form").querySelector("input").focus();
+        Post("sound");
+    };
+    const CloseForm = () => { FormAction = null; $("modal").classList.add("hidden"); };
+    $("form").addEventListener("submit", Ev => {
+        Ev.preventDefault();
+        if (!FormAction) return;
+        const Data = { ...FormAction.Extra };
+        for (const F of FormAction.Fields) Data[F] = $("form").elements[F].value.trim();
+        if (FormAction.Fields.some(F => F !== "Comment" && !Data[F])) return Toast("Fill in every field", "error");
+        Post(FormAction.Action, Data);
+        CloseForm();
+    });
+
     // ── Input ───────────────────────────────────────────────────────────────
 
     const OpenBank = Cid => { S.bank = null; Post("getBank", { Cid }); };
@@ -284,7 +326,7 @@
             return Render();
         }
         if ((El = Get("data-role"))) { S.role = El.dataset.role; S.confirm = null; Post("sound"); return Render(); }
-        if ((El = Get("data-hire"))) { S.hiring = false; Render(); return Post("hire", { Role: El.dataset.hire }); }
+        if ((El = Get("data-hire"))) { S.hiring = false; Render(); return Form("Hire employee", ["Cid"], "hire", { Role: El.dataset.hire }); }
         if ((El = Get("data-setrole"))) return Post("setRole", { Cid: S.employee, Role: El.dataset.setrole });
         if ((El = Get("data-perm"))) {
             const R = S.view.Roles.find(X => X.Name === S.role);
@@ -295,14 +337,17 @@
         if ((El = Get("data-act"))) {
             const A = El.dataset.act;
             if (A === "hire") { S.hiring = true; S.employee = null; Post("sound"); return Render(); }
+            if (A === "formCancel") return CloseForm();
             if (A === "cancelHire" || A === "cancel") { S.hiring = false; S.confirm = null; return Render(); }
             if (A === "fire") { S.confirm = "fire:" + S.employee; return Render(); }
             if (A === "fireConfirm") { S.confirm = null; return Post("fire", { Cid: S.employee }); }
             if (A === "deleteRole") { S.confirm = "role:" + S.role; return Render(); }
             if (A === "deleteRoleConfirm") { S.confirm = null; return Post("deleteRole", { Role: S.role }); }
-            if (A === "payEmployee") return Post("pay", { Cid: S.employee });
-            if (A === "payExternal") return Post("pay", {});
-            Post(A); // refresh, charge, createRole
+            if (A === "payEmployee") return Form("Pay employee", ["Amount", "Comment"], "pay", { Cid: S.employee });
+            if (A === "payExternal") return Form("Pay someone", ["Cid", "Amount", "Comment"], "pay");
+            if (A === "charge") return Form("Charge customer", ["Cid", "Amount", "Comment"], "charge");
+            if (A === "createRole") return Form("New role", ["Name"], "createRole");
+            Post(A); // refresh
         }
     });
 
@@ -324,7 +369,7 @@
                 break;
             case "bank": S.bank = D; Render(); break;
             case "toast": Toast(D.text, D.type); break;
-            case "lock": Lock(D && D.text); break;
+            case "lock": CloseForm(); Lock(D && D.text); break;
         }
     });
 
@@ -342,5 +387,6 @@
         setTimeout(() => { S.employee = "QWE111"; window.postMessage({ action: "bank", data: { Cid: "QWE111", Perms: { Balance: true, Deposit: true } } }, "*"); }, 50);
     }
 </script>
+<script src="nui://fw-dui/html/keys.js"></script>
 </body>
 </html>

@@ -189,6 +189,11 @@
             }
             case "desktop:app": ToApp(D.id, { action: D.action, data: D.data }); break;
             case "desktop:open": Open(D.id); break;
+            case "dui:key": { // typing (fw-dui cl_keys.lua): to the app in front
+                const Front = Order.filter(Id => !Apps[Id].win.classList.contains("hidden")).sort((A, B) => Apps[B].win.style.zIndex - Apps[A].win.style.zIndex)[0];
+                if (Front) ToApp(Front, Msg);
+                break;
+            }
             case "desktop:close": Close(D.id); break;
             case "desktop:cursor": {
                 const C = $("cursor");

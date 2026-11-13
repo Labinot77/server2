@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fleeca Branch Terminal</title>
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.15.4/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; cursor: none; user-select: none; }
+    body { font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 13px; color: #1d1f24; background: #fff; }
+    .cond { font-family: "Barlow Condensed", Inter, sans-serif; }
+    .muted { color: #8a8f98; } .green { color: #2f9e44; } .red { color: #e03131; }
+    .label { font-size: 10px; font-weight: 600; letter-spacing: 1.6px; color: #9aa0a8; text-transform: uppercase; }
+    .logo { font-family: "Barlow Condensed", sans-serif; font-style: italic; font-weight: 700; font-size: 26px; letter-spacing: -1px; }
+    .logo i { font-style: italic; color: #2f9e44; }
+    .row { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid #f0f1f3; }
+    .row:last-child { border: 0; }
+    .dot::before { content: "●"; font-size: 9px; margin-right: 5px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1.5px solid #1d1f24; border-radius: 10px; font-weight: 600; background: #fff; }
+    .btn:hover { background: #f4f5f7; }
+    .btn.off { border-color: transparent; color: #c4c8ce; background: #fafbfc; pointer-events: none; }
+    .hidden { display: none !important; }
+
+    /* Login */
+    #login { display: flex; height: 100%; }
+    .brand { width: 42%; padding: 34px 26px; border-right: 1px solid #eef0f2; display: flex; flex-direction: column; background: linear-gradient(#fff, #fcfcfd); }
+    .brand h1 { font-size: 46px; font-weight: 700; line-height: 1; margin-top: 6px; }
+    .brand .rows { margin-top: 26px; border-top: 1px solid #eef0f2; }
+    .brand .foot { margin-top: auto; font-size: 10px; color: #b0b5bc; line-height: 1.5; }
+    .auth { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .box { width: 300px; }
+    .back { color: #6b7280; margin-bottom: 22px; display: inline-block; }
+    .back:hover { color: #1d1f24; }
+    .account { display: flex; align-items: center; gap: 14px; }
+    .account .logo { font-size: 22px; padding: 6px 10px; border: 1px solid #eef0f2; border-radius: 8px; }
+    .account b { font-size: 15px; display: block; margin-top: 2px; }
+    .accounts .account { padding: 12px; border: 1px solid #eef0f2; border-radius: 12px; margin-bottom: 10px; }
+    .accounts .account:hover { border-color: #2f9e44; background: #f6fbf7; }
+    .accounts .account.disabled { opacity: 0.45; pointer-events: none; }
+    .field { display: flex; gap: 8px; margin-top: 6px; }
+    .input { flex: 1; height: 36px; border: 1px solid #e3e5e8; border-radius: 8px; padding: 0 12px; display: flex; align-items: center; font-size: 16px; letter-spacing: 2px; }
+    .input:hover { border-color: #2f9e44; }
+    .input:focus-within { border-color: #2f9e44; }
+    .input input { width: 100%; border: 0; outline: 0; font: inherit; letter-spacing: inherit; background: none; cursor: none; }
+    .go { width: 36px; height: 36px; border-radius: 8px; background: #2f9e44; color: #fff; display: flex; align-items: center; justify-content: center; }
+    .go:hover { background: #2b8a3e; }
+    .msg { min-height: 18px; margin-top: 8px; font-size: 12px; }
+    .hint { display: flex; gap: 16px; font-size: 12px; }
+    .hint .green:hover { text-decoration: underline; }
+    .check { margin-top: 12px; padding: 12px; border: 1px solid #eef0f2; border-radius: 10px; }
+    .check .code { font-family: "Barlow Condensed", Inter, sans-serif; font-size: 30px; letter-spacing: 10px; text-align: center; color: #495057; background: repeating-linear-gradient(45deg, #f1f3f5 0 6px, #e9ecef 6px 12px); border-radius: 6px; margin: 8px 0; transform: skewX(-8deg); }
+    .check .typed { text-align: center; letter-spacing: 6px; font-weight: 700; min-height: 18px; }
+    .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 8px; }
+    .keys div { padding: 7px 0; text-align: center; border: 1px solid #e3e5e8; border-radius: 6px; font-weight: 600; }
+    .keys div:hover { background: #f1f3f5; }
+
+    /* Dashboard */
+    #dash { display: flex; height: 100%; }
+    .side { width: 200px; padding: 22px 18px; border-right: 1px solid #eef0f2; display: flex; flex-direction: column; }
+    .side .who { margin-top: 18px; font-weight: 600; line-height: 1.35; }
+    .side .who span { display: block; font-weight: 400; font-size: 12px; color: #8a8f98; }
+    .nav { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #f1f8f3; color: #2f9e44; font-weight: 600; }
+    .side .bottom { margin-top: auto; font-size: 12px; }
+    .side .bottom .row { padding: 7px 0; border: 0; }
+    .signout { margin-top: 10px; color: #6b7280; } .signout:hover { color: #e03131; }
+    .main { flex: 1; padding: 24px 26px; overflow: hidden; }
+    .head { display: flex; align-items: flex-start; gap: 16px; }
+    .head h2 { font-size: 22px; font-weight: 600; margin-top: 4px; }
+    .head .right { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 12px; }
+    .refresh { padding: 8px 14px; border: 1px solid #e3e5e8; border-radius: 8px; } .refresh:hover { background: #f4f5f7; }
+    .stats { display: flex; margin-top: 22px; padding: 16px 0; border-top: 1px solid #eef0f2; border-bottom: 1px solid #eef0f2; }
+    .stats > div { flex: 1; }
+    .stats .v { font-family: "Barlow Condensed", Inter, sans-serif; font-size: 24px; font-weight: 600; margin-top: 4px; }
+    .stats .v small { font-family: Inter; font-size: 11px; color: #8a8f98; font-weight: 400; }
+    .door { display: flex; align-items: center; gap: 16px; padding: 18px 12px; border-bottom: 1px solid #f4f5f7; }
+    .door > i { color: #6b7280; width: 16px; }
+    .door b { font-weight: 600; font-size: 14px; display: block; }
+    .chip { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; padding: 3px 9px; border-radius: 6px; background: #f4f5f7; font-size: 11px; font-weight: 600; }
+    .chip.open { background: #ebfbee; color: #2f9e44; }
+    .door .btn { margin-left: auto; }
+    .note { margin-top: 18px; font-size: 12px; color: #8a8f98; display: flex; gap: 10px; }
+</style>
+</head>
+<body>
+    <div id="login">
+        <div class="brand">
+            <div class="logo">FL<i>EE</i>CA</div>
+            <div class="label" style="margin-top:26px">Branch terminal</div>
+            <h1 class="cond" id="branch">Legion Square</h1>
+            <div class="muted" style="font-size:11px">Fleeca Bank · Lobby workstation</div>
+            <div class="rows">
+                <div class="row"><span class="muted">Branch network</span><span class="green dot">Online</span></div>
+                <div class="row"><span class="muted">Workstation</span><b>Lobby</b></div>
+                <div class="row"><span class="muted">Security</span><b id="security">Active</b></div>
+                <div class="row"><span class="muted">Local time</span><b class="clock"></b></div>
+            </div>
+            <div class="foot">Authorised personnel only. Sessions<br>on this terminal are recorded.</div>
+        </div>
+        <div class="auth">
+            <div class="box accounts" id="accounts">
+                <div class="label" style="margin-bottom:12px">Select an account</div>
+                <div class="account" data-pick><div class="logo">FL<i>EE</i>CA</div><div><span class="label">Branch account</span><b>Fleeca Management</b></div></div>
+                <div class="account disabled"><div class="logo">FL<i>EE</i>CA</div><div><span class="label">Account disabled</span><b>Teller 01</b></div></div>
+            </div>
+            <div class="box hidden" id="password">
+                <span class="back" data-back><i class="fas fa-angle-left"></i>&nbsp; All accounts</span>
+                <div class="account"><div class="logo">FL<i>EE</i>CA</div><div><span class="label">Enter your password</span><b>Fleeca Management</b></div></div>
+                <div class="label" style="margin-top:26px">Password</div>
+                <div class="field"><form class="input" id="form"><input type="password" id="pw" maxlength="24" autocomplete="off" spellcheck="false"></form><div class="go" data-login><i class="fas fa-arrow-right"></i></div></div>
+                <div class="msg red" id="error"></div>
+                <div class="hint" id="hint"><span class="green" data-check><i class="far fa-question-circle"></i>&nbsp; Password hint</span><span class="muted"><i class="fas fa-lock"></i>&nbsp; Pass a security check to reveal</span></div>
+                <div class="check hidden" id="check">
+                    <div class="label">Security check · enter the code</div>
+                    <div class="code" id="captcha"></div>
+                    <div class="typed" id="captchaTyped"></div>
+                    <div class="keys" id="keys"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dash" class="hidden">
+        <div class="side">
+            <div class="logo">FL<i>EE</i>CA</div>
+            <div class="who"><span class="branchName" style="color:#1d1f24;font-size:13px;font-weight:600"></span><span id="user"></span></div>
+            <div class="label" style="margin-top:22px">Services</div>
+            <div class="nav"><i class="fas fa-university"></i>&nbsp; Branch Management</div>
+            <div class="bottom">
+                <div class="row"><span class="muted">Branch network</span><span class="green dot">Online</span></div>
+                <div class="row"><span class="muted">Local time</span><b class="clock"></b></div>
+                <div class="signout" data-signout><i class="fas fa-sign-out-alt"></i>&nbsp; Sign out</div>
+            </div>
+        </div>
+        <div class="main">
+            <div class="head">
+                <div><div class="label">Services / Branch management</div><h2>Door access</h2></div>
+                <div class="right"><span><i class="fas fa-shield-alt"></i>&nbsp; <span id="openCount"></span></span><span class="refresh" data-refresh><i class="fas fa-sync-alt"></i>&nbsp; Refresh</span></div>
+            </div>
+            <div class="stats">
+                <div><div class="label">Back-room doors</div><div class="v" id="unlocked"></div></div>
+                <div><div class="label">Live access code</div><div class="v" id="live">None</div></div>
+                <div><div class="label">Branch</div><div class="v branchName"></div></div>
+            </div>
+            <div id="doors"></div>
+            <div class="note"><i class="fas fa-info-circle"></i><span>Access codes are single use and expire after several seconds. Generating a new code replaces the previous one.</span></div>
+        </div>
+    </div>
+
+<script src="nui://fw-dui/html/keys.js"></script>
+<script>
+    const $ = id => document.getElementById(id);
+    const Q = s => document.querySelectorAll(s);
+    const Post = (Action, Data = {}) => fetch("https://fw-heists/fleecaTerminal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ Action, ...Data }) }).catch(() => {});
+    const Rng = Seed => () => { Seed = (Seed * 16807) % 2147483647; return Seed / 2147483647; };
+
+    let S = { labels: [], doors: [], live: null, rand: Rng(1), clock: 0, captcha: "", typed: "" };
+
+    const View = Name => { $("login").classList.toggle("hidden", Name === "dash"); $("dash").classList.toggle("hidden", Name !== "dash"); };
+    const Step = Name => { $("accounts").classList.toggle("hidden", Name !== "accounts"); $("password").classList.toggle("hidden", Name !== "password"); };
+
+    const ResetLogin = () => {
+        $("pw").value = ""; $("error").textContent = "";
+        $("check").classList.add("hidden"); $("hint").classList.remove("hidden");
+        $("hint").innerHTML = `<span class="green" data-check><i class="far fa-question-circle"></i>&nbsp; Password hint</span><span class="muted"><i class="fas fa-lock"></i>&nbsp; Pass a security check to reveal</span>`;
+        Step("accounts"); View("login");
+    };
+
+    const Clock = () => {
+        const T = Math.floor(S.clock) % 86400, P = n => String(n).padStart(2, "0");
+        Q(".clock").forEach(E => E.textContent = `${P(Math.floor(T / 3600))}:${P(Math.floor(T / 60) % 60)}:${P(T % 60)}`);
+    };
+    setInterval(() => { S.clock++; Clock(); if (S.live) RenderLive(); }, 1000);
+
+    // ---------- Security check (click the digits shown) ----------
+    const NewCaptcha = () => {
+        S.captcha = Array.from({ length: 4 }, () => Math.floor(S.rand() * 10)).join(""); S.typed = "";
+        $("captcha").textContent = S.captcha; $("captchaTyped").textContent = "";
+    };
+    $("keys").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(N => `<div data-key="${N}">${N}</div>`).join("");
+    const Key = N => {
+        S.typed += N;
+        $("captchaTyped").textContent = "•".repeat(S.typed.length);
+        if (S.typed.length < 4) return;
+        if (S.typed === S.captcha) { $("check").classList.add("hidden"); $("hint").innerHTML = `<span class="muted">Checking…</span>`; Post("hint"); }
+        else NewCaptcha();
+    };
+
+    // ---------- Dashboard ----------
+    const Open = () => S.doors.filter(Boolean).length;
+    const RenderLive = () => {
+        const Left = Math.ceil((S.live.until - Date.now()) / 1000);
+        if (Left <= 0) { S.live = null; $("live").textContent = "None"; return; }
+        $("live").innerHTML = `${S.live.code} <small>${S.labels[S.live.door - 1]?.label || ""} · ${Left}s</small>`;
+    };
+    const RenderDash = () => {
+        const Total = S.labels.length;
+        $("openCount").textContent = `${Open()} of ${Total} doors open`;
+        $("unlocked").innerHTML = `${Open()} <small>of ${Total} unlocked</small>`;
+        $("doors").innerHTML = S.labels.map((D, i) => {
+            const IsOpen = S.doors[i], Ready = !IsOpen && (i === 0 || S.doors[i - 1]);
+            return `<div class="door"><i class="fas fa-${IsOpen ? "lock-open" : "lock"}"></i><div><b>${D.label}</b><span class="muted" style="font-size:12px">${D.desc}</span><br>
+                <span class="chip ${IsOpen ? "open" : ""}"><i class="fas fa-${IsOpen ? "lock-open" : "lock"}"></i> ${IsOpen ? "Unlocked" : "Locked"}</span></div>
+                <span class="btn ${Ready ? "" : "off"}" data-generate="${i + 1}"><i class="fas fa-key"></i> Generate access code</span></div>`;
+        }).join("");
+        if (S.live) RenderLive(); else $("live").textContent = "None";
+    };
+    const ShowDash = (User, Doors) => { $("user").textContent = `Signed in: ${User}`; S.doors = Doors || []; View("dash"); RenderDash(); };
+
+    // ---------- Clicks (replayed for players watching through fw-dui mirror) ----------
+    const Login = () => { if ($("pw").value) { $("error").textContent = ""; Post("login", { Password: $("pw").value }); } else $("error").textContent = "Enter your password."; };
+    $("form").addEventListener("submit", E => { E.preventDefault(); Login(); }); // Enter (keys.js)
+
+    document.addEventListener("click", E => {
+        const T = E.target.closest("[data-pick],[data-back],[data-login],[data-check],[data-key],[data-generate],[data-refresh],[data-signout]");
+        if (!T) return;
+        const D = T.dataset;
+        if ("pick" in D) { Step("password"); $("pw").focus(); }
+        else if ("back" in D) ResetLogin();
+        else if ("login" in D) Login();
+        else if ("check" in D) { $("hint").classList.add("hidden"); $("check").classList.remove("hidden"); NewCaptcha(); }
+        else if ("key" in D) Key(D.key);
+        else if ("generate" in D) Post("generate", { Door: Number(D.generate) });
+        else if ("refresh" in D) Post("refresh");
+        else if ("signout" in D) Post("signout");
+    });
+
+    // ---------- Lua -> page ----------
+    const Handlers = {
+        init: D => {
+            S.labels = D.labels || []; S.rand = Rng(D.seed || 1); S.clock = D.clock ? D.clock[0] * 3600 + D.clock[1] * 60 + D.clock[2] : 0; S.live = null;
+            $("branch").textContent = D.branch; Q(".branchName").forEach(E => E.textContent = D.branch);
+            $("security").innerHTML = D.bypassed ? `<span class="red">Bypassed</span>` : "Active";
+            Clock();
+            if (D.user) ShowDash(D.user, D.doors); else ResetLogin();
+        },
+        login: D => { $("pw").value = ""; if (D.Ok) ShowDash(D.User, D.Doors); else $("error").textContent = D.Error || "Sign-in failed."; },
+        hint: D => { $("hint").innerHTML = `<span class="green"><i class="fas fa-unlock"></i>&nbsp; ${D || "No hint set."}</span>`; },
+        code: D => {
+            if (D.error) return;
+            S.live = { code: D.code, door: D.door, until: Date.now() + D.lifetime * 1000 };
+            RenderLive();
+        },
+        state: D => { S.doors = D.Doors || S.doors; if (D.Code === false) S.live = null; RenderDash(); },
+        signedout: () => { S.live = null; ResetLogin(); },
+    };
+
+    window.addEventListener("message", E => {
+        let M = E.data;
+        if (typeof M === "string") { try { M = JSON.parse(M); } catch { return; } }
+        if (M && Handlers[M.action]) Handlers[M.action](M.data || {});
+    });
+
+    if (location.search.includes("mock")) window.postMessage({ action: "init", data: { branch: "Legion Square", seed: 7, clock: [18, 36, 22], labels: [{ label: "Security office door", desc: "Lobby to security office keypad." }, { label: "Vault corridor door", desc: "Security office to vault corridor keypad." }] } }, "*");
+</script>
+</body>
+</html>

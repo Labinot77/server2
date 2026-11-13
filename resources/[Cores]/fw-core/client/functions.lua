@@ -315,9 +315,12 @@ function FW.GetCustomizedKey(CommandString)
 end
 
 function FW.AddKeybind(CommandString, Category, Description, DefaultParameter, OnKey, Event, IsHold, DefaultWrapper)
-	local Pressed = false
+	local Pressed, Blocked = false, false
 	RegisterCommand('+fw_'..CommandString, function()
 		if IsPauseMenuActive() then return end
+		-- Typing on a DUI screen (fw-dui): keys are text, not keybinds (phone, inventory, ...)
+		Blocked = LocalPlayer.state.duiFocus == true
+		if Blocked then return end
 		if IsHold and Pressed then return end
 		Pressed = true
 
@@ -327,6 +330,7 @@ function FW.AddKeybind(CommandString, Category, Description, DefaultParameter, O
 
 	RegisterCommand('-fw_'..CommandString, function()
 		if IsPauseMenuActive() then return end
+		if Blocked then Blocked = false return end
 		if IsHold then Pressed = false end
 
 		if OnKey then OnKey(false) end
