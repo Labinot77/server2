@@ -28,6 +28,12 @@ function SpawnTrolley(Id, Type, Coords)
     }
 end
 
+-- A trolley another client spawned (networked): make it grabbable here too (cl_fleeca_advanced.lua).
+function RegisterTrolley(Id, Type, Object)
+    if Trollies[Id] and Trollies[Id].Object == Object then return end
+    Trollies[Id] = { Type = Type, Object = Object }
+end
+
 function DeleteTrolley(Id)
     NetworkRequestControlOfEntity(Trollies[Id].Object)
     while not NetworkHasControlOfEntity(Trollies[Id].Object) do
@@ -128,7 +134,29 @@ AddEventHandler("fw-heists:Client:Trolley:Grab", function(Data, Entity)
     NetworkAddEntityToSynchronisedScene(BagObject, GrabAnimationTwo, "anim@heists@ornate_bank@grab_cash", "bag_grab", 4.0, -8.0, 1)
     NetworkAddEntityToSynchronisedScene(Entity, GrabAnimationTwo, "anim@heists@ornate_bank@grab_cash", "cart_cash_dissapear", 4.0, -8.0, 1)
     NetworkStartSynchronisedScene(GrabAnimationTwo)
-    Citizen.Wait(37000)
+
+    -- Space grabs faster. The rate goes to everyone (server relay), so the synced scene stays the same speed for all.
+    local BASE, Rate, Sent, Deadline = 1.3, 1.0, 1.0, GetGameTimer() + 60000
+    exports['fw-ui']:ShowInteraction('[SPACE] Grab faster')
+    while GetGameTimer() < Deadline do
+        Citizen.Wait(0)
+        DisableControlAction(0, 22, true)
+        if IsDisabledControlJustPressed(0, 22) then Rate = math.min(Rate + 0.35, 2.5) end
+        Rate = math.max(1.0, Rate - 0.004) -- back to normal speed when you stop pressing
+
+        local Scene = NetworkGetLocalSceneFromNetworkId(GrabAnimationTwo)
+        if Scene ~= -1 then
+            SetSynchronizedSceneRate(Scene, BASE * Rate)
+            if math.abs(Rate - Sent) >= 0.15 or (Rate == 1.0 and Sent ~= 1.0) then
+                Sent = Rate
+                TriggerServerEvent('fw-heists:Server:Trolley:Rate', GrabAnimationTwo, BASE * Rate)
+            end
+            if GetSynchronizedScenePhase(Scene) >= 0.99 then break end
+        elseif GetGameTimer() - StartedGrabbing > 37000 then
+            break -- scene not running locally: old fixed duration
+        end
+    end
+    exports['fw-ui']:HideInteraction()
 
     local GrabAnimationThree = NetworkCreateSynchronisedScene(GetEntityCoords(Entity), GetEntityRotation(Entity), 2, false, false, 1065353216, 0, 1.3)
     NetworkAddPedToSynchronisedScene(PlayerPedId(), GrabAnimationThree, "anim@heists@ornate_bank@grab_cash", "exit", 1.5, -4.0, 1, 16, 1148846080, 0)
@@ -189,4 +217,8 @@ AddEventHandler("fw-ui:Ready", function()
             },
         }
     })
+end)
+RegisterNetEvent("fw-heists:Client:Trolley:Rate", function(NetScene, Rate)
+    local Scene = NetworkGetLocalSceneFromNetworkId(NetScene)
+    if Scene ~= -1 then SetSynchronizedSceneRate(Scene, Rate) end
 end)

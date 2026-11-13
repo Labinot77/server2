@@ -1,6 +1,7 @@
 -- Keypads with a DUI display (html/fleeca/keypad.html), typed on the keyboard (fw-dui typing): digits, Backspace, Enter.
 --   fleeca_keypad   : keypad at every Fleeca's StaffDoor, Config.FleecaKeypad.Code -> service door
 --   fleeca_secpanel : security panel next to an advanced bank's door, the code worked out from the terminal
+--                     (fleeca_secpanel_<model> for a door with its own panel copy)
 local DUI = exports['fw-dui']
 local Url = ('nui://%s/html/fleeca/keypad.html'):format(GetCurrentResourceName())
 local Pad = { Open = nil, Busy = false, Code = '', Target = nil }
@@ -14,22 +15,42 @@ local Pads = {
             end
         end,
         Submit = function(T, Code) return FW.SendCallback('fw-heists:Server:Fleeca:Keypad', T.Id, Code) end,
-    },
-    fleeca_secpanel = {
-        Model = Config.FleecaAdvanced.Models.Panel, Max = 6,
-        Find = function(C) -- the advanced door whose Panel is closest
-            local Best, BestDist = nil, 4.0
-            for Id, Bank in pairs(Config.Fleeca) do
-                for Door, D in ipairs(Bank.Advanced and Bank.Advanced.Doors or {}) do
-                    local Dist = #(C - vector3(D.Panel.x, D.Panel.y, D.Panel.z))
-                    if Dist < BestDist then Best, BestDist = { Id = Id, Door = Door }, Dist end
-                end
-            end
-            return Best
-        end,
-        Submit = function(T, Code) return FW.SendCallback('fw-heists:Server:FleecaAdv:Panel', T.Id, T.Door, Code) end,
+        Done = function(T) return FleecaVault[T.Id] and FleecaVault[T.Id].Staff == 1 end,
+        Static = Config.FleecaKeypad.Static,
     },
 }
+
+-- Security panels: one screen per panel model. A panel model only shows one page at a time (the texture swap is
+-- per model), so a door with its own copy (Doors[x].PanelModel, e.g. v_corp_bk_secpanel_dui_02) gets its own screen
+-- and both panels can show a page at once. Without the copy streamed, doors share Config.FleecaAdvanced.Models.Panel.
+local function PanelModel(D)
+    local M = D.PanelModel
+    return M and IsModelInCdimage(joaat(M)) and M or Config.FleecaAdvanced.Models.Panel
+end
+
+for _, Bank in pairs(Config.Fleeca) do
+    for _, D in ipairs(Bank.Advanced and Bank.Advanced.Doors or {}) do
+        local Model = PanelModel(D)
+        local Name = Model == Config.FleecaAdvanced.Models.Panel and 'fleeca_secpanel' or 'fleeca_secpanel_' .. Model
+        Pads[Name] = Pads[Name] or {
+            Model = Model, Max = 6, Static = {}, SwapFrom = Config.FleecaAdvanced.Models.PanelMap,
+            Find = function(C) -- the advanced door (with this panel model) whose Panel is at this panel (within 1m)
+                local Best, BestDist = nil, 1.0
+                for Id, B in pairs(Config.Fleeca) do
+                    for Door, DD in ipairs(B.Advanced and B.Advanced.Doors or {}) do
+                        local Dist = PanelModel(DD) == Model and #(C - vector3(DD.Panel.x, DD.Panel.y, DD.Panel.z))
+                        if Dist and Dist < BestDist then Best, BestDist = { Id = Id, Door = Door }, Dist end
+                    end
+                end
+                return Best
+            end,
+            Submit = function(T, Code) return FW.SendCallback('fw-heists:Server:FleecaAdv:Panel', T.Id, T.Door, Code) end,
+            Done = function(T) return FleecaVault[T.Id] and FleecaVault[T.Id].Doors[T.Door] end, -- door already open
+            Live = function(T) return FleecaVault[T.Id] and FleecaVault[T.Id].Live == T.Door end,  -- a code is live for it
+        }
+        table.insert(Pads[Name].Static, D.Panel)
+    end
+end
 
 local function Push(Name, Status)
     DUI:Send(Name, 'state', { length = Pad.Open == Name and #Pad.Code or 0, status = Status or 'idle' })
@@ -66,7 +87,10 @@ local function Submit()
     PlaySoundFrontend(-1, Ok and 'Hack_Success' or 'Hack_Failed', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
     Wait(1200)
     Pad.Busy = false
-    if Ok then Close() elseif Pad.Open == Name then Push(Name) end
+    if Ok then
+        Close()
+        if FleecaAdvRefresh then FleecaAdvRefresh(Pad.Target.Id) end -- prompt gone right away
+    elseif Pad.Open == Name then Push(Name) end
 end
 
 AddEventHandler('fw-dui:Client:Key', function(Name, Key)
@@ -96,19 +120,9 @@ end)
 
 -- Panels are the bank interior's own (static) panels: fw-dui swaps them to the _dui model at their positions (SwapFrom)
 -- and keeps an invisible copy there (Static) so range, camera and interact can find them.
-local function PanelSpots()
-    local List = {}
-    for _, Bank in pairs(Config.Fleeca) do
-        for _, D in ipairs(Bank.Advanced and Bank.Advanced.Doors or {}) do List[#List + 1] = D.Panel end
-    end
-    return List
-end
-
 local function RegisterScreens()
-    local Static = { fleeca_keypad = Config.FleecaKeypad.Static, fleeca_secpanel = PanelSpots() }
-    local SwapFrom = { fleeca_secpanel = Config.FleecaAdvanced.Models.PanelMap }
     for Name, P in pairs(Pads) do
-        DUI:RegisterScreen(Name, { Url = Url, Models = { P.Model }, Distance = 3.5, Mirror = true, Static = Static[Name], SwapFrom = SwapFrom[Name] })
+        DUI:RegisterScreen(Name, { Url = Url, Models = { P.Model }, Distance = 3.5, Mirror = true, Static = P.Static, SwapFrom = P.SwapFrom })
     end
 end
 
@@ -122,8 +136,35 @@ CreateThread(function()
         exports['interact']:AddModelInteraction({
             modelData = { { model = P.Model, offset = vec3(0.0, 0.0, 0.0) } }, distance = 3.0, interactDst = 1.2,
             options = { { name = Name, label = 'Use keypad',
-                canInteract = function(Entity) return not Pad.Open and P.Find(GetEntityCoords(Entity)) ~= nil end,
+                canInteract = function(Entity)
+                    local T = not Pad.Open and P.Find(GetEntityCoords(Entity))
+                    -- hidden once the code was entered; panels only while a code is live for their door
+                    return T and not P.Done(T) and (not P.Live or P.Live(T))
+                end,
                 action = function(Entity) CreateThread(function() Open(Name, Entity) end) end } },
         })
     end
+end)
+
+-- /fleecatest panels: every security panel near you and the door it belongs to (server/sv_fleeca_test.lua)
+RegisterNetEvent('fw-heists:Client:FleecaTest:Panels', function()
+    local C, Lines = GetEntityCoords(PlayerPedId()), {}
+    for _, Obj in ipairs(GetGamePool('CObject')) do
+        local Model, P = GetEntityModel(Obj), nil
+        for Name, Pad in pairs(Pads) do
+            if Pad.Live and joaat(Pad.Model) == Model then P = Pad end
+        end
+        local Pos = GetEntityCoords(Obj)
+        if P and #(C - Pos) < 15.0 then
+            local T = P.Find(Pos)
+            local V = T and FleecaVault[T.Id]
+            Lines[#Lines + 1] = ('%s at vector4(%.2f, %.2f, %.2f, %.1f) %s -> %s%s'):format(P.Model, Pos.x, Pos.y, Pos.z, GetEntityHeading(Obj),
+                GetEntityAlpha(Obj) == 0 and '(fw-dui copy)' or '(real object)',
+                T and ('door ' .. T.Door) or 'NO DOOR (not within 1m of a Panel)',
+                V and (' | live code for door %s | open: %s'):format(tostring(V.Live), tostring(V.Doors[T.Door])) or '')
+        end
+    end
+    if #Lines == 0 then Lines[1] = 'No security panels within 15m' end
+    for _, L in ipairs(Lines) do print('[fleecatest] ' .. L) end
+    FW.Functions.Notify(('%d panel(s), see F8'):format(#Lines), 'primary')
 end)

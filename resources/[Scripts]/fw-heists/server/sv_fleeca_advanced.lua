@@ -34,11 +34,17 @@ local function Generate(Id)
     local Spots = {}
     for _, V in ipairs(Adv.Notes) do Spots[#Spots + 1] = V end
 
+    -- Every note: "Backdoor code, last serviced <age> ago". The most recently serviced one has the real password.
+    local Count, Ages = math.min(Cfg.NoteCount, #Spots), {}
+    for i, A in ipairs(Cfg.ServiceAges) do Ages[i] = A end
+    local Picked = {}
+    for i = 1, Count do Picked[i] = table.remove(Ages, math.random(#Ages)) end
+    table.sort(Picked, function(A, B) return A[2] < B[2] end) -- Picked[1] = most recent
+
     local Bank = { Password = Password(), Notes = {}, Fails = 0, LockedUntil = 0, Doors = {} }
-    local Correct = math.random(math.min(Cfg.NoteCount, #Spots))
-    for i = 1, math.min(Cfg.NoteCount, #Spots) do
+    for i = 1, Count do
         local Spot = table.remove(Spots, math.random(#Spots))
-        Bank.Notes[i] = { Coords = Spot, Text = i == Correct and Bank.Password or Password() }
+        Bank.Notes[i] = { Coords = Spot, Text = i == 1 and Bank.Password or Password(), Service = Picked[i][1] }
     end
     Bank.Hint = ('Starts with "%s" and has %d characters.'):format(Bank.Password:sub(1, 1), #Bank.Password)
 
@@ -71,6 +77,7 @@ end)
 AddEventHandler('fw-heists:Server:Fleeca:OnReset', function(Id)
     if not Config.Fleeca[Id].Advanced then return end
     DataManager.Set(Key(Id, 'box-open'), 0)
+    DataManager.Set('trolley-fleeca-' .. Id, 0)
     for _, D in ipairs(Config.Fleeca[Id].Advanced.Doors) do -- doors that aren't in DoorIds (those are relocked by sv_fleeca.lua)
         TriggerEvent('fw-doors:Server:SetLockStateById', D.Door, 1)
     end
@@ -131,6 +138,7 @@ FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Login', function(Source,
     local Bank = Valid(Id)
     if not Bank or not Near(Source, Config.Fleeca[Id].Center, 25.0) then return Cb({ Error = 'Workstation unavailable.' }) end
     if DataManager.Get(Key(Id, 'powerbox'), 0) == 0 then return Cb({ Error = 'Locked by branch security. Remote sign-in disabled.' }) end
+    if DataManager.Get(Key(Id, 'door-lockpicked'), 0) ~= 1 then return Cb({ Error = 'Workstation locked.' }) end -- staff door keypad first
     if os.time() < Bank.LockedUntil then return Cb({ Error = ('Too many attempts. Try again in %ds.'):format(Bank.LockedUntil - os.time()) }) end
 
     if type(Password) ~= 'string' or Password:lower() ~= Bank.Password:lower() then
@@ -196,15 +204,32 @@ end)
 -- ── Security panels next to the doors (cl_fleeca_keypad.lua) ───────────────
 
 -- Opens terminal door Door of bank Id. Also used by /fleecatest.
-function FleecaAdvOpenDoor(Id, Door)
+function FleecaAdvOpenDoor(Id, Door, Opener)
     local Data = Config.Fleeca[Id].Advanced.Doors[Door]
     Banks[Id].Doors[Door] = true
     TriggerEvent('fw-doors:Server:SetLockStateById', Data.Door, 0)
-    if Data.Door == Config.Fleeca[Id].DoorIds[3] then DataManager.Set(Key(Id, 'vault-gate'), 2) end -- loot behind the gate (cl_fleeca.lua)
+    if Data.Door == Config.Fleeca[Id].DoorIds[3] then DataManager.Set(Key(Id, 'vault-gate'), 2) end -- loot 3-5 (cl_fleeca.lua)
+    if Data.Vault then
+        DataManager.Set(Key(Id, 'vault'), 2) -- swings the vault door + loot 1-2 (cl_fleeca.lua)
+        TriggerClientEvent('fw-heists:Client:FleecaAdv:VaultOpened', -1, Id, Opener) -- the opener spawns the trolley
+    end
     PushState(Id)
 end
 
 function FleecaAdvState(Id) return Banks[Id] end -- for /fleecatest
+
+-- Everything the vault prompts need, in one call (polled by cl_fleeca_advanced.lua while you're near the vault).
+FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:VaultState', function(Source, Cb, Id)
+    if not Valid(Id) then return Cb(false) end
+    local Loot = {}
+    for i = 1, 5 do Loot[i] = DataManager.Get(Key(Id, 'loot-' .. i), 0) end
+    Cb({
+        Vault = DataManager.Get(Key(Id, 'vault'), 0), Gate = DataManager.Get(Key(Id, 'vault-gate'), 0),
+        Staff = DataManager.Get(Key(Id, 'door-lockpicked'), 0), Trolley = DataManager.Get('trolley-fleeca-' .. Id, 0),
+        Loot = Loot, Doors = DoorStates(Id),
+        Live = Banks[Id].Code and os.time() <= Banks[Id].Code.Expires and Banks[Id].Code.Door or false, -- door with a live code
+    })
+end)
 
 FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Panel', function(Source, Cb, Id, Door, Code)
     local Bank = Valid(Id)
@@ -215,7 +240,7 @@ FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Panel', function(Source,
     if not Live or Live.Door ~= Door or os.time() > Live.Expires or tostring(Code) ~= Live.Code then return Cb(false) end
 
     Bank.Code = nil -- single use
-    FleecaAdvOpenDoor(Id, Door)
+    FleecaAdvOpenDoor(Id, Door, Source)
     Cb(true)
 end)
 

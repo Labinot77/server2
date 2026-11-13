@@ -23,13 +23,23 @@ do
     CommitRuntimeTexture(Black)
 end
 
-local ModelsByHash = {} -- base model and its Variant both point at the model's config
+local ModelsByHash = {} -- base model and its Variant(s) all point at the model's config
 
+-- Data.Copy[1] = the model itself, Data.Copy[2..] = its extra Copies (another _dui copy with its own texture), so
+-- two screens can show a page on two props of the same model side by side (RegisterScreen Copy = 2).
 for Name, Data in pairs(Config.Models) do
     Data.Name = Name
     Data.Resolution = Data.Resolution or { 1280, 720 }
+    Data.Copy = { Data }
     ModelsByHash[joaat(Name)] = Data
     if Data.Variant then ModelsByHash[joaat(Data.Variant)] = Data end
+    for i, C in ipairs(Data.Copies or {}) do
+        local Copy = {}
+        for K, V in pairs(Data) do Copy[K] = V end
+        Copy.Variant, Copy.Texture, Copy.Dict, Copy.Specular = C.Variant, C.Texture, C.Dict, C.Specular
+        Data.Copy[i + 1] = Copy
+        ModelsByHash[joaat(C.Variant)] = Copy
+    end
 end
 
 local function LoadModel(Name)
@@ -60,7 +70,11 @@ function FindNearest(S, Coords)
     local Interior = S.SameInterior and GetInteriorFromEntity(PlayerPedId())
     local function Check(Entity, Model)
         if Interior and GetInteriorFromEntity(Entity) ~= Interior then return end -- e.g. the neighbour's house
-        local Dist = #(Coords - GetEntityCoords(Entity))
+        local Pos = GetEntityCoords(Entity)
+        for _, Other in pairs(Screens) do -- a prop another screen (e.g. the 2nd copy) already shows
+            if Other ~= S and Other.Entity and DoesEntityExist(Other.Entity) and #(GetEntityCoords(Other.Entity) - Pos) < 0.3 then return end
+        end
+        local Dist = #(Coords - Pos)
         if Dist <= BestDist then Best, BestModel, BestDist = Entity, Model, Dist end
     end
 
@@ -299,6 +313,8 @@ end
     Static   = { vector4(x, y, z, heading), ... }: positions of the model placed as static map props (see above)
     SwapFrom = 'map_model': the props at the Static points are this model, swapped to the screen's model there
     MirrorKeys = true: watchers get the typed characters (default: * so passwords don't leak)
+    Copy     = 2, 3, ...: use the model's extra copy (Config.Models[x].Copies) instead of its Variant, for a 2nd screen
+               on the prop next to it. Two screens never take the same prop.
 ]]
 local function RegisterScreen(Name, Options)
     if Screens[Name] then Destroy(Screens[Name]) end
@@ -310,12 +326,13 @@ local function RegisterScreen(Name, Options)
         Static = Options.Static, Proxies = {}, SwapFrom = Options.SwapFrom,
         Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {},
     }
+    local Copy = Options.Copy or 1
     for _, Model in ipairs(Options.Models or {}) do
-        local Data = Config.Models[Model]
+        local Data = Config.Models[Model] and Config.Models[Model].Copy[Copy] -- models without that copy are skipped
         if Data then
             S.Models[joaat(Model)] = Data
             if Data.Variant then S.Models[joaat(Data.Variant)] = Data end
-        else
+        elseif not Config.Models[Model] then
             print(('[fw-dui] %s: model %s is not in fw-dui Config.Models'):format(Name, Model))
         end
     end
@@ -387,6 +404,18 @@ exports('GetPropId', GetPropId)
 -- Base model name of an entity, also when it is the Variant copy (nil = not a screen model)
 exports('GetBaseModel', function(Entity) local Data = ModelsByHash[GetEntityModel(Entity)] return Data and Data.Name end)
 exports('GetVariant', function(Model) return Config.Models[Model] and Config.Models[Model].Variant end)
+-- All screen copies of a model: { Variant, Copies[1].Variant, ... }
+exports('GetVariants', function(Model)
+    local List = {}
+    for _, C in ipairs(Config.Models[Model] and Config.Models[Model].Copy or {}) do List[#List + 1] = C.Variant end
+    return List
+end)
+-- Name of the screen showing its page on Entity, if any
+exports('GetScreenOf', function(Entity)
+    for Name, S in pairs(Screens) do
+        if S.Entity == Entity then return Name end
+    end
+end)
 
 -- ── Threads ────────────────────────────────────────────────────────────────
 

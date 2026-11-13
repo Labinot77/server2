@@ -31,8 +31,9 @@ Actions = {
         table.sort(List)
         Say(Source, 'Actions: ' .. table.concat(List, ', '),
             'on/off: test mode (no cops, cooldown or disabled heists needed)',
-            'tp box|terminal|panel1|panel2|staff|vault: teleport to a step',
-            'door 1|2: open a terminal door without a code')
+            'tp box|terminal|panel1|panel2|staff|vault|trolley: teleport to a step',
+            'door 1|2: open a terminal door without a code',
+            'panels: every security panel near you + its door (F8)')
     end,
 
     on = function(Source)
@@ -49,7 +50,8 @@ Actions = {
         local Player = FW.Functions.GetPlayer(Source)
         Player.Functions.AddItem(Cfg.Items.Cutters, 1, false, nil, true)
         Player.Functions.AddItem(Cfg.Items.Laptop, 1, false, nil, true)
-        Say(Source, ('Gave %s + %s'):format(Cfg.Items.Cutters, Cfg.Items.Laptop))
+        Player.Functions.AddItem('heist-drill-basic', 1, false, nil, true) -- loot spots (Overvallen)
+        Say(Source, ('Gave %s + %s + heist-drill-basic'):format(Cfg.Items.Cutters, Cfg.Items.Laptop))
     end,
 
     -- Skip steps
@@ -71,12 +73,17 @@ Actions = {
         local Door = tonumber(Arg)
         local Data = Door and Config.Fleeca[Id].Advanced.Doors[Door]
         if not Data then return Say(Source, 'Usage: /fleecatest door 1|2') end
-        FleecaAdvOpenDoor(Id, Door)
+        FleecaAdvOpenDoor(Id, Door, Source)
         Say(Source, ('Opened %s (%s)'):format(Data.Label, Data.Door))
     end,
     vault = function(Source, Id)
         Set(Id, 'vault', 2)
-        Say(Source, 'Vault state set to open (2)')
+        TriggerClientEvent('fw-heists:Client:FleecaAdv:VaultOpened', -1, Id, Source)
+        Say(Source, 'Vault door open (+ trolley spawned by you)')
+    end,
+
+    panels = function(Source)
+        TriggerClientEvent('fw-heists:Client:FleecaTest:Panels', Source)
     end,
 
     -- Answers
@@ -113,11 +120,11 @@ Actions = {
     tp = function(Source, Id, Arg)
         local Bank, Adv = Config.Fleeca[Id], Config.Fleeca[Id].Advanced
         local Spots = {
-            box = Bank.PowerBox[1], terminal = Adv.Terminal, staff = Bank.StaffDoor, vault = Bank.Vault,
+            box = Bank.PowerBox[1], terminal = Adv.Terminal, staff = Bank.StaffDoor, vault = Bank.Vault, trolley = V3(Adv.Trolley),
             panel1 = Adv.Doors[1] and V3(Adv.Doors[1].Panel), panel2 = Adv.Doors[2] and V3(Adv.Doors[2].Panel),
         }
         local C = Spots[Arg or '']
-        if not C then return Say(Source, 'Usage: /fleecatest tp box|terminal|panel1|panel2|staff|vault') end
+        if not C then return Say(Source, 'Usage: /fleecatest tp box|terminal|panel1|panel2|staff|vault|trolley') end
         Teleport(Source, C)
         Say(Source, 'Teleported to ' .. Arg)
     end,

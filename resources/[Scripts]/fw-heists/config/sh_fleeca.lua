@@ -62,19 +62,25 @@ Config.Fleeca = {
         -- Advanced robbery (config/sh_fleeca_advanced.lua). Replaces thermite + lockpick for this bank.
         Advanced = {
             Name = 'Legion Square',
+            Trolley = vector4(150.20, -1046.00, 29.37, 70.0), -- cash trolley in the vault, spawned when the vault door opens
             Terminal = vector3(147.22, -1041.10, 29.15), -- the monitor closest to this point is the terminal (/duiprop prop_monitor_01a)
             Notes = { -- sticky note spots, NoteCount of them get a note, one has the real password
                 vector4(146.68, -1038.38, 29.37, 276.23),
                 vector4(146.68, -1039.38, 29.37, 276.23),
                 vector4(145.68, -1038.38, 29.37, 276.23),
+                vector4(147.68, -1038.38, 29.37, 276.23), -- estimates, move to the desks you want
+                vector4(145.68, -1039.38, 29.37, 276.23),
             },
             -- Terminal doors, in order (the 2nd code can only be generated once the 1st door is open).
             -- Door = fw-doors name, Panel = position + heading of its security panel (Config.FleecaAdvanced.Models.Panel).
             -- The panels are static map props: take the position from the ymap (CodeWalker) or look at it + /duiprop <model>,
-            -- Rules = how many instructions the code gets.
+            -- PanelModel = this door's own copy of the panel, so both panels can show a page at once (like the ATMs).
+            -- Rules = how many instructions the code gets. Vault = true: also swings the vault door (v_ilev_gb_vauldr) open.
+            -- Loot spots 1-2 show once the vault door is open, 3-5 once the security door (DoorIds[3]) is open.
             Doors = {
-                { Label = 'Security door', Desc = 'Security door inside the vault.', Door = 'FLEECA_LEGIONSQUARE_VAULT_DOOR', Panel = vector4(147.18, -1046.25, 29.56, 249.8), Rules = 1 },
-                { Label = 'Vault door', Desc = 'Vault corridor to vault keypad.', Door = 'FLEECA_LEGIONSQUARE_VAULT_GATE', Panel = vector4(148.45, -1046.66, 29.60, 160.0), Rules = 2 },
+                { Label = 'Vault door', Desc = 'Vault corridor to vault keypad.', Door = 'FLEECA_LEGIONSQUARE_VAULT_DOOR', Panel = vector4(147.18, -1046.25, 29.56, 249.8), Rules = 1, Vault = true },
+                { Label = 'Security door', Desc = 'Security door inside the vault.', Door = 'FLEECA_LEGIONSQUARE_VAULT_GATE', Panel = vector4(148.45, -1046.66, 29.60, 160.0), Rules = 2,
+                  PanelModel = 'v_corp_bk_secpanel_dui_02' }, -- own panel copy (falls back to the shared one until it's streamed)
             },
         },
         Zones = {

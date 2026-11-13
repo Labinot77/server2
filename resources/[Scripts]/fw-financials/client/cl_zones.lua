@@ -90,6 +90,7 @@ end)
         modelData = {
             { model = 'prop_fleeca_atm', offset = vec3(0.0, 0.0, 1.0) },
             { model = 'prop_fleeca_atm_dui', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui screen copy
+            { model = 'prop_fleeca_atm_dui_02', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui 2nd screen copy
         },
         distance = 3.0,
         interactDst = 1.5,

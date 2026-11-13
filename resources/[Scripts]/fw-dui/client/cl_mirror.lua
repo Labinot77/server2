@@ -87,6 +87,9 @@ RegisterNetEvent('fw-dui:Client:Mirror', function(Name, T, Events)
     if Entity == 0 and Model.Variant then
         Entity = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, 0.5, joaat(Model.Variant), false, false, false)
     end
+    for _, C in ipairs(Entity == 0 and Model.Copy or {}) do -- swapped to another copy on this client
+        if C.Variant and Entity == 0 then Entity = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, 0.5, joaat(C.Variant), false, false, false) end
+    end
     if Entity == 0 then return end
 
     -- Only from inside the same interior (not through the wall from the house next door).

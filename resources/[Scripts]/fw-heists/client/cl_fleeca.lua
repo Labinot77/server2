@@ -171,17 +171,17 @@ AddEventHandler("fw-heists:Client:Fleeca:Loot", function(Data)
 
     -- Is the Vault Door hacked?
     if DataManager.Get(GetFleecaPrefix(FleecaId) .. "vault", 0) ~= 2 then
-        return
+        return FW.Functions.Notify("De kluisdeur is nog dicht..", "error")
     end
 
     -- Is the Power Box hacked?
     if DataManager.Get(GetFleecaPrefix(FleecaId) .. "powerbox", 0) == 0 then
-        return
+        return FW.Functions.Notify("Het netwerk is nog niet gehackt..", "error")
     end
 
     -- Is the safe behind the gate and is the gate not opened, return.
     if Data.SafeId > 2 and DataManager.Get(GetFleecaPrefix(FleecaId) .. "vault-gate", 0) ~= 2 then
-        return
+        return FW.Functions.Notify("De beveiligingsdeur is nog dicht..", "error")
     end
 
     if DataManager.Get(GetFleecaPrefix(FleecaId) .. "loot-" .. Data.SafeId, 0) ~= 0 then
@@ -189,7 +189,7 @@ AddEventHandler("fw-heists:Client:Fleeca:Loot", function(Data)
     end
 
     if not exports['fw-inventory']:HasEnoughOfItem('heist-drill-basic', 1) then
-        return
+        return FW.Functions.Notify("Je mist een Basic Drill!", "error")
     end
 
     if not IsWearingHandshoes() and math.random(1, 100) <= 85 then
@@ -288,7 +288,8 @@ Citizen.CreateThread(function()
             end
         end)
 
-        for k, v in pairs(Bank.Zones) do
+        -- Advanced banks: loot via interact (cl_fleeca_advanced.lua), gate opened with a terminal code
+        for k, v in pairs(Bank.Advanced and {} or Bank.Zones) do
             exports['fw-ui']:AddEyeEntry('fleeca-heist-' .. FleecaId .. '_' .. k, {
                 Type = 'Zone',
                 SpriteDistance = 5.0,

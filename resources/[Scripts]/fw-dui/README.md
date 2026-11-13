@@ -87,6 +87,13 @@ in the `.ytd` and in the `.ydr`'s shader, stream it, and set `Variant` + `Textur
   interact options for the copy too, the player looks at the copy once it's swapped.
 - Each player shows one screen of a type at a time, so one copy per model is all a client ever needs.
 
+## Two screens side by side (Copies)
+One Variant means one page per model at a time. For two ATMs next to each other that both show a page (yours + the
+player next to you), make a 2nd copy (`prop_fleeca_atm_dui_02` with texture `prop_fleeca_atm_screen_dui_02`) and add
+`Copies = { { Variant = ..., Texture = ... } }` to the model. Register a 2nd screen with `Copy = 2`: it uses the 2nd
+copy and never takes the prop the first screen shows. `GetVariants(Model)` lists all copies, `GetScreenOf(Entity)`
+says which screen shows a prop.
+
 ## Houses next to each other (SameInterior)
 `SameInterior = true` only uses props in the interior the player stands in, and watchers only see a mirrored
 screen from inside the same interior. Two houses with the same computer never show each other's screen:

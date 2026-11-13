@@ -61,6 +61,10 @@ Config.Models = {
     },
 
     -- Fleeca security panels next to the vault doors (fw-heists, advanced Fleeca). Already a DUI prop, no copy needed.
+    ['v_corp_bk_secpanel_dui_02'] = { -- 2nd copy: the 2nd door's panel shows its own page (fw-heists Doors[x].PanelModel)
+        Texture = 'secpanel_screen_dui_02', Resolution = { 512, 384 },
+        Camera = { Offset = vector3(0.0, -0.45, 0.05), LookAt = vector3(0.0, 0.0, 0.05), Fov = 35.0, Transition = 500 },
+    },
     ['v_corp_bk_secpanel_dui_01'] = {
         Texture = 'secpanel_screen_dui', Resolution = { 512, 384 },
         Camera = { Offset = vector3(0.0, -0.45, 0.05), LookAt = vector3(0.0, 0.0, 0.05), Fov = 35.0, Transition = 500 },
@@ -70,6 +74,8 @@ Config.Models = {
     ['prop_fleeca_atm'] = {
         -- The copy has its own screen material + texture (the signs keep prop_fleece_emis). See README "ATM screen".
         Variant = 'prop_fleeca_atm_dui', Texture = 'prop_fleeca_atm_screen_dui', Resolution = { 1326, 948 }, -- screen is ~1.4 : 1
+        -- 2nd copy: two ATMs side by side can both show a page (fw-financials screen atm_2)
+        Copies = { { Variant = 'prop_fleeca_atm_dui_02', Texture = 'prop_fleeca_atm_screen_dui_02' } },
         Camera = { Offset = vector3(-0.1205, -0.415, 1.2125), LookAt = vector3(-0.1205, 0.085, 1.1425), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_01'] = {
