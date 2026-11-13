@@ -75,7 +75,7 @@ Config.Models = {
         -- The copy has its own screen material + texture (the signs keep prop_fleece_emis). See README "ATM screen".
         Variant = 'prop_fleeca_atm_dui', Texture = 'prop_fleeca_atm_screen_dui', Resolution = { 1326, 948 }, -- screen is ~1.4 : 1
         -- 2nd copy: two ATMs side by side can both show a page (fw-financials screen atm_2)
-        Copies = { { Variant = 'prop_fleeca_atm_dui_02', Texture = 'prop_fleeca_atm_screen_dui_02' } },
+        Copies = { { Variant = 'prop_fleeca_atm_dui_02', Texture = 'prop_fleeca_atm_screen_dui' } },
         Camera = { Offset = vector3(-0.1205, -0.415, 1.2125), LookAt = vector3(-0.1205, 0.085, 1.1425), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_01'] = {
