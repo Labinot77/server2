@@ -68,9 +68,13 @@ Config.Fleeca = {
                 vector4(146.68, -1039.38, 29.37, 276.23),
                 vector4(145.68, -1038.38, 29.37, 276.23),
             },
-            Doors = { -- in order. Keypad = interact point; without one the code goes in the StaffDoor keypad prop
-                { Label = 'Security office door', Desc = 'Lobby to security office keypad.', DoorId = 1 }, -- keypad prop at StaffDoor
-                { Label = 'Vault corridor door', Desc = 'Security office to vault corridor keypad.', DoorId = 2, Keypad = vector3(144.70, -1042.80, 29.64) },
+            -- Terminal doors, in order (the 2nd code can only be generated once the 1st door is open).
+            -- Door = fw-doors name, Panel = position + heading of its security panel (Config.FleecaAdvanced.Models.Panel).
+            -- The panels are static map props: take the position from the ymap (CodeWalker) or look at it + /duiprop <model>,
+            -- Rules = how many instructions the code gets.
+            Doors = {
+                { Label = 'Security door', Desc = 'Security door inside the vault.', Door = 'FLEECA_LEGIONSQUARE_VAULT_DOOR', Panel = vector4(147.18, -1046.25, 29.56, 249.8), Rules = 1 },
+                { Label = 'Vault door', Desc = 'Vault corridor to vault keypad.', Door = 'FLEECA_LEGIONSQUARE_VAULT_GATE', Panel = vector4(148.45, -1046.66, 29.60, 160.0), Rules = 2 },
             },
         },
         Zones = {

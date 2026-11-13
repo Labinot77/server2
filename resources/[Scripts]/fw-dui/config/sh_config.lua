@@ -56,8 +56,14 @@ Config.Models = {
     -- Still the normal LOCKED display? The texture is in another .ytd or has another name: find the display
     -- material in CodeWalker and test it live with /duitex fleeca_keypad <texture> <dict>, then set Texture / Dict.
     ['hei_prop_hei_keypad_01'] = {
-        Variant = 'hei_prop_hei_keypad_01_dui', Texture = 'hei_keypad_screen_dui', Resolution = { 512, 256 },
+        Texture = 'hei_keypad_screen_dui', Resolution = { 512, 256 },
         Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
+    },
+
+    -- Fleeca security panels next to the vault doors (fw-heists, advanced Fleeca). Already a DUI prop, no copy needed.
+    ['v_corp_bk_secpanel_dui_01'] = {
+        Texture = 'secpanel_screen_dui', Resolution = { 512, 384 },
+        Camera = { Offset = vector3(0.0, -0.45, 0.05), LookAt = vector3(0.0, 0.0, 0.05), Fov = 35.0, Transition = 500 },
     },
 
     -- ATMs (fw-financials)

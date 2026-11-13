@@ -1,7 +1,7 @@
 -- Advanced Fleeca (config/sh_fleeca_advanced.lua, server/sv_fleeca_advanced.lua)
 --   1. Power box: [E] Access (cutters) -> [E] Hack the network (laptop on the ground, GridBreaker app in a DUI)
 --   2. Lobby terminal (monitor DUI): Fleeca app, password from one of the sticky notes
---   3. Dashboard: generate a door access code -> enter it on the door keypad (security office, then vault corridor)
+--   3. Dashboard: generate a door code (number + instructions) -> a 2nd player types the result on the door's security panel
 --   After that the normal Fleeca flow (cl_fleeca.lua) continues: vault laptop, gate, loot.
 local Cfg = Config.FleecaAdvanced
 local DUI = exports['fw-dui']
@@ -165,6 +165,7 @@ function RefreshStep(Id)
 end
 
 local function CanRob()
+    if GlobalState.FleecaTest then return true end -- /fleecatest mode: no cops / cooldown needed
     if DataManager.Get('HeistsDisabled', 0) == 1 or CurrentCops < Config.RequiredCopsFleeca or DataManager.Get('GlobalCooldown', false) == true then
         Notify("You can't do this right now..", 'error')
         return false
@@ -322,7 +323,8 @@ local TerminalActions = {
     hint = function() SendT('hint', FW.SendCallback('fw-heists:Server:FleecaAdv:Hint', Current)) end,
     generate = function(Data)
         local Result = FW.SendCallback('fw-heists:Server:FleecaAdv:GenerateCode', Current, tonumber(Data.Door))
-        SendT('code', Result and { code = Result.Code, lifetime = Result.Lifetime, door = tonumber(Data.Door) } or { error = 'Unable to generate a code.' })
+        SendT('code', Result and { door = tonumber(Data.Door), shown = Result.Shown, rules = Result.Rules, memorise = Result.Memorise, lifetime = Result.Lifetime }
+            or { error = 'Unable to generate a code.' })
     end,
     refresh = function()
         local Session = FW.SendCallback('fw-heists:Server:FleecaAdv:Session', Current)
@@ -346,20 +348,6 @@ end)
 
 -- ── 3. Keypads + notes ─────────────────────────────────────────────────────
 
-local function Keypad(Params)
-    if Params.FleecaId ~= Current then return end
-    local Result = exports['fw-ui']:CreateInput({ { Label = 'Access code', Icon = 'fas fa-hashtag', Name = 'Code', Type = 'number' } })
-    if type(Result) ~= 'table' or not Result.Code then return end
-
-    exports['fw-assets']:RequestAnimationDict('anim@heists@keycard@')
-    TaskPlayAnim(PlayerPedId(), 'anim@heists@keycard@', 'exit', 5.0, 1.0, -1, 16, 0, false, false, false)
-    Wait(800)
-    ClearPedTasks(PlayerPedId())
-
-    local Ok = FW.SendCallback('fw-heists:Server:FleecaAdv:EnterCode', Current, Params.Door, Result.Code)
-    PlaySoundFrontend(-1, Ok and 'Hack_Success' or 'Hack_Failed', 'DLC_HEIST_BIOLAB_PREP_HACKING_SOUNDS', true)
-    Notify(Ok and 'Access granted.' or 'Invalid or expired code.', Ok and 'success' or 'error')
-end
 
 -- The bank's monitors (map props): base model and its _dui copy, only inside an advanced bank.
 CreateThread(function()
@@ -374,14 +362,8 @@ CreateThread(function()
     })
 end)
 
-CreateThread(function()
-    for Id, Bank in pairs(Config.Fleeca) do
-        for Door, D in ipairs(Bank.Advanced and Bank.Advanced.Doors or {}) do
-            if D.Keypad then Interact:AddInteraction({
-                coords = D.Keypad, distance = 4.0, interactDst = 1.2, name = ('fleeca_adv_keypad_%d_%d'):format(Id, Door),
-                options = { { label = 'Enter access code', canInteract = function() return Current == Id and not Busy end,
-                    action = function() Run(Keypad, { FleecaId = Id, Door = Door }) end } },
-            }) end
-        end
-    end
+-- /fleecatest output (server/sv_fleeca_test.lua): F8 console + notification
+RegisterNetEvent('fw-heists:Client:FleecaTest:Print', function(Lines)
+    for _, Line in ipairs(Lines) do print('[fleecatest] ' .. Line) end
+    FW.Functions.Notify(Lines[1], 'primary', 6000)
 end)

@@ -1,3 +1,22 @@
+-- Everything back to normal (doors locked, states cleared). Also used by /fleecatest reset.
+function ResetFleeca(FleecaId)
+    DataManager.Set(GetFleecaPrefix(FleecaId) .. "powerbox", 0)
+    DataManager.Set(GetFleecaPrefix(FleecaId) .. "vault", 0)
+    DataManager.Set(GetFleecaPrefix(FleecaId) .. "vault-gate", 0)
+    DataManager.Set(GetFleecaPrefix(FleecaId) .. "door-lockpicked", 0)
+
+    for i = 1, 5, 1 do
+        DataManager.Set(GetFleecaPrefix(FleecaId) .. "loot-" .. i, 0)
+    end
+
+    for k, v in pairs(Config.Fleeca[FleecaId].DoorIds) do
+        TriggerEvent('fw-doors:Server:SetLockStateById', v, 1)
+    end
+
+    TriggerEvent("fw-heists:Server:Fleeca:OnReset", FleecaId)
+    print("[HEISTS]: Fleeca " .. tostring(FleecaId) .. " Reset")
+end
+
 -- Starts the robbery: cooldown + everything back to normal after 90 minutes. Also used by sv_fleeca_advanced.lua.
 function StartFleecaRobbery(Source, FleecaId)
     if Config.Fleeca[FleecaId] == nil then return end
@@ -12,26 +31,11 @@ function StartFleecaRobbery(Source, FleecaId)
     
     StartGlobalCooldown()
     Citizen.SetTimeout((60 * 1000) * 90, function()
-        DataManager.Set(GetFleecaPrefix(FleecaId) .. "powerbox", 0)
-        DataManager.Set(GetFleecaPrefix(FleecaId) .. "vault", 0)
-        DataManager.Set(GetFleecaPrefix(FleecaId) .. "vault-gate", 0)
-        DataManager.Set(GetFleecaPrefix(FleecaId) .. "door-lockpicked", 0)
-
-        for i = 1, 5, 1 do
-            DataManager.Set(GetFleecaPrefix(FleecaId) .. "loot-" .. i, 0)
-        end
-
-        for k, v in pairs(Config.Fleeca[FleecaId].DoorIds) do
-            TriggerEvent('fw-doors:Server:SetLockStateById', v, 1)
-        end
-
+        ResetFleeca(FleecaId)
         if CidToAdd then
             IncreaseProgression(CidToAdd, 5)
             Config.Fleeca[FleecaId].Robber = nil
         end
-
-        TriggerEvent("fw-heists:Server:Fleeca:OnReset", FleecaId)
-        print("[HEISTS]: Fleeca " .. tostring(FleecaId) .. " Reset")
     end)
 end
 

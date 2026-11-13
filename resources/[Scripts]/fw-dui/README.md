@@ -53,6 +53,15 @@ game controls disabled; held keys repeat, shift gives capitals/symbols). Backspa
 `Anchor = vector3(...)` uses only the prop closest to that point, e.g. one of the four monitors on a bank desk.
 `/duiprop <model>` prints the coords of the nearest prop of a model.
 
+## Static map props (ymap / MLO)
+A prop placed in a ymap or MLO without physics is a *building*, not an object: `GetClosestObjectOfType`, interact and
+`/duiprop` can't find it, so the screen never loads and the prop keeps its normal display. Give its positions:
+`RegisterScreen(Name, { ..., Static = { vector4(x, y, z, heading) } })`. fw-dui keeps an invisible copy of the model at
+each point while you're within 60m (range, camera, interact use it); the texture swap is per model so the real prop shows
+the page. Get the position + heading from the ymap (CodeWalker), or look at the prop and run `/duiprop <model>`.
+Is the map prop another model (e.g. the interior's own `v_corp_bk_secpanel`, and the `_dui` copy is yours)? Add
+`SwapFrom = 'v_corp_bk_secpanel'`: it's swapped to the screen's model at each Static point (exact same spot).
+
 ## Mirror (others see your screen)
 Register with `Mirror = true` and players within `Config.MirrorDistance` see what the user does on it:
 cursor, clicks and every `Send`. `DUI:Send(Name, Action, Data, MirrorData)` lets you send watchers

@@ -85,6 +85,11 @@ function FindNearest(S, Coords)
         end
     end
 
+    -- Static copies are script entities, which GetClosestObjectOfType skips: check them directly
+    for _, Obj in pairs(S.Proxies or {}) do
+        if Obj and DoesEntityExist(Obj) then Check(Obj, S.Models[GetEntityModel(Obj)]) end
+    end
+
     return Best, BestModel
 end
 
@@ -216,7 +221,63 @@ function ApplyScreen(S, Entity, Model)
     TriggerEvent('fw-dui:Client:Shown', S.Name, Entity, GetPropId(Entity))
 end
 
+-- ── Static map props ───────────────────────────────────────────────────────
+-- A prop placed in a ymap / MLO without physics is a building, not an object: GetClosestObjectOfType (and interact)
+-- can't find it. For Static = { vector4(x, y, z, heading) } an invisible local copy of the screen's model is kept at
+-- each point while you're near, so range, camera and interact work. The texture swap is per model, so the real
+-- map prop shows the page. Skipped where a real object of the model already stands.
+-- SwapFrom = 'map_model': the map prop at each Static point is another model (e.g. the interior's own panel), swap it
+-- to the screen's model there (keeps its exact position / rotation), so it gets the DUI texture.
+local function Swap(S, P, On)
+    if not S.SwapFrom then return end
+    local From, To = joaat(S.SwapFrom), next(S.Models)
+    if On then CreateModelSwap(P.x, P.y, P.z, 1.0, From, To, false) else RemoveModelSwap(P.x, P.y, P.z, 1.0, From, To, false) end
+end
+
+local function ClearProxies(S)
+    for i, Obj in pairs(S.Proxies or {}) do
+        if Obj and DoesEntityExist(Obj) then DeleteEntity(Obj) end
+        Swap(S, S.Static[i], false)
+    end
+    S.Proxies = {}
+end
+
+CreateThread(function()
+    while true do
+        local C = GetEntityCoords(PlayerPedId())
+        for _, S in pairs(Screens) do
+            local Hash = S.Static and next(S.Models)
+            for i, P in ipairs(Hash and S.Static or {}) do
+                local Near, Obj = #(C - vector3(P.x, P.y, P.z)) < 60.0, S.Proxies[i]
+                if Near and Obj == nil then
+                    Swap(S, P, true)
+                    if GetClosestObjectOfType(P.x, P.y, P.z, 0.3, Hash, false, false, false) ~= 0 then
+                        S.Proxies[i] = false -- a real object is there
+                    else
+                        RequestModel(Hash)
+                        local Deadline = GetGameTimer() + 3000
+                        while not HasModelLoaded(Hash) and GetGameTimer() < Deadline do Wait(10) end
+                        Obj = CreateObject(Hash, P.x, P.y, P.z, false, false, false)
+                        SetEntityHeading(Obj, P.w or 0.0)
+                        FreezeEntityPosition(Obj, true)
+                        SetEntityCollision(Obj, false, false)
+                        SetEntityAlpha(Obj, 0, false) -- transparent, not invisible: invisible entities are skipped by some lookups
+                        SetModelAsNoLongerNeeded(Hash)
+                        S.Proxies[i] = Obj
+                    end
+                elseif not Near and Obj ~= nil then
+                    if Obj then DeleteEntity(Obj) end
+                    Swap(S, P, false)
+                    S.Proxies[i] = nil
+                end
+            end
+        end
+        Wait(2000)
+    end
+end)
+
 local function Destroy(S)
+    ClearProxies(S)
     if Focused and Focused.S == S then StopFocus() end
     S.Loading = false
     Hide(S)
@@ -235,6 +296,8 @@ end
     SameInterior = true: only props in the interior the player is in (houses next to each other)
     Desktop  = true: the shared computer desktop (html/desktop) as the page, apps set with SetApps
     Anchor   = vector3: only the prop closest to this point (within 3m) is used
+    Static   = { vector4(x, y, z, heading), ... }: positions of the model placed as static map props (see above)
+    SwapFrom = 'map_model': the props at the Static points are this model, swapped to the screen's model there
     MirrorKeys = true: watchers get the typed characters (default: * so passwords don't leak)
 ]]
 local function RegisterScreen(Name, Options)
@@ -244,6 +307,7 @@ local function RegisterScreen(Name, Options)
         Name = Name, Url = Options.Url or (Options.Desktop and DESKTOP_URL), Desktop = Options.Desktop == true, Distance = Options.Distance or 15.0, Placed = Options.Placed == true, Mirror = Options.Mirror == true,
         SameInterior = Options.SameInterior == true, MirrorKeys = Options.MirrorKeys == true,
         Anchor = Options.Anchor and vector3(Options.Anchor.x, Options.Anchor.y, Options.Anchor.z),
+        Static = Options.Static, Proxies = {}, SwapFrom = Options.SwapFrom,
         Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {},
     }
     for _, Model in ipairs(Options.Models or {}) do
@@ -373,7 +437,18 @@ end)
 RegisterCommand('duiprop', function(_, Args)
     local C = GetEntityCoords(PlayerPedId())
     local Entity = GetClosestObjectOfType(C.x, C.y, C.z, 5.0, joaat(Args[1] or ''), false, false, false)
-    if Entity == 0 then return print('[fw-dui] none within 5m') end
+    if Entity == 0 then
+        -- Probably a static map prop (not an object). Print where you're looking at, as a start for Static = { vector4 }.
+        local Cam, Rot = GetGameplayCamCoord(), GetGameplayCamRot(2)
+        local X, Z = math.rad(Rot.x), math.rad(Rot.z)
+        local Dir = vector3(-math.sin(Z) * math.abs(math.cos(X)), math.cos(Z) * math.abs(math.cos(X)), math.sin(X))
+        local _, Hit, Pos, Normal = GetShapeTestResult(StartExpensiveSynchronousShapeTestLosProbe(Cam.x, Cam.y, Cam.z, Cam.x + Dir.x * 8.0, Cam.y + Dir.y * 8.0, Cam.z + Dir.z * 8.0, 1, PlayerPedId(), 0))
+        print(('[fw-dui] no %s object within 5m: a static map prop (ymap / MLO). Use its ymap position + heading in Static.'):format(Args[1] or '?'))
+        if Hit == 1 then
+            print(('[fw-dui] you are looking at: vector4(%.2f, %.2f, %.2f, %.1f) (heading from the surface, may need +180)'):format(Pos.x, Pos.y, Pos.z, (GetHeadingFromVector_2d(Normal.x, Normal.y) + 180.0) % 360.0))
+        end
+        return
+    end
     local P = GetEntityCoords(Entity)
     print(('[fw-dui] %s: vector3(%.2f, %.2f, %.2f), heading %.1f'):format(Args[1], P.x, P.y, P.z, GetEntityHeading(Entity)))
 end, false)
@@ -404,6 +479,14 @@ RegisterCommand('duidebug', function()
                 M.Name, tostring(M.Variant), tostring(M.Variant and IsModelInCdimage(joaat(M.Variant)) or '-'),
                 M.RenderTarget and 'rendertarget' or 'texture', M.RenderTarget or Dict, M.Texture or '',
                 S.Entity and DoesEntityExist(S.Entity) and (GetEntityModel(S.Entity) == joaat(M.Variant or '') and 'copy' or 'base') or '-'))
+        end
+        local C = GetEntityCoords(PlayerPedId())
+        for i, P in ipairs(S.Static or {}) do
+            local Obj = S.Proxies[i]
+            print(('  static %d: vector4(%.2f, %.2f, %.2f, %.1f) | %.1fm away (range %.1f) | %s%s'):format(i, P.x, P.y, P.z, P.w or 0.0,
+                #(C - vector3(P.x, P.y, P.z)), S.Distance,
+                Obj and DoesEntityExist(Obj) and 'invisible copy' or Obj == false and 'real object there' or 'no copy (over 60m?)',
+                S.SwapFrom and (' | swapped from ' .. S.SwapFrom) or ''))
         end
     end
 end, false)

@@ -71,6 +71,9 @@ end)
 AddEventHandler('fw-heists:Server:Fleeca:OnReset', function(Id)
     if not Config.Fleeca[Id].Advanced then return end
     DataManager.Set(Key(Id, 'box-open'), 0)
+    for _, D in ipairs(Config.Fleeca[Id].Advanced.Doors) do -- doors that aren't in DoorIds (those are relocked by sv_fleeca.lua)
+        TriggerEvent('fw-doors:Server:SetLockStateById', D.Door, 1)
+    end
     for Src, BankId in pairs(Sessions) do
         if BankId == Id then Sessions[Src] = nil end
     end
@@ -92,7 +95,8 @@ end)
 
 local function CanStart(Source, Id)
     if not Valid(Id) or not Near(Source, Config.Fleeca[Id].PowerBox[1], 4.0) then return false end
-    if DataManager.Get('HeistsDisabled', 0) == 1 or DataManager.Get('GlobalCooldown', false) == true then return false end
+    local Blocked = DataManager.Get('HeistsDisabled', 0) == 1 or DataManager.Get('GlobalCooldown', false) == true
+    if Blocked and not GlobalState.FleecaTest then return false end -- /fleecatest mode skips cooldown / disabled
     return DataManager.Get(Key(Id, 'powerbox'), 0) == 0
 end
 
@@ -152,33 +156,66 @@ end)
 
 RegisterNetEvent('fw-heists:Server:FleecaAdv:SignOut', function() Sessions[source] = nil end)
 
+-- Codes: the terminal shows a number + instructions, the door code is the number after them (in order).
+local Rules = {
+    { Label = 'Enter it backwards', Fn = function(S) return S:reverse() end },
+    { Label = 'Increase every digit by one', Fn = function(S) return (S:gsub('%d', function(D) return tostring((D + 1) % 10) end)) end },
+    { Label = 'Decrease every digit by one', Fn = function(S) return (S:gsub('%d', function(D) return tostring((D - 1) % 10) end)) end, Not = 2 },
+    { Label = 'Swap the first and last digit', Fn = function(S) return S:sub(-1) .. S:sub(2, -2) .. S:sub(1, 1) end },
+}
+
+local function PickRules(Count)
+    local Pool, Picked, Used = {}, {}, {}
+    for i = 1, #Rules do Pool[i] = i end
+    while #Picked < Count and #Pool > 0 do
+        local i = table.remove(Pool, math.random(#Pool))
+        if not Used[Rules[i].Not] and not (i == 2 and Used[3]) then
+            Used[i], Picked[#Picked + 1] = true, Rules[i]
+        end
+    end
+    return Picked
+end
+
 FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:GenerateCode', function(Source, Cb, Id, Door)
     local Bank = Valid(Id)
     local Doors = Bank and Config.Fleeca[Id].Advanced.Doors
     if not Bank or Sessions[Source] ~= Id or not Doors[Door] or Bank.Doors[Door] then return Cb(false) end
     if Door > 1 and not Bank.Doors[Door - 1] then return Cb(false) end
 
-    Bank.Code = { Door = Door, Code = tostring(math.random(100000, 999999)), Expires = os.time() + Cfg.CodeLifetime }
+    local Shown, Labels = tostring(math.random(100000, 999999)), {}
+    local Code = Shown
+    for i, R in ipairs(PickRules(Doors[Door].Rules or Door)) do
+        Code, Labels[i] = R.Fn(Code), R.Label
+    end
+
+    Bank.Code = { Door = Door, Code = Code, Expires = os.time() + Cfg.CodeLifetime } -- replaces the previous one
     PushState(Id)
-    Cb({ Code = Bank.Code.Code, Lifetime = Cfg.CodeLifetime })
+    Cb({ Shown = Shown, Rules = Labels, Memorise = Cfg.CodeMemorise, Lifetime = Cfg.CodeLifetime })
 end)
 
--- ── Keypads ────────────────────────────────────────────────────────────────
+-- ── Security panels next to the doors (cl_fleeca_keypad.lua) ───────────────
 
-FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:EnterCode', function(Source, Cb, Id, Door, Code)
+-- Opens terminal door Door of bank Id. Also used by /fleecatest.
+function FleecaAdvOpenDoor(Id, Door)
+    local Data = Config.Fleeca[Id].Advanced.Doors[Door]
+    Banks[Id].Doors[Door] = true
+    TriggerEvent('fw-doors:Server:SetLockStateById', Data.Door, 0)
+    if Data.Door == Config.Fleeca[Id].DoorIds[3] then DataManager.Set(Key(Id, 'vault-gate'), 2) end -- loot behind the gate (cl_fleeca.lua)
+    PushState(Id)
+end
+
+function FleecaAdvState(Id) return Banks[Id] end -- for /fleecatest
+
+FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Panel', function(Source, Cb, Id, Door, Code)
     local Bank = Valid(Id)
     local Data = Bank and Config.Fleeca[Id].Advanced.Doors[Door]
-    if not Data or not Data.Keypad or not Near(Source, Data.Keypad, 3.0) then return Cb(false) end
+    if not Data or not Near(Source, Data.Panel, 4.0) then return Cb(false) end
 
     local Live = Bank.Code
     if not Live or Live.Door ~= Door or os.time() > Live.Expires or tostring(Code) ~= Live.Code then return Cb(false) end
 
-    Bank.Code, Bank.Doors[Door] = nil, true -- single use
-    TriggerEvent('fw-doors:Server:SetLockStateById', Config.Fleeca[Id].DoorIds[Data.DoorId], 0)
-    if Door == #Config.Fleeca[Id].Advanced.Doors then
-        DataManager.Set(Key(Id, 'door-lockpicked'), 1) -- the vault laptop (cl_fleeca.lua) needs this
-    end
-    PushState(Id)
+    Bank.Code = nil -- single use
+    FleecaAdvOpenDoor(Id, Door)
     Cb(true)
 end)
 
@@ -186,24 +223,9 @@ end)
 
 FW.Functions.CreateCallback('fw-heists:Server:Fleeca:Keypad', function(Source, Cb, Id, Code)
     local Bank = Config.Fleeca[Id]
-    if not Bank or not Near(Source, Bank.StaffDoor, 3.0) then return Cb(false) end
-    Code = tostring(Code)
+    if not Bank or not Near(Source, Bank.StaffDoor, 3.0) or tostring(Code) ~= Config.FleecaKeypad.Code then return Cb(false) end
 
-    local DoorId = Config.FleecaKeypad.DoorId
-    local Adv, Door = Banks[Id], nil -- advanced: the door that is DoorIds[DoorId]
-    for i, D in ipairs(Adv and Bank.Advanced.Doors or {}) do
-        if D.DoorId == DoorId then Door = i end
-    end
-    local Live = Adv and Adv.Code
-    local LiveOk = Live and Door and Live.Door == Door and os.time() <= Live.Expires and Code == Live.Code
-    if Code ~= Config.FleecaKeypad.Code and not LiveOk then return Cb(false) end
-
-    TriggerEvent('fw-doors:Server:SetLockStateById', Bank.DoorIds[DoorId], 0)
-    if DoorId == 2 then DataManager.Set(Key(Id, 'door-lockpicked'), 1) end -- the vault laptop (cl_fleeca.lua) needs this
-    if Door then
-        Adv.Doors[Door] = true
-        if LiveOk then Adv.Code = nil end
-        PushState(Id)
-    end
+    TriggerEvent('fw-doors:Server:SetLockStateById', Bank.DoorIds[Config.FleecaKeypad.DoorId], 0)
+    DataManager.Set(Key(Id, 'door-lockpicked'), 1) -- replaces the staff door lockpick: the vault laptop (cl_fleeca.lua) needs it
     Cb(true)
 end)

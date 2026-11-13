@@ -2,119 +2,73 @@
     "overrides": {},
     "doors": [
         {
-            "Locked": 1,
-            "Disabled": false,
-            "Info": "MIRR_8462",
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "Business": [],
-                "CitizenId": []
-            },
-            "Connected": [],
-            "IsLockpickable": false,
-            "Model": 1181020301,
-            "CanDetcord": true,
             "IsGate": false,
+            "Disabled": false,
             "Coords": {
                 "x": 1137.34,
                 "y": -470.04,
                 "z": 66.91
-            }
-        },
-        {
-            "Model": -131754413,
-            "Disabled": false,
-            "Info": "PBOX_6427",
-            "Access": {
-                "CitizenId": [],
-                "Gangs": [],
-                "Business": [],
-                "Job": [
-                    "police"
-                ]
             },
-            "Connected": [],
             "IsLockpickable": false,
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "x": 145.42,
-                "y": -1041.81,
-                "z": 29.64
-            }
-        },
-        {
-            "Model": 2121050683,
-            "Disabled": false,
-            "Info": "PBOX_8375",
-            "Access": {
-                "CitizenId": [],
-                "Gangs": [],
-                "Business": [],
-                "Job": [
-                    "police"
-                ]
-            },
             "Connected": [],
-            "IsLockpickable": false,
-            "IsGate": false,
-            "CanDetcord": true,
+            "Info": "MIRR_8462",
             "Locked": 1,
-            "Coords": {
-                "x": 148.03,
-                "y": -1044.36,
-                "z": 29.51
-            }
-        },
-        {
-            "Model": 1608375261,
-            "Disabled": false,
-            "Info": "STRAW_4442",
+            "CanDetcord": true,
             "Access": {
                 "Job": [
                     "police"
                 ],
-                "Gangs": [],
                 "Business": [],
+                "Gangs": [],
                 "CitizenId": []
             },
-            "Connected": [],
+            "Model": 1181020301
+        },
+        {
             "IsGate": false,
-            "IsLockpickable": false,
-            "CanDetcord": true,
-            "Locked": 1,
+            "Disabled": false,
             "Coords": {
                 "x": -35.48,
                 "y": -1676.56,
                 "z": 29.62
-            }
-        },
-        {
-            "Model": 647538810,
-            "Disabled": false,
-            "Info": "RANCHO_387",
+            },
+            "IsLockpickable": false,
+            "Connected": [],
+            "Info": "STRAW_4442",
+            "Locked": 1,
+            "CanDetcord": true,
             "Access": {
                 "Job": [
                     "police"
                 ],
-                "Gangs": [],
                 "Business": [],
+                "Gangs": [],
                 "CitizenId": []
             },
-            "Connected": [],
+            "Model": 1608375261
+        },
+        {
             "IsGate": false,
-            "IsLockpickable": false,
-            "CanDetcord": true,
-            "Locked": 1,
+            "Disabled": false,
             "Coords": {
                 "x": 203.08,
                 "y": -2023.24,
                 "z": 17.26
-            }
+            },
+            "IsLockpickable": false,
+            "Connected": [],
+            "Info": "RANCHO_387",
+            "Locked": 1,
+            "CanDetcord": true,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "Business": [],
+                "Gangs": [],
+                "CitizenId": []
+            },
+            "Model": 647538810
         }
     ]
 }
