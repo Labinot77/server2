@@ -37,11 +37,9 @@ local function Aim(Ped)
     return Hit == 1 and Normal.z > 0.7 and #(Pos - GetEntityCoords(Ped)) <= 2.5 and Pos or nil
 end
 
-local function Help(Text)
-    BeginTextCommandDisplayHelp('STRING')
-    AddTextComponentSubstringPlayerName(Text)
-    EndTextCommandDisplayHelp(0, false, false, -1)
-end
+local UI = exports['fw-ui']
+local HINTS = { { 'E', 'Place laptop' }, { 'SCROLL', 'Rotate' }, { 'BACKSPACE', 'Cancel' } }
+local HINTS_AIM = { { '', 'Aim at a flat surface close by' }, { 'BACKSPACE', 'Cancel' } }
 
 -- Ghost laptop follows the aim: scroll rotates, E places, Backspace / right click cancels. Returns coords + heading.
 local function Place()
@@ -63,11 +61,12 @@ local function Place()
             SetEntityCoords(Ghost, Pos.x, Pos.y, Pos.z, false, false, false, false)
             SetEntityHeading(Ghost, Heading)
         end
-        Help(Pos and '~INPUT_PICKUP~ Place laptop~n~~INPUT_WEAPON_WHEEL_NEXT~ Rotate~n~~INPUT_FRONTEND_RRIGHT~ Cancel' or 'Aim at a flat surface close by~n~~INPUT_FRONTEND_RRIGHT~ Cancel')
+        UI:ShowKeyHints(Pos and HINTS or HINTS_AIM)
         if Pos and IsDisabledControlJustPressed(0, 38) then Result = vector4(Pos.x, Pos.y, Pos.z, Heading) break end
         if IsDisabledControlJustPressed(0, 177) or IsDisabledControlJustPressed(0, 25) or IsDisabledControlJustPressed(0, 200) or IsEntityDead(Ped) then break end
         Wait(0)
     end
+    UI:HideKeyHints()
     DeleteEntity(Ghost)
     SetModelAsNoLongerNeeded(Hash)
     return Result

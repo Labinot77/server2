@@ -1,7 +1,6 @@
 FW = FW or exports['fw-core']:GetCoreObject()
 Config = Config or {}
 Config.Creator = Config.Creator or {}
-Config.Creator.Command = Config.Creator.Command or 'doormenu'
 Config.Creator.Permissions = Config.Creator.Permissions or { 'admin', 'god' }
 Config.Creator.MaxAimDistance = Config.Creator.MaxAimDistance or 10.0
 Config.Creator.NearbyRadius = Config.Creator.NearbyRadius or 15.0
@@ -274,8 +273,3 @@ end)
 FW.Functions.CreateCallback('fw-doors:Server:Creator:IsAdmin', function(Source, Cb)
     Cb(IsAdmin(Source))
 end)
-
-FW.Commands.Add(Config.Creator.Command, 'Open the door creator', {}, false, function(Source)
-    if not IsAdmin(Source) then return end
-    TriggerClientEvent('fw-doors:Client:Creator:Open', Source)
-end, 'admin')

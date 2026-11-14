@@ -38,16 +38,7 @@ local function GetRefund(Model)
     return math.floor((Item.Price or 0) * (Config.Decorate.RefundPercentage or 0) / 100)
 end
 
--- AddTextEntry instead of a STRING component: components are truncated at 99 characters.
-local LastHelpText = nil
-local function ShowHelp(Text)
-    if Text ~= LastHelpText then
-        LastHelpText = Text
-        AddTextEntry('FW_HOUSING_DECOR_HELP', Text)
-    end
-    BeginTextCommandDisplayHelp('FW_HOUSING_DECOR_HELP')
-    EndTextCommandDisplayHelp(0, false, false, -1)
-end
+local UI = exports['fw-ui'] -- bottom-right key hints
 
 local function SetOutline(Entity, State, R, G, B)
     if SetEntityDrawOutline == nil then return end -- older game builds
@@ -65,6 +56,7 @@ end
 
 local function SwallowInput()
     -- Stops ESC / right click from opening the pause menu right after leaving a mode.
+    UI:HideKeyHints()
     local Release = GetGameTimer() + 300
     while GetGameTimer() < Release do DisableEditorControls() Citizen.Wait(0) end
 end
@@ -162,7 +154,7 @@ local function RunPlacement(House, Model, Existing)
         SetOutline(Ghost, true, R, G, B)
         DrawMarker(25, Pos.x, Pos.y, Base.z + 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.8, 0.8, R, G, B, 140, false, false, 2, false, nil, nil, false)
 
-        ShowHelp(("~b~%s~s~ (%.0f°)~n~~INPUT_ATTACK~ Place~n~~INPUT_CELLPHONE_CANCEL~ Cancel~n~~INPUT_WEAPON_WHEEL_NEXT~ / ~INPUT_CELLPHONE_LEFT~ ~INPUT_CELLPHONE_RIGHT~ Rotate (~INPUT_SPRINT~ fine)~n~~INPUT_CELLPHONE_UP~ ~INPUT_CELLPHONE_DOWN~ Height  ~INPUT_RELOAD~ Reset~n~~INPUT_DETONATE~ Snap: %s"):format(GetItemLabel(Model), Heading, Snap and "~g~ON~s~" or "~r~OFF~s~"))
+        UI:ShowKeyHints({ { '', ('%s (%.0f°)'):format(GetItemLabel(Model), Heading) }, { 'LMB', 'Place' }, { 'SCROLL', 'Rotate' }, { 'SHIFT', 'Fine' }, { { 'UP', 'DOWN' }, 'Height' }, { 'R', 'Reset' }, { 'G', Snap and 'Snap on' or 'Snap off' }, { 'BACKSPACE', 'Cancel' } })
 
         if IsDisabledControlJustPressed(0, 24) or IsControlJustPressed(0, 191) then -- LMB / ENTER
             if Valid then
@@ -219,9 +211,9 @@ local function RunSelect(House)
 
         if Decor then
             local Refund = GetRefund(Decor.Model)
-            ShowHelp(("~b~%s~s~~n~~INPUT_ATTACK~ Move~n~~INPUT_VEH_DUCK~ Remove%s~n~~INPUT_CELLPHONE_CANCEL~ Back"):format(GetItemLabel(Decor.Model), Refund > 0 and (" (+" .. FormatMoney(Refund) .. ")") or ""))
+            UI:ShowKeyHints({ { '', GetItemLabel(Decor.Model) }, { 'LMB', 'Move' }, { 'X', Refund > 0 and ('Remove (+' .. FormatMoney(Refund) .. ')') or 'Remove' }, { 'BACKSPACE', 'Back' } })
         else
-            ShowHelp("Look at an object you placed.~n~~INPUT_CELLPHONE_CANCEL~ Back")
+            UI:ShowKeyHints({ { '', 'Look at an object you placed' }, { 'BACKSPACE', 'Back' } })
         end
 
         if Decor and IsDisabledControlJustPressed(0, 24) then

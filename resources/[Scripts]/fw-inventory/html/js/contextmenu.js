@@ -229,19 +229,6 @@ $(document).on('keydown', '#split-amount', function(e) {
     e.stopPropagation(); // don't clear AMOUNT with "C" etc.
 });
 
-// ---------------------------------------------------------------------------
-//  Item-in-hand hint bar (from Lua: PlaceHint)
-// ---------------------------------------------------------------------------
-window.addEventListener('message', (event) => {
-    if (event.data.Action != 'PlaceHint') return;
-    const Mode = event.data.Mode;
-    if (Mode) {
-        $('.place-box').attr('data-mode', Mode).show();
-    } else {
-        $('.place-box').hide().attr('data-mode', '');
-    }
-});
-
 // Drop: at your feet, or out of the window when you're in a car (client/cl_vehicledrop.lua). AMOUNT field, else the stack.
 const DropItem = (Slot, Item) => {
     let Amount = Number($('#inventory-move-amount').val());

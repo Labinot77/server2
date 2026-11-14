@@ -118,8 +118,6 @@ $(document).ready(function(){
                 break;
             case "MagazineProgress": // handled in magazine.js
                 break;
-            case "PlaceHint": // handled in contextmenu.js
-                break;
             case "InventoryBox":
                 InventoryBox(event.data.Text, event.data.Item, event.data.Amount, event.data.CustomType)
                 break;

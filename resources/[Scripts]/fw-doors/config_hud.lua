@@ -28,9 +28,8 @@ Config.HUD = {
     ShowOnGates  = false,         -- gates had no prompt before; set true to draw on them too
 }
 
--- // Door creator \\ --
+-- // Door creator (admin panel: Utility > Add Door / Manage Doors) \\ --
 Config.Creator = {
-    Command     = 'doormenu',     -- /doormenu (admin / god only)
     Permissions = { 'admin', 'god' },
     MaxAimDistance = 10.0,
     NearbyRadius   = 15.0,        -- "Doors nearby" list radius

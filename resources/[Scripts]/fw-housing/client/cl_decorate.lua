@@ -44,16 +44,7 @@ local function FormatMoney(Amount)
     return '$' .. Formatted
 end
 
--- AddTextEntry instead of a STRING component: components are truncated at 99 characters.
-local LastHelpText = nil
-local function ShowHelp(Text)
-    if Text ~= LastHelpText then
-        LastHelpText = Text
-        AddTextEntry('FW_HOUSING_DECOR_HELP', Text)
-    end
-    BeginTextCommandDisplayHelp('FW_HOUSING_DECOR_HELP')
-    EndTextCommandDisplayHelp(0, false, false, -1)
-end
+local UI = exports['fw-ui'] -- bottom-right key hints
 
 local function SetOutline(Entity, State, R, G, B)
     if SetEntityDrawOutline == nil then return end -- older game builds
@@ -132,7 +123,7 @@ local function RunPlacement(House, Model, Existing)
         SetOutline(Ghost, true, Valid and 46 or 220, Valid and 204 or 53, Valid and 113 or 69)
         DrawMarker(25, Pos.x, Pos.y, Base.z + 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.8, 0.8, Valid and 46 or 220, Valid and 204 or 53, Valid and 113 or 69, 140, false, false, 2, false, nil, nil, false)
 
-        ShowHelp(("~b~%s~s~~n~~INPUT_ATTACK~ Place~n~~INPUT_CELLPHONE_CANCEL~ Cancel~n~~INPUT_WEAPON_WHEEL_NEXT~ / ~INPUT_CELLPHONE_LEFT~ ~INPUT_CELLPHONE_RIGHT~ Rotate (~INPUT_SPRINT~ fine)~n~~INPUT_CELLPHONE_UP~ ~INPUT_CELLPHONE_DOWN~ Height  ~INPUT_RELOAD~ Reset height"):format(GetItemLabel(Model)))
+        UI:ShowKeyHints({ { '', GetItemLabel(Model) }, { 'LMB', 'Place' }, { 'SCROLL', 'Rotate' }, { 'SHIFT', 'Fine' }, { { 'UP', 'DOWN' }, 'Height' }, { 'R', 'Reset' }, { 'BACKSPACE', 'Cancel' } })
 
         if IsDisabledControlJustPressed(0, 24) or IsControlJustPressed(0, 191) then
             if Valid then
@@ -157,6 +148,7 @@ local function RunPlacement(House, Model, Existing)
 
     -- Swallow the key press so ESC doesn't open the pause menu right after cancelling.
     local Release = GetGameTimer() + 300
+    UI:HideKeyHints()
     while GetGameTimer() < Release do DisableEditorControls() Citizen.Wait(0) end
     IsEditing = false
 
@@ -192,9 +184,9 @@ local function RunSelect(House)
         if Hovered then
             local Item = Config.FurnitureByModel[Hovered.Model]
             local Refund = (Config.Decorate.ChargeMoney and Item) and math.floor((Item.Price or 0) * (Config.Decorate.RefundPercentage or 0) / 100) or 0
-            ShowHelp(("~b~%s~s~~n~~INPUT_ATTACK~ Move~n~~INPUT_VEH_DUCK~ Remove%s~n~~INPUT_CELLPHONE_CANCEL~ Back"):format(GetItemLabel(Hovered.Model), Refund > 0 and (" (+" .. FormatMoney(Refund) .. ")") or ""))
+            UI:ShowKeyHints({ { '', GetItemLabel(Hovered.Model) }, { 'LMB', 'Move' }, { 'X', Refund > 0 and ('Remove (+' .. FormatMoney(Refund) .. ')') or 'Remove' }, { 'BACKSPACE', 'Back' } })
         else
-            ShowHelp("Look at a piece of furniture.~n~~INPUT_CELLPHONE_CANCEL~ Back")
+            UI:ShowKeyHints({ { '', 'Look at a piece of furniture' }, { 'BACKSPACE', 'Back' } })
         end
 
         if Hovered and IsDisabledControlJustPressed(0, 24) then
@@ -220,6 +212,7 @@ local function RunSelect(House)
 
     if HoveredEntity and DoesEntityExist(HoveredEntity) then SetOutline(HoveredEntity, false) end
     local Release = GetGameTimer() + 300
+    UI:HideKeyHints()
     while GetGameTimer() < Release do DisableEditorControls() Citizen.Wait(0) end
     IsEditing = false
 end

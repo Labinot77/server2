@@ -50,6 +50,7 @@ function DoGraffitiPlacer(Model, MaxDistance, StickToGround, PlayerHeading, ZMin
     PlacingObject = CreateObject(HashEntity, CenterCoords, false, false, false)
     if PlacingObject ~= false then
         IsPlacing = true
+        exports['fw-ui']:ShowKeyHints({ { 'ENTER', 'Place' }, { 'BACKSPACE', 'Cancel' } })
         SetEntityCollision(PlacingObject, false)
         SetEntityAlpha(PlacingObject, 0.3, true)
         Citizen.CreateThread(function()
@@ -67,6 +68,7 @@ function DoGraffitiPlacer(Model, MaxDistance, StickToGround, PlayerHeading, ZMin
                 SetSprayRotation(PlacingObject)
 
                 if IsControlJustPressed(0, 177) then
+                    exports['fw-ui']:HideKeyHints()
                     DeleteEntity(PlacingObject)
                     IsPlacing, PlacingObject = false, nil
                     Cb(false)
@@ -74,6 +76,7 @@ function DoGraffitiPlacer(Model, MaxDistance, StickToGround, PlayerHeading, ZMin
                 
                 if CanPlace and IsControlJustPressed(0, 191) then
                     local EntityCoords, EntityRotation = GetEntityCoords(PlacingObject), GetEntityRotation(PlacingObject)
+                    exports['fw-ui']:HideKeyHints()
                     DeleteEntity(PlacingObject)
                     Cb(true, EntityCoords, EntityRotation)
                     IsPlacing, PlacingObject = false, nil

@@ -16,8 +16,15 @@ local GiveInteractions = {}                    -- [ped] = interaction id
 
 IsHoldingItem = false
 
+-- Bottom-right key hints (fw-ui) per mode, false = hide.
+local HINTS = {
+    hand = { { 'N', 'Place' }, { 'RMB', 'Aim' }, { 'LMB', 'Throw' }, { 'ESC', 'Cancel' } },
+    give = { { 'E', 'Give' }, { 'N', 'Place' }, { 'ESC', 'Cancel' } },
+    place = { { { 'ENTER', 'LMB' }, 'Confirm' }, { 'SCROLL', 'Rotate' }, { 'SHIFT', 'Fine' }, { 'ESC', 'Cancel' } },
+}
+
 local function Hint(Mode)
-    SendNUIMessage({ Action = "PlaceHint", Mode = Mode or false })
+    if Mode then exports['fw-ui']:ShowKeyHints(HINTS[Mode]) else exports['fw-ui']:HideKeyHints() end
 end
 
 local function SetInteractDisabled(State)

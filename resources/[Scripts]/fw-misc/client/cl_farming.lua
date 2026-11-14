@@ -420,6 +420,7 @@ AddEventHandler("fw-inventory:Client:OnItemInsert", function(FromItem, ToItem)
 
     Citizen.CreateThread(function()
         while true do
+            exports['fw-ui']:ShowKeyHints({ { 'E', StartingPoint and 'Set end of row' or 'Set start of row' }, { 'BACKSPACE', 'Cancel' } })
             local Hit, Pos, Entity = exports['fw-ui']:RayCastGamePlayCamera(10.0)
             if CameraCrop then
                 SetEntityCoords(CameraCrop, Pos.x, Pos.y, Pos.z)
@@ -467,6 +468,7 @@ AddEventHandler("fw-inventory:Client:OnItemInsert", function(FromItem, ToItem)
             Citizen.Wait(4)
         end
 
+        exports['fw-ui']:HideKeyHints()
         DeleteObject(CameraCrop)
         for k, v in pairs(CropPreviewObjects) do
             DeleteObject(v)
