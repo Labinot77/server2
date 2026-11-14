@@ -281,6 +281,14 @@ Config.AttachBackProps = {
 	-- Type 3
 	{
 		Type = 3,
+		Id = 'pawn-box',
+		Name = 'Pawn Box',
+		Model = 'hei_prop_heist_box',
+		PropCoords = { X = 0.0, Y = -0.03, Z = 0.0, RX = 5.0, RY = 0.0, RZ = 0.0 },
+		PropExtra = { DisableRun = true, Dict = 'anim@heists@box_carry@', Anim = 'idle' },
+	},
+	{
+		Type = 3,
 		Id = 'hunting-carcass-one',
 		Name = 'Bank Bag',
 		Model = 'hunting_pelt_01_a',

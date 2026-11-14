@@ -31,6 +31,13 @@ Config.Orders = {
                 picador = 3, premier = 8, primo = 8, sadler = 2, stanier = 9, tornado = 5, washington = 6,
             },
         },
+        -- Pawn shop (config/sh_pawn.lua). The monitor is an fw-admin placed prop, created on first start.
+        ['The Brick House'] = {
+            Label = 'The Brick House',
+            Area = { Center = vector3(150.26, -1711.04, 29.31), Radius = 30.0 },
+            Apps = { 'Pawn', 'Management' },
+            Account = '73519046',
+        },
     },
 
     -- How long installing one cart item takes (ms), by slot prefix. First match wins.
@@ -65,6 +72,7 @@ Config.Laptop = {
         ['as_prop_as_laptop_01a'] = true,
         ['v_res_lest_monitor'] = true, -- Mosley's showroom
         ['prop_monitor_01b'] = true, -- Mosley's workshop
+        ['prop_monitor_w_large'] = true, -- The Brick House (pawn shop)
     },
 
     CursorSensitivity = 14.0,
@@ -75,6 +83,8 @@ Config.Laptop = {
         -- Hire, fire, pay, roles, bank access. Only the owner and roles with a management permission can use it.
         Management = { id = 'management', label = '%s Management', icon = 'fas fa-briefcase', color = 'linear-gradient(160deg, #ffa53a, #f47a17)', page = 'management.html' },
         -- Showroom spots + selling from the shop's catalog (needs VehicleSales).
+        -- Buy orders, packing and shipments (config/sh_pawn.lua).
+        Pawn = { id = 'pawn', label = 'Pawn Order', icon = 'fas fa-file-invoice-dollar', color = 'linear-gradient(160deg, #ffc24a, #f08a12)', page = 'pawn.html' },
         Dealership = { id = 'dealership', label = '%s', icon = 'fas fa-car', color = 'linear-gradient(160deg, #7ee06a, #2f9e44)', page = 'dealership.html' },
     },
 

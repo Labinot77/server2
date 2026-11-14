@@ -5927,3 +5927,18 @@ Shared.Items["radioscanner"] = {
     FullDecay = false,
     InsertInto = {},
 }
+
+Shared.Items["pawn-box"] = {
+    Name = "pawn-box",
+    Label = "Pawn Box",
+    Image = "h_box.png",
+    Description = "A sealed shipment box from the pawn shop. Heavy, carry it with both hands.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true, HasProp = true,
+    IsBag = false, Weight = 60,
+    Price = 0,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}

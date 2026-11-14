@@ -80,6 +80,7 @@ local function ShowIdle(Entity)
     SetApps(Entry and Entry.Business, nil, Entry and Entry.Apps)
     ManagementLock()
     DealershipLock()
+    PawnLock()
     if Entry then ShowDashboard(Entry.Business) end
 end
 
@@ -94,6 +95,7 @@ function CloseLaptop()
     SetApps(Laptop.Business, nil, Laptop.Apps) -- back to the desktop (app windows closed), the app keeps its live orders
     ManagementLock()
     DealershipLock()
+    PawnLock()
     DUI:Release(SCREEN) -- the range check takes over
     ClearPedTasks(PlayerPedId())
     TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId) -- free for the next player
@@ -142,6 +144,7 @@ function OpenLaptop(Entity, Business)
 
     DUI:Focus(SCREEN, { Mouse = true, Sensitivity = Config.Laptop.CursorSensitivity })
     if HasApp(Entity, 'Dealership') then DealershipLoad(Business) end
+    if HasApp(Entity, 'Pawn') then PawnLoad(Business) end
     ManagementLoad(Business) -- after Focus, so players watching see it too
 end
 
@@ -371,7 +374,13 @@ local function RegisterInteractions()
                         {
                             name = 'bennys_laptop_computer',
                             label = 'Use Computer',
-                            canInteract = function(Entity) return LaptopCanInteract(Entity) and not HasApp(Entity, 'Orders') end,
+                            canInteract = function(Entity) return LaptopCanInteract(Entity) and not HasApp(Entity, 'Orders') and not HasApp(Entity, 'Pawn') end,
+                            action = Open,
+                        },
+                        {
+                            name = 'bennys_laptop_pawn',
+                            label = 'Pawn Orders',
+                            canInteract = function(Entity) return LaptopCanInteract(Entity) and HasApp(Entity, 'Pawn') end,
                             action = Open,
                         },
                     },
