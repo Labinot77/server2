@@ -107,7 +107,7 @@ setImmediate(async () => {
         await Delay(100)
     };
 
-    const ShopZones: VehicleShops[] = [ "pdm", "bennys", "flightschool", "lostmc", "darkwolves", "losmuertos" ];
+    const ShopZones: VehicleShops[] = [ "pdm", "bennys", "flightschool", "lostmc", "darkwolves", "losmuertos", "mosley" ];
     const ShopData = await exp['fw-config'].GetModuleConfig("bus-vehicleshop");
 
     for (let i = 0; i < ShopZones.length; i++) {

@@ -291,6 +291,12 @@ function Actions.SetBankAccess(Source, Biz, Access, Data)
     return { Success = true, Message = 'Bank access updated.', Bank = { Cid = Data.Cid, Perms = Perms } }
 end
 
+-- For sv_dealership.lua: { IsOwner, Role, Perms } of Source at Name, nil = not a member.
+function GetBusinessAccess(Source, Name)
+    local Biz = GetBusiness(Name)
+    return Biz and GetAccess(Source, Biz)
+end
+
 -- ── Callbacks ──────────────────────────────────────────────────────────────
 
 local function Load(Source, Business)

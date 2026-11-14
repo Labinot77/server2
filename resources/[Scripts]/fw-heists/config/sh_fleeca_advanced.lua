@@ -4,11 +4,11 @@ Config = Config or {}
 -- -> door access codes -> keypads. Per bank settings live in Config.Fleeca[x].Advanced (sh_fleeca.lua).
 -- Keypad prop at every Fleeca's StaffDoor (client/cl_fleeca_keypad.lua). Opens DoorIds[DoorId] (1 = the service door).
 -- Static = positions of keypads placed in a ymap / MLO (not found as objects): vector4(x, y, z, heading), see fw-dui README.
-Config.FleecaKeypad = { Model = 'hei_prop_hei_keypad_01', Code = '1111', MaxDigits = 6, DoorId = 1, Static = {} }
+Config.FleecaKeypad = { Model = 'ch_prop_casino_keypad_02', Code = '1111', MaxDigits = 6, DoorId = 1, Static = {} }
 
 Config.FleecaAdvanced = {
     Items = { Cutters = 'heavy-cutters', Laptop = 'heist-laptop', LaptopType = 'green' }, -- the green laptop = Bugger
-    Models = { Laptop = 'custom_laptop_01', Monitor = 'prop_monitor_01a', Note = 'hei_prop_hei_post_note_01', Panel = 'v_corp_bk_secpanel_dui_01',
+    Models = { Laptop = 'as_prop_as_laptop_01a', Monitor = 'prop_monitor_01a', Note = 'hei_prop_hei_post_note_01', Panel = 'v_corp_bk_secpanel_dui_01',
         PanelMap = 'v_corp_bk_secpanel' }, -- PanelMap = the bank interior's own panel, swapped to Panel at each door's Panel spot
 
     CutTime = 7500,                               -- ms to cut the box open

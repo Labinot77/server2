@@ -12,6 +12,25 @@ Config.Orders = {
             -- this business when it's placed within Radius of Center.
             Area = { Center = vector3(-1420.0, -450.0, 35.91), Radius = 40.0 },
         },
+        -- Apps = the computer's dock (default { 'Orders', 'Management' }), Shop = fw-businesses vehicle shop id.
+        ["Mosley's Dealership"] = {
+            Label = "Mosley's Dealership",
+            Area = { Center = vector3(-31.25, -1664.87, 29.49), Radius = 40.0 },
+            Apps = { 'Dealership', 'Management' },
+            Shop = 'mosley',
+            -- Monitors that are part of the MLO (not admin placed): rough positions, the computer model within 2.5m is used.
+            -- Apps overrides the business' Apps for that computer.
+            Computers = {
+                vector3(-31.25, -1664.87, 29.49), -- showroom
+                { Coords = vector3(-12.0, -1653.91, 30.43), Apps = { 'Orders' } }, -- workshop
+            },
+            -- Created on start when missing: the business + bank account, and the catalog (model = stock).
+            Account = '64829173',
+            Catalog = {
+                asea = 9, blista = 7, emperor = 5, glendale = 3, ingot = 3, intruder = 5, issi2 = 5, manana = 4,
+                picador = 3, premier = 8, primo = 8, sadler = 2, stanier = 9, tornado = 5, washington = 6,
+            },
+        },
     },
 
     -- How long installing one cart item takes (ms), by slot prefix. First match wins.
@@ -44,7 +63,8 @@ Config.Laptop = {
         ['prop_laptop_jimmy'] = true,
         ['prop_laptop_lester2'] = true,
         ['as_prop_as_laptop_01a'] = true,
-        ['custom_laptop_01'] = true,
+        ['v_res_lest_monitor'] = true, -- Mosley's showroom
+        ['prop_monitor_01b'] = true, -- Mosley's workshop
     },
 
     CursorSensitivity = 14.0,
@@ -54,8 +74,16 @@ Config.Laptop = {
         Orders = { id = 'orders', label = 'Work Orders', icon = 'fas fa-car-mechanic', color = 'linear-gradient(160deg, #3fd8e6, #1b9fb0)', page = 'laptop.html' },
         -- Hire, fire, pay, roles, bank access. Only the owner and roles with a management permission can use it.
         Management = { id = 'management', label = '%s Management', icon = 'fas fa-briefcase', color = 'linear-gradient(160deg, #ffa53a, #f47a17)', page = 'management.html' },
+        -- Showroom spots + selling from the shop's catalog (needs VehicleSales).
+        Dealership = { id = 'dealership', label = '%s', icon = 'fas fa-car', color = 'linear-gradient(160deg, #7ee06a, #2f9e44)', page = 'dealership.html' },
     },
 
     -- The nearest laptop within this many metres shows the live dashboard (members) or the locked screen.
     RenderDistance = 15.0,
+}
+
+-- Dealership cash register: an admin placed prop inside the business Area. The buyer pays price + these taxes.
+Config.Dealership = {
+    RegisterModel = 'prop_till_02',
+    Taxes = { 'Vehicle Sales', 'Vehicle Registration Tax' }, -- fw-core tax names
 }

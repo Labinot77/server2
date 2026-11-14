@@ -481,7 +481,6 @@ end
 function LoadLaptops()
     local Models = {}
     for Model in pairs(Config.Laptop.Models) do Models[#Models + 1] = Model end
-    if #Models == 0 then Laptops = {} return end
 
     local Placeholders = ('?'):rep(#Models, ', ')
     local Rows = DB:executeSync(('SELECT `id`, `model`, `coords` FROM `placed_props` WHERE `model` IN (%s)'):format(Placeholders), Models) or {}
@@ -507,6 +506,14 @@ function LoadLaptops()
         end
     end
 
+    -- Computers that are part of the MLO (Config.Orders.Businesses[...].Computers)
+    for Business, Data in pairs(Config.Orders.Businesses) do
+        for I, Computer in ipairs(Data.Computers or {}) do
+            local Coords = type(Computer) == 'table' and Computer.Coords or Computer
+            List[#List + 1] = { Id = ('static_%s_%d'):format(Business:gsub('%W', ''), I), Model = 'static', Coords = Coords, Business = Business, Static = true, Apps = type(Computer) == 'table' and Computer.Apps or nil }
+        end
+    end
+
     Laptops = List
     print(('[fw-bennys] Loaded %d work-order laptop(s) from placed_props'):format(#List))
     TriggerClientEvent('fw-bennys:Client:Laptop:SetLaptops', -1, Laptops)
@@ -528,7 +535,7 @@ FW.Functions.CreateCallback('fw-bennys:Server:Laptop:Claim', function(Source, Cb
         if Laptop.Id == Id then Entry = Laptop end
     end
     if not Entry or not IsMember(Source, Entry.Business) then return Cb(false) end
-    if #(GetEntityCoords(GetPlayerPed(Source)) - Entry.Coords) > 4.0 then return Cb(false) end
+    if #(GetEntityCoords(GetPlayerPed(Source)) - Entry.Coords) > (Entry.Static and 6.0 or 4.0) then return Cb(false) end
 
     local User = GlobalState[InUseKey(Id)]
     if User and User ~= Source and GetPlayerName(User) then return Cb(false) end -- someone (still online) is using it

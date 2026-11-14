@@ -76,5 +76,11 @@
       "minZ": 73.06,
       "maxZ": 75.6
     }
+  },
+  {
+    "shopId": "mosley",
+    "shopAbbvr": "Mosley's",
+    "shopLabel": "Mosley's Dealership",
+    "interact": {"x": -35.28, "y": -1667.44, "z": 30.0}
   }
 ]

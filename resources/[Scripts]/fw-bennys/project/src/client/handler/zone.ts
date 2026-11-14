@@ -243,6 +243,21 @@ const ZONES = [
         }
     },
 
+    {
+        center: new Vector3(-12.79, -1668.61, 29.49),
+        length: 9.0,
+        width: 5.0,
+        heading: 139,
+        minZ: 28.49,
+        maxZ: 32.49,
+        ShowBlip: false,
+        data: {
+            // Anyone can open; paying creates a work order for Mosley's workshop.
+            OrderBusiness: "Mosley's Dealership",
+            Heading: 139.3,
+        }
+    },
+
     // Civ
     // Paleto Bay
     {

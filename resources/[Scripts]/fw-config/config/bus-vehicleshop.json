@@ -34,6 +34,11 @@
       "BusinessName": "Los Santos Vliegschool",
       "TestPos": {"x": -960.1, "y": -3010.43, "z": 13.95, "w": 59.78},
       "MaxPositions": 2
+    },
+    "mosley": {
+      "BusinessName": "Mosley's Dealership",
+      "TestPos": {"x": -30.8, "y": -1652.4, "z": 29.49, "w": 230.0},
+      "MaxPositions": 4
     }
   },
   "pdm": {
@@ -112,6 +117,16 @@
       "heading": 15,
       "minZ": 31.83,
       "maxZ": 46.83
+    }
+  },
+  "mosley": {
+    "area": {
+      "center": {"x": -32.0, "y": -1655.0, "z": 29.49},
+      "length": 80,
+      "width": 80,
+      "heading": 320,
+      "minZ": 27.49,
+      "maxZ": 45.49
     }
   }
 }

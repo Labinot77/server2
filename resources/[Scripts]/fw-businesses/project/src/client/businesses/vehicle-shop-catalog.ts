@@ -48,28 +48,40 @@ CatalogThread.addHook("preStart", (Data) => {
     exp['fw-ui'].ShowInteraction(`[E] ${Data.ShopAbbvr} Catalogus`)
 });
 
-CatalogThread.addHook("active", async (Data) => {
-    if (IsControlJustReleased(0, 38) && !UsingCatalog) {
-        UsingCatalog = true;
+type CatalogData = { ShopId: VehicleShops; ShopAbbvr: string; ShopLabel: string };
 
-        exp['fw-assets'].AddProp('Tablet')
-        await exp['fw-assets'].RequestAnimationDict('amb@code_human_in_bus_passenger_idles@female@tablet@base')
-        TaskPlayAnim(PlayerPedId(), "amb@code_human_in_bus_passenger_idles@female@tablet@base", "base", 3.0, 3.0, -1, 49, 0, false, false, false);
+const OpenCatalog = async (Data: CatalogData) => {
+    if (UsingCatalog) return;
+    UsingCatalog = true;
 
-        const Vehicles = await FW.SendCallback("fw-businesses:Server:GetCatalog", Data.ShopId)
-        SetUIFocus(true, true)
-        SendUIMessage("VehicleCatalog", "SetVisibility", {
-            Visible: true,
-            Shop: Data.ShopLabel,
-            Vehicles: Vehicles
-        })
+    exp['fw-assets'].AddProp('Tablet')
+    await exp['fw-assets'].RequestAnimationDict('amb@code_human_in_bus_passenger_idles@female@tablet@base')
+    TaskPlayAnim(PlayerPedId(), "amb@code_human_in_bus_passenger_idles@female@tablet@base", "base", 3.0, 3.0, -1, 49, 0, false, false, false);
 
-        exp['fw-ui'].HideInteraction()
-
-        await Delay(1500);
-        ToggleCatalogCam(true);
+    const Vehicles = await FW.SendCallback("fw-businesses:Server:GetCatalog", Data.ShopId)
+    if (!Vehicles || Vehicles.length == 0) {
+        UsingCatalog = false;
+        exp['fw-assets'].RemoveProp();
+        StopAnimTask(PlayerPedId(), "amb@code_human_in_bus_passenger_idles@female@tablet@base", "base", 1.0);
+        return FW.Functions.Notify("Geen voertuigen in deze catalogus..", "error");
     };
-})
+
+    SetUIFocus(true, true)
+    SendUIMessage("VehicleCatalog", "SetVisibility", {
+        Visible: true,
+        Shop: Data.ShopLabel,
+        Vehicles: Vehicles
+    })
+
+    exp['fw-ui'].HideInteraction()
+
+    await Delay(1500);
+    ToggleCatalogCam(true);
+};
+
+CatalogThread.addHook("active", (Data: any) => {
+    if (IsControlJustReleased(0, 38)) OpenCatalog(Data);
+});
 
 CatalogThread.addHook("afterStop", () => {
     exp['fw-ui'].HideInteraction();
@@ -268,7 +280,8 @@ setImmediate(async () => {
         shopId: VehicleShops;
         shopAbbvr: string;
         shopLabel: string;
-        catalogZone: {
+        interact?: Vector3Format; // interact prompt instead of a [E] zone
+        catalogZone?: {
             center: Vector3Format;
             length: number;
             width: number;
@@ -279,8 +292,15 @@ setImmediate(async () => {
     }[] = Object.values(await exp['fw-config'].GetModuleConfig("bus-vehicleshop-catalog"));
 
     for (let i = 0; i < CatalogZones.length; i++) {
-        const { shopId, shopAbbvr, shopLabel, catalogZone } = CatalogZones[i];
-        AddCatalogZone(shopId, shopAbbvr, shopLabel, catalogZone);
+        const { shopId, shopAbbvr, shopLabel, catalogZone, interact } = CatalogZones[i];
+        if (catalogZone) AddCatalogZone(shopId, shopAbbvr, shopLabel, catalogZone);
+        if (interact) exp['interact'].AddInteraction({
+            name: `${shopId}_catalog`,
+            coords: interact,
+            distance: 3.0,
+            interactDst: 1.5,
+            options: [{ name: `${shopId}_catalog_open`, label: `${shopAbbvr} Catalogus`, action: () => OpenCatalog({ ShopId: shopId, ShopAbbvr: shopAbbvr, ShopLabel: shopLabel }) }],
+        });
     }
 });
 

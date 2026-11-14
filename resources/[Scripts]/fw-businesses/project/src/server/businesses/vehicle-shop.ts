@@ -42,10 +42,17 @@ const VehicleShopPlacements: {[key: string]: {
         { Coords: {x: 1710.49, y: 4808.31, z: 41.18, w: 146.5}, Vehicle: false },
         { Coords: {x: 1713.09, y: 4808.04, z: 41.16, w: 145.83}, Vehicle: false },
     ],
+    mosley: [
+        { Coords: {x: -42.9, y: -1667.06, z: 29.49, w: 286.91}, Vehicle: false },
+        { Coords: {x: -38.62, y: -1660.27, z: 29.49, w: 306.26}, Vehicle: false },
+        { Coords: {x: -22.3, y: -1641.11, z: 29.49, w: 170.92}, Vehicle: false },
+        { Coords: {x: -25.95, y: -1645.77, z: 29.49, w: 181.99}, Vehicle: false },
+    ],
 };
+exp("GetVehicleShopPlacements", (ShopName: VehicleShops) => VehicleShopPlacements[ShopName]);
 
 setImmediate(async () => {
-    const Shops: VehicleShops[] = [ "pdm", "bennys", "flightschool", "lostmc", "darkwolves", "losmuertos" ];
+    const Shops: VehicleShops[] = [ "pdm", "bennys", "flightschool", "lostmc", "darkwolves", "losmuertos", "mosley" ];
 
     for (let i = 0; i < Shops.length; i++) {
         const ShopName = Shops[i];
@@ -162,6 +169,63 @@ onNet("fw-businesses:Server:VehicleShop:SellVehicle", async (
     emitNet("fw-phone:Client:Notification", Target.PlayerData.source, `purchase-vehicle-${Data.Cid}`, "fas fa-car", [ "white", "rgb(38, 50, 56)" ], "Voertuig Kopen", `${NumberWithCommas(Number(Data.Amount))} incl. tax`, false, true, "fw-businesses:Server:VehicleShop:Purchase", "fw-phone:Client:RemoveNotificationById", { Id: `purchase-vehicle-${Data.Cid}`, Cid: Data.Cid, Seller: Source, Business: VehicleData.Shop, Amount: Data.Amount, NetId: NetId, Model: VehicleData.Vehicle });
 });
 
+// Everything after payment: ownership, registration document, keys for the buyer. Also used by fw-bennys (Mosley's cash register).
+const RegisterSoldVehicle = async (BuyerSource: number, SellerSource: number, ShopName: string, Model: string, Amount: number, NetId: number) => {
+    const Player = FW.Functions.GetPlayer(BuyerSource);
+    const Seller = FW.Functions.GetPlayer(SellerSource);
+    const SharedData = FW.Shared.HashVehicles[GetHashKey(Model)];
+    const ShopData = GetShopData(ShopName);
+    if (!Player || !Seller || !SharedData || !ShopData) return false;
+
+    const Plate = await FW.Functions.GeneratePlate();
+    const VIN = await FW.Functions.GenerateVin();
+
+    exp['ghmattimysql'].executeSync("INSERT INTO `player_vehicles` (`citizenid`, `vehicle`, `plate`, `state`, `vinnumber`) VALUES (?, ?, ?, 'out', ?)", [
+        Player.PlayerData.citizenid,
+        Model,
+        Plate,
+        VIN,
+    ])
+
+    exp['ghmattimysql'].executeSync("INSERT INTO `vehicles_ownership` (seller, buyer, plate, price, timestamp) VALUES (?, ?, ?, ?, ?)", [
+        ShopData.BusinessName,
+        Seller.PlayerData.citizenid,
+        Plate,
+        Amount,
+        new Date().getTime()
+    ])
+
+    const _Date = new Date();
+    emit("fw-logs:Server:Log", ShopName, "Vehicle Sold", `User: [${Seller.PlayerData.source}] - ${Seller.PlayerData.citizenid} - ${Seller.PlayerData.charinfo.firstname} ${Seller.PlayerData.charinfo.lastname}\nBuyer: [${Player.PlayerData.source}] - ${Player.PlayerData.citizenid} - ${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}\nModel: ${Model} [${Plate}]\nSold Price: ${NumberWithCommas(Amount)}\nRetail Price: ${NumberWithCommas(SharedData.Price)}`, "green");
+
+    let TemplateData: string[] = [
+        SharedData.Name,
+        Model,
+        Plate,
+        VIN,
+        `${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}`,
+        `${Seller.PlayerData.charinfo.firstname} ${Seller.PlayerData.charinfo.lastname}`,
+        `${_Date.getDate()}/${_Date.getMonth()}/${_Date.getFullYear()} ${_Date.getHours()}:${_Date.getMinutes()}`,
+        NumberWithCommas(Number(Amount))
+    ];
+
+    emitNet('fw-businesses:Client:VehicleShop:LoadVehicle', BuyerSource, NetId, Plate)
+    emitNet('fw-phone:Client:Cars:SetTestDrive', SellerSource, false)
+    emit('fw-phone:Server:Documents:AddDocument', '1001', {
+        Type: 3,
+        Title: `${SharedData.Name} - ${Plate}`,
+        Content: VehicleRegistration.replace(/%s/g, () => TemplateData.shift() || ''),
+        Signatures: [
+            { Signed: true, Name: 'De Staat', Timestamp: _Date.getTime(), Cid: '1001' },
+            { Signed: true, Name: `${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}`, Timestamp: _Date.getTime(), Cid: Player.PlayerData.citizenid },
+        ],
+        Sharees: [ Player.PlayerData.citizenid ],
+        Finalized: 1,
+    });
+    return Plate;
+};
+exp("RegisterSoldVehicle", RegisterSoldVehicle);
+
 onNet("fw-businesses:Server:VehicleShop:Purchase", (Data: {
     Id: string;
     Cid: string;
@@ -193,61 +257,10 @@ onNet("fw-businesses:Server:VehicleShop:Purchase", (Data: {
 
         emitNet('fw-phone:Client:UpdateNotification', Source, Data.Id, true, true, false, "Transactie voltooid!", true)
 
-        const Plate = await FW.Functions.GeneratePlate();
-        const VIN = await FW.Functions.GenerateVin();
-
-        exp['ghmattimysql'].executeSync("INSERT INTO `player_vehicles` (`citizenid`, `vehicle`, `plate`, `state`, `vinnumber`) VALUES (?, ?, ?, 'out', ?)", [
-            Player.PlayerData.citizenid,
-            Data.Model,
-            Plate,
-            VIN,
-        ])
-
-        exp['ghmattimysql'].executeSync("INSERT INTO `vehicles_ownership` (seller, buyer, plate, price, timestamp) VALUES (?, ?, ?, ?, ?)", [
-            ShopData.BusinessName,
-            Seller.PlayerData.citizenid,
-            Plate,
-            Data.Amount,
-            new Date().getTime()
-        ])
-
-        const _Date = new Date();
-        const Year = _Date.getFullYear();
-        const Month = _Date.getMonth();
-        const Day = _Date.getDate();
-        const Hour = _Date.getHours();
-        const Minutes = _Date.getMinutes();
-
+        const Plate = await RegisterSoldVehicle(Source, Data.Seller, Data.Business, Data.Model, Data.Amount, Data.NetId);
         const Profit = Data.Amount - SharedData.Price;
         exp['fw-financials'].AddMoneyToAccount(Seller.PlayerData.citizenid, Seller.PlayerData.charinfo.account, BusinessAccount, SharedData.Price + Math.min(Profit, SharedData.Price * 0.05), 'PURCHASE', `Betaling zakelijke dienstverlening: ${Data.Model} [${Plate}] verkocht!`);
-        emit("fw-logs:Server:Log", Data.Business, "Vehicle Sold", `User: [${Seller.PlayerData.source}] - ${Seller.PlayerData.citizenid} - ${Seller.PlayerData.charinfo.firstname} ${Seller.PlayerData.charinfo.lastname}\nBuyer: [${Player.PlayerData.source}] - ${Player.PlayerData.citizenid} - ${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}\nModel: ${Data.Model} [${Plate}]\nSold Price: ${NumberWithCommas(Data.Amount)}\nRetail Price: ${NumberWithCommas(SharedData.Price)}`, "green");
-
-        let TemplateData: string[] = [
-            SharedData.Name,
-            Data.Model,
-            Plate,
-            VIN,
-            `${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}`,
-            `${Seller.PlayerData.charinfo.firstname} ${Seller.PlayerData.charinfo.lastname}`,
-            `${Day}/${Month}/${Year} ${Hour}:${Minutes}`,
-            NumberWithCommas(Number(Data.Amount))
-        ];
-        
-        emitNet('fw-businesses:Client:VehicleShop:LoadVehicle', Source, Data.NetId, Plate)
-        emitNet('fw-phone:Client:Cars:SetTestDrive', Seller.PlayerData.source, false)
-        emit('fw-phone:Server:Documents:AddDocument', '1001', {
-            Type: 3,
-            Title: `${SharedData.Name} - ${Plate}`,
-            Content: VehicleRegistration.replace(/%s/g, () => TemplateData.shift() || ''),
-            Signatures: [
-                { Signed: true, Name: 'De Staat', Timestamp: _Date.getTime(), Cid: '1001' },
-                { Signed: true, Name: `${Player.PlayerData.charinfo.firstname} ${Player.PlayerData.charinfo.lastname}`, Timestamp: _Date.getTime(), Cid: Player.PlayerData.citizenid },
-            ],
-            Sharees: [ Player.PlayerData.citizenid ],
-            Finalized: 1,
-        });
     }, 1000)
-
 })
 
 onNet("fw-businesses:Server:VehicleShop:SetPreset", async (ShopName: VehicleShops, ModelName: string, Preset: {[key: string]: number}) => {

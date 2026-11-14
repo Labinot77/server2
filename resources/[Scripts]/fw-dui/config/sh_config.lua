@@ -52,14 +52,17 @@ Config.Models = {
         Variants = { 'as_prop_as_laptop_01a_dui_01', 'as_prop_as_laptop_01a_dui_02' }, Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 800 }, Idle = true,
     },
     ['v_res_lest_monitor'] = {
-        Variants = { 'v_res_lest_monitor_dui_01', 'v_res_lest_monitor_dui_02' }, Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 960 }, Idle = true,
+        Variants = { 'v_res_lest_monitor_dui_01', 'v_res_lest_monitor_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
         Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
     },
     ['prop_monitor_01a'] = {
         Variants = { 'prop_monitor_01a_dui_01', 'prop_monitor_01a_dui_02' }, Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 960 }, Idle = true,
         Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
     },
-
+    ['prop_monitor_01b'] = {
+        Variants = { 'prop_monitor_01b_dui_01', 'prop_monitor_01b_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
+        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
+    },
     ['ch_prop_casino_keypad_02'] = {
         Variants = { 'ch_prop_casino_keypad_02_dui_01', 'ch_prop_casino_keypad_02_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',Resolution = { 512, 256 },
         Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
@@ -79,7 +82,7 @@ Config.Models = {
         Camera = { Offset = vector3(-0.053, -0.62, 1.15), LookAt = vector3(-0.053, -0.12, 1.08), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_02'] = {
-        Variants = { 'prop_atm_02_dui_01', 'prop_atm_02_dui_02' }, Texture = 'prop_atm_screen_dui', Resolution = { 1326, 1004 }, Idle = true,
+        Variants = { 'prop_atm_02_dui_01', 'prop_atm_02_dui_02' }, Texture = 'prop_atm_02_screen_dui', Resolution = { 1326, 1004 }, Idle = true,
         Camera = { Offset = vector3(-0.1205, -0.415, 1.21), LookAt = vector3(-0.1205, 0.085, 1.14), Fov = 30.0, Transition = 500 },
     },
     ['prop_atm_03'] = {

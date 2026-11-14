@@ -34,7 +34,7 @@ export interface RolePermissions {
 }
 
 // Business - vehicle-shop
-export type VehicleShops = "pdm" | "bennys" | "flightschool" | "lostmc" | "darkwolves" | "losmuertos"
+export type VehicleShops = "pdm" | "bennys" | "flightschool" | "lostmc" | "darkwolves" | "losmuertos" | "mosley"
 
 // Business - foodchain
 export type DishTypes = "Main" | "Side" | "Dessert" | "Drink";

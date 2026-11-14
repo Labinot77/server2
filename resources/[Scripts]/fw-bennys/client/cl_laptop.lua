@@ -16,13 +16,19 @@ LAPTOP_SCREEN = SCREEN
 local APP = Config.Laptop.Apps.Orders.id
 local function Send(Action, Data, MirrorData) DUI:SendApp(SCREEN, APP, Action, Data, MirrorData) end
 
+-- Apps of a business (Config.Orders.Businesses[...].Apps), a computer's own Apps go first.
+function GetBusinessApps(Business)
+    local Data = Config.Orders.Businesses[Business]
+    return Data and Data.Apps or { 'Orders', 'Management' }
+end
+
 -- The apps on this laptop's desktop (Open = app id to show right away). Every player gets the same dock,
 -- so watchers' screens match; the Management app itself locks for players without access.
-local function SetApps(Business, Open)
+local function SetApps(Business, Open, Apps)
     if not Business then return DUI:SetApps(SCREEN, {}) end
     local Label = Config.Orders.Businesses[Business] and Config.Orders.Businesses[Business].Label or Business
     local List = {}
-    for _, Key in ipairs({ 'Orders', 'Management' }) do
+    for _, Key in ipairs(Apps or GetBusinessApps(Business)) do
         local App = {}
         for K, V in pairs(Config.Laptop.Apps[Key]) do App[K] = V end
         App.label = App.label:format(Label)
@@ -39,7 +45,11 @@ end
 
 local function GetLaptopForEntity(Entity)
     local Id = GetResourceState('fw-admin') == 'started' and exports['fw-admin']:GetPropIdByEntity(Entity)
-    return Id and Laptops[Id]
+    if Id and Laptops[Id] then return Laptops[Id] end
+    local Coords = GetEntityCoords(Entity)
+    for _, Entry in pairs(Laptops) do -- MLO computers: by position
+        if Entry.Static and #(Entry.Coords - Coords) < 2.5 then return Entry end
+    end
 end
 
 -- Dashboard header + cached orders of Business, then fresh ones from the server.
@@ -67,8 +77,9 @@ end
 local function ShowIdle(Entity)
     local Entry = GetLaptopForEntity(Entity)
     Laptop.Shown, Laptop.ShownBusiness = Entity, Entry and Entry.Business
-    SetApps(Entry and Entry.Business)
+    SetApps(Entry and Entry.Business, nil, Entry and Entry.Apps)
     ManagementLock()
+    DealershipLock()
     if Entry then ShowDashboard(Entry.Business) end
 end
 
@@ -80,12 +91,13 @@ function CloseLaptop()
 
     Send('close')
     DUI:StopFocus()
-    SetApps(Laptop.Business) -- back to the desktop (app windows closed), the app keeps its live orders
+    SetApps(Laptop.Business, nil, Laptop.Apps) -- back to the desktop (app windows closed), the app keeps its live orders
     ManagementLock()
+    DealershipLock()
     DUI:Release(SCREEN) -- the range check takes over
     ClearPedTasks(PlayerPedId())
     TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId) -- free for the next player
-    Laptop.Entity, Laptop.Business, Laptop.PropId = nil, nil, nil
+    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Apps = nil, nil, nil, nil
 end
 
 function OpenLaptop(Entity, Business)
@@ -99,7 +111,7 @@ function OpenLaptop(Entity, Business)
         Laptop.Open = false
         return FW.Functions.Notify("Someone else is using this laptop.", "error")
     end
-    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Preview = Entity, Business, Entry.Id, false
+    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Preview, Laptop.Apps = Entity, Business, Entry.Id, false, Entry.Apps
 
     local Ped = PlayerPedId()
     TaskTurnPedToFaceEntity(Ped, Entity, 600)
@@ -115,7 +127,7 @@ function OpenLaptop(Entity, Business)
     Laptop.Entity = Entity
     if Laptop.Shown ~= Entity or Laptop.ShownBusiness ~= Business then
         Laptop.Shown, Laptop.ShownBusiness = Entity, Business
-        SetApps(Business)
+        SetApps(Business, nil, Laptop.Apps)
         ShowDashboard(Business)
     end
 
@@ -124,6 +136,7 @@ function OpenLaptop(Entity, Business)
     TaskPlayAnim(Ped, 'anim@heists@prison_heiststation@cop_reactions', 'cop_b_idle', 3.0, 3.0, -1, 49, 0, false, false, false)
 
     DUI:Focus(SCREEN, { Mouse = true, Sensitivity = Config.Laptop.CursorSensitivity })
+    if HasApp(Entity, 'Dealership') then DealershipLoad(Business) end
     ManagementLoad(Business) -- after Focus, so players watching see it too
 end
 
@@ -236,6 +249,21 @@ end)
 
 -- ── Interact on the laptop props ───────────────────────────────────────────
 
+local function Open(Entity)
+    local Entry = GetLaptopForEntity(Entity)
+    if Entry then CreateThread(function() OpenLaptop(Entity, Entry.Business) end) end
+end
+
+-- The business of this laptop has App on its dock.
+function HasApp(Entity, App)
+    local Entry = GetLaptopForEntity(Entity)
+    if not Entry then return false end
+    for _, Key in ipairs(Entry.Apps or GetBusinessApps(Entry.Business)) do
+        if Key == App then return true end
+    end
+    return false
+end
+
 local Registered = {} -- [Model] = true (interact's AddModelInteraction appends, so register once)
 
 local function SetLaptops(List)
@@ -245,6 +273,8 @@ local function SetLaptops(List)
             Id = Entry.Id,
             Model = Entry.Model,
             Business = Entry.Business,
+            Static = Entry.Static,
+            Apps = Entry.Apps,
             Coords = vector3(Entry.Coords.x, Entry.Coords.y, Entry.Coords.z),
         }
     end
@@ -296,6 +326,22 @@ local function GetLaptopModels()
     return List
 end
 
+-- Computers can't be shot or broken (map props and fw-dui screen copies alike).
+CreateThread(function()
+    while true do
+        local Hashes, Coords = {}, GetEntityCoords(PlayerPedId())
+        for _, Model in ipairs(GetLaptopModels()) do Hashes[joaat(Model)] = true end
+        for _, Obj in ipairs(GetGamePool('CObject')) do
+            if Hashes[GetEntityModel(Obj)] and #(GetEntityCoords(Obj) - Coords) < 50.0 then
+                SetEntityInvincible(Obj, true)
+                SetEntityCanBeDamaged(Obj, false)
+                SetDisableFragDamage(Obj, true)
+            end
+        end
+        Wait(1000)
+    end
+end)
+
 local function RegisterInteractions()
     if GetResourceState('interact') ~= 'started' then return end
 
@@ -314,11 +360,14 @@ local function RegisterInteractions()
                         {
                             name = 'bennys_laptop_orders',
                             label = 'Work Orders',
-                            canInteract = function(Entity) return LaptopCanInteract(Entity) end,
-                            action = function(Entity)
-                                local Entry = GetLaptopForEntity(Entity)
-                                if Entry then CreateThread(function() OpenLaptop(Entity, Entry.Business) end) end
-                            end,
+                            canInteract = function(Entity) return LaptopCanInteract(Entity) and HasApp(Entity, 'Orders') end,
+                            action = Open,
+                        },
+                        {
+                            name = 'bennys_laptop_computer',
+                            label = 'Use Computer',
+                            canInteract = function(Entity) return LaptopCanInteract(Entity) and not HasApp(Entity, 'Orders') end,
+                            action = Open,
                         },
                     },
                 })

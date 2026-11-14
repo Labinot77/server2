@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dealership</title>
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.15.4/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=Roboto+Mono:wght@500&display=swap">
+<style>
+    :root {
+        --accent: #7ee06a; --ink: #0b0d10; --bg: #0d0f12; --panel: #15181d; --panel-2: #1c2027;
+        --line: rgba(255, 255, 255, 0.07); --muted: #8d949d; --ok: #5ee08a; --bad: #ef5a5a; --warn: #f2c14e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); color: white;
+                 font-family: "Barlow Semi Condensed", sans-serif; user-select: none; cursor: none; }
+    .italic { font-style: italic; text-transform: uppercase; font-weight: 800; }
+    .mono { font-family: "Roboto Mono", monospace; }
+
+    .topbar { display: flex; align-items: center; height: 56px; padding: 0 22px; border-bottom: 2px solid var(--accent);
+              background: linear-gradient(90deg, #111418, #0d0f12); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand i { font-size: 22px; color: var(--accent); }
+    .brand .title { font-size: 22px; line-height: 1; }
+    .brand .sub { font-size: 13px; color: var(--muted); font-weight: 600; font-style: italic; text-transform: uppercase; }
+    .stats { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 14px; font-weight: 600; color: var(--muted); }
+    .stats b { color: white; }
+    .stats .money { color: var(--accent); font-size: 18px; }
+    .icon-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); color: var(--muted); }
+    .icon-btn:hover { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+
+    .tabs { display: flex; gap: 6px; padding: 12px 22px 0; border-bottom: 1px solid var(--line); }
+    .tab { padding: 8px 14px 10px; font-size: 15px; color: var(--muted); border-bottom: 3px solid transparent; }
+    .tab:hover { color: white; }
+    .tab.active { color: white; border-color: var(--accent); }
+
+    .body { display: flex; height: calc(100vh - 56px - 47px); }
+    .list { width: 380px; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); }
+    .list-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .list-head p { font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .rows { flex: 1; overflow-y: auto; padding: 8px; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 6px; background: var(--panel-2); border-left: 3px solid transparent; }
+    .row:hover { background: #232832; }
+    .row.selected { border-color: var(--accent); background: #1d2a30; }
+    .row .name { font-size: 17px; font-weight: 700; flex: 1; }
+    .row .meta { font-size: 13px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4b5058; }
+    .dot.on { background: var(--ok); }
+
+    .chip { display: inline-block; padding: 3px 9px; font-size: 13px; font-weight: 700; background: #2a2f38; color: #d7dbe0; }
+    .chip.accent { background: var(--accent); color: var(--ink); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips .chip { padding: 7px 12px; font-size: 14px; }
+    .chips .chip:hover { background: #3a414c; }
+    .chips .chip.accent:hover { background: var(--accent); }
+
+    .detail { flex: 1; overflow-y: auto; padding: 24px 28px; }
+    .detail h1 { font-size: 34px; line-height: 1; }
+    .detail .subtitle { margin-top: 6px; color: var(--muted); font-size: 15px; font-weight: 600; }
+    .section { margin-top: 24px; }
+    .section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .section-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: 15px; font-weight: 800; font-style: italic;
+           text-transform: uppercase; background: var(--accent); color: var(--ink); }
+    .btn:hover { filter: brightness(1.1); }
+    .btn.ghost { background: transparent; color: white; border: 1px solid var(--line); }
+    .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.danger { background: var(--bad); color: white; }
+    .btn.small { padding: 6px 12px; font-size: 13px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .toggles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .toggle { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--panel-2); font-size: 15px; font-weight: 600; }
+    .toggle.editable:hover { background: #232832; }
+    .switch { width: 38px; height: 20px; border-radius: 10px; background: #3a3f48; position: relative; transition: background 0.12s; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: left 0.12s; }
+    .switch.on { background: var(--accent); }
+    .switch.on::after { left: 21px; }
+
+    .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .card { padding: 20px; background: var(--panel-2); }
+    .card i { font-size: 26px; color: var(--accent); }
+    .card h3 { margin: 10px 0 6px; font-size: 22px; }
+    .card p { margin-bottom: 16px; color: var(--muted); font-size: 15px; font-weight: 500; }
+    .balance { font-size: 46px; color: var(--accent); }
+
+    .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: var(--muted); text-align: center; }
+    .empty i { font-size: 40px; }
+    .note { color: var(--muted); font-size: 14px; font-weight: 500; }
+
+    .lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); z-index: 50; }
+    .lock i { font-size: 56px; color: var(--accent); }
+    .lock p { font-size: 28px; }
+    .lock span { font-size: 15px; color: var(--muted); font-weight: 700; font-style: italic; text-transform: uppercase; }
+
+    .toast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 20px); padding: 10px 20px; font-size: 16px; font-weight: 700;
+             background: var(--accent); color: var(--ink); opacity: 0; transition: all 0.2s; pointer-events: none; z-index: 60; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { background: var(--bad); color: white; }
+
+    .modal { position: absolute; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center; background: rgba(5, 6, 8, 0.75); }
+    .modal form { width: 420px; padding: 22px; background: var(--panel); border-top: 2px solid var(--accent); display: flex; flex-direction: column; gap: 12px; }
+    .modal h3 { font-size: 22px; }
+    .modal label { font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .modal input { width: 100%; margin-top: 4px; padding: 10px 12px; font: 600 17px "Barlow Semi Condensed", sans-serif; color: white;
+                   background: var(--panel-2); border: 1px solid var(--line); outline: 0; cursor: none; }
+    .modal input:focus { border-color: var(--accent); }
+    .modal .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .modal .row { background: none; padding: 0; border: 0; }
+    .modal button.btn { border: 0; cursor: none; font: italic 800 16px "Barlow Semi Condensed", sans-serif; text-transform: uppercase; }
+    .modal input::-webkit-inner-spin-button { display: none; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: rgba(126, 224, 106, 0.5); }
+    .hidden { display: none !important; }
+    .spot { display: flex; align-items: center; gap: 10px; }
+    .spot .num { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #2a2f38; font-weight: 800; }
+    .stock { font-weight: 700; }
+    .stock.out { color: var(--bad); }
+    .taxes p { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .taxes p.total { color: white; font-size: 19px; border: 0; }
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">
+            <i class="fas fa-car"></i>
+            <div><p class="title italic" id="brand">Dealership</p><p class="sub">Showroom &amp; Sales</p></div>
+        </div>
+        <div class="stats">
+            <p>Out: <b id="current">-</b></p>
+            <div class="icon-btn" data-act="refresh" title="Refresh"><i class="fas fa-sync-alt"></i></div>
+        </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="body" id="body"></div>
+
+    <div class="lock" id="lock"><i class="fas fa-lock"></i><p class="italic">Dealership</p><span id="lockText">Use the computer to manage the dealership</span></div>
+    <div class="toast" id="toast"></div>
+    <div class="modal hidden" id="modal"><form id="form">
+        <h3 class="italic">Sell vehicle</h3>
+        <div><label>Price</label><input name="Price" type="number" maxlength="12" autocomplete="off"></div>
+        <div><label>Comment</label><input name="Comment" type="text" maxlength="60" autocomplete="off" spellcheck="false"></div>
+        <div class="taxes" id="taxes"></div>
+        <div class="row"><div class="btn ghost" data-act="formCancel">Cancel</div><button type="submit" class="btn">Send to cash register</button></div>
+    </form></div>
+
+<script>
+    const S = { view: null, tab: "showroom", spot: 0, model: null, mock: location.search.includes("mock") };
+    const $ = id => document.getElementById(id);
+    const Esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const Money = v => "$" + Math.round(v || 0).toLocaleString("en-US");
+    const NameOf = M => (S.view.Catalog.find(V => V.Model === M) || { Name: M || "Empty" }).Name;
+
+    const Post = (Action, Data = {}) => {
+        if (S.mock) return;
+        fetch("https://fw-bennys/dealership", { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8" }, body: JSON.stringify({ Action, ...Data }) });
+    };
+
+    let ToastTimer;
+    const Toast = (Text, Type) => {
+        const El = $("toast");
+        El.textContent = Text;
+        El.className = `toast show ${Type === "error" ? "error" : ""}`;
+        clearTimeout(ToastTimer);
+        ToastTimer = setTimeout(() => (El.className = "toast"), 2600);
+    };
+
+    const Lock = Text => { $("lockText").textContent = Text || "Use the computer to manage the dealership"; $("lock").classList.remove("hidden"); };
+    const Empty = (Icon, Text) => `<div class="empty"><i class="fas ${Icon}"></i><p>${Esc(Text)}</p></div>`;
+    const Row = (Attr, Sel, Inner) => `<div class="row ${Sel ? "selected" : ""}" ${Attr}>${Inner}</div>`;
+
+    const Showroom = () => {
+        const { Spots, Catalog } = S.view;
+        const List = Spots.map((M, I) => Row(`data-spot="${I}"`, S.spot === I,
+            `<div class="spot"><span class="num">${I + 1}</span></div><p class="name">${Esc(NameOf(M))}</p>`)).join("");
+        const Picks = Catalog.map(V => `<div class="chip ${Spots[S.spot] === V.Model ? "accent" : ""}" data-pick="${Esc(V.Model)}">${Esc(V.Name)}</div>`).join("");
+        return `<div class="list"><div class="list-head"><p>Show spots</p></div><div class="rows">${List}</div></div>
+            <div class="detail"><h1 class="italic">Spot ${S.spot + 1}</h1><p class="subtitle">Now showing: ${Esc(NameOf(Spots[S.spot]))}</p>
+            <div class="section"><div class="section-title">Pick a vehicle</div><div class="chips">${Picks || '<p class="note">No vehicles in the catalog</p>'}</div></div></div>`;
+    };
+
+    const Sales = () => {
+        const { Catalog, Current, Order } = S.view;
+        const List = Catalog.map(V => Row(`data-model="${Esc(V.Model)}"`, S.model === V.Model,
+            `<p class="name">${Esc(V.Name)}</p><span class="meta stock ${V.Stock ? "" : "out"}">${V.Stock} in stock</span>`)).join("");
+        const V = Catalog.find(X => X.Model === S.model);
+        let Detail = Empty("fa-car", "Select a vehicle from the catalog");
+        if (Order) {
+            Detail = `<h1 class="italic">${Esc(Order.Name)}</h1><p class="subtitle">Waiting for payment at the cash register</p>
+                <div class="section"><div class="section-title">Order</div><div class="cards">
+                    <div class="card"><i class="fas fa-cash-register"></i><h3>${Money(Order.Total)}</h3><p>Total incl. tax (price ${Money(Order.Price)})</p></div>
+                    <div class="card"><i class="fas fa-pencil-alt"></i><h3>${Esc(Order.Comment || "-")}</h3><p>Comment</p></div></div></div>
+                <div class="section"><div class="actions"><div class="btn danger" data-act="cancelOrder"><i class="fas fa-times"></i>Cancel order</div></div></div>`;
+        } else if (Current) {
+            Detail = `<h1 class="italic">${Esc(NameOf(Current))}</h1><p class="subtitle">Waiting outside for the buyer</p>
+                <div class="section"><div class="section-title">Sale</div><p class="note" style="margin-bottom:14px">Send the price to the cash register, the buyer pays there and drives away with this vehicle.</p>
+                <div class="actions"><div class="btn" data-act="sell"><i class="fas fa-file-signature"></i>Sell</div><div class="btn ghost" data-act="returnVehicle"><i class="fas fa-undo"></i>Return to stock</div></div></div>`;
+        } else if (V) {
+            Detail = `<h1 class="italic">${Esc(V.Name)}</h1><p class="subtitle mono">${Esc(V.Model)}</p>
+                <div class="section"><div class="section-title">Details</div><div class="cards">
+                    <div class="card"><i class="fas fa-tag"></i><h3>${Money(V.Price)}</h3><p>Retail price (excl. tax)</p></div>
+                    <div class="card"><i class="fas fa-warehouse"></i><h3>${V.Stock}</h3><p>In stock</p></div></div></div>
+                <div class="section"><div class="actions">${V.Stock ? '<div class="btn" data-act="pullOut"><i class="fas fa-key"></i>Pull out for sale</div>' : '<p class="note">Out of stock</p>'}</div></div>`;
+        }
+        return `<div class="list"><div class="list-head"><p>Catalog</p></div><div class="rows">${List || '<p class="note">No vehicles</p>'}</div></div><div class="detail">${Detail}</div>`;
+    };
+
+    const Render = () => {
+        if (!S.view) return;
+        $("current").textContent = S.view.Current ? NameOf(S.view.Current) : "-";
+        $("tabs").innerHTML = [["showroom", "Showroom"], ["sales", "Sales"]].map(([K, L]) => `<div class="tab ${S.tab === K ? "active" : ""}" data-tab="${K}">${L}</div>`).join("");
+        $("body").innerHTML = S.tab === "showroom" ? Showroom() : Sales();
+    };
+
+    const CloseForm = () => $("modal").classList.add("hidden");
+    const UpdateTaxes = () => {
+        const Price = Math.max(0, Math.floor(Number($("form").elements.Price.value) || 0));
+        let Total = Price;
+        const Lines = (S.view?.Taxes || []).map(T => { const A = Math.ceil(Price * T.Rate / 100); Total += A; return `<p><span>${Esc(T.Label)} (${T.Rate}%)</span><span class="mono">${Money(A)}</span></p>`; });
+        $("taxes").innerHTML = `<p><span>Price</span><span class="mono">${Money(Price)}</span></p>${Lines.join("")}<p class="total"><span>Total</span><span class="mono">${Money(Total)}</span></p>`;
+    };
+    $("form").addEventListener("input", UpdateTaxes);
+    $("form").addEventListener("submit", Ev => {
+        Ev.preventDefault();
+        const Price = $("form").elements.Price.value.trim(), Comment = $("form").elements.Comment.value.trim();
+        if (!(Number(Price) > 0) || !Comment) return Toast("Fill in every field", "error");
+        Post("sell", { Price, Comment });
+        CloseForm();
+    });
+
+    document.addEventListener("click", Ev => {
+        const Get = A => Ev.target.closest(`[${A}]`);
+        let El;
+        if ((El = Get("data-tab"))) { S.tab = El.dataset.tab; Post("sound"); return Render(); }
+        if ((El = Get("data-spot"))) { S.spot = Number(El.dataset.spot); Post("sound"); return Render(); }
+        if ((El = Get("data-model"))) { S.model = El.dataset.model; Post("sound"); return Render(); }
+        if ((El = Get("data-pick"))) return Post("setSpot", { Spot: S.spot + 1, Model: El.dataset.pick });
+        if ((El = Get("data-act"))) {
+            const A = El.dataset.act;
+            if (A === "formCancel") return CloseForm();
+            if (A === "sell") { $("form").reset(); UpdateTaxes(); $("modal").classList.remove("hidden"); $("form").elements.Price.focus(); return Post("sound"); }
+            if (A === "pullOut") return Post("pullOut", { Model: S.model });
+            Post(A); // refresh, returnVehicle, cancelOrder
+        }
+    });
+
+    window.addEventListener("message", Ev => {
+        let M = Ev.data;
+        if (typeof M === "string") { try { M = JSON.parse(M); } catch { return; } }
+        if (!M || !M.action) return;
+        const D = M.data;
+        switch (M.action) {
+            case "view": S.view = D; S.spot = Math.min(S.spot, Math.max(0, D.Spots.length - 1)); $("lock").classList.add("hidden"); Render(); break;
+            case "toast": Toast(D.text, D.type); break;
+            case "lock": CloseForm(); Lock(D && D.text); break;
+        }
+    });
+
+    Lock();
+
+    // Browser preview: dealership.html?mock
+    if (S.mock) window.postMessage({ action: "view", data: {
+        Spots: ["emperor", "manana", false, "asea"], Current: "asea", Order: false,
+        Taxes: [{ Label: "Vehicle Sales", Rate: 3 }, { Label: "Vehicle Registration Tax", Rate: 5 }],
+        Catalog: [{ Model: "asea", Name: "Asea", Price: 12000, Stock: 4 }, { Model: "emperor", Name: "Emperor", Price: 9000, Stock: 0 }, { Model: "manana", Name: "Manana", Price: 15000, Stock: 2 }],
+    } }, "*");
+</script>
+<script src="nui://fw-dui/html/keys.js"></script>
+</body>
+</html>
