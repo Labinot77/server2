@@ -314,6 +314,8 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
         SwitchPending = false
         CurrentInventory = OtherData
         SendNUIMessage({ Action = "SwapOther", OtherData = OtherData })
+        -- Reopening released the bag below: view it again (the panel itself stays).
+        if ExtraInventory then FW.TriggerServer('fw-inventory:Server:OpenExtraInventory', ExtraInventory.Type, ExtraInventory.Name, ExtraInventory.Slots, ExtraInventory.Weight) end
         return WatchOpenInventory(OtherData)
     end
     SwitchPending = false
@@ -401,13 +403,11 @@ end)
 RegisterNetEvent("fw-inventory:Client:RefreshOther")
 AddEventHandler("fw-inventory:Client:RefreshOther", function(InvName, Items)
     if not CurrentInventory then return end
-    if CurrentInventory.Ground and CurrentInventory.Ground.Name == InvName then
-        CurrentInventory.Ground.Items = Items
-    elseif CurrentInventory.Name == InvName then
-        CurrentInventory.Items = Items
-    else
-        return
-    end
+    local Data = (CurrentInventory.Ground and CurrentInventory.Ground.Name == InvName and CurrentInventory.Ground)
+        or (CurrentInventory.Name == InvName and CurrentInventory)
+        or (ExtraInventory and ExtraInventory.Name == InvName and ExtraInventory)
+    if not Data then return end
+    Data.Items, Data.Pending = Items, nil
     SendNUIMessage({ Action = "RefreshOther", Name = InvName, Items = Items })
 end)
 
@@ -549,6 +549,20 @@ function SwitchOtherInventory()
     Citizen.SetTimeout(2000, function() SwitchPending = false end) -- server refused: try again later
 end
 
+-- Opens InvName (e.g. a bag). While the inventory is open it's added below the other inventory, the rest stays as is.
+ExtraInventory = false
+exports('OpenOtherInventory', function(InvType, InvName, MaxSlots, MaxWeight)
+    local Event = CurrentInventory and 'fw-inventory:Server:OpenExtraInventory' or 'fw-inventory:Server:OpenInventory'
+    FW.TriggerServer(Event, InvType, InvName, MaxSlots, MaxWeight)
+end)
+
+RegisterNetEvent("fw-inventory:Client:LoadExtraInventory")
+AddEventHandler("fw-inventory:Client:LoadExtraInventory", function(Data)
+    if not CurrentInventory then return end
+    ExtraInventory = Data
+    SendNUIMessage({ Action = "SetExtra", Data = Data })
+end)
+
 function WatchOpenInventory(OtherData)
     local OpenCoords = GetEntityCoords(PlayerPedId())
     Citizen.CreateThread(function()
@@ -595,7 +609,7 @@ function CloseInventory()
     RestoreGameHud()
     SendNUIMessage({ Action = "CloseInventory" })
     
-    CurrentInventory = false
+    CurrentInventory, ExtraInventory = false, false
 
     HotbarCooldown = true
     Citizen.SetTimeout(100, function()
@@ -717,7 +731,7 @@ RegisterNUICallback("FetchMoney", function(Data, Cb)
 end)
 
 RegisterNUICallback("UseItem", function(Data, Cb)
-    Citizen.SetTimeout(250, function()
+    Citizen.SetTimeout(Data.KeepOpen and 0 or 250, function() -- the inventory stays open: no close to wait for
         FW.TriggerServer('fw-inventory:Server:UseItem', tonumber(Data.Slot), true)
     end)
 

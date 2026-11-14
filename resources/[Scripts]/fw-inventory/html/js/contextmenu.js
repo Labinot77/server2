@@ -38,7 +38,7 @@ const FindEmptySlot = (Container, Item) => {
     }
 
     for (let i = 1; i <= GetContainerMaxSlots(Container); i++) {
-        if (!Items[i]) return i;
+        if (!Items[i] && !IsSlotLoading(Container, i)) return i;
     }
     return false;
 };

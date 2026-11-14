@@ -1177,3 +1177,21 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 .ox-right.has-ground .other-grid { max-height: calc(4 * var(--size) + 3 * var(--gap)); }
 .inv-enter .ground-layout { animation: inv-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) 0.11s both; }
 .quick-stash .ox-right { display: none !important; }
+.bag-layout { display: none; width: var(--right-w); }
+.bag-grid { max-height: calc(2 * var(--size) + var(--gap)); overflow-y: auto; overflow-x: hidden; }
+.bag-layout .ox-sub { position: relative; }
+.bag-layout.loading .bag-grid { min-height: var(--size); opacity: 0.35; }
+.bag-spinner {
+    display: none; position: absolute; left: 50%; bottom: calc(var(--size) / 2 - 1.6vh); margin-left: -1.6vh;
+    width: 3.2vh; height: 3.2vh; border: 0.35vh solid rgba(255, 255, 255, 0.2); border-top-color: #fff; border-radius: 50%;
+    animation: bag-spin 0.7s linear infinite;
+}
+.bag-layout.loading .bag-spinner { display: block; }
+@keyframes bag-spin { to { transform: rotate(360deg); } }
+/* Filled slot whose item hasn't arrived yet: loader, not usable */
+.inventory-box-slot.slot-loading { pointer-events: none; }
+.inventory-box-slot.slot-loading::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 2.4vh; height: 2.4vh; margin: -1.2vh 0 0 -1.2vh;
+    border: 0.3vh solid rgba(255, 255, 255, 0.18); border-top-color: #fff; border-radius: 50%;
+    animation: bag-spin 0.7s linear infinite;
+}

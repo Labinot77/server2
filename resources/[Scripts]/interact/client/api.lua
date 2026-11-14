@@ -528,25 +528,20 @@ function api.getNearbyInteractions()
         if MODELS[hash] then
             local interaction = lib.table.deepclone(MODELS[hash])
             -- put the functions to original references
-            for k, v in pairs(interaction) do
-                if type(v) == "table" then
-                    for id, item in pairs(v) do
-                        if item.action then
-                            item.action = MODELS[hash].options[id].action
-                        end
-                        if MODELS[hash].options[id].canInteract then
-                            item.canInteract = MODELS[hash].options[id].canInteract
-                        end
-                        if item.canInteract then
-                            local canInteract = false
-                            pcall(function()
-                                canInteract = item.canInteract(nearby.object, nearby.coords, item.args)
-                            end)
-                            v[id] = canInteract and item or nil
-                        end
-                    end
+            -- Original function references, hidden options left out (a compact list: gaps break the renderer)
+            local visible = {}
+            for id, item in ipairs(interaction.options) do
+                local source = MODELS[hash].options[id]
+                item.action, item.canInteract = source.action, source.canInteract
+                local canInteract = not item.canInteract
+                if item.canInteract then
+                    pcall(function()
+                        canInteract = item.canInteract(nearby.object, nearby.coords, item.args)
+                    end)
                 end
+                if canInteract then visible[#visible + 1] = item end
             end
+            interaction.options = visible
             local distance = #(nearby.coords - playercoords)
             interaction.entity = nearby.object
 

@@ -156,10 +156,19 @@ const ValidatePlayerSlot = (Items, Slot, ItemName, Amount) => {
     return [true];
 };
 
-// 'player' | 'other' | 'ground'  ->  data / element / rules
+// 'player' | 'other' | 'ground' | 'bag'  ->  data / element / rules
 // 'ground' is the ground under your feet, shown above a stash / trunk (OtherInvData.Ground).
-let GroundInvData = false;
-const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : OtherInvData;
+// 'bag' is a bag used while the inventory is open, shown below the other inventory.
+let GroundInvData = false, BagInvData = false;
+const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : Container == 'bag' ? (BagInvData || {}) : OtherInvData;
+// Slot still loading (filled on the server, items not here yet): shows a loader, can't be used.
+const IsSlotLoading = (Container, Slot) => Container != 'player' && (GetContainerData(Container).Pending || []).includes(Number(Slot));
+const GetContainerByName = (InvName) => {
+    if (InvName == 'player') return 'player';
+    if (GroundInvData && InvName == GroundInvData.Name) return 'ground';
+    if (BagInvData && InvName == BagInvData.Name) return 'bag';
+    return OtherInvData && InvName == OtherInvData.Name ? 'other' : false;
+};
 const GetContainerOf = (Element) => $(Element).closest('.inventory-box').attr('inventory-name') || 'other';
 const GetContainerInvName = (Container) => Container == 'player' ? 'player' : GetContainerData(Container).Name;
 const GetContainerItems = (Container) => Container == 'player' ? MyInventory : (GetContainerData(Container).Items || {});
@@ -226,9 +235,10 @@ const ValidateMovement = (FromContainer, ToContainer, FromSlot, ToSlot, FromItem
 // ============================================================================
 //  Slot finding
 // ============================================================================
-const FindSlot = (Items, Slots, SlotData) => {
+const FindSlot = (Items, Slots, SlotData, IsLoading = () => false) => {
     for (let i = 1; i <= Slots; i++) {
         const Item = Items[i];
+        if (IsLoading(i)) continue;
         if (!Item || (Item && Item.Item == SlotData.Item && Item.CustomType == SlotData.CustomType && !ItemsList[SlotData.Item].NonStack)) {
             return i
         };
@@ -257,7 +267,7 @@ const FindPlayerSlot = (Items, SlotData) => {
 
 const FindTargetSlot = (Container, SlotData) => {
     if (IsPlayerContainer(Container)) return FindPlayerSlot(GetContainerItems(Container), SlotData);
-    return FindSlot(GetContainerItems(Container), GetContainerMaxSlots(Container), SlotData);
+    return FindSlot(GetContainerItems(Container), GetContainerMaxSlots(Container), SlotData, i => IsSlotLoading(Container, i));
 };
 
 // ============================================================================
@@ -353,6 +363,7 @@ const RenderSlot = (Container, Slot) => {
 
     Element.html(BuildSlotHtml(Container, Slot, Item));
     Element.toggleClass('has-item', !!(Item && ItemsList[Item.Item]));
+    Element.toggleClass('slot-loading', !Item && IsSlotLoading(Container, Slot));
     Element.toggleClass('is-broken', IsItemBroken(Item) && !(Container != 'player' && OtherInvData.Type == 'Store'));
     Element.toggleClass('locked', !!(IsPlayer && !IsBackpackSlotUnlocked(GetContainerItems(Container), Slot)));
 };
@@ -427,6 +438,29 @@ const BuildGroundInventory = () => {
         RenderSlot('ground', i);
     }
     UpdateInventoryWeights('ground');
+};
+
+// Bag panel right away with a spinner, until its items arrive (gone after 4s if it never opens).
+let BagLoadingTimer;
+const ShowBagLoading = () => {
+    const Box = GetContainerBox('bag').addClass('loading').show();
+    clearTimeout(BagLoadingTimer);
+    BagLoadingTimer = setTimeout(() => { Box.removeClass('loading'); if (!BagInvData) Box.hide(); }, 4000);
+};
+
+const BuildBagInventory = (Data) => {
+    BagInvData = Data || false;
+    clearTimeout(BagLoadingTimer);
+    const Box = GetContainerBox('bag').removeClass('loading');
+    const Grid = Box.find('.inventory-box-slots').empty();
+    if (!BagInvData) return Box.hide();
+
+    Box.show();
+    for (let i = 1; i <= BagInvData.Slots; i++) {
+        Grid.append(SlotElementHtml(i));
+        RenderSlot('bag', i);
+    }
+    UpdateInventoryWeights('bag');
 };
 
 const BuildInventory = (InvContainer, InvType, Items, MaxSlots) => {
@@ -552,7 +586,7 @@ const GetItemTypeLabel = (Container, Slot, ItemData) => {
 };
 
 const GenerateItemInfo = (InvName, SlotId) => {
-    const Container = InvName == 'player' ? 'player' : (GroundInvData && InvName == GroundInvData.Name ? 'ground' : 'other');
+    const Container = GetContainerByName(InvName) || 'other';
     const Item = GetContainerItems(Container)[SlotId];
     if (!Item || !ItemsList[Item.Item]) return false;
 

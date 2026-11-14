@@ -43,9 +43,23 @@ end
 -- Validates an item movement coming from the NUI before it touches the database.
 -- Data.FromInv / Data.ToInv are already resolved to 'ply-<cid>' names.
 -- Returns true, or false + reason. May clamp Data.Amount for equip slots.
+-- Config.InventoryWhitelist: false when Item can't go into InvName.
+local function IsAllowedIn(InvName, Item)
+    if not Item or type(InvName) ~= 'string' then return true end
+    for Prefix, Items in pairs(Config.InventoryWhitelist or {}) do
+        if InvName:sub(1, #Prefix) == Prefix then return Items[Item] == true end
+    end
+    return true
+end
+
 function ValidateItemMovement(Type, Data)
     local FromPlayer, ToPlayer = GetPlayerFromInv(Data.FromInv), GetPlayerFromInv(Data.ToInv)
     local FromSlot, ToSlot = tonumber(Data.FromSlot), tonumber(Data.ToSlot)
+
+    -- Swap: ToItem goes into FromInv too.
+    if not IsAllowedIn(Data.ToInv, Data.FromItem) or (Type == "Swap" and not IsAllowedIn(Data.FromInv, Data.ToItem)) then
+        return false, "That item can't be stored here."
+    end
 
     if Type == "Move" then
         if ToPlayer then

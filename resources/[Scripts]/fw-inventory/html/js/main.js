@@ -47,6 +47,7 @@ $(document).ready(function(){
 
                 BuildInventory('player', 'Player', MyInventory, MaxPlayerSlots);
                 BuildInventory('other', OtherInvData.Type, OtherInvData.Items, OtherInvData.Slots);
+                BuildBagInventory(false);
 
                 CloseAttachmentsPanel();
 
@@ -59,15 +60,19 @@ $(document).ready(function(){
                 break;
             case "RefreshOther": {
                 if (!InventoryOpen || !OtherInvData) break;
-                const Container = GroundInvData && GroundInvData.Name == event.data.Name ? 'ground' : (OtherInvData.Name == event.data.Name ? 'other' : false);
+                const Container = GetContainerByName(event.data.Name);
                 if (!Container) break;
                 // An item you're dragging from this inventory may be gone now: drop the drag.
                 if (DragData.IsDragging && DragData.FromContainer == Container) ResetDrag();
                 GetContainerData(Container).Items = event.data.Items || {};
+                delete GetContainerData(Container).Pending; // loading slots -> items
                 for (let i = 1; i <= GetContainerMaxSlots(Container); i++) RenderSlot(Container, i);
                 UpdateInventoryWeights(Container);
                 break;
             }
+            case "SetExtra":
+                if (InventoryOpen) BuildBagInventory(event.data.Data);
+                break;
             case "SwapOther":
                 if (!InventoryOpen) break;
                 ResetDrag();
@@ -128,6 +133,18 @@ $(document).ready(function(){
         };
     });
 });
+
+// Using these opens them in the other panel, so the inventory stays open.
+const KeepOpenOnUse = ['business-bag'];
+const UseInventoryItem = Slot => {
+    if (MyInventory[Slot] && KeepOpenOnUse.includes(MyInventory[Slot].Item)) {
+        ResetDrag();
+        ShowBagLoading();
+        return $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot, KeepOpen: true }));
+    }
+    CloseInventory();
+    setTimeout(() => $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot })), 250);
+};
 
 const CloseInventory = () => {
     InventoryOpen = false;
@@ -200,10 +217,7 @@ $(document).on('mouseup', '#inventory-use', function(e){
         return InventoryLog('Sleep kogels op het magazijn om het te laden.');
     }
 
-    CloseInventory();
-    setTimeout(() => {
-        $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot }));
-    }, 250);
+    UseInventoryItem(Slot);
 });
 
 $(document).on({

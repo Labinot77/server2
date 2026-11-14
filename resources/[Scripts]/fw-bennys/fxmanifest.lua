@@ -17,6 +17,7 @@ client_scripts {
     'client/cl_management.lua',
     'client/cl_dealership.lua',
     'client/cl_stance.lua',
+    'client/cl_pawn.lua',
     'dist/client.js',
 }
 
@@ -26,6 +27,7 @@ server_scripts {
     'server/sv_orders.lua',
     'server/sv_management.lua',
     'server/sv_dealership.lua',
+    'server/sv_pawn.lua',
     'dist/server.js',
 }
 
@@ -33,4 +35,5 @@ files {
     'html/laptop.html',
     'html/management.html',
     'html/dealership.html',
+    'html/pawn.html',
 }

@@ -227,12 +227,16 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
             return
         end
 
-        local Items = GetInventoryItems(InvName)
+        -- Another player's pockets need their items for the layout; anything else gets its filled slots first
+        -- (shown loading) and the items right after it opened (see the end of this event).
+        local IsPlayerInv = string.startsWith(InvName, 'ply-')
+        local Items = IsPlayerInv and GetInventoryItems(InvName) or {}
         OtherData.Type = InvType
         OtherData.Name = InvName
         OtherData.Slots = MaxSlots
         OtherData.Weight = MaxWeight
         OtherData.Items = Items
+        if not IsPlayerInv then OtherData.Pending = GetInventorySlots(InvName) end
 
         -- Searching/robbing another player: show the same Pockets/Backpack/Body/Accessories layout.
         if string.startsWith(InvName, 'ply-') then
@@ -254,7 +258,7 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     -- Stash / trunk on foot: also show the ground under your feet above it.
     local GroundName = ShowsGroundWith(Source, InvType, InvName) and GetGroundDropName(Source)
     if GroundName then
-        OtherData.Ground = { Type = 'Drop', Name = GroundName, Slots = 40, Weight = 250.0, Items = GetInventoryItems(GroundName) }
+        OtherData.Ground = { Type = 'Drop', Name = GroundName, Slots = 40, Weight = 250.0, Items = {}, Pending = GetInventorySlots(GroundName) }
     end
 
     -- Anything else this player still had open (a previous open that never got closed) is freed.
@@ -270,6 +274,19 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     Player.Functions.RefreshInventory()
 
     TriggerClientEvent("fw-inventory:Client:LoadInventory", Source, OtherData)
+
+    -- The items of the slots that were shown loading.
+    if OtherData.Pending then TriggerClientEvent("fw-inventory:Client:RefreshOther", Source, InvName, GetInventoryItems(InvName)) end
+    if GroundName then TriggerClientEvent("fw-inventory:Client:RefreshOther", Source, GroundName, GetInventoryItems(GroundName)) end
+end)
+
+-- A bag opened while the inventory is open: shown below the other inventory, everything else stays open.
+FW.RegisterServer("fw-inventory:Server:OpenExtraInventory", function(Source, InvType, InvName, MaxSlots, MaxWeight)
+    if not FW.Functions.GetPlayer(Source) or not IsSharedInventory(InvName) then return end
+    MaxSlots, MaxWeight = tonumber(MaxSlots) or 40, tonumber(MaxWeight) or 250.0
+    AddViewer(InvName, Source, MaxWeight)
+    TriggerClientEvent("fw-inventory:Client:LoadExtraInventory", Source, { Type = InvType, Name = InvName, Slots = MaxSlots, Weight = MaxWeight, Items = {}, Pending = GetInventorySlots(InvName) })
+    TriggerClientEvent("fw-inventory:Client:RefreshOther", Source, InvName, GetInventoryItems(InvName))
 end)
 
 RegisterLocked("fw-inventory:Server:DoItemMovement", function(Source, Type, Data)

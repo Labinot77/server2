@@ -561,3 +561,8 @@ Config.CraftingBenches = {
         { Item = 'emptybaggies', Amount = 100, AddRep = 0, RequiredRep = 0  },
     },
 }
+
+-- Inventories that only take certain items: [inventory name prefix] = { [item] = true }.
+Config.InventoryWhitelist = {
+    ['pawn_dropoff_'] = { ['pawn-box'] = true }, -- fw-bennys pawn shop drop-off storage
+}

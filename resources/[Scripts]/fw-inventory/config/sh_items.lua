@@ -1147,9 +1147,9 @@ Shared.Items["magazine"] = {
 
 Shared.Items["bullets"] = {
     Name = "bullets",
-    Label = "Kogels",
+    Label = "Bullets",
     Image = "bullets-pistol.png",
-    Description = "Losse kogels. Laad ze in een magazijn van hetzelfde type.",
+    Description = "Loose bullets. Load them into a magazine of the same type.",
     Weapon = false, Illegal = false,
     Metal = true, NonStack = false,
     IsBag = false, Weight = 0.02,
@@ -5924,6 +5924,21 @@ Shared.Items["radioscanner"] = {
         { Item = 'rubber', Amount = 1168 },
     },
     DecayRate = 1.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
+Shared.Items["pawn-box"] = {
+    Name = "pawn-box",
+    Label = "Pawn Box",
+    Image = "h_box.png",
+    Description = "A sealed shipment box from the pawn shop. Heavy, carry it with both hands.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = true, HasProp = true,
+    IsBag = false, Weight = 60,
+    Price = 0,
+    Craft = {},
+    DecayRate = 0.0,
     FullDecay = false,
     InsertInto = {},
 }

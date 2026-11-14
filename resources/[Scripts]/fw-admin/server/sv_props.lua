@@ -124,6 +124,12 @@ RegisterNetEvent("fw-admin:Server:Props:Reload", function()
     TriggerClientEvent('FW:Notify', source, ("Reloaded %s props."):format(#GetPropList()), 'success')
 end)
 
+-- Server side reload, for resources that insert props themselves (e.g. fw-bennys pawn monitor).
+AddEventHandler("fw-admin:Server:Props:ReloadAll", function()
+    LoadProps()
+    SyncAll()
+end)
+
 -- Commands (same as the panel buttons)
 FW.Commands.Add("placeprop", "Place a prop that gets saved.", {{ name = "model", help = "Prop model (optional)" }}, false, function(Source, Args)
     TriggerClientEvent("Admin:Props:Place", Source, { model = Args[1] })
