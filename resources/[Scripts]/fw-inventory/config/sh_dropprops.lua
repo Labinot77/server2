@@ -19,6 +19,7 @@ Config.DropPropsOverride = {
     phone = 'prop_npc_phone_02',
     burnerphone = 'prop_npc_phone',
     keyring = 'prop_cs_keys_01',
+    carkeys = 'm23_2_prop_m32_carkey_fob_01a',
     wallet = 'prop_ld_wallet_01',
     backpack = 'p_michael_backpack_s',
     hat = 'prop_proxy_hat_01',
