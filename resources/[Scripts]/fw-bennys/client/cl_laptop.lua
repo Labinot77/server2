@@ -48,7 +48,7 @@ local function GetLaptopForEntity(Entity)
     if Id and Laptops[Id] then return Laptops[Id] end
     local Coords = GetEntityCoords(Entity)
     for _, Entry in pairs(Laptops) do -- MLO computers: by position
-        if Entry.Static and #(Entry.Coords - Coords) < 2.5 then return Entry end
+        if Entry.Static and #(Entry.Coords - Coords) < 3.5 then return Entry end
     end
 end
 
@@ -153,8 +153,19 @@ end
 local function RegisterScreen()
     local Models = {}
     for Model in pairs(Config.Laptop.Models) do Models[#Models + 1] = Model end
+    -- Map computers of a model without screen copies (e.g. the pawn monitor): fw-dui finds them at these points.
+    local Static = {}
+    for _, Data in pairs(Config.Orders.Businesses) do
+        for _, Computer in ipairs(Data.Computers or {}) do
+            if type(Computer) == 'table' and Computer.Heading then
+                Static[#Static + 1] = vector4(Computer.Coords.x, Computer.Coords.y, Computer.Coords.z, Computer.Heading)
+            end
+        end
+    end
     DUI:RegisterScreen(SCREEN, {
         Models = Models,
+        Static = Static,
+        StaticRadius = 3.0,
         Distance = Config.Laptop.RenderDistance,
         Placed = true,
         Mirror = true,

@@ -10,8 +10,9 @@ Config.Pawn = {
     Safe = { Coords = vector3(150.26, -1711.04, 29.31), Slots = 50, Weight = 5000.0 },    -- StashAccess
     DropOff = { Coords = vector3(150.26, -1711.04, 30.31), Slots = 50, Weight = 5000.0 }, -- every member
 
-    -- fw-admin placed prop, inserted on first start. Move it in the admin panel if it's off.
-    Monitor = { Model = 'prop_monitor_w_large', Coords = vector3(150.96, -1711.62, 29.36), Rotation = vector3(0.0, 0.0, 140.0) },
+    -- The prop_monitor_w_large in the map. The one within 3m of Coords is used. If it can't be found (a static
+    -- map prop), stand at it and run /duiprop prop_monitor_w_large, then put its exact position + heading here.
+    Monitor = { Coords = vector3(150.96, -1711.62, 29.36), Heading = 140.0 },
 
     BoxItem = 'pawn-box', -- carried in hand (fw-assets Type 3): box carry animation, no running
     DeliverTime = 4000,
@@ -80,3 +81,6 @@ Config.Pawn = {
         } },
     },
 }
+
+-- The monitor is the business' computer (cl_laptop.lua / sv_orders.lua).
+Config.Orders.Businesses[Config.Pawn.Business].Computers = { { Coords = Config.Pawn.Monitor.Coords, Heading = Config.Pawn.Monitor.Heading } }

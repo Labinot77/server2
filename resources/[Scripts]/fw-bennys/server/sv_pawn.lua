@@ -334,27 +334,12 @@ CreateThread(function()
         Orders[Row.id] = Order
     end
 
-    -- Business + bank account (like Mosley's) and the monitor, when missing.
+    -- Business + bank account (like Mosley's), when missing.
     local Biz = Config.Orders.Businesses[P.Business]
     if Biz and Biz.Account and not DB:executeSync("SELECT 1 FROM `phone_businesses` WHERE `business_name` = ?", { P.Business })[1] then
         DB:executeSync("INSERT INTO `phone_businesses` (`business_owner`, `business_name`, `business_account`, `business_employees`, `business_ranks`) VALUES ('1001', ?, ?, '[]', '[]')", { P.Business, Biz.Account })
         DB:executeSync("INSERT INTO `player_financials` (`citizenid`, `name`, `accountid`, `balance`, `type`, `authorized`, `active`, `monitored`) VALUES ('1001', ?, ?, 0, 'Bedrijfsrekening', '[]', 1, 0)", { P.Business, Biz.Account })
         print(('[fw-bennys] Created business %s'):format(P.Business))
-    end
-
-    Wait(2000) -- fw-admin created placed_props
-    local M = P.Monitor
-    local Found = false
-    for _, Row in ipairs(DB:executeSync("SELECT `coords` FROM `placed_props` WHERE `model` = ?", { M.Model }) or {}) do
-        local C = json.decode(Row.coords)
-        if C and #(vector3(C.x, C.y, C.z) - M.Coords) < 15.0 then Found = true end
-    end
-    if not Found then
-        DB:executeSync("INSERT INTO `placed_props` (`model`, `coords`, `rotation`, `frozen`, `collision`, `placed_by`) VALUES (?, ?, ?, 1, 1, 'fw-bennys')", {
-            M.Model, json.encode({ x = M.Coords.x, y = M.Coords.y, z = M.Coords.z }), json.encode({ x = M.Rotation.x, y = M.Rotation.y, z = M.Rotation.z }),
-        })
-        TriggerEvent('fw-admin:Server:Props:ReloadAll') -- fires PropsChanged -> LoadLaptops
-        print('[fw-bennys] Placed the pawn monitor')
     end
 
     RefillOffers()
