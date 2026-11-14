@@ -103,15 +103,18 @@ local function LoadSlot(Slot, Url, Resolution)
         DestroyDui(Slot.Dui)
         Slot.Dui = nil
     end
-    if Slot.Dui then
-        SetDuiUrl(Slot.Dui, Url)
-    else
+    if not Slot.Dui then
         Slot.Dui, Slot.Width, Slot.Height = CreateDui(Url, W, H), W, H
-        Slot.Tex = NewDuiTexture(Slot.Dui)
         local Deadline = GetGameTimer() + 4000
         while not IsDuiAvailable(Slot.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        Slot.Tex = NewDuiTexture(Slot.Dui) -- handle only once the DUI exists, else the texture stays black
+        Slot.ReadyAt = GetGameTimer() + 1500 -- cold first load is slower
+    elseif Slot.Url ~= Url then
+        SetDuiUrl(Slot.Dui, Url)
+        Slot.ReadyAt = GetGameTimer() + 500
     end
-    Wait(500) -- let the page boot before the first message
+    Slot.Url = Url
+    while GetGameTimer() < (Slot.ReadyAt or 0) do Wait(0) end -- page booted before the first message (no wait when prewarmed)
     Slot.Loaded = true
 end
 
@@ -142,10 +145,17 @@ function PoolApply(R, Hint)
     Slot.Busy, Slot.Key, Slot.Desktop = true, R.Key, S.Desktop
     LoadSlot(Slot, S.Url, Data.Resolution)
     Trace('  page %s: %s (DUI %s, %dx%d)', S.Url, Slot.Loaded and 'loaded' or 'NOT loaded', tostring(Slot.Dui), Slot.Width or 0, Slot.Height or 0)
-    SetTexture(Slot, true) -- page on the copy's texture first, then the swap: the copy shows it from its first frame
     local V = Data.Variants[R.Variant]
+    -- First use after a start: the copy's model + .ytd aren't streamed yet and AddReplaceTexture on an unloaded
+    -- dict does nothing (default / black screen until re-entered). Load both before replacing.
+    LoadModel(V.Hash)
+    RequestStreamedTextureDict(V.Dict, false)
+    local Deadline = GetGameTimer() + 2000
+    while not HasStreamedTextureDictLoaded(V.Dict) and GetGameTimer() < Deadline do Wait(10) end
+    SetTexture(Slot, true) -- page on the copy's texture first, then the swap: the copy shows it from its first frame
     Trace('  texture %s / %s -> fw_dui/%s', V.Dict, V.Texture, tostring(Slot.Tex))
     Slot.Entity = SwapTo(Entity, Data, V.Model)
+    SetTexture(Slot, false) SetTexture(Slot, true) -- re-apply now the copy's drawable is in (embedded textures)
     Slot.Busy = false
     if GetEntityModel(Slot.Entity) ~= V.Hash and V.Model ~= R.Type then
         Trace('  !! the prop is still %s, so it shows its own (idle) screen, not this page', NameOf(GetEntityModel(Slot.Entity)))
@@ -165,7 +175,10 @@ function PoolUnapply(Slot)
     local Data = Config.Models[Slot.Type]
     if Slot.Entity and DoesEntityExist(Slot.Entity) then SwapTo(Slot.Entity, Data, Data.Name) end
     SetTexture(Slot, false)
-    if Slot.Dui then SetDuiUrl(Slot.Dui, 'about:blank') end
+    if Slot.Dui then -- fresh copy of the page right away: clean state, booted by the next use
+        SetDuiUrl(Slot.Dui, Slot.Url)
+        Slot.ReadyAt = GetGameTimer() + 500
+    end
     Slot.Key, Slot.Entity, Slot.Loaded, Slot.Busy = nil, nil, false, false
 end
 
@@ -303,12 +316,13 @@ end)
 -- ── Idle page: props nobody uses ───────────────────────────────────────────
 -- One shared page per model on the ORIGINAL model's screen texture (Config.Models[x].Idle): every idle prop of that
 -- model shows the same thing, so one page is enough however many there are. Props in use are copies, their own
--- texture. Loaded while an idle prop of the model is within PoolRenderDistance.
+-- texture. Loaded while any prop of the model (idle or in use) is within PoolRenderDistance, so a prop going back
+-- to the original model shows the idle page at once instead of its default screen for a second.
 --   Desktop screens: an empty desktop. Others: fw-dui:Client:Idle (Name, Model) -> the resource sends its idle
 --   content with DUI:SendIdle(Name, Model, Action, Data).
 local Idles = {} -- [Type] = { Dui, Tex, Width, Height, Loaded, Busy, Screen, Texture, Dict }
 
-local function IdleScreen(Data) -- the screen that shows this model (first registered one, desktop screens first)
+local function ScreenFor(Data) -- the screen that shows this model (first registered one, desktop screens first)
     local Best
     for Name, S in pairs(Screens) do
         if S.Models[joaat(Data.Name)] and (not Best or (S.Desktop and not Best.Desktop)) then Best = S end
@@ -321,7 +335,7 @@ local function IdleOff(Type)
     if not I or not I.Loaded then return end
     RemoveReplaceTexture(I.Dict, I.Texture)
     SetDuiUrl(I.Dui, 'about:blank')
-    I.Loaded, I.Screen = false, nil
+    I.Loaded, I.Screen, I.Url = false, nil, nil
 end
 
 local function IdleOn(Data, S)
@@ -342,16 +356,18 @@ end
 CreateThread(function()
     while true do
         local C, Near = GetEntityCoords(PlayerPedId()), {}
-        for _, Obj in ipairs(GetGamePool('CObject')) do -- idle props = the original model
+        for _, Obj in ipairs(GetGamePool('CObject')) do
             local Data = Config.ModelsByHash[GetEntityModel(Obj)]
-            if Data and Data.Idle and GetEntityModel(Obj) == Data.Idle.Hash and #(GetEntityCoords(Obj) - C) <= Config.PoolRenderDistance then
+            if Data and Data.Variants and #(GetEntityCoords(Obj) - C) <= Config.PoolRenderDistance then
                 Near[Data.Name] = Data
             end
         end
         for Type, Data in pairs(Config.Models) do
-            local S = Near[Type] and IdleScreen(Data)
+            local S = Near[Type] and ScreenFor(Data)
+            if Data.Variants then Prewarm(Data, S) end
             local I = Idles[Type]
-            if S and not (I and (I.Busy or (I.Loaded and I.Screen == S.Name and I.Texture == Data.Idle.Texture and I.Dict == Data.Idle.Dict))) then
+            if not Data.Idle then -- no idle page
+            elseif S and not (I and (I.Busy or (I.Loaded and I.Screen == S.Name and I.Texture == Data.Idle.Texture and I.Dict == Data.Idle.Dict))) then
                 CreateThread(function() IdleOn(Data, S) end)
             elseif not S and I and I.Loaded and not I.Busy then
                 IdleOff(Type)
@@ -360,6 +376,31 @@ CreateThread(function()
         Wait(1000)
     end
 end)
+
+-- Prewarm: while a prop of the model is near, its copies' models + .ytds are streamed and every free slot already has
+-- the page booted, so Show only waits for the server's answer (~ping). Far away: pages unloaded.
+function Prewarm(Data, S)
+    for _, V in ipairs(Data.Variants) do
+        local Slot = GetSlot(Data.Name, V.Index)
+        if S then
+            RequestModel(V.Hash)
+            RequestStreamedTextureDict(V.Dict, false)
+            if not Slot.Key and not Slot.Busy and Slot.Url ~= S.Url then
+                CreateThread(function()
+                    if Slot.Key or Slot.Busy then return end
+                    Slot.Busy = true
+                    LoadSlot(Slot, S.Url, Data.Resolution)
+                    Slot.Loaded, Slot.Busy = false, false -- booted, not on a prop
+                end)
+            end
+        elseif not Slot.Key and not Slot.Busy and Slot.Url then
+            SetDuiUrl(Slot.Dui, 'about:blank')
+            Slot.Url = nil
+            SetModelAsNoLongerNeeded(V.Hash)
+            SetStreamedTextureDictAsNoLongerNeeded(V.Dict)
+        end
+    end
+end
 
 -- Idle content for one model's idle page (e.g. the ATM's idle screen), not mirrored: every client shows the same.
 exports('SendIdle', function(Name, Model, Action, Data)

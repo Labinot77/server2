@@ -6,11 +6,10 @@
 
 Focused = nil -- { S, Cam, Transition, X, Y, Options, Closeable }
 
--- HUD + minimap off while focused (pdwatch etc. turn the radar on themselves, so it's forced off every frame).
+-- HUD + minimap off while focused. fw-hud keeps the radar on itself (pd watch), so it's blocked there.
 -- Other HUDs: listen to fw-dui:Client:Focus (true / false) or set Config.OnFocus.
-local function SetHud(Focused, F)
-    if Focused then F.Radar = not IsRadarHidden() end
-    DisplayRadar(not Focused and F.Radar)
+local function SetHud(Focused)
+    if GetResourceState('fw-hud') == 'started' then exports['fw-hud']:SetHudBlocked(Focused and 'all' or false) end
     TriggerEvent('hud:client:ToggleHUD', not Focused)
     TriggerEvent('fw-dui:Client:Focus', Focused)
     if Config.OnFocus then Config.OnFocus(Focused) end
@@ -53,7 +52,7 @@ function StopFocus()
     FreezeEntityPosition(PlayerPedId(), false)
     SetInteractDisabled(false)
     LocalPlayer.state:set('duiFocus', false, false)
-    SetHud(false, F)
+    SetHud(false)
 end
 
 local function Focus(Name, Options)
@@ -80,7 +79,7 @@ local function Focus(Name, Options)
     SetInteractDisabled(true)
     -- Other resources skip their keys while this is set (fw-core FW.AddKeybind, fw-inventory hotbar).
     LocalPlayer.state:set('duiFocus', true, false)
-    SetHud(true, F)
+    SetHud(true)
 
     CreateThread(function()
         local Sensitivity, Last = Options.Sensitivity or Config.CursorSensitivity, nil

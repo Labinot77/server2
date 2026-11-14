@@ -265,7 +265,6 @@ local function OpenTerminal(Entity)
 
     Term.Open = true
     TaskTurnPedToFaceEntity(PlayerPedId(), Screen, 600)
-    Wait(600)
     DUI:SetApps(TERMINAL, { Apps.Terminal })
     DUI:Focus(TERMINAL, { Mouse = true })
     TerminalInit(FW.SendCallback('fw-heists:Server:FleecaAdv:Session', Current))

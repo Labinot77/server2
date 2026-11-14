@@ -73,7 +73,6 @@ local function Open(Name, Entity)
 
     Pad.Open, Pad.Busy, Pad.Code, Pad.Target = Name, false, '', Target
     TaskTurnPedToFaceEntity(PlayerPedId(), Screen, 500)
-    Wait(500)
     Push(Name)
     DUI:Focus(Name, {}) -- keyboard only, no cursor
 end

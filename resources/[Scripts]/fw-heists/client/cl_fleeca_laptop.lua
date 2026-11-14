@@ -109,7 +109,6 @@ local function Open(Entity)
     if not Shown then return Notify(Reason == 'busy' and 'Someone is already using this laptop.' or "The laptop won't boot.", 'error') end
     Session = { Entity = Entity, NetId = NetworkGetNetworkIdFromEntity(Entity) }
     TaskTurnPedToFaceEntity(PlayerPedId(), Entity, 600)
-    Wait(600)
     DUI:SetApps(LAPTOP, { App })
     DUI:Focus(LAPTOP, { Mouse = true })
 end

@@ -207,10 +207,9 @@ function LoadScreen(S, Model)
         SetDuiUrl(S.Dui, S.Url)
     else
         S.Dui, S.Width, S.Height = CreateDui(S.Url, W, H), W, H
-        S.Tex = NewDuiTexture(S.Dui)
-
         local Deadline = GetGameTimer() + 4000
         while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        S.Tex = NewDuiTexture(S.Dui)
     end
 
     Wait(500) -- let the page boot before the first message

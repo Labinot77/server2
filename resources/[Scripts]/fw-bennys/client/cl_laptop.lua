@@ -119,7 +119,6 @@ function OpenLaptop(Entity, Business)
         ShowDashboard(Business)
     end
 
-    Wait(600)
     if not Laptop.Open then return end
     exports['fw-assets']:RequestAnimationDict('anim@heists@prison_heiststation@cop_reactions')
     TaskPlayAnim(Ped, 'anim@heists@prison_heiststation@cop_reactions', 'cop_b_idle', 3.0, 3.0, -1, 49, 0, false, false, false)

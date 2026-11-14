@@ -225,8 +225,7 @@ local function StartATM(Entity)
     ATM.State = { screen = 'loading', accounts = {}, accIndex = 1, amount = '' }
     SetBusy(false)
 
-    TaskTurnPedToFaceEntity(PlayerPedId(), Entity, 800)
-    Wait(600)
+    TaskTurnPedToFaceEntity(PlayerPedId(), Entity, 800) -- turns while the screen loads
 
     local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
     if not Shown then
