@@ -3342,6 +3342,21 @@ Shared.Items["keyring"] = {
     InsertInto = {},
 }
 
+Shared.Items["carkeys"] = {
+    Name = "carkeys",
+    Label = "Autosleutels",
+    Image = "keyfob.png",
+    Description = "Sleutels van een voertuig.",
+    Weapon = false, Illegal = false,
+    Metal = true, NonStack = true,
+    IsBag = false, Weight = 0.1,
+    Price = 0,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
 Shared.Items["backpack"] = {
     Name = "backpack",
     Label = "Rugzak",
