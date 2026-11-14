@@ -1,13 +1,15 @@
 -- // Hand mode (ported from ox_inventory startPlaceMode) \\ --
 -- "Give" in the inventory context menu puts the item in your hand:
 --   [N]  aim mode -> place it exactly where you look ([Enter]/[LMB] confirm, scroll to rotate, [Shift] fine rotate)
---   [E]  throw it, or - when you're looking at a player - give it to them (interact prompt)
---   [Esc]/[Backspace] cancel (item stays in your inventory)
+--   [RMB]/[LMB] native GTA throw (like a grenade): the item rides an invisible WEAPON_BALL projectile
+--   [E]  when you're looking at a player - give it to them (interact prompt)
+--   [Esc] cancel (item stays in your inventory)
 -- The item only leaves the inventory once it's placed / has landed (server: fw-inventory:Server:PlaceItem).
 
 Config.PlaceMaxDistance = 5.0
 Config.GiveDistance = 2.5        -- max distance between you and the player you give to
 Config.GiveAimDistance = 6.0     -- how far the camera ray looks for a player
+Config.ThrowStrength = 0.5       -- multiplier on the native throw speed (1.0 = grenade strength)
 
 local GiveTarget, GiveRequest = false, false   -- ped currently aimed at / ped chosen via interact
 local GiveInteractions = {}                    -- [ped] = interaction id
@@ -71,6 +73,28 @@ local function FindGiveTarget(Ped)
     return Entity
 end
 
+local ThrowWeapon, ThrowModel = `WEAPON_BALL`, `w_am_baseball`
+
+local function SetThrowWeapon(Ped, State)
+    if State then
+        GiveWeaponToPed(Ped, ThrowWeapon, 1, false, true)
+        SetCurrentPedWeapon(Ped, ThrowWeapon, true)
+    else
+        RemoveWeaponFromPed(Ped, ThrowWeapon)
+        SetCurrentPedWeapon(Ped, `WEAPON_UNARMED`, true)
+    end
+end
+
+-- The ball the game just launched (the one in our hand is gone at this point).
+local function FindProjectile(Ped)
+    local Ends = GetGameTimer() + 1000
+    repeat
+        local Obj = GetClosestObjectOfType(GetEntityCoords(Ped), 4.0, ThrowModel, false, false, false)
+        if Obj ~= 0 then return Obj end
+        Citizen.Wait(0)
+    until GetGameTimer() > Ends
+end
+
 local function ClearGiveInteractions()
     for TargetPed, Id in pairs(GiveInteractions) do
         pcall(function() exports.interact:RemoveInteraction(Id) end)
@@ -117,7 +141,8 @@ local function RefreshGiveInteractions(Ped, Label)
     end
 end
 
-local BlockedControls = { 14, 15, 16, 17, 24, 25, 37, 44, 81, 99, 140, 141, 142, 177, 200, 241, 242, 174, 175 }
+local PlaceControls = { 24, 25 }
+local BlockedControls = { 14, 15, 16, 17, 37, 44, 81, 99, 140, 141, 142, 177, 200, 241, 242, 174, 175 }
 
 local function CanHold()
     local Ped = PlayerPedId()
@@ -167,6 +192,7 @@ function StartHoldMode(Slot, Amount)
         TaskPlayAnim(Ped, 'pickup_object', 'pickup_low', 8.0, -8.0, 900, 49, 0, false, false, false)
     end
     Citizen.Wait(700)
+    SetThrowWeapon(Ped, true)
 
     local Mode, Target, Valid = 'hand', nil, false
     local Heading = GetEntityHeading(Ped)
@@ -180,7 +206,6 @@ function StartHoldMode(Slot, Amount)
     while IsHoldingItem do
         Citizen.Wait(0)
 
-        DisablePlayerFiring(PlayerId(), true)
         for _, Control in ipairs(BlockedControls) do DisableControlAction(0, Control, true) end
         BlockWeaponWheelThisFrame()
 
@@ -189,9 +214,18 @@ function StartHoldMode(Slot, Amount)
         if not Current or Current.Item ~= Item.Item then break end
 
         if not CanHold() or not DoesEntityExist(Prop) then break end
-        if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then break end
+        if IsDisabledControlJustPressed(0, 200) then break end -- Esc only (177 also fires on RMB)
 
         if Mode == 'hand' then
+            -- Hide the ball, our item prop is what you see in the hand.
+            local Held = GetCurrentPedWeaponEntityIndex(Ped)
+            if Held ~= 0 and IsEntityVisible(Held) then SetEntityVisible(Held, false, false) end
+
+            if IsPedShooting(Ped) or GetAmmoInPedWeapon(Ped, ThrowWeapon) == 0 then
+                Result = 'throw'
+                break
+            end
+
             -- Who are we looking at? Interact (and its [E] prompt) is only on while aiming at a player,
             -- so [E] gives instead of throws and no other prompt can steal the key meanwhile.
             if GetGameTimer() > NextInteractRefresh then
@@ -216,12 +250,10 @@ function StartHoldMode(Slot, Amount)
                 GiveRequest = false
             end
 
-            if not GiveTarget and IsControlJustReleased(0, 38) then -- E
-                Result = 'throw'
-                break
-            elseif IsControlJustReleased(0, 306) then -- N
+            if IsControlJustReleased(0, 306) then -- N
                 Mode = 'place'
                 GiveTarget = false
+                SetThrowWeapon(Ped, false)
                 SetInteractDisabled(true)
                 DetachEntity(Prop, true, true)
                 SetEntityCollision(Prop, false, false)
@@ -231,6 +263,9 @@ function StartHoldMode(Slot, Amount)
                 Hint(Mode)
             end
         else
+            DisablePlayerFiring(PlayerId(), true)
+            for _, Control in ipairs(PlaceControls) do DisableControlAction(0, Control, true) end
+
             local Hit = RayFromCamera(15.0)
             if Hit then
                 Valid = #(Hit - GetEntityCoords(Ped)) <= Config.PlaceMaxDistance
@@ -259,6 +294,7 @@ function StartHoldMode(Slot, Amount)
 
     IsHoldingItem = false
     Hint(false)
+    SetThrowWeapon(Ped, false)
     ClearGiveInteractions()
     GiveTarget, GiveRequest = false, false
 
@@ -283,27 +319,28 @@ function StartHoldMode(Slot, Amount)
         DropCoords, DropHeading = Target, Heading
     elseif Result == 'throw' and DoesEntityExist(Prop) then
         Thrown = true
-        DetachEntity(Prop, true, true)
-        if LoadAnimDictTimeout('melee@thrown@streamed_core') then
-            TaskPlayAnim(Ped, 'melee@thrown@streamed_core', 'plyr_takedown_front', -8.0, 8.0, 600, 49, 0, false, false, false)
+        local Projectile = FindProjectile(Ped)
+        if Projectile then
+            SetEntityVisible(Projectile, false, false)
+            for _ = 1, 10 do -- velocity can still be zero on the release frame
+                local Vel = GetEntityVelocity(Projectile)
+                if #Vel > 0.1 then SetEntityVelocity(Projectile, Vel.x * Config.ThrowStrength, Vel.y * Config.ThrowStrength, Vel.z * Config.ThrowStrength) break end
+                Citizen.Wait(0)
+            end
+            AttachEntityToEntity(Prop, Projectile, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+        else
+            Projectile = Prop -- fallback: drop it in front of you
+            DetachEntity(Prop, true, true)
+            SetEntityCollision(Prop, true, true)
+            ActivatePhysics(Prop)
         end
-        Citizen.Wait(450)
-
-        local From = GetOffsetFromEntityInWorldCoords(Ped, 0.0, 0.6, 1.0)
-        local Fwd = GetEntityForwardVector(Ped)
-        SetEntityCoords(Prop, From.x, From.y, From.z, false, false, false, false)
-        SetEntityCollision(Prop, true, true)
-        FreezeEntityPosition(Prop, false)
-        SetEntityDynamic(Prop, true)
-        ActivatePhysics(Prop)
-        SetEntityVelocity(Prop, Fwd.x * 9.0, Fwd.y * 9.0, 4.0)
 
         local Started, Still = GetGameTimer(), 0
         while GetGameTimer() - Started < 6000 do
             Citizen.Wait(100)
-            if not DoesEntityExist(Prop) then break end
+            if not DoesEntityExist(Projectile) then break end
 
-            if GetGameTimer() - Started > 600 and #GetEntityVelocity(Prop) < 0.2 then
+            if GetGameTimer() - Started > 600 and #GetEntityVelocity(Projectile) < 0.2 then
                 Still = Still + 1
                 if Still >= 3 then break end
             else
@@ -311,13 +348,20 @@ function StartHoldMode(Slot, Amount)
             end
         end
 
-        local Landed = DoesEntityExist(Prop) and GetEntityCoords(Prop) or GetEntityCoords(Ped)
+        local Landed = DoesEntityExist(Projectile) and GetEntityCoords(Projectile) or GetEntityCoords(Ped)
         if Landed.z < GetEntityCoords(Ped).z - 6.0 then
             Landed = GetOffsetFromEntityInWorldCoords(Ped, 0.0, 1.0, -1.0)
         end
 
         DropCoords = Landed
         DropHeading = DoesEntityExist(Prop) and GetEntityHeading(Prop) or 0.0
+
+        if Projectile ~= Prop and DoesEntityExist(Projectile) then
+            DetachEntity(Prop, true, false)
+            SetEntityCoords(Prop, Landed.x, Landed.y, Landed.z, false, false, false, false)
+            SetEntityAsMissionEntity(Projectile, true, true)
+            DeleteEntity(Projectile)
+        end
     end
 
     -- Keep the thrown prop visible a moment so it doesn't blink before the synced one spawns.

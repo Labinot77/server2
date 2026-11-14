@@ -105,7 +105,14 @@ end)
 
 -- Functions
 function HasKeysToVehicle(Plate)
-    return Config.VehicleKeys[Plate] ~= nil and Config.VehicleKeys[Plate][FW.Functions.GetPlayerData().citizenid]
+    local PlayerData = FW.Functions.GetPlayerData()
+    if Config.VehicleKeys[Plate] ~= nil and Config.VehicleKeys[Plate][PlayerData.citizenid] then return true end
+
+    -- Holding the carkeys item for this plate also counts
+    for _, v in pairs(PlayerData.inventory or {}) do
+        if v and v.Item == 'carkeys' and type(v.Info) == 'table' and v.Info.Plate == Plate then return true end
+    end
+    return false
 end
 exports("HasKeysToVehicle", HasKeysToVehicle)
 

@@ -197,6 +197,22 @@ end, function(Source, Slot, Amount, Coords, Heading, Thrown)
     SyncDrop(DropId)
 end)
 
+-- // Spawn an item straight onto the ground (scripts: NPC drops, loot, ...) \\ --
+function SpawnItemDrop(Coords, Item, Amount, Info, Heading)
+    local DropId = GetDropForPlacement(Coords)
+    local DropName = 'Drop-' .. DropId
+    Config.Drops[DropId].Items = GetInventoryItems(DropName)
+
+    local Slot = FindFreeDropSlot(DropId)
+    if not Slot or not AddItemToInventory(DropName, Item, Amount or 1, Slot, Info) then return false end
+
+    Config.Drops[DropId].Props = Config.Drops[DropId].Props or {}
+    Config.Drops[DropId].Props[Slot] = { Coords = Coords, Heading = Heading or 0.0, Exact = false }
+    SyncDrop(DropId)
+    return true
+end
+exports("SpawnItemDrop", SpawnItemDrop)
+
 -- // Pick up a single ground item \\ --
 RegisterLocked("fw-inventory:Server:PickupDropItem", function(Source, DropId)
     return { 'Drop-' .. tostring(tonumber(DropId)) }
