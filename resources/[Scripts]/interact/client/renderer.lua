@@ -39,8 +39,8 @@ local function getVisibleOptions(interaction)
     local options = interaction.options
     for i = 1, #options do
         local option = options[i]
-        local ok = true
-        if option.canInteract then
+        local ok = option ~= nil
+        if ok and option.canInteract then
             ok = false
             pcall(function() ok = option.canInteract(interaction.entity, interaction.coords, option.args) end)
         end
