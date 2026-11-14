@@ -183,9 +183,9 @@ local function Hide(S)
     SetTexture(S, nil)
     local WasShown = S.Entity ~= nil
     S.Entity = nil
-    if S.Loaded then
-        SetDuiUrl(S.Dui, 'about:blank')
-        S.Loaded = false
+    if S.Dui then -- destroyed, not blanked: no idle browsers (created again on the next show)
+        DestroyDui(S.Dui)
+        S.Dui, S.Loaded = nil, false
     end
     if WasShown then TriggerEvent('fw-dui:Client:Hidden', S.Name) end
 end
@@ -347,7 +347,7 @@ local function Show(Name, Entity)
     if Model.Variants then
         if S.Active and S.Entity == Entity then return true, S.Entity end
         local Started = GetGameTimer()
-        StartPendingCamera(Name, Entity, Model) -- fly-in starts now, the page loads meanwhile
+        ScheduleCamera(Name, Entity, Model) -- fly-in timed to end when the page is loaded
         PoolRelease(S)
         S.Locked = true
         local Active, Reason = PoolClaim(S, Entity, Model)
@@ -358,13 +358,13 @@ local function Show(Name, Entity)
         end
         S.Active, S.Entity, S.Model = Active, Active.Slot.Entity, Model
         MirrorPoolStart(S)
-        Trace('shown %s in %d ms', Name, GetGameTimer() - Started) -- /duitrace: where the time went
-        ExpirePendingCamera(Name)
+        CameraLoaded(Name, Model, GetGameTimer() - Started)
         TriggerEvent('fw-dui:Client:Shown', S.Name, S.Entity, GetPropId(S.Entity))
         return true, S.Entity
     end
 
-    StartPendingCamera(Name, Entity, Model)
+    local Started = GetGameTimer()
+    ScheduleCamera(Name, Entity, Model)
     PoolRelease(S)
     S.Locked, S.Watching = true, nil
     if not LoadScreen(S, Model) then
@@ -373,7 +373,7 @@ local function Show(Name, Entity)
         return false
     end
     ApplyScreen(S, Entity, Model)
-    ExpirePendingCamera(Name)
+    CameraLoaded(Name, Model, GetGameTimer() - Started)
     return true, S.Entity
 end
 

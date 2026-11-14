@@ -98,6 +98,12 @@ local function SwapTo(Entity, Data, ToModel)
     return FindProp(Data, C) or Entity
 end
 
+-- DUIs only exist while a page is on a prop: destroyed when it comes off (no idle browsers eating memory / GPU).
+function FreeDui(Slot)
+    if Slot.Dui then DestroyDui(Slot.Dui) end
+    Slot.Dui, Slot.Tex, Slot.Url, Slot.ReadyAt, Slot.Loaded = nil, nil, nil, nil, false
+end
+
 local function LoadSlot(Slot, Url, Resolution)
     local W, H = Resolution[1], Resolution[2]
     if Slot.Dui and (Slot.Width ~= W or Slot.Height ~= H) then
@@ -115,7 +121,7 @@ local function LoadSlot(Slot, Url, Resolution)
         Slot.ReadyAt = GetGameTimer() + 500
     end
     Slot.Url = Url
-    while GetGameTimer() < (Slot.ReadyAt or 0) do Wait(0) end -- page booted before the first message (no wait when prewarmed)
+    while GetGameTimer() < (Slot.ReadyAt or 0) do Wait(0) end -- page booted before the first message
     Slot.Loaded = true
 end
 
@@ -179,11 +185,8 @@ function PoolUnapply(Slot)
     local Data = Config.Models[Slot.Type]
     if Slot.Entity and DoesEntityExist(Slot.Entity) then SwapTo(Slot.Entity, Data, Data.Name) end
     SetTexture(Slot, false)
-    if Slot.Dui then -- fresh copy of the page right away: clean state, booted by the next use
-        SetDuiUrl(Slot.Dui, Slot.Url)
-        Slot.ReadyAt = GetGameTimer() + 500
-    end
-    Slot.Key, Slot.Entity, Slot.Loaded, Slot.Busy = nil, nil, false, false
+    FreeDui(Slot)
+    Slot.Key, Slot.Entity, Slot.Busy = nil, nil, false
 end
 
 local function SlotOf(Key)
@@ -338,8 +341,8 @@ local function IdleOff(Type)
     local I = Idles[Type]
     if not I or not I.Loaded then return end
     RemoveReplaceTexture(I.Dict, I.Texture)
-    SetDuiUrl(I.Dui, 'about:blank')
-    I.Loaded, I.Screen, I.Url = false, nil, nil
+    FreeDui(I)
+    I.Screen = nil
 end
 
 local function IdleOn(Data, S)
@@ -359,16 +362,16 @@ end
 
 CreateThread(function()
     while true do
-        local C, Near = GetEntityCoords(PlayerPedId()), {}
+        local C, Near, NearIdle = GetEntityCoords(PlayerPedId()), {}, {}
         for _, Obj in ipairs(GetGamePool('CObject')) do
             local Data = Config.ModelsByHash[GetEntityModel(Obj)]
-            if Data and Data.Variants and #(GetEntityCoords(Obj) - C) <= Config.PoolRenderDistance then
-                Near[Data.Name] = Data
-            end
+            local Dist = Data and Data.Variants and #(GetEntityCoords(Obj) - C)
+            if Dist and Dist <= Config.PoolRenderDistance then Near[Data.Name] = true end
+            if Dist and Dist <= Config.IdleDistance then NearIdle[Data.Name] = true end
         end
         for Type, Data in pairs(Config.Models) do
-            local S = Near[Type] and ScreenFor(Data)
-            if Data.Variants then Prewarm(Data, S) end
+            if Data.Variants then Prewarm(Data, Near[Type]) end
+            local S = NearIdle[Type] and ScreenFor(Data)
             local I = Idles[Type]
             if not Data.Idle then -- no idle page
             elseif S and not (I and (I.Busy or (I.Loaded and I.Screen == S.Name and I.Texture == Data.Idle.Texture and I.Dict == Data.Idle.Dict))) then
@@ -381,25 +384,17 @@ CreateThread(function()
     end
 end)
 
--- Prewarm: while a prop of the model is near, its copies' models + .ytds are streamed and every free slot already has
--- the page booted, so Show only waits for the server's answer (~ping). Far away: pages unloaded.
-function Prewarm(Data, S)
+-- Prewarm: while a prop of the model is near, its copies' models + .ytds stay streamed (cheap, no DUI: pages are
+-- only created on use, cl_focus.lua times the fly-in to end when the page is loaded). Far away: released.
+local Streamed = {}
+function Prewarm(Data, Near)
+    if (Streamed[Data.Name] or false) == (Near or false) then return end
+    Streamed[Data.Name] = Near
     for _, V in ipairs(Data.Variants) do
-        local Slot = GetSlot(Data.Name, V.Index)
-        if S then
+        if Near then
             RequestModel(V.Hash)
             RequestStreamedTextureDict(V.Dict, false)
-            if not Slot.Key and not Slot.Busy and Slot.Url ~= S.Url then
-                CreateThread(function()
-                    if Slot.Key or Slot.Busy then return end
-                    Slot.Busy = true
-                    LoadSlot(Slot, S.Url, Data.Resolution)
-                    Slot.Loaded, Slot.Busy = false, false -- booted, not on a prop
-                end)
-            end
-        elseif not Slot.Key and not Slot.Busy and Slot.Url then
-            SetDuiUrl(Slot.Dui, 'about:blank')
-            Slot.Url = nil
+        else
             SetModelAsNoLongerNeeded(V.Hash)
             SetStreamedTextureDictAsNoLongerNeeded(V.Dict)
         end

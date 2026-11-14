@@ -25,6 +25,11 @@ Config.MirrorDistance = 20.0
 Config.PoolRadius = 80.0
 Config.PoolRenderDistance = 35.0 -- in-use props within this range get their copy + page on your client
 Config.PoolLeaveDistance = 15.0  -- the user walked this far from the prop (for 10s): the variant is freed
+Config.IdleDistance = 20.0       -- idle pages (Idle = true) only render while a prop of the model is this close
+
+-- DUIs are created on use and destroyed after (no idle browsers). The fly-in is timed to end when the page is
+-- loaded, using how long that model took last time; this is the guess for the first open (ms).
+Config.LoadEstimate = 1500
 
 --[[
     How the page gets onto each model's screen:
@@ -53,15 +58,15 @@ Config.Models = {
     },
     ['v_res_lest_monitor'] = {
         Variants = { 'v_res_lest_monitor_dui_01', 'v_res_lest_monitor_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
+        Camera = { Offset = vector3(0.016, -0.750, 0.419), LookAt = vector3(0.009, 0.000, 0.355), Fov = 45.0, Transition = 600 },
     },
     ['prop_monitor_01a'] = {
         Variants = { 'prop_monitor_01a_dui_01', 'prop_monitor_01a_dui_02' }, Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
-    },
+        Camera = { Offset = vector3(0.007, -0.701, 0.400), LookAt = vector3(-0.001, 0.000, 0.301), Fov = 46.0, Transition = 600 },
+        },
     ['prop_monitor_01b'] = {
         Variants = { 'prop_monitor_01b_dui_01', 'prop_monitor_01b_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
+        Camera = { Offset = vector3(0.000, -0.627, 0.405), LookAt = vector3(-0.003, 0.000, 0.292), Fov = 56.0, Transition = 600 },
     },
     ['ch_prop_casino_keypad_02'] = {
         Variants = { 'ch_prop_casino_keypad_02_dui_01', 'ch_prop_casino_keypad_02_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',Resolution = { 512, 256 },
