@@ -47,6 +47,7 @@ $(document).ready(function(){
 
                 BuildInventory('player', 'Player', MyInventory, MaxPlayerSlots);
                 BuildInventory('other', OtherInvData.Type, OtherInvData.Items, OtherInvData.Slots);
+                BuildBagInventory(false);
 
                 CloseAttachmentsPanel();
 
@@ -59,7 +60,7 @@ $(document).ready(function(){
                 break;
             case "RefreshOther": {
                 if (!InventoryOpen || !OtherInvData) break;
-                const Container = GroundInvData && GroundInvData.Name == event.data.Name ? 'ground' : (OtherInvData.Name == event.data.Name ? 'other' : false);
+                const Container = GetContainerByName(event.data.Name);
                 if (!Container) break;
                 // An item you're dragging from this inventory may be gone now: drop the drag.
                 if (DragData.IsDragging && DragData.FromContainer == Container) ResetDrag();
@@ -68,6 +69,9 @@ $(document).ready(function(){
                 UpdateInventoryWeights(Container);
                 break;
             }
+            case "SetExtra":
+                if (InventoryOpen) BuildBagInventory(event.data.Data);
+                break;
             case "SwapOther":
                 if (!InventoryOpen) break;
                 ResetDrag();

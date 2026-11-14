@@ -156,10 +156,17 @@ const ValidatePlayerSlot = (Items, Slot, ItemName, Amount) => {
     return [true];
 };
 
-// 'player' | 'other' | 'ground'  ->  data / element / rules
+// 'player' | 'other' | 'ground' | 'bag'  ->  data / element / rules
 // 'ground' is the ground under your feet, shown above a stash / trunk (OtherInvData.Ground).
-let GroundInvData = false;
-const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : OtherInvData;
+// 'bag' is a bag used while the inventory is open, shown below the other inventory.
+let GroundInvData = false, BagInvData = false;
+const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : Container == 'bag' ? (BagInvData || {}) : OtherInvData;
+const GetContainerByName = (InvName) => {
+    if (InvName == 'player') return 'player';
+    if (GroundInvData && InvName == GroundInvData.Name) return 'ground';
+    if (BagInvData && InvName == BagInvData.Name) return 'bag';
+    return OtherInvData && InvName == OtherInvData.Name ? 'other' : false;
+};
 const GetContainerOf = (Element) => $(Element).closest('.inventory-box').attr('inventory-name') || 'other';
 const GetContainerInvName = (Container) => Container == 'player' ? 'player' : GetContainerData(Container).Name;
 const GetContainerItems = (Container) => Container == 'player' ? MyInventory : (GetContainerData(Container).Items || {});
@@ -429,6 +436,20 @@ const BuildGroundInventory = () => {
     UpdateInventoryWeights('ground');
 };
 
+const BuildBagInventory = (Data) => {
+    BagInvData = Data || false;
+    const Box = GetContainerBox('bag');
+    const Grid = Box.find('.inventory-box-slots').empty();
+    if (!BagInvData) return Box.hide();
+
+    Box.show();
+    for (let i = 1; i <= BagInvData.Slots; i++) {
+        Grid.append(SlotElementHtml(i));
+        RenderSlot('bag', i);
+    }
+    UpdateInventoryWeights('bag');
+};
+
 const BuildInventory = (InvContainer, InvType, Items, MaxSlots) => {
     if (InvContainer == 'player') return BuildPlayerInventory();
     BuildGroundInventory();
@@ -552,7 +573,7 @@ const GetItemTypeLabel = (Container, Slot, ItemData) => {
 };
 
 const GenerateItemInfo = (InvName, SlotId) => {
-    const Container = InvName == 'player' ? 'player' : (GroundInvData && InvName == GroundInvData.Name ? 'ground' : 'other');
+    const Container = GetContainerByName(InvName) || 'other';
     const Item = GetContainerItems(Container)[SlotId];
     if (!Item || !ItemsList[Item.Item]) return false;
 

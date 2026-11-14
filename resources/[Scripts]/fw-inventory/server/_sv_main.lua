@@ -272,6 +272,14 @@ FW.RegisterServer("fw-inventory:Server:OpenInventory", function(Source, InvType,
     TriggerClientEvent("fw-inventory:Client:LoadInventory", Source, OtherData)
 end)
 
+-- A bag opened while the inventory is open: shown below the other inventory, everything else stays open.
+FW.RegisterServer("fw-inventory:Server:OpenExtraInventory", function(Source, InvType, InvName, MaxSlots, MaxWeight)
+    if not FW.Functions.GetPlayer(Source) or not IsSharedInventory(InvName) then return end
+    MaxSlots, MaxWeight = tonumber(MaxSlots) or 40, tonumber(MaxWeight) or 250.0
+    AddViewer(InvName, Source, MaxWeight)
+    TriggerClientEvent("fw-inventory:Client:LoadExtraInventory", Source, { Type = InvType, Name = InvName, Slots = MaxSlots, Weight = MaxWeight, Items = GetInventoryItems(InvName) })
+end)
+
 RegisterLocked("fw-inventory:Server:DoItemMovement", function(Source, Type, Data)
     local Ply = PlayerInvName(Source)
     return { Data.FromInv == 'player' and Ply or Data.FromInv, Data.ToInv == 'player' and Ply or Data.ToInv }

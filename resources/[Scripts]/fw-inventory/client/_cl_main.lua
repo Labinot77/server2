@@ -314,6 +314,8 @@ AddEventHandler("fw-inventory:Client:LoadInventory", function(OtherData)
         SwitchPending = false
         CurrentInventory = OtherData
         SendNUIMessage({ Action = "SwapOther", OtherData = OtherData })
+        -- Reopening released the bag below: view it again (the panel itself stays).
+        if ExtraInventory then FW.TriggerServer('fw-inventory:Server:OpenExtraInventory', ExtraInventory.Type, ExtraInventory.Name, ExtraInventory.Slots, ExtraInventory.Weight) end
         return WatchOpenInventory(OtherData)
     end
     SwitchPending = false
@@ -405,6 +407,8 @@ AddEventHandler("fw-inventory:Client:RefreshOther", function(InvName, Items)
         CurrentInventory.Ground.Items = Items
     elseif CurrentInventory.Name == InvName then
         CurrentInventory.Items = Items
+    elseif ExtraInventory and ExtraInventory.Name == InvName then
+        ExtraInventory.Items = Items
     else
         return
     end
@@ -549,13 +553,18 @@ function SwitchOtherInventory()
     Citizen.SetTimeout(2000, function() SwitchPending = false end) -- server refused: try again later
 end
 
--- Opens InvName in the other panel; an open inventory swaps it in place (e.g. a bag used from the inventory).
+-- Opens InvName (e.g. a bag). While the inventory is open it's added below the other inventory, the rest stays as is.
+ExtraInventory = false
 exports('OpenOtherInventory', function(InvType, InvName, MaxSlots, MaxWeight)
-    if CurrentInventory then
-        SwitchPending = true
-        Citizen.SetTimeout(2000, function() SwitchPending = false end)
-    end
-    FW.TriggerServer('fw-inventory:Server:OpenInventory', InvType, InvName, MaxSlots, MaxWeight)
+    local Event = CurrentInventory and 'fw-inventory:Server:OpenExtraInventory' or 'fw-inventory:Server:OpenInventory'
+    FW.TriggerServer(Event, InvType, InvName, MaxSlots, MaxWeight)
+end)
+
+RegisterNetEvent("fw-inventory:Client:LoadExtraInventory")
+AddEventHandler("fw-inventory:Client:LoadExtraInventory", function(Data)
+    if not CurrentInventory then return end
+    ExtraInventory = Data
+    SendNUIMessage({ Action = "SetExtra", Data = Data })
 end)
 
 function WatchOpenInventory(OtherData)
@@ -568,9 +577,7 @@ function WatchOpenInventory(OtherData)
             local Ped = PlayerPedId()
             local Seated, Moved = IsSeatedInVehicle(Ped), #(GetEntityCoords(Ped) - OpenCoords) > Config.InventoryMoveDistance
 
-            if OtherData.Type == 'Bag' then
-                -- carried with you: stays open while walking
-            elseif OtherData.Type == 'Glovebox' then
+            if OtherData.Type == 'Glovebox' then
                 if not Seated then SwitchOtherInventory() end
             elseif OtherData.Type == 'Drop' then
                 if Seated then
@@ -606,7 +613,7 @@ function CloseInventory()
     RestoreGameHud()
     SendNUIMessage({ Action = "CloseInventory" })
     
-    CurrentInventory = false
+    CurrentInventory, ExtraInventory = false, false
 
     HotbarCooldown = true
     Citizen.SetTimeout(100, function()

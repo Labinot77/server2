@@ -1177,3 +1177,5 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 .ox-right.has-ground .other-grid { max-height: calc(4 * var(--size) + 3 * var(--gap)); }
 .inv-enter .ground-layout { animation: inv-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) 0.11s both; }
 .quick-stash .ox-right { display: none !important; }
+.bag-layout { display: none; width: var(--right-w); }
+.bag-grid { max-height: calc(2 * var(--size) + var(--gap)); overflow-y: auto; overflow-x: hidden; }
