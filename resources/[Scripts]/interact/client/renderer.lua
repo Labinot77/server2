@@ -80,7 +80,7 @@ local function CreateInteractions()
         local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
         local onScreen, sx, sy = GetScreenCoordFromWorldCoord(coords.x, coords.y, coords.z)
 
-        if onScreen then
+        if onScreen and not interaction.blocked then
             local amount = getVisibleOptions(interaction)
 
             if amount > 0 then
@@ -191,10 +191,36 @@ CreateThread(function ()
     end
 end)
 
+-- Line of sight: a point is blocked when the ray from the camera hits the world / an object (closed door) before it.
+-- The interaction's own entity is ignored, so points on or inside their prop still work.
+local los = settings.LineOfSight
+local StartExpensiveSynchronousShapeTestLosProbe = StartExpensiveSynchronousShapeTestLosProbe
+local GetFinalRenderedCamCoord = GetFinalRenderedCamCoord
+
+local function updateLineOfSight()
+    if not los.enabled then return end
+    local cam = GetFinalRenderedCamCoord()
+    for i = 1, #nearby do
+        local interaction = nearby[i]
+        local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
+        local ray = StartExpensiveSynchronousShapeTestLosProbe(cam.x, cam.y, cam.z, coords.x, coords.y, coords.z, 1 | 16, interaction.entity or cache.ped, 4)
+        local _, hit, hitCoords = GetShapeTestResult(ray)
+        interaction.blocked = hit == 1 and #(hitCoords - coords) > los.tolerance
+    end
+end
+
+CreateThread(function()
+    while true do
+        if next(nearby) then updateLineOfSight() end
+        Wait(los.interval)
+    end
+end)
+
 -- Slow checker thread
 CreateThread(function()
     while true do
         nearby = interactions.getNearbyInteractions()
+        updateLineOfSight() -- fresh entries are checked before they're drawn
         Wait(500)
     end
 end)

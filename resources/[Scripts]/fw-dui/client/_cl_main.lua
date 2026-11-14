@@ -192,7 +192,7 @@ end
 
 -- Loads the page at the model's resolution (the DUI is reused while the size stays the same).
 function LoadScreen(S, Model)
-    while S.Loading do Wait(50) end
+    while S.Loading do Wait(0) end
     local W, H = Model.Resolution[1], Model.Resolution[2]
 
     if S.Dui and (S.Width ~= W or S.Height ~= H) then
@@ -208,7 +208,7 @@ function LoadScreen(S, Model)
     else
         S.Dui, S.Width, S.Height = CreateDui(S.Url, W, H), W, H
         local Deadline = GetGameTimer() + 4000
-        while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(0) end
         S.Tex = NewDuiTexture(S.Dui)
     end
 
@@ -346,6 +346,7 @@ local function Show(Name, Entity)
 
     if Model.Variants then
         if S.Active and S.Entity == Entity then return true, S.Entity end
+        local Started = GetGameTimer()
         PoolRelease(S)
         S.Locked = true
         local Active, Reason = PoolClaim(S, Entity, Model)
@@ -355,6 +356,7 @@ local function Show(Name, Entity)
         end
         S.Active, S.Entity, S.Model = Active, Active.Slot.Entity, Model
         MirrorPoolStart(S)
+        Trace('shown %s in %d ms', Name, GetGameTimer() - Started) -- /duitrace: where the time went
         TriggerEvent('fw-dui:Client:Shown', S.Name, S.Entity, GetPropId(S.Entity))
         return true, S.Entity
     end

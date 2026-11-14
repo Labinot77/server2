@@ -87,6 +87,13 @@ local Settings = {
     onHandCuff = true, -- Disable interactions while handcuffed
   },
 
+  -- Hide points behind walls / closed doors (ray from the camera to the point).
+  LineOfSight = {
+    enabled = true,
+    tolerance = 0.5, -- a hit this close to the point still counts as visible (points sitting on/in a prop)
+    interval = 100,  -- ms between checks
+  },
+
   -- Nearby object distance check.
   nearbyObjectDistance = 20.0, -- Keep it at 15.0 at minimum.
   nearbyVehicleDistance = 4.0,

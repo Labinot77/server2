@@ -106,7 +106,7 @@ local function LoadSlot(Slot, Url, Resolution)
     if not Slot.Dui then
         Slot.Dui, Slot.Width, Slot.Height = CreateDui(Url, W, H), W, H
         local Deadline = GetGameTimer() + 4000
-        while not IsDuiAvailable(Slot.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        while not IsDuiAvailable(Slot.Dui) and GetGameTimer() < Deadline do Wait(0) end
         Slot.Tex = NewDuiTexture(Slot.Dui) -- handle only once the DUI exists, else the texture stays black
         Slot.ReadyAt = GetGameTimer() + 1500 -- cold first load is slower
     elseif Slot.Url ~= Url then
@@ -133,7 +133,7 @@ end
 -- Puts record R's copy + page on the prop. Hint = the entity the user clicked (owner). Yields.
 function PoolApply(R, Hint)
     local Slot, S = GetSlot(R.Type, R.Variant), Screens[R.Screen]
-    while Slot.Busy do Wait(50) end
+    while Slot.Busy do Wait(0) end
     if Slot.Key == R.Key or not S or not Pool[R.Key] then return Slot end
     if Slot.Key then PoolUnapply(Slot) end
 
@@ -168,7 +168,7 @@ end
 
 -- Back to the original model, page unloaded. Yields.
 function PoolUnapply(Slot)
-    while Slot.Busy do Wait(50) end
+    while Slot.Busy do Wait(0) end
     if not Slot.Key then return end
     Slot.Busy = true
     Trace('unapply %s (variant %d)', Slot.Key, Slot.Variant)
