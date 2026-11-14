@@ -56,10 +56,12 @@ RegisterNetEvent("fw-vehicles:Server:KeysDropped")
 AddEventHandler("fw-vehicles:Server:KeysDropped", function(VehNetId, Coords, Heading)
     local Source = source
     local Vehicle = NetworkGetEntityFromNetworkId(VehNetId or 0)
-    if Vehicle == 0 or JackedVehicles[VehNetId] or type(Coords) ~= 'vector3' then return end
-    if #(GetEntityCoords(GetPlayerPed(Source)) - Coords) > 20.0 then return end
+    if Vehicle == 0 or JackedVehicles[VehNetId] or type(Coords) ~= 'vector3' then return print("^3[carjack] key drop rejected: bad vehicle/coords^7") end
+    if #(GetEntityCoords(GetPlayerPed(Source)) - Coords) > 20.0 then return print("^3[carjack] key drop rejected: too far from player^7") end
 
     JackedVehicles[VehNetId] = true
     local Plate = GetVehicleNumberPlateText(Vehicle)
-    exports['fw-inventory']:SpawnItemDrop(Coords, 'carkeys', 1, { Plate = Plate, _Description = "Kenteken: " .. Plate }, Heading)
+    if not exports['fw-inventory']:SpawnItemDrop(Coords, 'carkeys', 1, { Plate = Plate, _Description = "Kenteken: " .. Plate }, Heading) then
+        print("^3[carjack] key drop failed: fw-inventory could not create the drop^7")
+    end
 end)

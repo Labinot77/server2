@@ -63,13 +63,22 @@ local function ThrowKeys(Driver, Vehicle)
     local Dir = GetEntityForwardVector(Driver)
     SetEntityVelocity(Prop, Dir.x * 4.0, Dir.y * 4.0, 2.5)
 
-    Citizen.Wait(600)
-    WaitFor(function() return #GetEntityVelocity(Prop) < 0.05 end, 3000)
+    -- The tiny key model can fall through the map, so don't trust where it ends up:
+    -- take its x/y (clamped to 4m from the driver) and snap it to the ground.
+    Citizen.Wait(700)
+    local From, Pos = GetEntityCoords(Driver), GetEntityCoords(Prop)
+    local Flat = vector3(Pos.x - From.x, Pos.y - From.y, 0.0)
+    if #Flat > 4.0 or #Flat < 0.5 then Flat = vector3(Dir.x, Dir.y, 0.0) * 1.5 end
+    local Landing = From + Flat
+    local Found, GroundZ = GetGroundZFor_3dCoord(Landing.x, Landing.y, From.z + 1.0, false)
+    Landing = vector3(Landing.x, Landing.y, Found and GroundZ or From.z - 0.95)
+
+    FreezeEntityPosition(Prop, true)
+    SetEntityCoords(Prop, Landing.x, Landing.y, Landing.z, false, false, false, false)
 
     -- The real ground item spawns here; drop the local prop once it has synced
-    TriggerServerEvent("fw-vehicles:Server:KeysDropped", VehToNet(Vehicle), GetEntityCoords(Prop), GetEntityHeading(Prop))
-    FreezeEntityPosition(Prop, true)
-    Citizen.SetTimeout(1200, function() if DoesEntityExist(Prop) then DeleteEntity(Prop) end end)
+    TriggerServerEvent("fw-vehicles:Server:KeysDropped", VehToNet(Vehicle), Landing, GetEntityHeading(Prop))
+    Citizen.SetTimeout(2500, function() if DoesEntityExist(Prop) then DeleteEntity(Prop) end end)
 
     -- Keep hands up, then run
     TaskPlayAnim(Driver, "missminuteman_1ig_2", "handsup_base", 8.0, -8.0, 4000, 49, 0, false, false, false)
