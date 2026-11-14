@@ -1,15 +1,15 @@
 -- Advanced Fleeca (config/sh_fleeca_advanced.lua, server/sv_fleeca_advanced.lua)
---   1. Power box: [E] Access (cutters) -> [E] Hack the network (laptop on the ground, GridBreaker app in a DUI)
+--   1. Power box: [E] Access (cutters) -> hack the branch WiFi with Bugger (cl_fleeca_laptop.lua): network down +
+--      the staff door keypad code
 --   2. Lobby terminal (monitor DUI): Fleeca app, password from one of the sticky notes
 --   3. Dashboard: generate a door code (number + instructions) -> a 2nd player types the result on the door's security panel
 --   After that the normal Fleeca flow (cl_fleeca.lua) continues: vault laptop, gate, loot.
 local Cfg = Config.FleecaAdvanced
 local DUI = exports['fw-dui']
-local LAPTOP, TERMINAL = 'fleeca_laptop', 'fleeca_terminal'
+local TERMINAL = 'fleeca_terminal'
 local Url = function(Page) return ('nui://%s/html/fleeca/%s.html'):format(GetCurrentResourceName(), Page) end
 
 local Apps = {
-    Laptop = { id = 'gridbreaker', label = 'GridBreaker', icon = 'fas fa-bolt', color = 'linear-gradient(160deg, #ffd43b, #f08c00)', url = Url('gridbreaker') },
     Terminal = { id = 'fleeca', label = 'Fleeca Branch Terminal', icon = 'fas fa-university', color = 'linear-gradient(160deg, #40c057, #2b8a3e)', url = Url('terminal'), width = 70, height = 72 },
 }
 
@@ -17,13 +17,15 @@ local Current = nil                       -- advanced bank the player is in
 local Notes = {}                          -- spawned sticky notes { Entity, Text }
 local NotesData = {}                      -- [FleecaId] = { { Coords, Text } }
 local Steps = {}                          -- [FleecaId] = 'access' | 'hack' | 'done' (cached for canInteract)
-local Busy, Hack = false, nil
+local Busy = false
 local Interact = exports['interact']
 local Term = { Open = false, Entity = nil } -- Entity = the one monitor that is the terminal (closest to Advanced.Terminal)
 
 local function FindTerminal()
     local A, Best, BestDist = Config.Fleeca[Current].Advanced.Terminal, nil, 3.0
-    for _, Model in ipairs({ Cfg.Models.Monitor, exports['fw-dui']:GetVariant(Cfg.Models.Monitor) }) do
+    local Models = exports['fw-dui']:GetVariants(Cfg.Models.Monitor) -- the monitor in use is one of its screen copies
+    table.insert(Models, 1, Cfg.Models.Monitor)
+    for _, Model in ipairs(Models) do
         local Entity = GetClosestObjectOfType(A.x, A.y, A.z, BestDist, joaat(Model), false, false, false)
         local Dist = Entity ~= 0 and #(A - GetEntityCoords(Entity))
         if Dist and Dist <= BestDist then Best, BestDist = Entity, Dist end
@@ -56,10 +58,10 @@ end
 -- ── Screens ────────────────────────────────────────────────────────────────
 -- Only registered inside an advanced bank, so other laptops / monitors in the city are left alone.
 
+-- Both models have screen copies (fw-dui location pool): a prop only shows a page while it's in use.
 local function SetScreens(Active)
     if GetResourceState('fw-dui') ~= 'started' then return end
-    DUI:RegisterScreen(LAPTOP, { Models = Active and { Cfg.Models.Laptop } or {}, Distance = 3.0, Mirror = true, Desktop = true })
-    DUI:RegisterScreen(TERMINAL, { Models = Active and { Cfg.Models.Monitor } or {}, Anchor = Active and Adv().Terminal or nil, Distance = 5.0, Mirror = true, Desktop = true })
+    DUI:RegisterScreen(TERMINAL, { Models = Active and { Cfg.Models.Monitor } or {}, Mirror = true, Desktop = true })
 end
 
 local function SendT(Action, Data, Mirror) DUI:SendApp(TERMINAL, Apps.Terminal.id, Action, Data, Mirror) end
@@ -71,13 +73,11 @@ local function TerminalInit(Session)
         branch = Adv().Name, user = Session and Session.User, doors = Session and Session.Doors, labels = Labels,
         bypassed = DataManager.Get(Prefix('powerbox'), 0) ~= 0, lifetime = Cfg.CodeLifetime,
         clock = { GetClockHours(), GetClockMinutes(), GetClockSeconds() }, seed = Current * 7919 + GetClockHours(),
-    }, false)
+    }) -- mirrored: players around the terminal see the same page
 end
 
 AddEventHandler('fw-dui:Client:Shown', function(Name, Entity)
-    if Name == LAPTOP and not Hack then
-        DUI:SetApps(LAPTOP, { Apps.Laptop }, Apps.Laptop.id)
-    elseif Name == TERMINAL and not Term.Open then
+    if Name == TERMINAL and not Term.Open then
         if not Current then return DUI:SetApps(TERMINAL, {}) end
         DUI:SetApps(TERMINAL, { Apps.Terminal }) -- plain desktop, the app is opened from the dock
         TerminalInit(nil)
@@ -169,7 +169,7 @@ CreateThread(function()
             if Current then Leave() end
             if Id then Enter(Id) end
         end
-        Term.Entity = Current and FindTerminal() or nil -- changes when fw-dui swaps it to the _dui copy
+        Term.Entity = Current and FindTerminal() or nil -- changes when fw-dui swaps it to a screen copy
         if Current then FleecaAdvRefresh(Current) end
         -- The terminal can only be used once the staff door keypad was done (sets door-lockpicked)
         local Vault = Current and FleecaVault[Current]
@@ -221,69 +221,7 @@ local function Access(Id)
     if not FW.SendCallback('fw-heists:Server:FleecaAdv:Access', Id) then return Notify("It won't budge..", 'error') end
     TriggerServerEvent('fw-inventory:Server:DecayItem', Cfg.Items.Cutters, nil, 20.0)
     PlaySoundFromCoord(-1, 'Drill_Pin_Break', Box.x, Box.y, Box.z, 'DLC_HEIST_FLEECA_SOUNDSET', false, 0, false)
-    Notify('The box is open.', 'success')
-end
-
--- Laptop on the ground in front of the player, GridBreaker app focused. Returns true when the network is down.
-local function RunLaptop()
-    local Ped = PlayerPedId()
-    exports['fw-assets']:RequestAnimationDict('amb@medic@standing@kneel@base')
-    TaskPlayAnim(Ped, 'amb@medic@standing@kneel@base', 'base', 3.0, 3.0, -1, 1, 0, false, false, false)
-    Wait(600)
-
-    local C = GetOffsetFromEntityInWorldCoords(Ped, 0.0, 0.6, 0.0)
-    local Laptop = Spawn(Cfg.Models.Laptop, vector4(C.x, C.y, C.z, GetEntityHeading(Ped)), true)
-    PlaceObjectOnGroundProperly(Laptop)
-    Wait(400)
-
-    local Shown = DUI:Show(LAPTOP, Laptop)
-    local Success = false
-    if Shown then
-        Hack = promise.new()
-        DUI:SetApps(LAPTOP, { Apps.Laptop }, Apps.Laptop.id)
-        DUI:Focus(LAPTOP, { Mouse = true })
-        Wait(300)
-        DUI:SendApp(LAPTOP, Apps.Laptop.id, 'start', { seed = math.random(1, 2147483646), rounds = Cfg.Hack.Rounds, time = Cfg.Hack.Time, cols = Cfg.Hack.Cols, rows = Cfg.Hack.Rows })
-        Success = Citizen.Await(Hack)
-        Hack = nil
-        DUI:StopFocus()
-        DUI:Release(LAPTOP)
-    end
-
-    Delete(Laptop)
-    StopAnimTask(Ped, 'amb@medic@standing@kneel@base', 'base', 1.0)
-    return Success
-end
-
-RegisterNUICallback('fleecaLaptop', function(Data, Cb)
-    Cb('ok')
-    local P = Hack
-    if P and Data.Action == 'result' then
-        Hack = false -- resolved: ignore a later Closed / result
-        P:resolve(Data.Success == true)
-    end
-end)
-
-local function HackNetwork(Id)
-    if not exports['fw-inventory']:HasEnoughOfItem(Cfg.Items.Laptop, 1) then return Notify('You need a laptop..', 'error') end
-    if not CanRob() then return end
-
-    local Ok = FW.SendCallback('fw-heists:Server:FleecaAdv:StartHack', Id)
-    if Ok == 'busy' then return Notify('Someone is already hacking!', 'error') end
-    if not Ok then return Notify("You can't do this right now..", 'error') end
-
-    Fingerprint()
-    TriggerServerEvent('fw-ui:Server:gain:stress', math.random(6, 12))
-    local Success = RunLaptop()
-    TriggerServerEvent('fw-inventory:Server:DecayItem', Cfg.Items.Laptop, nil, Success and 20.0 or 10.0)
-
-    if not FW.SendCallback('fw-heists:Server:FleecaAdv:FinishHack', Id, Success) then return Notify('Hack failed..', 'error') end
-
-    Notify('Branch security is down.', 'success')
-    TriggerServerEvent('fw-mdw:Server:SendAlert:FleecaBank', GetEntityCoords(PlayerPedId()))
-    StartCoordsChecker(Config.Fleeca[Id].Center, 100.0, function()
-        FW.TriggerServer('fw-heists:Server:Fleeca:LeftArea', Id)
-    end)
+    Notify('The box is open, the branch network is exposed. Hack it from a laptop nearby.', 'success')
 end
 
 -- Runs an interact action off the render loop, one at a time.
@@ -298,7 +236,8 @@ local function Run(Fn, ...)
     end)
 end
 
--- Power box points (one per advanced bank). Interact draws [E] ACCESS / [E] HACK THE NETWORK.
+-- Power box points (one per advanced bank): [E] ACCESS. Once it's cut open the branch WiFi can be hacked with Bugger
+-- (the green heist laptop, cl_fleeca_laptop.lua).
 CreateThread(function()
     for Id, Bank in pairs(Config.Fleeca) do
         if Bank.Advanced then
@@ -310,8 +249,6 @@ CreateThread(function()
                 options = {
                     { name = 'access', label = 'Access', canInteract = function() return not Busy and Steps[Id] == 'access' end,
                         action = function() Run(Access, Id) end },
-                    { name = 'hack', label = 'Hack network', canInteract = function() return not Busy and Steps[Id] == 'hack' end,
-                        action = function() Run(HackNetwork, Id) end },
                 },
             })
         end
@@ -335,11 +272,7 @@ local function OpenTerminal(Entity)
 end
 
 AddEventHandler('fw-dui:Client:Closed', function(Name)
-    if Name == LAPTOP and Hack then
-        local P = Hack
-        Hack = false
-        P:resolve(false)
-    elseif Name == TERMINAL then
+    if Name == TERMINAL then
         Term.Open = false
         DUI:Release(TERMINAL)
     end
@@ -382,9 +315,8 @@ end)
 
 -- The bank's monitors (map props): base model and its _dui copy, only inside an advanced bank.
 CreateThread(function()
-    local Variant = DUI:GetVariant(Cfg.Models.Monitor)
     local Models = { { model = Cfg.Models.Monitor, offset = vec3(0.0, 0.0, 0.25) } }
-    if Variant then Models[2] = { model = Variant, offset = vec3(0.0, 0.0, 0.25) } end
+    for _, Variant in ipairs(DUI:GetVariants(Cfg.Models.Monitor)) do Models[#Models + 1] = { model = Variant, offset = vec3(0.0, 0.0, 0.25) } end
     Interact:AddModelInteraction({
         modelData = Models, distance = 4.0, interactDst = 1.5,
         options = { { name = 'fleeca_terminal', label = 'Use terminal',

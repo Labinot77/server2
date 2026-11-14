@@ -1,4 +1,7 @@
 local RobbingTrolley = false
+-- Grab speed: every Space press adds Step (counted once per Cooldown ms), up to Max x normal, and it
+-- slowly drops back to normal (Decay per frame) when you stop pressing.
+local Speed = { Step = 0.1, Max = 1.6, Cooldown = 180, Decay = 0.0025 }
 local Trollies = {}
 local TrolleyTypes = {
     Cash = GetHashKey('ch_prop_ch_cash_trolly_01c'),
@@ -136,15 +139,23 @@ AddEventHandler("fw-heists:Client:Trolley:Grab", function(Data, Entity)
     NetworkStartSynchronisedScene(GrabAnimationTwo)
 
     -- Space grabs faster. The rate goes to everyone (server relay), so the synced scene stays the same speed for all.
-    local BASE, Rate, Sent, Deadline = 1.3, 1.0, 1.0, GetGameTimer() + 60000
-    exports['fw-ui']:ShowInteraction('[SPACE] Grab faster')
+    -- X stops early: you keep what you grabbed so far (Grabbed = scene phase).
+    local BASE, Rate, Sent, Deadline, LastPress, Grabbed = 1.3, 1.0, 1.0, GetGameTimer() + 60000, 0, 1.0
+    SendNUIMessage({ action = 'hints', hints = { { key = 'space', label = 'Grab faster' }, { key = 'X', label = 'Stop grabbing' } } })
     while GetGameTimer() < Deadline do
         Citizen.Wait(0)
         DisableControlAction(0, 22, true)
-        if IsDisabledControlJustPressed(0, 22) then Rate = math.min(Rate + 0.35, 2.5) end
-        Rate = math.max(1.0, Rate - 0.004) -- back to normal speed when you stop pressing
+        if IsDisabledControlJustPressed(0, 22) and GetGameTimer() - LastPress >= Speed.Cooldown then
+            LastPress = GetGameTimer()
+            Rate = math.min(Rate + Speed.Step, Speed.Max)
+        end
+        Rate = math.max(1.0, Rate - Speed.Decay)
 
         local Scene = NetworkGetLocalSceneFromNetworkId(GrabAnimationTwo)
+        if IsDisabledControlJustPressed(0, 73) then
+            Grabbed = Scene ~= -1 and GetSynchronizedScenePhase(Scene) or math.min(1.0, (GetGameTimer() - StartedGrabbing) / 37000)
+            break
+        end
         if Scene ~= -1 then
             SetSynchronizedSceneRate(Scene, BASE * Rate)
             if math.abs(Rate - Sent) >= 0.15 or (Rate == 1.0 and Sent ~= 1.0) then
@@ -156,7 +167,7 @@ AddEventHandler("fw-heists:Client:Trolley:Grab", function(Data, Entity)
             break -- scene not running locally: old fixed duration
         end
     end
-    exports['fw-ui']:HideInteraction()
+    SendNUIMessage({ action = 'hints' })
 
     local GrabAnimationThree = NetworkCreateSynchronisedScene(GetEntityCoords(Entity), GetEntityRotation(Entity), 2, false, false, 1065353216, 0, 1.3)
     NetworkAddPedToSynchronisedScene(PlayerPedId(), GrabAnimationThree, "anim@heists@ornate_bank@grab_cash", "exit", 1.5, -4.0, 1, 16, 1148846080, 0)
@@ -169,7 +180,7 @@ AddEventHandler("fw-heists:Client:Trolley:Grab", function(Data, Entity)
     end
     
     DataManager.Set("trolley-" .. TrolleyId, 2)
-    FW.TriggerServer("fw-heists:Server:Trolley:PayoutGrab", TrolleyId, Trollies[TrolleyId])
+    FW.TriggerServer("fw-heists:Server:Trolley:PayoutGrab", TrolleyId, Trollies[TrolleyId], Grabbed)
 
     Citizen.SetTimeout(250, function()
         DeleteTrolley(TrolleyId)

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bugger</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; cursor: none; user-select: none; }
+    body { font-family: "Consolas", "Courier New", monospace; color: #b6f5d8; background: radial-gradient(ellipse at 50% 0%, #0f2a22 0%, #05100c 75%); display: flex; flex-direction: column; }
+    header { display: flex; align-items: center; gap: 1vw; padding: 1.8vh 2vw; border-bottom: 1px solid #12392d; }
+    .logo { font-size: 3.2vh; font-weight: 800; color: #38d9a9; letter-spacing: 0.3vw; text-shadow: 0 0 12px rgba(56, 217, 169, 0.5); }
+    .sub { font-size: 1.6vh; color: #3f7a66; }
+    .tag { margin-left: auto; font-size: 1.6vh; color: #3f7a66; }
+    main { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; padding: 2vh 2vw; }
+    .view { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; padding: 2vh 2vw; }
+    button { font: inherit; font-size: 2vh; font-weight: 700; letter-spacing: 0.15vw; color: #05100c; background: #38d9a9; border: 0; border-radius: 0.6vh; padding: 1.2vh 2.2vw; cursor: none; }
+    button:hover { background: #63e6be; box-shadow: 0 0 14px rgba(56, 217, 169, 0.6); }
+    button.ghost { background: transparent; color: #38d9a9; border: 1px solid #38d9a9; }
+    .muted { color: #3f7a66; font-size: 1.8vh; text-align: center; }
+    .radar { width: 26vh; height: 26vh; border-radius: 50%; border: 1px solid #1e5c48; position: relative; overflow: hidden;
+        background: repeating-radial-gradient(circle, transparent 0 4.2vh, #12392d 4.2vh calc(4.2vh + 1px)); }
+    .radar::after { content: ""; position: absolute; inset: 0; background: conic-gradient(from 0deg, rgba(56, 217, 169, 0.55), transparent 25%); animation: spin 1.6s linear infinite; }
+    .radar i { position: absolute; width: 0.9vh; height: 0.9vh; border-radius: 50%; background: #63e6be; box-shadow: 0 0 8px #63e6be; animation: blip 1.6s infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes blip { 0%, 100% { opacity: 0.1; } 50% { opacity: 1; } }
+    .list { width: 100%; max-height: 100%; overflow: hidden; display: flex; flex-direction: column; gap: 0.8vh; justify-content: flex-start; }
+    .row { display: flex; align-items: center; gap: 1.2vw; padding: 1.2vh 1.2vw; border: 1px solid #12392d; border-radius: 0.6vh; background: rgba(18, 57, 45, 0.25); font-size: 1.9vh; }
+    .row:hover { border-color: #38d9a9; background: rgba(56, 217, 169, 0.12); }
+    .row .ssid { flex: 1; color: #d3f9e8; }
+    .row .state { font-size: 1.5vh; padding: 0.3vh 0.6vw; border-radius: 0.4vh; border: 1px solid currentColor; }
+    .s-vulnerable { color: #ffd43b; } .s-compromised { color: #ff6b6b; } .s-locked, .s-secured { color: #3f7a66; }
+    .bars { display: flex; align-items: flex-end; gap: 0.25vw; height: 2.2vh; }
+    .bars b { width: 0.45vw; background: #1e5c48; border-radius: 1px; } .bars b.on { background: #38d9a9; }
+    .listhead { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 1.7vh; color: #3f7a66; }
+    .code { font-size: 9vh; font-weight: 800; letter-spacing: 1.6vw; color: #ffd43b; text-shadow: 0 0 18px rgba(255, 212, 59, 0.6); }
+    .bad { color: #ff6b6b; font-size: 2.6vh; font-weight: 700; }
+    .ok { color: #69db7c; font-size: 2.6vh; font-weight: 700; }
+    iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">🐞 BUGGER</div>
+        <div class="sub">wireless intrusion toolkit v2.3</div>
+        <div class="tag" id="tag">idle</div>
+    </header>
+    <main>
+        <div class="view" id="home">
+            <div class="muted">No networks cached. Run a scan to sniff the surrounding area.</div>
+            <button data-act="scan">SCAN SURROUNDINGS</button>
+        </div>
+        <div class="view hidden" id="scanning">
+            <div class="radar" id="radar"></div>
+            <div class="muted" id="scanmsg">Sniffing 2.4 / 5 GHz beacons…</div>
+        </div>
+        <div class="view hidden" id="networks" style="justify-content:flex-start">
+            <div class="listhead"><span id="count"></span><button class="ghost" data-act="scan">RESCAN</button></div>
+            <div class="list" id="list"></div>
+        </div>
+        <div class="view hidden" id="busy">
+            <div class="radar"></div>
+            <div class="muted" id="busymsg"></div>
+        </div>
+        <div class="view hidden" id="hack"><iframe id="frame"></iframe></div>
+        <div class="view hidden" id="result"></div>
+    </main>
+<script>
+    const $ = Id => document.getElementById(Id);
+    const Post = (Action, Data = {}) => fetch("https://fw-heists/fleecaBugger", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ Action, ...Data }) }).catch(() => {});
+    const Label = { vulnerable: "VULNERABLE", compromised: "COMPROMISED", locked: "FIREWALLED", secured: "WPA3" };
+    let Nets = [], ScanUntil = 0, Pending = null, Target = null;
+
+    const Show = (View, Tag) => {
+        document.querySelectorAll(".view").forEach(V => V.classList.toggle("hidden", V.id !== View));
+        $("tag").textContent = Tag || View;
+    };
+
+    const Scan = () => {
+        Show("scanning", "scanning");
+        $("radar").innerHTML = Array.from({ length: 7 }, () => `<i style="left:${10 + Math.random() * 78}%;top:${10 + Math.random() * 78}%;animation-delay:${Math.random() * 1.6}s"></i>`).join("");
+        ScanUntil = Date.now() + 4000;
+        Post("scan");
+    };
+
+    const List = () => {
+        $("count").textContent = `${Nets.length} networks found`;
+        $("list").innerHTML = Nets.map((N, i) => `<div class="row" data-net="${i}">
+            <div class="bars">${[1, 2, 3, 4].map(B => `<b class="${B <= N.signal ? "on" : ""}" style="height:${B * 25}%"></b>`).join("")}</div>
+            <div class="ssid">${N.state === "secured" || N.state === "locked" ? "🔒 " : ""}${N.ssid}</div>
+            <div class="state s-${N.state}">${Label[N.state] || N.state}</div></div>`).join("");
+        Show("networks", "networks");
+    };
+
+    const Busy = Text => { $("busymsg").textContent = Text; Show("busy", "attacking"); };
+    const Result = (Html, Back) => {
+        $("result").innerHTML = Html + (Back ? `<button class="ghost" data-act="back">BACK</button>` : "");
+        Show("result", "result");
+    };
+
+    const Handlers = {
+        networks: D => {
+            Nets = D.list || [];
+            Pending = setTimeout(List, Math.max(0, ScanUntil - Date.now()));
+        },
+        hack: D => {
+            Show("hack", "exploit");
+            const Start = () => $("frame").contentWindow.postMessage({ action: "start", data: D }, "*");
+            $("frame").onload = () => { $("frame").onload = null; Start(); };
+            $("frame").src = `gridbreaker.html?r=${Date.now()}`; // fresh board every attempt
+        },
+        failed: D => Result(`<div class="bad">ATTACK FAILED</div><div class="muted">${D.reason || "Connection lost."}</div>`, true),
+        backdoor: D => Result(`<div class="ok">BACKDOOR INSTALLED ON ${D.ssid}</div>
+            <div class="muted">Branch network is down. Staff door keypad override:</div>
+            <div class="code">${D.code}</div><div class="muted">Write it down, it won't be shown again.</div>`),
+    };
+
+    document.addEventListener("click", E => {
+        const Act = E.target.closest("[data-act]"), Row = E.target.closest("[data-net]");
+        if (Act && Act.dataset.act === "scan") Scan();
+        else if (Act && Act.dataset.act === "back") Nets.length ? List() : Show("home", "idle");
+        else if (Row) {
+            Target = Nets[Number(Row.dataset.net)];
+            Busy(`Capturing handshake from ${Target.ssid}…`);
+            setTimeout(() => Post("hack", { id: Target.id }), 1800);
+        }
+    });
+
+    window.addEventListener("message", E => {
+        let M = E.data;
+        if (typeof M === "string") { try { M = JSON.parse(M); } catch { return; } }
+        if (M && Handlers[M.action]) Handlers[M.action](M.data || {});
+    });
+
+    if (location.search.includes("mock")) {
+        window.fetch = async (Url, O) => {
+            const B = JSON.parse(O.body);
+            if (B.Action === "scan") window.postMessage({ action: "networks", data: { list: [{ id: 1, ssid: "Fleeca_LegionSquare", signal: 4, state: "vulnerable" }, { id: "f1", ssid: "Bean Machine", signal: 2, state: "secured" }] } }, "*");
+            if (B.Action === "hack") window.postMessage(B.id === 1 ? { action: "backdoor", data: { ssid: "Fleeca_LegionSquare", code: "4821" } } : { action: "failed", data: { reason: "Handshake failed: WPA3 encryption too strong." } }, "*");
+        };
+    }
+</script>
+</body>
+</html>

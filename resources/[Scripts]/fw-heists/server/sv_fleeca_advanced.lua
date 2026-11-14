@@ -100,11 +100,14 @@ end)
 
 -- ── Power box ──────────────────────────────────────────────────────────────
 
+local function Allowed()
+    local Blocked = DataManager.Get('HeistsDisabled', 0) == 1 or DataManager.Get('GlobalCooldown', false) == true
+    return not Blocked or GlobalState.FleecaTest -- /fleecatest mode skips cooldown / disabled
+end
+
 local function CanStart(Source, Id)
     if not Valid(Id) or not Near(Source, Config.Fleeca[Id].PowerBox[1], 4.0) then return false end
-    local Blocked = DataManager.Get('HeistsDisabled', 0) == 1 or DataManager.Get('GlobalCooldown', false) == true
-    if Blocked and not GlobalState.FleecaTest then return false end -- /fleecatest mode skips cooldown / disabled
-    return DataManager.Get(Key(Id, 'powerbox'), 0) == 0
+    return Allowed() and DataManager.Get(Key(Id, 'powerbox'), 0) == 0
 end
 
 FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Access', function(Source, Cb, Id)
@@ -113,23 +116,74 @@ FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Access', function(Source
     Cb(true)
 end)
 
-FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:StartHack', function(Source, Cb, Id)
-    if not CanStart(Source, Id) or DataManager.Get(Key(Id, 'box-open'), 0) ~= 1 then return Cb(false) end
-    if Banks[Id].Hacker then return Cb('busy') end
-    if not HasItem(Source, Cfg.Items.Laptop) then return Cb(false) end
-    Banks[Id].Hacker, Banks[Id].HackStart = Source, os.time()
+-- ── Bugger laptop (cl_fleeca_laptop.lua): placed green heist laptop, hacks the branch WiFi ──
+
+-- The placed laptop (networked) of this player within 3m, or nil.
+local function LaptopOf(Source, NetId)
+    local Obj = type(NetId) == 'number' and NetworkGetEntityFromNetworkId(NetId)
+    if not Obj or Obj == 0 or not DoesEntityExist(Obj) or GetEntityModel(Obj) ~= joaat(Cfg.Models.Laptop) then return nil end
+    return #(GetEntityCoords(GetPlayerPed(Source)) - GetEntityCoords(Obj)) <= 3.0 and GetEntityCoords(Obj) or nil
+end
+
+local function WifiState(Id)
+    if DataManager.Get(Key(Id, 'powerbox'), 0) ~= 0 then return 'compromised' end
+    return DataManager.Get(Key(Id, 'box-open'), 0) == 1 and 'vulnerable' or 'locked' -- locked: cut the power box first
+end
+
+-- The bank networks this laptop picks up: { Id, Ssid, Signal 1-4, State }
+FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:Wifis', function(Source, Cb, NetId)
+    local C, List = LaptopOf(Source, NetId), {}
+    for Id, Bank in pairs(C and Config.Fleeca or {}) do
+        local Dist = Bank.Advanced and Banks[Id] and #(C - Bank.Center)
+        if Dist and Dist <= Cfg.WifiRange then
+            List[#List + 1] = { Id = Id, Ssid = Bank.Advanced.Wifi, Signal = math.max(1, 4 - math.floor(Dist / (Cfg.WifiRange / 4))), State = WifiState(Id) }
+        end
+    end
+    Cb(List)
+end)
+
+-- true | 'busy' | 'locked' | 'compromised' | 'blocked' | false
+FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:StartHack', function(Source, Cb, Id, NetId)
+    local C = LaptopOf(Source, NetId)
+    if not Valid(Id) or not C or #(C - Config.Fleeca[Id].Center) > Cfg.WifiRange then return Cb(false) end
+    if not Allowed() then return Cb('blocked') end
+    local State = WifiState(Id)
+    if State ~= 'vulnerable' then return Cb(State) end
+    if Banks[Id].Hacker and Banks[Id].Hacker ~= Source then return Cb('busy') end
+    Banks[Id].Hacker, Banks[Id].HackStart, Banks[Id].HackLaptop = Source, os.time(), NetId
     Cb(true)
 end)
+
+-- Network down: robbery started, backdoor code for the staff door keypad. Also used by /fleecatest hack.
+function FleecaAdvHacked(Source, Id, StartTimer)
+    DataManager.Set(Key(Id, 'box-open'), 1)
+    DataManager.Set(Key(Id, 'powerbox'), 1) -- terminal / vault / loot (cl_fleeca.lua) check this
+    Banks[Id].Backdoor = tostring(math.random(1000, 9999))
+    if StartTimer then StartFleecaRobbery(Source, Id) end
+    return Banks[Id].Backdoor
+end
 
 FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:FinishHack', function(Source, Cb, Id, Success)
     local Bank = Valid(Id)
     if not Bank or Bank.Hacker ~= Source then return Cb(false) end
     Bank.Hacker = nil
-    if not Success or os.time() - Bank.HackStart < 5 or not CanStart(Source, Id) then return Cb(false) end
+    if not Success or os.time() - Bank.HackStart < 5 or not LaptopOf(Source, Bank.HackLaptop) or WifiState(Id) ~= 'vulnerable' then return Cb(false) end
+    Cb({ Code = FleecaAdvHacked(Source, Id, true) })
+end)
 
-    DataManager.Set(Key(Id, 'powerbox'), 1) -- vault laptop / gate / loot from cl_fleeca.lua check this
-    StartFleecaRobbery(Source, Id)
-    Cb(true)
+-- Placing the laptop uses up the green heist laptop (taking it back doesn't return it).
+FW.Functions.CreateCallback('fw-heists:Server:FleecaAdv:PlaceLaptop', function(Source, Cb)
+    local Player = FW.Functions.GetPlayer(Source)
+    Cb(Player ~= nil and Player.Functions.RemoveItem(Cfg.Items.Laptop, 1, false, true, Cfg.Items.LaptopType) == true)
+end)
+
+-- Packing it up deletes it: its owner, or anyone once the owner is gone. A hack running on it fails.
+RegisterNetEvent('fw-heists:Server:FleecaAdv:TakeLaptop', function(NetId)
+    local Source = source
+    local Owner = LaptopOf(Source, NetId) and Entity(NetworkGetEntityFromNetworkId(NetId)).state.fleecaLaptop
+    if not Owner or (Owner ~= Source and GetPlayerPing(Owner) > 0) then return end
+    for _, Bank in pairs(Banks) do if Bank.HackLaptop == NetId then Bank.Hacker = nil end end
+    DeleteEntity(NetworkGetEntityFromNetworkId(NetId))
 end)
 
 -- ── Terminal ───────────────────────────────────────────────────────────────
@@ -246,9 +300,12 @@ end)
 
 -- ── Staff door keypad prop (cl_fleeca_keypad.lua), every Fleeca ───────────
 
+-- Advanced banks: the backdoor code from the Bugger hack. Other banks: Config.FleecaKeypad.Code.
 FW.Functions.CreateCallback('fw-heists:Server:Fleeca:Keypad', function(Source, Cb, Id, Code)
     local Bank = Config.Fleeca[Id]
-    if not Bank or not Near(Source, Bank.StaffDoor, 3.0) or tostring(Code) ~= Config.FleecaKeypad.Code then return Cb(false) end
+    if not Bank or not Near(Source, Bank.StaffDoor, 3.0) then return Cb(false) end
+    local Right = Banks[Id] and Banks[Id].Backdoor or (not Bank.Advanced and Config.FleecaKeypad.Code)
+    if not Right or tostring(Code) ~= Right then return Cb(false) end
 
     TriggerEvent('fw-doors:Server:SetLockStateById', Bank.DoorIds[Config.FleecaKeypad.DoorId], 0)
     DataManager.Set(Key(Id, 'door-lockpicked'), 1) -- replaces the staff door lockpick: the vault laptop (cl_fleeca.lua) needs it

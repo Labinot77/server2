@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+    #hints { position: absolute; right: 6.5vw; bottom: 9vh; display: flex; gap: 2.6vw; font-family: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+        font-style: italic; font-weight: 700; font-size: 2.4vh; color: #fff; text-transform: uppercase; letter-spacing: 0.05vw; text-shadow: 0 0 6px rgba(0, 0, 0, 0.8); }
+    .hint { display: flex; align-items: center; gap: 0.8vw; animation: in 0.2s ease-out; }
+    .key { min-width: 2.6vh; height: 2.6vh; padding: 0 0.3vh; box-sizing: border-box; border-radius: 0.4vh; background: #fff; color: #111;
+        display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; font-style: normal; font-weight: 800; font-size: 1.7vh;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.6); }
+    .space { width: 1.4vh; height: 0.6vh; border: 0.25vh solid #111; border-top: 0; margin-top: 0.6vh; }
+    @keyframes in { from { opacity: 0; transform: translateY(0.6vh); } }
+</style>
+</head>
+<body>
+<div id="hints"></div>
+<script>
+    // SendNUIMessage({ action = 'hints', hints = { { key = 'space' | 'E' | ..., label = '...' } } }), no hints = hide
+    const Key = K => K === "space" ? `<div class="space"></div>` : K;
+    window.addEventListener("message", E => {
+        const M = E.data;
+        if (!M || M.action !== "hints") return;
+        document.getElementById("hints").innerHTML = (M.hints || []).map(H => `<div class="hint"><div class="key">${Key(H.key)}</div>${H.label}</div>`).join("");
+    });
+    if (location.search.includes("mock")) window.postMessage({ action: "hints", hints: [{ key: "space", label: "Grab faster" }, { key: "X", label: "Stop grabbing" }] }, "*");
+</script>
+</body>
+</html>

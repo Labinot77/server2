@@ -62,6 +62,7 @@ Config.Fleeca = {
         -- Advanced robbery (config/sh_fleeca_advanced.lua). Replaces thermite + lockpick for this bank.
         Advanced = {
             Name = 'Legion Square',
+            Wifi = 'Fleeca_LegionSquare', -- network name in Bugger
             Trolley = vector4(150.20, -1046.00, 29.37, 70.0), -- cash trolley in the vault, spawned when the vault door opens
             Terminal = vector3(147.22, -1041.10, 29.15), -- the monitor closest to this point is the terminal (/duiprop prop_monitor_01a)
             Notes = { -- sticky note spots, NoteCount of them get a note, one has the real password

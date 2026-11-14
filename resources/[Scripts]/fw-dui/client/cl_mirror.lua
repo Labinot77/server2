@@ -1,5 +1,36 @@
 -- Mirror: while you use a screen registered with Mirror = true, nearby players see the same thing.
 -- Your cursor, clicks and Send() messages are batched (10x per second) and replayed on their copy of the page.
+--   Variant models (pool): sent with the prop's pool key, the whole time you use it; watchers' copies are in
+--   cl_pool.lua and the server keeps the page messages for players who walk up later.
+--   Old way (below): only while focused, watchers show it on their nearest prop of that screen.
+
+local PoolQueue = {} -- [Key] = events to send
+
+function MirrorPoolStart(S)
+    if not S.Mirror or not S.Active then return end
+    local Key = S.Active.Key
+    PoolQueue[Key] = {}
+    CreateThread(function()
+        while S.Active and S.Active.Key == Key do
+            local Q = PoolQueue[Key]
+            if #Q > 0 then
+                PoolQueue[Key] = {}
+                TriggerServerEvent('fw-dui:Server:PoolMirror', Key, Q)
+            end
+            Wait(100)
+        end
+        PoolQueue[Key] = nil
+    end)
+end
+
+local function Add(Queue, Event)
+    local Last = Queue[#Queue]
+    if Event[1] == 'move' and Last and Last[1] == 'move' then
+        Queue[#Queue] = Event -- only the latest cursor position matters
+    elseif #Queue < 60 then
+        Queue[#Queue + 1] = Event
+    end
+end
 
 local Queue, Target, LastFlush = {}, nil, 0
 
@@ -15,17 +46,16 @@ end
 
 -- Events: { 'msg', Action, Data } | { 'move', X, Y } | { 'down' } | { 'up' } | { 'wheel', Delta }
 function MirrorPush(S, Event)
-    if not (S.Mirror and Target and Focused and Focused.S == S) then return end
-    local Last = Queue[#Queue]
-    if Event[1] == 'move' and Last and Last[1] == 'move' then
-        Queue[#Queue] = Event -- only the latest cursor position matters
-    elseif #Queue < 60 then
-        Queue[#Queue + 1] = Event
+    if S.Active then
+        if S.Mirror and PoolQueue[S.Active.Key] then Add(PoolQueue[S.Active.Key], Event) end
+        return
     end
+    if not (S.Mirror and Target and Focused and Focused.S == S) then return end
+    Add(Queue, Event)
 end
 
 function MirrorStart(S)
-    if not S.Mirror then return end
+    if not S.Mirror or S.Active then return end -- pool screens mirror the whole time they're in use
     local Coords = GetEntityCoords(S.Entity)
     -- Base model: watchers still have the normal prop there until their own swap.
     Target = { Model = joaat(S.Model.Name), Coords = { x = Coords.x, y = Coords.y, z = Coords.z } }
@@ -40,7 +70,7 @@ function MirrorStart(S)
 end
 
 function MirrorStop(S)
-    if not (S.Mirror and Target) then return end
+    if not (S.Mirror and Target) or S.Active then return end
     Queue[#Queue + 1] = { 'stop' }
     Flush(S.Name)
     Target = nil

@@ -1,10 +1,15 @@
 # fw-dui
 
-Shared DUI screens on props. A **screen** is one named page (`atm`, `bennys_laptop`, ...) that fw-dui shows on
-the nearest prop of its models while the player is in range, and unloads when nobody is near.
-Props placed from the fw-admin panel are pulled from fw-admin (`Placed = true`).
+Shared DUI screens on props. A **screen** is one named page (`atm`, `bennys_laptop`, ...).
 
-Start order: `fw-admin` → `fw-dui` → resources that use it (`fw-financials`, `fw-bennys`).
+- **Models with `Variants` (location pools)**: a prop someone uses gets a free screen copy for its location from the
+  server, and every player around it sees that copy + the user's page. Idle props show one shared idle page on the
+  original model's screen (`Idle`). See "Location pools" below. ATMs, laptops and the bank terminal work like this.
+- **Models without `Variants` (old way)**: the page is on the nearest prop of the screen's models while the player is
+  in range (props that exist once, like the bank keypads / panels).
+
+Props placed from the fw-admin panel are pulled from fw-admin (`Placed = true`).
+Start order: `fw-admin` → `fw-dui` → resources that use it (`fw-financials`, `fw-bennys`, `fw-heists`).
 
 ## Models
 `config/sh_config.lua` says how the page gets on each model: `Texture` (+ `Dict`) or `RenderTarget`,
@@ -66,33 +71,49 @@ Is the map prop another model (e.g. the interior's own `v_corp_bk_secpanel`, and
 Register with `Mirror = true` and players within `Config.MirrorDistance` see what the user does on it:
 cursor, clicks and every `Send`. `DUI:Send(Name, Action, Data, MirrorData)` lets you send watchers
 something else (`MirrorData`, e.g. balances replaced by `**`) or nothing (`false`).
-When the user stops, watchers get `fw-dui:Client:WatchEnded (Name, Entity)` to restore their own page.
-Someone who walks up halfway through only sees changes from that moment on (a page switched with mouse
-clicks before they arrived, like a laptop tab, can differ until the next change).
+Old way: when the user stops, watchers get `fw-dui:Client:WatchEnded (Name, Entity)` to restore their own page,
+and someone who walks up halfway through only sees changes from that moment on.
+Location pools: watchers get all page messages sent so far; only things switched with mouse clicks before they
+arrived (like a laptop tab) can differ until the next change.
 
-## Same model side by side (Variant)
-A replaced texture shows on every prop of that model, so two ATMs next to each other both showed the page.
-Give the model a `Variant`: a copy of the prop with its own screen texture name. Only the prop that shows the
-page is swapped to the copy, so its neighbours keep the normal screen. **One copy per model is enough**
-(200 houses with `house_monitor_01` only need `house_monitor_01_dui`).
+## Location pools (Variants)
+`AddReplaceTexture` is global per client: every prop of a model shows the same page. So each model gets **two
+copies** with their own screen texture (`prop_fleeca_atm_dui_01`, `prop_fleeca_atm_dui_02`; the same texture name in
+both is fine as long as each copy has its own `.ytd` / `textureDictionary` in the `.ytyp`):
 
-Making a copy: duplicate the `.ydr` + `.ytd` as `<model>_dui`, rename the screen texture (e.g. `_dui` suffix)
-in the `.ytd` and in the `.ydr`'s shader, stream it, and set `Variant` + `Texture` in `config/sh_config.lua`.
+```lua
+['prop_fleeca_atm'] = { Variants = { 'prop_fleeca_atm_dui_01', 'prop_fleeca_atm_dui_02' }, Texture = 'prop_fleeca_atm_screen_dui', ... },
+```
 
-- Map props (ATMs) are swapped with `CreateModelSwap`, fw-admin props are respawned as the copy in the same frame.
-- The swap happens when the prop becomes the nearest in range (idle screen), not when it's opened, and the
-  page is on the texture before the swap, so nobody sees it change.
-- `DUI:Show` returns the entity now showing the page: `local Ok, Entity = DUI:Show(Name, Entity)`.
-- `DUI:GetBaseModel(Entity)` / `DUI:GetVariant(Model)` help with interactions and model checks; register your
-  interact options for the copy too, the player looks at the copy once it's swapped.
-- Each player shows one screen of a type at a time, so one copy per model is all a client ever needs.
+1. `DUI:Show(Name, Entity)` asks the server (`server/sv_pool.lua`) for a copy for that prop. A copy is free when no
+   other prop of that model within `Config.PoolRadius` (80m) uses it, so the same two copies work at every location:
+   two players at Location A and two at Location B all have their own screen.
+2. Every client around the prop (within `Config.PoolRenderDistance`, 35m) swaps it to that copy (map props:
+   `CreateModelSwap`, fw-admin props: respawned locally) and puts a page on the copy's texture.
+3. The user drives their page. Everyone else gets the user's page messages, cursor and clicks (mirror); the server
+   keeps the page messages, so a player who walks up later first gets everything sent so far.
+4. `DUI:Release(Name)`: the copy goes back to the original prop for everyone and is free again. Also on disconnect,
+   or when the user is over `Config.PoolLeaveDistance` (15m) from the prop for 10 seconds.
 
-## Two screens side by side (Copies)
-One Variant means one page per model at a time. For two ATMs next to each other that both show a page (yours + the
-player next to you), make a 2nd copy (`prop_fleeca_atm_dui_02` with texture `prop_fleeca_atm_screen_dui_02`) and add
-`Copies = { { Variant = ..., Texture = ... } }` to the model. Register a 2nd screen with `Copy = 2`: it uses the 2nd
-copy and never takes the prop the first screen shows. `GetVariants(Model)` lists all copies, `GetScreenOf(Entity)`
-says which screen shows a prop.
+- `DUI:Show` returns `true, Entity` (the copy now standing there) or `false, Reason`: `'busy'` (someone uses this
+  prop), `'full'` (both copies in use at this location: wait or try another one).
+- `DUI:IsInUse(Entity)` = a player uses this prop now (hide your prompt). `DUI:GetVariants(Model)` lists the copies
+  (register your interact options for them too, the player looks at the copy while it's in use).
+- `fw-dui:Client:Shown` only fires for the user. `SetApps` and `Send` are mirrored while in use (`MirrorData` as
+  before), so watchers get the same desktop and data without doing anything.
+- `/duidebug` lists the pool (key, variant, owner, distance, shown here or not).
+- PoolRadius must be over twice PoolRenderDistance: then no client ever sees the same copy at two props.
+
+### Idle page (props nobody uses)
+`Idle = true` on a model: every idle prop of it near you shows one shared idle page on the **original** model's
+screen texture (`Idle = { Texture, Dict }`, defaults: the model's `Texture` and the original model name). Desktop
+screens show an empty desktop (no apps); other screens get `fw-dui:Client:Idle (Name, Model)` and send their idle
+content with `DUI:SendIdle(Name, Model, Action, Data)` (fw-financials: the idle ATM screen). In-use props are copies
+with their own texture, so they're not affected. No idle page? The original's texture has another name / .ytd:
+`/duiidle <model> <texture> [dict]` tries one live, `/duidebug` lists the idle pages.
+
+Making a copy: duplicate the `.ydr`/`.yft` + `.ytd` as `<model>_dui_01` and `_dui_02`, give each `.ytyp` archetype its
+own `textureDictionary` (= its own name), stream them, and list them in `Variants`.
 
 ## Houses next to each other (SameInterior)
 `SameInterior = true` only uses props in the interior the player stands in, and watchers only see a mirrored

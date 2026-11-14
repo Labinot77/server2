@@ -7,11 +7,15 @@ Config = Config or {}
 Config.FleecaKeypad = { Model = 'hei_prop_hei_keypad_01', Code = '1111', MaxDigits = 6, DoorId = 1, Static = {} }
 
 Config.FleecaAdvanced = {
-    Items = { Cutters = 'heavy-cutters', Laptop = 'heist-laptop' },
+    Items = { Cutters = 'heavy-cutters', Laptop = 'heist-laptop', LaptopType = 'green' }, -- the green laptop = Bugger
     Models = { Laptop = 'custom_laptop_01', Monitor = 'prop_monitor_01a', Note = 'hei_prop_hei_post_note_01', Panel = 'v_corp_bk_secpanel_dui_01',
         PanelMap = 'v_corp_bk_secpanel' }, -- PanelMap = the bank interior's own panel, swapped to Panel at each door's Panel spot
 
     CutTime = 7500,                               -- ms to cut the box open
+    WifiRange = 60.0,                             -- Bugger picks up a branch's WiFi within this range of the bank
+    -- Fake networks Bugger shows next to the real one (a few at random every scan)
+    FakeWifis = { 'Pegasus_Guest', 'LifeInvader_5G', 'Vespucci-Free-WiFi', 'MazeBank_Staff', 'CluckinBell_Free', 'xX_Pwnd_Xx',
+        'Bean Machine', 'LSPD_Surveillance_Van_3', 'Weazel-News-Mobile', 'FBI_Party_Bus', 'Burger Shot Guest', 'Tinkle_4G_Hotspot' },
     Hack = { Rounds = 3, Time = 45, Cols = 7, Rows = 5 }, -- laptop minigame (seconds per round)
     NoteCount = 5,                                -- notes per bank (max = number of spots)
     NoteScale = 1.6,                              -- sticky notes are scaled up so they're easy to spot

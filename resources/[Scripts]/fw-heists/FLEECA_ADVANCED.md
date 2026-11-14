@@ -4,9 +4,14 @@ Banks with an `Advanced` block in `config/sh_fleeca.lua` (Legion Square for now)
 
 All prompts use the `interact` resource (no eye).
 
-1. **Power box** (interact point on the prop_elecbox_09): `[E] Access` needs `heavy-cutters` -> `[E] Hack the network` needs `heist-laptop`.
-   A `custom_laptop_01` is put on the ground and the GridBreaker app (`html/fleeca/gridbreaker.html`) opens in its DUI:
-   rotate tiles to route power to the relay, 3 rounds. Success = `powerbox` 1, police alert, 90 min reset timer.
+1. **Power box** (interact point on the prop_elecbox_09): `[E] Access` needs `heavy-cutters`. This exposes the branch WiFi.
+   **Bugger** (`client/cl_fleeca_laptop.lua`, `html/fleeca/bugger.html`): use the `heist-laptop` with custom type `green`
+   anywhere: a ghost `custom_laptop_01` follows your aim (scroll = rotate, E = place, Backspace / right click = cancel);
+   placing it uses up the item. "Use laptop" opens the desktop with the Bugger app: scan -> fake networks
+   (`FakeWifis`, WPA3, always fail) + every advanced branch within `WifiRange` (`Advanced.Wifi`, e.g. `Fleeca_LegionSquare`).
+   Firewalled until the box is cut open. Hack it -> GridBreaker minigame (rotate tiles, 3 rounds) -> backdoor installed:
+   `powerbox` 1, police alert, 90 min reset timer, and the **staff door keypad code** (random 4 digits per robbery) is shown.
+   "Take laptop" (owner, or anyone once the owner left) deletes it, it is not returned.
 2. **Lobby terminal** (after the staff door keypad, `door-lockpicked`): one of the bank's own monitors, the one closest to `Advanced.Terminal`, gets "Use terminal"
    (interact). It is swapped to the `_dui` copy (like the ATMs) and shows the Fleeca Branch Terminal app (`html/fleeca/terminal.html`).
    The password is typed on the screen itself (fw-dui typing). Password = the sticky note serviced most recently (5 notes, "Backdoor code, last serviced <age> ago") (`hei_prop_hei_post_note_01`, scaled up `NoteScale`, "Read note" -> notification).
@@ -25,7 +30,8 @@ All prompts use the `interact` resource (no eye).
    security door. **Trolley** (interact "Grab cash"): synced grab scene, Space grabs faster (the speed is sent to
    everyone). Payout: `Config.FleecaAdvanced.Trolley`.
 
-Staff door keypad prop (`Config.FleecaKeypad`, every Fleeca): type the code on the keyboard; `1111` for now.
+Staff door keypad prop (`Config.FleecaKeypad`, every Fleeca): type the code on the keyboard. Advanced banks: the Bugger
+backdoor code (wrong until the hack is done); other banks: `Config.FleecaKeypad.Code` (`1111`).
 Opens `DoorIds[1]` (service door) and replaces the staff door lockpick for the vault laptop (`door-lockpicked`).
 
 New password + notes every server start and every bank reset. All checks (items, distance, password, codes, doors) are server side.
@@ -39,15 +45,18 @@ New password + notes every server start and every bank reset. All checks (items,
   Black / no page? `/duidebug`. Tweak `Camera` there too.
 - Items, timings, difficulty: `config/sh_fleeca_advanced.lua`.
 
-Preview pages in a browser: `html/fleeca/terminal.html?mock`, `html/fleeca/gridbreaker.html?mock`.
+Preview pages in a browser: `html/fleeca/terminal.html?mock`, `html/fleeca/gridbreaker.html?mock`, `html/fleeca/bugger.html?mock`.
+
+fw-dui hides the HUD + minimap while you're on a screen (forced off every frame, so pdwatch's radar too). HUDs drawn in
+NUI: hook `Config.OnFocus` (fw-dui config) or listen to `fw-dui:Client:Focus`.
 
 ## Testing: `/fleecatest <action>` (admin)
 Works on the advanced bank you're in. Output in a notification + F8.
 
 1. `/fleecatest on` (no cops / cooldown needed), `/fleecatest items` (cutters + laptop), `/fleecatest reset` for a clean bank
-2. `/fleecatest tp box` -> [E] Access -> [E] Hack network (skip: `box`, `hack`)
+2. `/fleecatest tp box` -> [E] Access -> use the green laptop, Bugger -> scan -> hack `Fleeca_LegionSquare` (skip: `box`, `hack`, prints the keypad code)
 3. `/fleecatest tp terminal` -> Use terminal, `/fleecatest password` shows the password + which note
 4. Generate a code on the terminal, `/fleecatest code` shows the answer, `/fleecatest tp panel1` -> type it (skip: `door 1`)
 5. Same for the security door: `tp panel2`, `door 2`. Loot + trolley: `tp vault`, `tp trolley`
-6. Staff door keypad: `tp staff`, code 1111 (skip: `staff`). Vault: `tp vault`, `vault`
+6. Staff door keypad: `tp staff`, the Bugger code (`/fleecatest code` shows it; skip: `staff`). Vault: `tp vault`, `vault`
 7. `/fleecatest status` any time, `/fleecatest reset` to start over, `/fleecatest off` when done

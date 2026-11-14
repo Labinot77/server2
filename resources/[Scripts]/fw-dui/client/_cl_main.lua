@@ -1,8 +1,11 @@
--- fw-dui: named screens (e.g. 'atm', 'bennys_laptop'). A screen is one DUI page shown on the nearest
--- prop of its models while the player is in range, and unloaded when nobody is near.
+-- fw-dui: named screens (e.g. 'atm', 'bennys_laptop').
+--   Models with Variants (config): a prop shows a page only while someone uses it (Show .. Release). The server
+--   gives it a free copy for its location (cl_pool.lua / sv_pool.lua), everyone around sees that copy + page.
+--   Models without Variants (old way): one page on the nearest prop of the screen's models while in range.
 --
 -- Events for the resource that registered the screen (TriggerEvent, client side):
---   fw-dui:Client:Shown  (Name, Entity, PropId)  page is on Entity (PropId = fw-admin placed prop id, or nil)
+--   fw-dui:Client:Shown  (Name, Entity, PropId)  page is on Entity (PropId = fw-admin placed prop id, or nil).
+--                                                 Variant models: only for the user, watchers get the user's page
 --   fw-dui:Client:Hidden (Name)                  out of range, page unloaded
 --   fw-dui:Client:Cursor (Name, X, Y)            focused without Mouse: cursor moved (percent)
 --   fw-dui:Client:Click  (Name, X, Y)            focused without Mouse: left click
@@ -14,6 +17,17 @@ DESKTOP_URL = ('nui://%s/html/desktop/index.html'):format(GetCurrentResourceName
 local Txd = CreateRuntimeTxd('fw_dui')
 local TexCount = 0
 
+-- Runtime texture for a DUI (runtime textures can't be recreated, a new name per DUI). Also used by cl_pool.lua.
+function NewDuiTexture(Dui)
+    TexCount = TexCount + 1
+    local Name = ('dui_%d'):format(TexCount)
+    CreateRuntimeTextureFromDuiHandle(Txd, Name, GetDuiHandle(Dui))
+    return Name
+end
+
+-- What a screen draws on: the user's pool slot while they use a Variant model, else the screen's own (old way) page.
+function View(S) return S.Active and S.Active.Slot or S end
+
 -- Flat black texture: put over a screen's specular map it removes sun / light reflections (glare).
 do
     local Black = CreateRuntimeTexture(Txd, 'no_spec', 4, 4)
@@ -23,24 +37,7 @@ do
     CommitRuntimeTexture(Black)
 end
 
-local ModelsByHash = {} -- base model and its Variant(s) all point at the model's config
-
--- Data.Copy[1] = the model itself, Data.Copy[2..] = its extra Copies (another _dui copy with its own texture), so
--- two screens can show a page on two props of the same model side by side (RegisterScreen Copy = 2).
-for Name, Data in pairs(Config.Models) do
-    Data.Name = Name
-    Data.Resolution = Data.Resolution or { 1280, 720 }
-    Data.Copy = { Data }
-    ModelsByHash[joaat(Name)] = Data
-    if Data.Variant then ModelsByHash[joaat(Data.Variant)] = Data end
-    for i, C in ipairs(Data.Copies or {}) do
-        local Copy = {}
-        for K, V in pairs(Data) do Copy[K] = V end
-        Copy.Variant, Copy.Texture, Copy.Dict, Copy.Specular = C.Variant, C.Texture, C.Dict, C.Specular
-        Data.Copy[i + 1] = Copy
-        ModelsByHash[joaat(C.Variant)] = Copy
-    end
-end
+local ModelsByHash = Config.ModelsByHash -- base model and its copies all point at the model's config (sh_config.lua)
 
 local function LoadModel(Name)
     local Hash = joaat(Name)
@@ -64,7 +61,9 @@ function GetPropId(Entity)
     end
 end
 
+-- Old way only (models without Variants).
 function FindNearest(S, Coords)
+    if not next(S.Legacy) then return nil end
     local Best, BestModel, BestDist = nil, nil, S.Distance
 
     local Interior = S.SameInterior and GetInteriorFromEntity(PlayerPedId())
@@ -81,7 +80,7 @@ function FindNearest(S, Coords)
     if S.Anchor then
         -- Only the one prop closest to the anchor point (e.g. one monitor of the four on a bank desk)
         local Pick, PickModel, PickDist = nil, nil, 3.0
-        for Hash, Model in pairs(S.Models) do
+        for Hash, Model in pairs(S.Legacy) do
             local Entity = GetClosestObjectOfType(S.Anchor.x, S.Anchor.y, S.Anchor.z, PickDist, Hash, false, false, false)
             local Dist = Entity ~= 0 and #(S.Anchor - GetEntityCoords(Entity))
             if Dist and Dist <= PickDist then Pick, PickModel, PickDist = Entity, Model, Dist end
@@ -89,11 +88,11 @@ function FindNearest(S, Coords)
         if Pick then Check(Pick, PickModel) end
     elseif S.Placed then
         for _, Prop in pairs(GetPlacedProps()) do
-            local Model = S.Models[joaat(Prop.Model)]
+            local Model = S.Legacy[joaat(Prop.Model)]
             if Model and Prop.Entity and DoesEntityExist(Prop.Entity) then Check(Prop.Entity, Model) end
         end
     else
-        for Hash, Model in pairs(S.Models) do
+        for Hash, Model in pairs(S.Legacy) do
             local Entity = GetClosestObjectOfType(Coords.x, Coords.y, Coords.z, BestDist, Hash, false, false, false)
             if Entity ~= 0 then Check(Entity, Model) end
         end
@@ -101,7 +100,7 @@ function FindNearest(S, Coords)
 
     -- Static copies are script entities, which GetClosestObjectOfType skips: check them directly
     for _, Obj in pairs(S.Proxies or {}) do
-        if Obj and DoesEntityExist(Obj) then Check(Obj, S.Models[GetEntityModel(Obj)]) end
+        if Obj and DoesEntityExist(Obj) and S.Legacy[GetEntityModel(Obj)] then Check(Obj, S.Legacy[GetEntityModel(Obj)]) end
     end
 
     return Best, BestModel
@@ -208,9 +207,7 @@ function LoadScreen(S, Model)
         SetDuiUrl(S.Dui, S.Url)
     else
         S.Dui, S.Width, S.Height = CreateDui(S.Url, W, H), W, H
-        TexCount = TexCount + 1
-        S.Tex = ('dui_%d'):format(TexCount) -- runtime textures can't be recreated, new name per DUI
-        CreateRuntimeTextureFromDuiHandle(Txd, S.Tex, GetDuiHandle(S.Dui))
+        S.Tex = NewDuiTexture(S.Dui)
 
         local Deadline = GetGameTimer() + 4000
         while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(50) end
@@ -244,7 +241,7 @@ end
 -- to the screen's model there (keeps its exact position / rotation), so it gets the DUI texture.
 local function Swap(S, P, On)
     if not S.SwapFrom then return end
-    local From, To = joaat(S.SwapFrom), next(S.Models)
+    local From, To = joaat(S.SwapFrom), next(S.Legacy)
     if On then CreateModelSwap(P.x, P.y, P.z, 1.0, From, To, false) else RemoveModelSwap(P.x, P.y, P.z, 1.0, From, To, false) end
 end
 
@@ -260,7 +257,7 @@ CreateThread(function()
     while true do
         local C = GetEntityCoords(PlayerPedId())
         for _, S in pairs(Screens) do
-            local Hash = S.Static and next(S.Models)
+            local Hash = S.Static and next(S.Legacy)
             for i, P in ipairs(Hash and S.Static or {}) do
                 local Near, Obj = #(C - vector3(P.x, P.y, P.z)) < 60.0, S.Proxies[i]
                 if Near and Obj == nil then
@@ -291,6 +288,7 @@ CreateThread(function()
 end)
 
 local function Destroy(S)
+    PoolRelease(S)
     ClearProxies(S)
     if Focused and Focused.S == S then StopFocus() end
     S.Loading = false
@@ -313,8 +311,8 @@ end
     Static   = { vector4(x, y, z, heading), ... }: positions of the model placed as static map props (see above)
     SwapFrom = 'map_model': the props at the Static points are this model, swapped to the screen's model there
     MirrorKeys = true: watchers get the typed characters (default: * so passwords don't leak)
-    Copy     = 2, 3, ...: use the model's extra copy (Config.Models[x].Copies) instead of its Variant, for a 2nd screen
-               on the prop next to it. Two screens never take the same prop.
+
+    Distance / Placed / Anchor / Static / SwapFrom / SameInterior only matter for models without Variants (old way).
 ]]
 local function RegisterScreen(Name, Options)
     if Screens[Name] then Destroy(Screens[Name]) end
@@ -324,28 +322,45 @@ local function RegisterScreen(Name, Options)
         SameInterior = Options.SameInterior == true, MirrorKeys = Options.MirrorKeys == true,
         Anchor = Options.Anchor and vector3(Options.Anchor.x, Options.Anchor.y, Options.Anchor.z),
         Static = Options.Static, Proxies = {}, SwapFrom = Options.SwapFrom,
-        Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {},
+        Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {}, Legacy = {},
     }
-    local Copy = Options.Copy or 1
     for _, Model in ipairs(Options.Models or {}) do
-        local Data = Config.Models[Model] and Config.Models[Model].Copy[Copy] -- models without that copy are skipped
+        local Data = Config.Models[Model]
         if Data then
             S.Models[joaat(Model)] = Data
-            if Data.Variant then S.Models[joaat(Data.Variant)] = Data end
-        elseif not Config.Models[Model] then
+            for _, V in ipairs(Data.Variants or {}) do S.Models[V.Hash] = Data end
+            if not Data.Variants then S.Legacy[joaat(Model)] = Data end
+        else
             print(('[fw-dui] %s: model %s is not in fw-dui Config.Models'):format(Name, Model))
         end
     end
     Screens[Name] = S
 end
 
--- Locks the screen on Entity (range check stops moving it). Yields until the page is loaded.
--- Returns true + the entity now showing the page (it changes when the prop was swapped to its Variant).
+-- Starts using the screen on Entity. Yields until the page is loaded.
+-- Returns true + the entity now showing the page (it changes when the prop was swapped to a copy),
+-- or false + a reason ('busy' = someone uses this prop, 'full' = both copies in use at this location).
 local function Show(Name, Entity)
     local S = Screens[Name]
     local Model = S and DoesEntityExist(Entity) and S.Models[GetEntityModel(Entity)]
-    if not Model then return false end
+    if not Model then return false, 'model' end
 
+    if Model.Variants then
+        if S.Active and S.Entity == Entity then return true, S.Entity end
+        PoolRelease(S)
+        S.Locked = true
+        local Active, Reason = PoolClaim(S, Entity, Model)
+        if not Active or Screens[Name] ~= S then
+            S.Locked = false
+            return false, Reason
+        end
+        S.Active, S.Entity, S.Model = Active, Active.Slot.Entity, Model
+        MirrorPoolStart(S)
+        TriggerEvent('fw-dui:Client:Shown', S.Name, S.Entity, GetPropId(S.Entity))
+        return true, S.Entity
+    end
+
+    PoolRelease(S)
     S.Locked, S.Watching = true, nil
     if not LoadScreen(S, Model) then
         S.Locked = false
@@ -355,16 +370,25 @@ local function Show(Name, Entity)
     return true, S.Entity
 end
 
--- Unlocks the screen; the page stays on the prop and the range check takes over again.
+-- Done using it. Variant models: the copy goes back to the original prop for everyone, the variant is free again.
+-- Old way: the page stays on the prop and the range check takes over again.
 local function Release(Name)
-    if Screens[Name] then Screens[Name].Locked = false end
+    local S = Screens[Name]
+    if not S then return end
+    if S.Active then
+        PoolRelease(S)
+        S.Entity, S.Model = nil, nil
+        TriggerEvent('fw-dui:Client:Hidden', Name)
+    end
+    S.Locked = false
 end
 
 -- MirrorData: what players watching you get instead of Data (e.g. balances hidden); false = not mirrored.
 function Send(Name, Action, Data, MirrorData)
     local S = Screens[Name]
-    if not S or not S.Loaded then return end
-    SendDuiMessage(S.Dui, json.encode({ action = Action, data = Data }))
+    local V = S and View(S)
+    if not V or not V.Loaded then return end
+    SendDuiMessage(V.Dui, json.encode({ action = Action, data = Data }))
     if MirrorData ~= false then MirrorPush(S, { 'msg', Action, MirrorData == nil and Data or MirrorData }) end
 end
 
@@ -372,15 +396,18 @@ end
 
 -- The desktop draws its own cursor: the page can't see the mouse while it's over an app window (iframe).
 function DesktopCursor(S, X, Y, Visible)
-    if S.Desktop and S.Loaded then
-        SendDuiMessage(S.Dui, json.encode({ action = 'desktop:cursor', data = { x = X, y = Y, visible = Visible } }))
+    local V = View(S)
+    if S.Desktop and V.Loaded then
+        SendDuiMessage(V.Dui, json.encode({ action = 'desktop:cursor', data = { x = X, y = Y, visible = Visible } }))
     end
 end
 
 -- Apps = { { id, label, icon = 'fas fa-...', color, url, width, height }, ... }, Open = app id to open (optional).
--- Local only: every client sets the apps for the computer it shows.
+-- Variant models: mirrored, watchers get the same apps. Old way: local, every client sets the apps for the computer it shows.
 local function SetApps(Name, Apps, Open)
-    Send(Name, 'desktop:setup', { apps = Apps or {}, open = Open }, false)
+    local Mirror = false
+    if Screens[Name] and Screens[Name].Active then Mirror = nil end
+    Send(Name, 'desktop:setup', { apps = Apps or {}, open = Open }, Mirror)
 end
 
 -- Message for one app; it receives { action = Action, data = Data }. MirrorData as in Send.
@@ -403,12 +430,24 @@ exports('GetEntity', function(Name) return Screens[Name] and Screens[Name].Entit
 exports('GetPropId', GetPropId)
 -- Base model name of an entity, also when it is the Variant copy (nil = not a screen model)
 exports('GetBaseModel', function(Entity) local Data = ModelsByHash[GetEntityModel(Entity)] return Data and Data.Name end)
-exports('GetVariant', function(Model) return Config.Models[Model] and Config.Models[Model].Variant end)
--- All screen copies of a model: { Variant, Copies[1].Variant, ... }
+-- First copy of a model (nil = none), and all of them
+exports('GetVariant', function(Model)
+    local V = Config.Models[Model] and Config.Models[Model].Variants
+    return V and V[1].Model ~= Model and V[1].Model or nil
+end)
 exports('GetVariants', function(Model)
     local List = {}
-    for _, C in ipairs(Config.Models[Model] and Config.Models[Model].Copy or {}) do List[#List + 1] = C.Variant end
+    for _, V in ipairs(Config.Models[Model] and Config.Models[Model].Variants or {}) do
+        if V.Model ~= Model then List[#List + 1] = V.Model end
+    end
     return List
+end)
+exports('IsInUse', function(Entity) -- a player uses this prop right now (pool)
+    local C = GetEntityCoords(Entity)
+    for _, R in pairs(Pool) do
+        if #(R.Coords - C) < 0.35 then return true, R.Owner end
+    end
+    return false
 end)
 -- Name of the screen showing its page on Entity, if any
 exports('GetScreenOf', function(Entity)
@@ -497,11 +536,12 @@ end, false)
 
 -- /duidebug: what every screen is doing (F8). Black screen? Check Loaded, the URL and the texture lines.
 RegisterCommand('duidebug', function()
+    PoolDebug()
     print('[fw-dui] ---- screens ----')
     for Name, S in pairs(Screens) do
         local M = S.Model
-        print(('%s | url=%s | loaded=%s locked=%s watching=%s | entity=%s'):format(
-            Name, tostring(S.Url), tostring(S.Loaded), tostring(S.Locked), tostring(S.Watching ~= nil), tostring(S.Entity)))
+        print(('%s | url=%s | loaded=%s locked=%s watching=%s | entity=%s | in use: %s'):format(
+            Name, tostring(S.Url), tostring(View(S).Loaded), tostring(S.Locked), tostring(S.Watching ~= nil), tostring(S.Entity), S.Active and S.Active.Key or 'no'))
         if M then
             local Dict = M.Dict or M.Variant or M.Name
             print(('  model=%s variant=%s (streamed=%s) | %s = %s/%s | prop now=%s'):format(

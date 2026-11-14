@@ -78,7 +78,7 @@ Config.Zones = {
 -- ATM screen (DUI on the ATM itself, drawn by fw-dui). Screen textures + cameras: fw-dui/config/sh_config.lua
 Config.ATM = {
     BankName = 'FLEECA',
-    RenderDistance = 15.0,  -- the nearest ATM within this range shows the idle screen
+    RenderDistance = 15.0,  -- (unused since fw-dui location pools: idle ATMs keep their normal screen)
     CursorSensitivity = 13.0,
     TestCommand = 'atmtest', -- opens the nearest ATM (false to disable)
 
@@ -92,8 +92,10 @@ Config.ATM = {
     -- Cash = where the cash prop slides out (offsets from the ATM).
     -- Sheet = true: the screen is only a corner of a shared texture (stock prop_fleeca_atm uses prop_fleece_emis),
     -- so the page squeezes its UI into that corner. Leave it off when the model has its own screen texture.
+    -- IdleSheet = the same for the idle screen on the original model (fw-dui Idle). Stock prop_fleeca_atm: set its fw-dui
+    -- Idle = { Texture = 'prop_fleece_emis' } and IdleSheet = true here (the sign panels on that sheet go dark).
     Models = {
-        ['prop_fleeca_atm'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } }, -- own screen in prop_fleeca_atm_dui
+        ['prop_fleeca_atm'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 }, IdleSheet = true }, -- copies: own screen texture; idle: prop_fleece_emis
         ['prop_atm_01'] = { Cash = { X = -0.05, StartY = -0.20, EndY = -0.35, Z = 0.75 } },
         ['prop_atm_02'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
         ['prop_atm_03'] = { Cash = { X = -0.11, StartY = 0.15, EndY = -0.15, Z = 0.95 } },
@@ -109,5 +111,7 @@ Config.ATM = {
         take_cash = 'Please take your cash',
         no_accounts = 'No accounts found',
         no_atm = 'No ATM nearby',
+        atm_busy = 'Someone is using this ATM',
+        atms_full = 'All ATMs here are busy, try again in a moment',
     },
 }

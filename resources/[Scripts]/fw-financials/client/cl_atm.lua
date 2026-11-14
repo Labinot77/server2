@@ -1,17 +1,16 @@
--- ATM on the ATM's own screen (was osm-atmdui). fw-dui shows the page on the nearest ATM and handles
--- the camera + cursor; this file owns the session state and hit-tests clicks against cl_atm_layout.lua.
-
--- Two screens: 'atm' (the _dui copy) and 'atm_2' (the _dui_02 copy), so two ATMs side by side can both show a page.
--- A session runs on the one showing the ATM you use (ATM.Screen).
-local SCREENS = { 'atm', 'atm_2' }
-local IsScreen = { atm = true, atm_2 = true }
+-- ATM on the ATM's own screen (was osm-atmdui). fw-dui handles the page, camera + cursor; this file owns the session
+-- state and hit-tests clicks against cl_atm_layout.lua.
+-- The ATM you use gets one of its model's two screen copies (fw-dui location pool, the server picks a free one), so
+-- two players at ATMs next to each other both have their own screen, and everyone around sees it. Idle ATMs show
+-- one shared idle screen (fw-dui idle page, see fw-dui:Client:Idle below).
+local SCREEN = 'atm'
 local DUI = exports['fw-dui']
 
-local ATM = { InSession = false, Busy = false, Entity = nil, Model = nil, Hover = nil, Screen = nil, State = { screen = 'idle' } }
+local ATM = { InSession = false, Busy = false, Entity = nil, Model = nil, Hover = nil, State = { screen = 'idle' } }
 
 -- ── Helpers ────────────────────────────────────────────────────────────────
 
-local function Send(Action, Data, MirrorData, Name) DUI:Send(Name or ATM.Screen or SCREENS[1], Action, Data, MirrorData) end
+local function Send(Action, Data, MirrorData) DUI:Send(SCREEN, Action, Data, MirrorData) end
 
 -- What players watching you see: the same screen, balances as **.
 local function Masked(State)
@@ -210,7 +209,7 @@ end
 
 -- Keyboard (fw-dui typing): digits, Backspace and Enter on the withdraw screen.
 AddEventHandler('fw-dui:Client:Key', function(Name, Key)
-    if Name ~= ATM.Screen or not ATM.InSession or ATM.State.screen ~= 'withdraw' then return end
+    if Name ~= SCREEN or not ATM.InSession or ATM.State.screen ~= 'withdraw' then return end
     local Id = Key:match('^%d$') and 'key_' .. Key or (Key == 'Backspace' and 'key_del') or (Key == 'Enter' and 'submit')
     if Id then OnClick(Id) end
 end)
@@ -229,23 +228,20 @@ local function StartATM(Entity)
     TaskTurnPedToFaceEntity(PlayerPedId(), Entity, 800)
     Wait(600)
 
-    -- The screen already showing this ATM, else the first one that takes its model
-    local Shown, ScreenEntity
-    local Owner = DUI:GetScreenOf(Entity)
-    for _, Name in ipairs(IsScreen[Owner] and { Owner } or SCREENS) do
-        Shown, ScreenEntity = DUI:Show(Name, Entity)
-        if Shown then ATM.Screen = Name break end
-    end
+    local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
     if not Shown then
         ATM.InSession = false
-        return
+        local Text = Config.ATM.Text
+        if ScreenEntity == 'busy' then return FW.Functions.Notify(Text.atm_busy or 'Someone is using this ATM', 'error') end
+        if ScreenEntity == 'full' then return FW.Functions.Notify(Text.atms_full or 'All ATMs here are busy, try again in a moment', 'error') end
+        return FW.Functions.Notify(('ATM screen failed (%s), see /duitrace'):format(tostring(ScreenEntity)), 'error')
     end
     ATM.Entity = ScreenEntity -- the screen copy when fw-dui swapped the ATM
     Push()
 
     exports['fw-assets']:RequestAnimationDict('amb@prop_human_atm@male@idle_a')
     TaskPlayAnim(PlayerPedId(), 'amb@prop_human_atm@male@idle_a', 'idle_a', 8.0, -8.0, -1, 1, 0, false, false, false)
-    DUI:Focus(ATM.Screen, { X = 50.0, Y = 72.0, Sensitivity = Config.ATM.CursorSensitivity })
+    DUI:Focus(SCREEN, { X = 50.0, Y = 72.0, Sensitivity = Config.ATM.CursorSensitivity })
 
     local Result = FW.SendCallback('fw-financials:Server:ATM:GetAccounts') or {}
     if not ATM.InSession then return end
@@ -274,8 +270,8 @@ function EndATM()
         if ATM.InSession then return end
         ATM.State = { screen = 'idle' }
         Push()
-        DUI:Release(ATM.Screen) -- back to the nearest ATM in range
-        ATM.Entity, ATM.Model, ATM.Busy, ATM.Screen = nil, nil, false, nil
+        DUI:Release(SCREEN) -- the ATM gets its normal screen back, the copy is free for the next player
+        ATM.Entity, ATM.Model, ATM.Busy = nil, nil, false
     end)
 end
 
@@ -304,50 +300,51 @@ end
 local function RegisterScreen()
     local Models = {}
     for Model in pairs(Config.ATM.Models) do Models[#Models + 1] = Model end
-    for Copy, Name in ipairs(SCREENS) do
-        DUI:RegisterScreen(Name, {
-            Url = ('nui://%s/html/atm/index.html'):format(GetCurrentResourceName()),
-            Models = Models, -- atm_2 only gets the models with a 2nd copy (fw-dui Copies)
-            Copy = Copy,
-            Distance = Config.ATM.RenderDistance,
-            Mirror = true, -- players nearby see your ATM screen (balances hidden)
-        })
-    end
+    DUI:RegisterScreen(SCREEN, {
+        Url = ('nui://%s/html/atm/index.html'):format(GetCurrentResourceName()),
+        Models = Models,
+        Mirror = true, -- players nearby see your ATM screen (balances hidden)
+    })
 end
 
--- The page was (re)loaded on an ATM: send the static setup, idle unless that ATM is in use.
-AddEventHandler('fw-dui:Client:Shown', function(Name, Entity)
-    if not IsScreen[Name] then return end
-    Send('INIT', {
+local function InitData(Model, Idle)
+    local M = Config.ATM.Models[Model]
+    return {
         layout = ATM_Layout,
         bankName = Config.ATM.BankName,
         quickAmounts = Config.ATM.Withdraw.QuickAmounts,
         dailyLimit = Config.ATM.Withdraw.DailyLimit,
-        model = ModelOf(Entity),
-        sheet = Config.ATM.Models[ModelOf(Entity)] and Config.ATM.Models[ModelOf(Entity)].Sheet == true,
-    }, nil, Name)
-    if Name == ATM.Screen then Push() else Send('STATE', { screen = 'idle' }, nil, Name) end
+        model = Model,
+        sheet = M and (Idle and M.IdleSheet or M.Sheet) == true,
+    }
+end
+
+-- Your ATM's page is loaded: the static setup, then your session (mirrored, so players around get it too).
+AddEventHandler('fw-dui:Client:Shown', function(Name, Entity)
+    if Name ~= SCREEN then return end
+    Send('INIT', InitData(ModelOf(Entity)))
+    Push()
 end)
 
--- Stopped watching another player's ATM: back to your own (idle) screen.
-AddEventHandler('fw-dui:Client:WatchEnded', function(Name)
-    if not IsScreen[Name] or (ATM.InSession and Name == ATM.Screen) then return end
-    Send('CURSOR', { visible = false }, false, Name)
-    Send('STATE', { screen = 'idle' }, false, Name)
+-- The idle page of an ATM model (shared by every ATM of that model nobody uses): setup + the idle screen.
+AddEventHandler('fw-dui:Client:Idle', function(Name, Model)
+    if Name ~= SCREEN or not Config.ATM.Models[Model] then return end
+    DUI:SendIdle(SCREEN, Model, 'INIT', InitData(Model, true))
+    DUI:SendIdle(SCREEN, Model, 'STATE', { screen = 'idle' })
 end)
 
 AddEventHandler('fw-dui:Client:Cursor', function(Name, X, Y)
-    if Name ~= ATM.Screen then return end
+    if Name ~= SCREEN then return end
     ATM.Hover = HitTest(X, Y)
     Send('CURSOR', { x = X, y = Y, hover = ATM.Hover, visible = true })
 end)
 
 AddEventHandler('fw-dui:Client:Click', function(Name)
-    if Name == ATM.Screen then OnClick(ATM.Hover) end
+    if Name == SCREEN then OnClick(ATM.Hover) end
 end)
 
 AddEventHandler('fw-dui:Client:Closed', function(Name)
-    if Name == ATM.Screen then EndATM() end
+    if Name == SCREEN then EndATM() end
 end)
 
 AddEventHandler('onClientResourceStart', function(Resource)

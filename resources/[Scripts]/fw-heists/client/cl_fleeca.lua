@@ -47,7 +47,7 @@ AddEventHandler("fw-heists:Client:HeistLaptopUsed", function(Laptop)
     end
 
     local Coords = GetEntityCoords(PlayerPedId())
-    if #(BankData.Vault - Coords) > 1.5 then
+    if BankData.Advanced or #(BankData.Vault - Coords) > 1.5 then -- advanced banks: the laptop is Bugger (cl_fleeca_laptop.lua)
         return
     end
 

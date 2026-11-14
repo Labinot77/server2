@@ -3,7 +3,9 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fleeca ATM screen (DUI). Pure renderer: Lua owns all state and sends
 //   INIT   { layout, bankName, quickAmounts, dailyLimit, model, sheet }
-//          sheet = the screen is a corner of a shared texture sheet (stock Fleeca ATM): squeeze the UI into it
+//          sheet = the screen is a corner of a shared texture sheet (stock Fleeca ATM): squeeze the UI into it.
+//                  The rest of the sheet (the lit sign panels) is drawn from html/atm/prop_fleece_emis.png when it exists
+//                  (the original texture exported from the game), otherwise those parts stay dark.
 //   STATE  { screen, accounts, accIndex, amount, history, result, toast, processing, ... }
 //   CURSOR { x, y, hover, visible }   (percent of screen)
 //   PRESS  { id }                     (click flash)
@@ -41,6 +43,7 @@ export default function App() {
   const [cursor, setCursor] = useState<{ x: number; y: number; hover?: string | null; visible: boolean }>({ x: 50, y: 72, hover: null, visible: false });
   const [pressed, setPressed] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [sheetArt, setSheetArt] = useState(true); // false = prop_fleece_emis.png missing
   const pressTimer = useRef<number>();
 
   useEffect(() => {
@@ -80,6 +83,10 @@ export default function App() {
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-transparent">
+      {sheet && sheetArt && (
+        <img src="./prop_fleece_emis.png" alt="" onError={() => setSheetArt(false)}
+          className="absolute inset-0 w-full h-full pointer-events-none" style={{ objectFit: 'fill' }} />
+      )}
       <div
         className="w-full h-full relative overflow-hidden bg-fleeca-paper text-fleeca-ink select-none"
         style={sheet ? { transformOrigin: 'top left', transform: 'translate(0.39vw, 50.78vh) scale(0.4921, 0.4648)' } : undefined}

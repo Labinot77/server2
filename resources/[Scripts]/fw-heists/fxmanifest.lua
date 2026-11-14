@@ -18,4 +18,5 @@ server_scripts {
     'server/**/*',
 }
 
-files { 'html/**/*' } -- DUI apps (fleeca laptop + terminal)
+ui_page 'html/hints.html' -- key hints (trolley grab)
+files { 'html/**/*' } -- DUI apps (fleeca laptop + terminal) + hints

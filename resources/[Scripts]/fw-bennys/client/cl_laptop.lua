@@ -1,5 +1,5 @@
--- Business laptop. fw-dui shows its computer desktop on the nearest placed laptop (range, texture, camera,
--- cursor); this file puts the apps on it: "Work Orders" (html/laptop.html, live orders of the laptop's business)
+-- Business laptop. fw-dui shows its computer desktop on the laptop in use (texture, camera, cursor; models with
+-- screen copies get a free copy per location, so two laptops in one shop both work); this file puts the apps on it: "Work Orders" (html/laptop.html, live orders of the laptop's business)
 -- and "Management" (html/management.html, see cl_management.lua).
 -- Mirror: players nearby also see what the user does on it.
 -- Laptops are fw-admin placed props inside a business Area (server/sv_orders.lua -> LoadLaptops).
@@ -108,6 +108,7 @@ function OpenLaptop(Entity, Business)
     if not Shown then
         Laptop.Open = false
         TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId)
+        if ScreenEntity == 'full' then return FW.Functions.Notify("Both laptop screens here are in use, try again in a moment.", "error") end
         return FW.Functions.Notify("The laptop couldn't be loaded.", "error")
     end
     Entity = ScreenEntity -- the screen copy when fw-dui swapped the laptop
@@ -170,14 +171,14 @@ CreateThread(function()
 end)
 
 -- Live updates for whatever the screen shows (members via cl_orders.lua, everyone else via Laptop:View).
--- Not mirrored: every watcher gets the same list from the server.
+-- Mirrored: players watching a laptop in use get the user's page, list included.
 AddEventHandler('fw-bennys:Client:Laptop:Orders', function(Business, List)
-    if Laptop.ShownBusiness == Business then Send('orders', List, false) end
+    if Laptop.ShownBusiness == Business then Send('orders', List) end
 end)
 
 RegisterNetEvent('fw-bennys:Client:Laptop:View', function(Business, List)
     ViewOrders[Business] = List
-    if Laptop.ShownBusiness == Business then Send('orders', List, false) end
+    if Laptop.ShownBusiness == Business then Send('orders', List) end
 end)
 
 -- ── Page -> client ─────────────────────────────────────────────────────────
@@ -284,13 +285,14 @@ function LaptopCanInteract(Entity)
     return LaptopBlockReason(Entity) == nil
 end
 
--- Laptop models + their fw-dui screen copies (the laptop showing the page is swapped to its copy).
+-- Laptop models + their fw-dui screen copies (the laptop in use is swapped to a copy).
 local function GetLaptopModels()
     local List = {}
     for Model in pairs(Config.Laptop.Models) do
         List[#List + 1] = Model
-        local Variant = GetResourceState('fw-dui') == 'started' and DUI:GetVariant(Model)
-        if Variant then List[#List + 1] = Variant end
+        for _, Variant in ipairs(GetResourceState('fw-dui') == 'started' and DUI:GetVariants(Model) or {}) do
+            List[#List + 1] = Variant
+        end
     end
     return List
 end

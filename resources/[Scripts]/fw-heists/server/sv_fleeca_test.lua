@@ -49,7 +49,7 @@ Actions = {
     items = function(Source)
         local Player = FW.Functions.GetPlayer(Source)
         Player.Functions.AddItem(Cfg.Items.Cutters, 1, false, nil, true)
-        Player.Functions.AddItem(Cfg.Items.Laptop, 1, false, nil, true)
+        Player.Functions.AddItem(Cfg.Items.Laptop, 1, false, nil, true, Cfg.Items.LaptopType) -- green = Bugger
         Player.Functions.AddItem('heist-drill-basic', 1, false, nil, true) -- loot spots (Overvallen)
         Say(Source, ('Gave %s + %s + heist-drill-basic'):format(Cfg.Items.Cutters, Cfg.Items.Laptop))
     end,
@@ -60,9 +60,8 @@ Actions = {
         Say(Source, 'Power box open: next is [E] Hack network')
     end,
     hack = function(Source, Id)
-        Set(Id, 'box-open', 1)
-        Set(Id, 'powerbox', 1)
-        Say(Source, 'Network hacked (no minigame, no reset timer): the terminal accepts the password now')
+        local Code = FleecaAdvHacked(Source, Id, false)
+        Say(Source, ('Network hacked (no minigame, no reset timer). Staff door keypad code: %s'):format(Code))
     end,
     staff = function(Source, Id)
         TriggerEvent('fw-doors:Server:SetLockStateById', Config.Fleeca[Id].DoorIds[Config.FleecaKeypad.DoorId], 0)
@@ -97,7 +96,8 @@ Actions = {
     end,
     code = function(Source, Id)
         local Live = FleecaAdvState(Id).Code
-        if not Live then return Say(Source, 'No live code, generate one on the terminal first') end
+        local Backdoor = FleecaAdvState(Id).Backdoor
+        if not Live then return Say(Source, ('Staff door keypad: %s | no live terminal code'):format(Backdoor or 'not hacked yet')) end
         Say(Source, ('Door code: %s for %s (%ds left)'):format(Live.Code, Config.Fleeca[Id].Advanced.Doors[Live.Door].Label, Live.Expires - os.time()))
     end,
 
@@ -107,7 +107,7 @@ Actions = {
         Say(Source, ('Fleeca %d (%s) | test mode %s'):format(Id, Config.Fleeca[Id].Advanced.Name, tostring(GlobalState.FleecaTest == true)),
             ('box-open=%s powerbox=%s door-lockpicked=%s vault=%s vault-gate=%s'):format(Get(Id, 'box-open'), Get(Id, 'powerbox'), Get(Id, 'door-lockpicked'), Get(Id, 'vault'), Get(Id, 'vault-gate')),
             'Doors: ' .. table.concat(Doors, ', '),
-            ('Password: %s | live code: %s | global cooldown: %s'):format(Bank.Password, Bank.Code and Bank.Code.Code or 'none', tostring(DataManager.Get('GlobalCooldown', false))))
+            ('Password: %s | live code: %s | keypad backdoor: %s | global cooldown: %s'):format(Bank.Password, Bank.Code and Bank.Code.Code or 'none', Bank.Backdoor or 'none', tostring(DataManager.Get('GlobalCooldown', false))))
     end,
 
     reset = function(Source, Id)

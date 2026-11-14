@@ -89,14 +89,15 @@ end)
   exports.interact:AddModelInteraction({
         modelData = {
             { model = 'prop_fleeca_atm', offset = vec3(0.0, 0.0, 1.0) },
-            { model = 'prop_fleeca_atm_dui', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui screen copy
-            { model = 'prop_fleeca_atm_dui_02', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui 2nd screen copy
+            { model = 'prop_fleeca_atm_dui_01', offset = vec3(0.0, 0.0, 1.0) }, -- fw-dui screen copies (ATM in use)
+            { model = 'prop_fleeca_atm_dui_02', offset = vec3(0.0, 0.0, 1.0) },
         },
         distance = 3.0,
         interactDst = 1.5,
         options = {
             {
                 label = 'ATM',
+                canInteract = function(entity) return not exports['fw-dui']:IsInUse(entity) end, -- someone else on it
                 action = function(entity, coords, args)
                     OpenATM(entity)
                 end,
@@ -117,17 +118,21 @@ end)
     exports.interact:AddModelInteraction({
         modelData = {
             { model = 'prop_atm_01', offset = vec3(-0.05, -0.15, 1.1) },
-            { model = 'prop_atm_01_dui', offset = vec3(-0.05, -0.15, 1.1) }, -- fw-dui screen copy
+            { model = 'prop_atm_01_dui_01', offset = vec3(-0.05, -0.15, 1.1) }, -- fw-dui screen copies (ATM in use)
+            { model = 'prop_atm_01_dui_02', offset = vec3(-0.05, -0.15, 1.1) },
             { model = 'prop_atm_02', offset = vec3(-0.05, -0.15, 1.1) },
-            { model = 'prop_atm_02_dui', offset = vec3(-0.05, -0.15, 1.1) }, -- fw-dui screen copy
+            { model = 'prop_atm_02_dui_01', offset = vec3(-0.05, -0.15, 1.1) },
+            { model = 'prop_atm_02_dui_02', offset = vec3(-0.05, -0.15, 1.1) },
             { model = 'prop_atm_03', offset = vec3(0.0, -0.05, 1.0) },
-            { model = 'prop_atm_03_dui', offset = vec3(0.0, -0.05, 1.0) }, -- fw-dui screen copy
+            { model = 'prop_atm_03_dui_01', offset = vec3(0.0, -0.05, 1.0) },
+            { model = 'prop_atm_03_dui_02', offset = vec3(0.0, -0.05, 1.0) },
         },
         distance = 3.0,
         interactDst = 1.5,
         options = {
             {
                 label = 'ATM',
+                canInteract = function(entity) return not exports['fw-dui']:IsInUse(entity) end, -- someone else on it
                 action = function(entity, coords, args)
                     OpenATM(entity)
                 end,
@@ -139,9 +144,11 @@ end)
         modelData = {
             -- No offset: keeps the ATM offset set above (a new offset would overwrite it)
             { model = 'prop_atm_02' },
-            { model = 'prop_atm_02_dui' }, -- fw-dui screen copy
+            { model = 'prop_atm_02_dui_01' }, -- fw-dui screen copies
+            { model = 'prop_atm_02_dui_02' },
             { model = 'prop_atm_03' },
-            { model = 'prop_atm_03_dui' }, -- fw-dui screen copy
+            { model = 'prop_atm_03_dui_01' },
+            { model = 'prop_atm_03_dui_02' },
         },
         distance = 3.0,
         interactDst = 1.5,

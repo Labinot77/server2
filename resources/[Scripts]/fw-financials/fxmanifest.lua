@@ -15,4 +15,7 @@ server_scripts {
     'sv_config.lua',
     'server/*.lua',
 }
-files { 'html/atm/index.html' } -- ATM page, built from web-atm/ (npm run build)
+files {
+    'html/atm/index.html', -- ATM page, built from web-atm/ (npm run build)
+    'html/atm/*.png',      -- prop_fleece_emis.png: the stock Fleeca ATM sheet behind the idle screen (export from the game)
+}

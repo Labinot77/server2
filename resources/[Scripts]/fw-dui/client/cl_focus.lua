@@ -6,6 +6,16 @@
 
 Focused = nil -- { S, Cam, Transition, X, Y, Options, Closeable }
 
+-- HUD + minimap off while focused (pdwatch etc. turn the radar on themselves, so it's forced off every frame).
+-- Other HUDs: listen to fw-dui:Client:Focus (true / false) or set Config.OnFocus.
+local function SetHud(Focused, F)
+    if Focused then F.Radar = not IsRadarHidden() end
+    DisplayRadar(not Focused and F.Radar)
+    TriggerEvent('hud:client:ToggleHUD', not Focused)
+    TriggerEvent('fw-dui:Client:Focus', Focused)
+    if Config.OnFocus then Config.OnFocus(Focused) end
+end
+
 local function Clamp(V) return math.max(0.0, math.min(100.0, V)) end
 
 local function SetInteractDisabled(Disabled)
@@ -43,7 +53,7 @@ function StopFocus()
     FreezeEntityPosition(PlayerPedId(), false)
     SetInteractDisabled(false)
     LocalPlayer.state:set('duiFocus', false, false)
-    TriggerEvent('hud:client:ToggleHUD', true)
+    SetHud(false, F)
 end
 
 local function Focus(Name, Options)
@@ -70,14 +80,16 @@ local function Focus(Name, Options)
     SetInteractDisabled(true)
     -- Other resources skip their keys while this is set (fw-core FW.AddKeybind, fw-inventory hotbar).
     LocalPlayer.state:set('duiFocus', true, false)
-    TriggerEvent('hud:client:ToggleHUD', false)
+    SetHud(true, F)
 
     CreateThread(function()
         local Sensitivity, Last = Options.Sensitivity or Config.CursorSensitivity, nil
+        local V = View(S) -- the pool slot while the screen is in use on a Variant model
         while Focused == F do
             DisableAllControlActions(0)
             EnableControlAction(0, 249, true) -- push to talk
             HideHudAndRadarThisFrame()
+            DisplayRadar(false)
 
             local Closed = not S.Entity or not DoesEntityExist(S.Entity) or IsEntityDead(PlayerPedId())
                 or (F.Closeable and not IsNuiFocused() -- an input dialog (fw-ui) is open: ESC is for that dialog
@@ -95,7 +107,7 @@ local function Focus(Name, Options)
             if Key ~= Last then
                 Last = Key
                 if Options.Mouse then
-                    SendDuiMouseMove(S.Dui, math.floor(F.X / 100 * S.Width), math.floor(F.Y / 100 * S.Height))
+                    SendDuiMouseMove(V.Dui, math.floor(F.X / 100 * V.Width), math.floor(F.Y / 100 * V.Height))
                     DesktopCursor(S, F.X, F.Y, true)
                     MirrorPush(S, { 'move', F.X, F.Y })
                 else
@@ -104,10 +116,10 @@ local function Focus(Name, Options)
             end
 
             if Options.Mouse then
-                if IsDisabledControlJustPressed(0, 24) then SendDuiMouseDown(S.Dui, 'left') MirrorPush(S, { 'down' }) end
-                if IsDisabledControlJustReleased(0, 24) then SendDuiMouseUp(S.Dui, 'left') MirrorPush(S, { 'up' }) end
-                if IsDisabledControlJustPressed(0, 241) then SendDuiMouseWheel(S.Dui, 120, 0) MirrorPush(S, { 'wheel', 120 }) end
-                if IsDisabledControlJustPressed(0, 242) then SendDuiMouseWheel(S.Dui, -120, 0) MirrorPush(S, { 'wheel', -120 }) end
+                if IsDisabledControlJustPressed(0, 24) then SendDuiMouseDown(V.Dui, 'left') MirrorPush(S, { 'down' }) end
+                if IsDisabledControlJustReleased(0, 24) then SendDuiMouseUp(V.Dui, 'left') MirrorPush(S, { 'up' }) end
+                if IsDisabledControlJustPressed(0, 241) then SendDuiMouseWheel(V.Dui, 120, 0) MirrorPush(S, { 'wheel', 120 }) end
+                if IsDisabledControlJustPressed(0, 242) then SendDuiMouseWheel(V.Dui, -120, 0) MirrorPush(S, { 'wheel', -120 }) end
             elseif IsDisabledControlJustPressed(0, 24) then
                 TriggerEvent('fw-dui:Client:Click', Name, F.X, F.Y)
             end
