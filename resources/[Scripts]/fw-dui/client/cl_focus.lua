@@ -5,7 +5,8 @@
 --   Options.Sensitivity   -> cursor speed (default Config.CursorSensitivity)
 
 Focused = nil -- { S, Cam, Transition, X, Y, Options, Closeable }
-local Pending = nil -- camera already flying in while Show loads the page: { Name, Cam, Transition }
+local Pending = nil -- fly-in scheduled / running while Show loads the page: { Name, Cam?, Transition? }
+local LoadTimes = {} -- [model name] = ms the last Show of that model took
 
 local function CreateScreenCam(Entity, Model)
     local C = Model.Camera or Config.Camera
@@ -24,24 +25,33 @@ local function EaseBack(Cam, Transition)
     DestroyCam(Cam, false)
 end
 
--- Starts the fly-in the moment Show is called, so loading the page happens during it. Focus takes the camera over;
--- without a Focus within 2s after Show returned (lock refused, preview command, ...) it eases back.
-function StartPendingCamera(Name, Entity, Model)
+-- The fly-in is timed to END when the page is loaded: it starts (load time - Transition) ms after the click.
+-- Load time = how long this model took last time (Config.LoadEstimate the first time). Example: load 1000ms,
+-- Transition 500ms -> 500ms wait, then the fly-in. Focus takes the camera over (started or not); without a Focus
+-- within 2s after Show returned (lock refused, preview command, ...) it eases back.
+function ScheduleCamera(Name, Entity, Model)
     if Focused then return end
     CancelPendingCamera()
-    local Cam, Transition = CreateScreenCam(Entity, Model)
-    RenderScriptCams(true, true, Transition, true, true)
-    Pending = { Name = Name, Cam = Cam, Transition = Transition }
+    local P = { Name = Name }
+    Pending = P
+    local Transition = (Model.Camera or Config.Camera).Transition or Config.Camera.Transition
+    SetTimeout(math.max(0, (LoadTimes[Model.Name] or Config.LoadEstimate) - Transition), function()
+        if Pending ~= P or not DoesEntityExist(Entity) then return end
+        P.Cam, P.Transition = CreateScreenCam(Entity, Model)
+        RenderScriptCams(true, true, P.Transition, true, true)
+    end)
 end
 
-function ExpirePendingCamera(Name)
+function CameraLoaded(Name, Model, Ms)
+    LoadTimes[Model.Name] = Ms
+    Trace('shown %s in %d ms', Name, Ms) -- /duitrace
     local P = Pending
     if P and P.Name == Name then SetTimeout(2000, function() if Pending == P then CancelPendingCamera() end end) end
 end
 
 function CancelPendingCamera(Name)
     if not Pending or (Name and Pending.Name ~= Name) then return end
-    EaseBack(Pending.Cam, Pending.Transition)
+    if Pending.Cam then EaseBack(Pending.Cam, Pending.Transition) end
     Pending = nil
 end
 
@@ -97,7 +107,7 @@ local function Focus(Name, Options)
     Options = Options or {}
 
     local Cam, Transition
-    if Pending and Pending.Name == Name then -- already flying in since Show: keep going, no second transition
+    if Pending and Pending.Name == Name and Pending.Cam then -- already flying in: keep going, no second transition
         Cam, Transition, Pending = Pending.Cam, Pending.Transition, nil
     else
         CancelPendingCamera()

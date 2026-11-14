@@ -25,6 +25,11 @@ Config.MirrorDistance = 20.0
 Config.PoolRadius = 80.0
 Config.PoolRenderDistance = 35.0 -- in-use props within this range get their copy + page on your client
 Config.PoolLeaveDistance = 15.0  -- the user walked this far from the prop (for 10s): the variant is freed
+Config.IdleDistance = 20.0       -- idle pages (Idle = true) only render while a prop of the model is this close
+
+-- DUIs are created on use and destroyed after (no idle browsers). The fly-in is timed to end when the page is
+-- loaded, using how long that model took last time; this is the guess for the first open (ms).
+Config.LoadEstimate = 1500
 
 --[[
     How the page gets onto each model's screen:
