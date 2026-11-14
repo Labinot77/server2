@@ -10,16 +10,16 @@
 <style>
     .app-header {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
-        padding: 4vh 6% 1.2vh;
-        font-size: 1.8vh;
+        min-height: 4vh;
+        padding: 3.9vh 1vh 0.7vh 1.5vh;
+        font-size: 1.6vh;
     }
 
     h1 {
         margin: 0;
-        font-size: 2.8vh;
+        font-size: 1.6vh;
         font-weight: 700;
-        letter-spacing: -0.03vh;
     }
 </style>

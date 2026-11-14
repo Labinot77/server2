@@ -2,7 +2,7 @@
     position: relative;
     width: 100%;
     margin-bottom: 1.2vh;
-    font-family: Roboto;
+    font-family: Inter, Roboto, sans-serif;
     font-size: 1.15vh;
     font-weight: 500;
     color: var(--phone-muted);
@@ -28,12 +28,13 @@
     gap: 0.8vh;
     height: 3.4vh;
     padding: 0 1vh;
-    border-radius: 1vh;
-    background: var(--phone-card);
+    border-radius: 1.1vh;
+    border: 0.08vh solid transparent;
+    background: #292d34;
     transition: box-shadow 150ms;
 }
 
-.textfield-box:focus-within { box-shadow: 0 0 0 0.15vh var(--phone-accent); }
+.textfield-box:focus-within { border-color: var(--phone-accent); }
 .textfield-box > i { font-size: 1.3vh; color: var(--phone-muted); }
 
 .textfield-box > input {
@@ -45,7 +46,7 @@
     outline: none;
     background: transparent;
     color: white;
-    font-family: Roboto;
+    font-family: Inter, Roboto, sans-serif;
     font-size: 1.4vh;
 }
 
