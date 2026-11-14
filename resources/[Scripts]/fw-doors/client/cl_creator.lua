@@ -1,11 +1,10 @@
 Config = Config or {}
 Config.Creator = Config.Creator or {}
-Config.Creator.Command = Config.Creator.Command or 'doormenu'
 Config.Creator.Permissions = Config.Creator.Permissions or { 'admin', 'god' }
 Config.Creator.MaxAimDistance = Config.Creator.MaxAimDistance or 10.0
 Config.Creator.NearbyRadius = Config.Creator.NearbyRadius or 15.0
 
--- Door creator menu: /doormenu
+-- Door creator, opened from the admin panel (Utility > Add Door / Manage Doors).
 -- Aim at a door, press E, fill in the form, done. Saved server-side to data/doors.json.
 
 local Selecting = false
@@ -64,11 +63,7 @@ local function AimedObject()
     if Hit == 1 and Entity ~= 0 and GetEntityType(Entity) == 3 then return Entity end
 end
 
-local function Help(Text)
-    BeginTextCommandDisplayHelp('STRING')
-    AddTextComponentSubstringPlayerName(Text)
-    EndTextCommandDisplayHelp(0, false, false, -1)
-end
+local UI = exports['fw-ui']
 
 local function FindExistingDoor(Entity)
     local Id = GetTargetDoorId(Entity)
@@ -87,6 +82,7 @@ end
 local function SelectDoor(Prompt, Exclude)
     if Selecting then return end
     Selecting = true
+    TriggerEvent('fw-admin:Client:Force:Close') -- the admin panel would block the keys
     local Picked, Last
 
     while Selecting do
@@ -107,21 +103,25 @@ local function SelectDoor(Prompt, Exclude)
             local Pos = GetEntityCoords(Entity)
             DrawMarker(2, Pos.x, Pos.y, Pos.z + 1.2, 0, 0, 0, 180.0, 0, 0, 0.2, 0.2, 0.2, 80, 200, 255, 180, false, true, 2, false, nil, nil, false)
 
-            Help(('%s~n~~b~Model~s~ %d%s~n~~INPUT_PICKUP~ Select   ~INPUT_CELLPHONE_CANCEL~ Cancel'):format(
-                Prompt, GetEntityModel(Entity), Existing and ('~n~~o~Already a door:~s~ ' .. tostring(Config.Doors[Existing].Info)) or ''))
+            UI:ShowKeyHints({
+                { '', Existing and ('Already ' .. tostring(Config.Doors[Existing].Info)) or Prompt },
+                { 'E', 'Select' },
+                { 'BACKSPACE', 'Cancel' },
+            })
 
             if IsDisabledControlJustReleased(0, 38) then
                 Picked = { Entity = Entity, Model = GetEntityModel(Entity), Coords = Pos, Existing = Existing }
                 Selecting = false
             end
         else
-            Help(Prompt .. '~n~Aim at a door object.~n~~INPUT_CELLPHONE_CANCEL~ Cancel')
+            UI:ShowKeyHints({ { '', Prompt .. ': aim at a door' }, { 'BACKSPACE', 'Cancel' } })
         end
 
         if IsControlJustReleased(0, 177) then Selecting = false end
     end
 
     if Last then SetEntityDrawOutline(Last, false) end
+    UI:HideKeyHints()
     return Picked
 end
 
@@ -193,7 +193,9 @@ end
 
 -- // Menu \\ --
 
+-- Admin panel: Utility > Manage Doors
 RegisterNetEvent('fw-doors:Client:Creator:Open', function()
+    TriggerEvent('fw-admin:Client:Force:Close')
     local Pos = GetEntityCoords(PlayerPedId())
     local Near = {}
     for K, V in pairs(Config.Doors) do
@@ -216,9 +218,6 @@ RegisterNetEvent('fw-doors:Client:Creator:Open', function()
     end
 
     local Items = {
-        { Icon = 'door-closed', Title = 'Door Creator', Desc = 'Aim at a door and press E to select it.', Data = { Event = '', Type = '' }, CloseMenu = false },
-        { Icon = 'plus', Title = 'Add single door', Data = { Event = 'fw-doors:Client:Creator:AddSingle', Type = 'Client' } },
-        { Icon = 'columns', Title = 'Add double door', Desc = 'Select both halves; they lock together.', Data = { Event = 'fw-doors:Client:Creator:AddDouble', Type = 'Client' } },
         { Icon = 'crosshairs', Title = 'Edit door I aim at', Data = { Event = 'fw-doors:Client:Creator:EditAimed', Type = 'Client' } },
     }
 
@@ -231,41 +230,39 @@ RegisterNetEvent('fw-doors:Client:Creator:Open', function()
     FW.Functions.OpenMenu({ MainMenuItems = Items })
 end)
 
-RegisterNetEvent('fw-doors:Client:Creator:AddSingle', function()
-    Wait(100)
-    local Door = SelectDoor('~b~Add door~s~')
-    if not Door then return end
-    if Door.Existing then return FW.Functions.Notify(('That is already door %s.'):format(Config.Doors[Door.Existing].Info), 'error') end
+local function PickNew(Prompt, Exclude)
+    local Door = SelectDoor(Prompt, Exclude)
+    if Door and Door.Existing then
+        FW.Functions.Notify(('That is already door %s.'):format(Config.Doors[Door.Existing].Info), 'error')
+        return
+    end
+    return Door
+end
 
-    local S = AskSettings(nil, SuggestName(Door.Coords))
-    if not S then return end
-    TriggerServerEvent('fw-doors:Server:Creator:Add', { { Model = Door.Model, Coords = Door.Coords } }, S)
-end)
-
-RegisterNetEvent('fw-doors:Client:Creator:AddDouble', function()
+-- Admin panel: Utility > Add Door (Result.type = 'single' | 'double')
+RegisterNetEvent('fw-doors:Client:Creator:Add', function(Result)
     Wait(100)
-    local A = SelectDoor('~b~Double door~s~ - select the FIRST half')
+    local Double = Result and Result.type == 'double'
+    local A = PickNew(Double and 'First half' or 'Add door')
     if not A then return end
-    if A.Existing then return FW.Functions.Notify(('That is already door %s.'):format(Config.Doors[A.Existing].Info), 'error') end
 
-    Wait(250)
-    local B = SelectDoor('~b~Double door~s~ - select the SECOND half', A.Entity)
-    if not B then return end
-    if B.Existing then return FW.Functions.Notify(('That is already door %s.'):format(Config.Doors[B.Existing].Info), 'error') end
+    local Doors = { { Model = A.Model, Coords = A.Coords } }
+    if Double then
+        Wait(250)
+        local B = PickNew('Second half', A.Entity)
+        if not B then return end
+        Doors[2] = { Model = B.Model, Coords = B.Coords }
+    end
 
     local S = AskSettings(nil, SuggestName(A.Coords))
-    if not S then return end
-    TriggerServerEvent('fw-doors:Server:Creator:Add', {
-        { Model = A.Model, Coords = A.Coords },
-        { Model = B.Model, Coords = B.Coords },
-    }, S)
+    if S then TriggerServerEvent('fw-doors:Server:Creator:Add', Doors, S) end
 end)
 
 RegisterNetEvent('fw-doors:Client:Creator:EditAimed', function()
     Wait(100)
-    local Door = SelectDoor('~b~Edit door~s~')
+    local Door = SelectDoor('Edit door')
     if not Door then return end
-    if not Door.Existing then return FW.Functions.Notify('That object is not a door yet. Use "Add door".', 'error') end
+    if not Door.Existing then return FW.Functions.Notify('That object is not a door yet. Use "Add Door".', 'error') end
     TriggerEvent('fw-doors:Client:Creator:Edit', { DoorId = Door.Existing })
 end)
 

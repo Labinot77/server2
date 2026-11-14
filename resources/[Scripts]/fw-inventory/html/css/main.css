@@ -970,34 +970,6 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 }
 .split-btn:hover { background: #000; }
 
-/* ==========================================================================
-   Item in hand hints (ox .place-box)
-   ========================================================================== */
-.place-box {
-    display: none;
-    position: fixed;
-    left: 50%;
-    bottom: 4%;
-    transform: translateX(-50%);
-    z-index: 5;
-    font-family: var(--font);
-}
-.place-bar {
-    display: none;
-    align-items: center;
-    height: 4.2vh;
-    padding: 0 1.6vh;
-    background: rgba(8, 14, 15, 0.62);
-    border: 1px solid var(--glass-line);
-    font-size: 1.55vh;
-    font-weight: 800;
-    font-style: italic;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-}
-.place-box[data-mode="hand"] .place-hand,
-.place-box[data-mode="place"] .place-aim { display: flex; }
-
 /* Cash carried by the searched player */
 .inventory-box-cash { display: none; align-items: center; gap: 0.8vh; }
 .inventory-box-cash .material-symbols-outlined { font-size: 2.1vh; color: #3ddc97; }
@@ -1050,8 +1022,6 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 .inventory-box-slot.att-active { border-color: #2fd0ee !important; box-shadow: inset 0 0 1.2vh rgba(47, 208, 238, 0.3); }
 .att-slot.locked { background-color: rgba(10, 13, 15, 0.35); border-style: dashed; border-color: rgba(120, 175, 185, 0.12); cursor: not-allowed; }
 .att-slot.locked .emptyicon, .att-slot.locked .emptylabel { opacity: 0.45; }
-.place-box[data-mode="give"] .place-give { display: flex; }
-.place-give .ox-key { background: #2fd0ee; }
 
 /* ==========================================================================
    Slot look: image + count only, broken items red with a diamond marker

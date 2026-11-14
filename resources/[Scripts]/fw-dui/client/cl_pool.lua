@@ -7,6 +7,7 @@
 Pool = {}       -- [Key] = { Key, Type, Variant, Coords (vector3), Owner, Screen }
 local Slots = {} -- ['Type#Variant'] = { Type, Variant, Dui, Tex, Width, Height, Loaded, Busy, Key, Entity, Desktop }
 local Requests, RequestId = {}, 0
+local NoDict = {} -- [dict] = true: no streamed .ytd of that name (textures embedded in the copy's model)
 local Me = GetPlayerServerId(PlayerId())
 
 -- ── Trace: every step of claim / apply / swap / release (/duitrace, live in F8 with /duitrace live) ──
@@ -106,7 +107,7 @@ local function LoadSlot(Slot, Url, Resolution)
     if not Slot.Dui then
         Slot.Dui, Slot.Width, Slot.Height = CreateDui(Url, W, H), W, H
         local Deadline = GetGameTimer() + 4000
-        while not IsDuiAvailable(Slot.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        while not IsDuiAvailable(Slot.Dui) and GetGameTimer() < Deadline do Wait(0) end
         Slot.Tex = NewDuiTexture(Slot.Dui) -- handle only once the DUI exists, else the texture stays black
         Slot.ReadyAt = GetGameTimer() + 1500 -- cold first load is slower
     elseif Slot.Url ~= Url then
@@ -133,7 +134,7 @@ end
 -- Puts record R's copy + page on the prop. Hint = the entity the user clicked (owner). Yields.
 function PoolApply(R, Hint)
     local Slot, S = GetSlot(R.Type, R.Variant), Screens[R.Screen]
-    while Slot.Busy do Wait(50) end
+    while Slot.Busy do Wait(0) end
     if Slot.Key == R.Key or not S or not Pool[R.Key] then return Slot end
     if Slot.Key then PoolUnapply(Slot) end
 
@@ -149,9 +150,12 @@ function PoolApply(R, Hint)
     -- First use after a start: the copy's model + .ytd aren't streamed yet and AddReplaceTexture on an unloaded
     -- dict does nothing (default / black screen until re-entered). Load both before replacing.
     LoadModel(V.Hash)
-    RequestStreamedTextureDict(V.Dict, false)
-    local Deadline = GetGameTimer() + 2000
-    while not HasStreamedTextureDictLoaded(V.Dict) and GetGameTimer() < Deadline do Wait(10) end
+    if not NoDict[V.Dict] then -- copies with embedded textures have no .ytd: waited for nothing once, never again
+        RequestStreamedTextureDict(V.Dict, false)
+        local Deadline = GetGameTimer() + 1000
+        while not HasStreamedTextureDictLoaded(V.Dict) and GetGameTimer() < Deadline do Wait(0) end
+        NoDict[V.Dict] = not HasStreamedTextureDictLoaded(V.Dict) or nil
+    end
     SetTexture(Slot, true) -- page on the copy's texture first, then the swap: the copy shows it from its first frame
     Trace('  texture %s / %s -> fw_dui/%s', V.Dict, V.Texture, tostring(Slot.Tex))
     Slot.Entity = SwapTo(Entity, Data, V.Model)
@@ -168,7 +172,7 @@ end
 
 -- Back to the original model, page unloaded. Yields.
 function PoolUnapply(Slot)
-    while Slot.Busy do Wait(50) end
+    while Slot.Busy do Wait(0) end
     if not Slot.Key then return end
     Slot.Busy = true
     Trace('unapply %s (variant %d)', Slot.Key, Slot.Variant)

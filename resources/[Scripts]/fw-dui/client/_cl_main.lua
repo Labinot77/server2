@@ -192,7 +192,7 @@ end
 
 -- Loads the page at the model's resolution (the DUI is reused while the size stays the same).
 function LoadScreen(S, Model)
-    while S.Loading do Wait(50) end
+    while S.Loading do Wait(0) end
     local W, H = Model.Resolution[1], Model.Resolution[2]
 
     if S.Dui and (S.Width ~= W or S.Height ~= H) then
@@ -208,7 +208,7 @@ function LoadScreen(S, Model)
     else
         S.Dui, S.Width, S.Height = CreateDui(S.Url, W, H), W, H
         local Deadline = GetGameTimer() + 4000
-        while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(50) end
+        while not IsDuiAvailable(S.Dui) and GetGameTimer() < Deadline do Wait(0) end
         S.Tex = NewDuiTexture(S.Dui)
     end
 
@@ -346,26 +346,34 @@ local function Show(Name, Entity)
 
     if Model.Variants then
         if S.Active and S.Entity == Entity then return true, S.Entity end
+        local Started = GetGameTimer()
+        StartPendingCamera(Name, Entity, Model) -- fly-in starts now, the page loads meanwhile
         PoolRelease(S)
         S.Locked = true
         local Active, Reason = PoolClaim(S, Entity, Model)
         if not Active or Screens[Name] ~= S then
             S.Locked = false
+            CancelPendingCamera(Name)
             return false, Reason
         end
         S.Active, S.Entity, S.Model = Active, Active.Slot.Entity, Model
         MirrorPoolStart(S)
+        Trace('shown %s in %d ms', Name, GetGameTimer() - Started) -- /duitrace: where the time went
+        ExpirePendingCamera(Name)
         TriggerEvent('fw-dui:Client:Shown', S.Name, S.Entity, GetPropId(S.Entity))
         return true, S.Entity
     end
 
+    StartPendingCamera(Name, Entity, Model)
     PoolRelease(S)
     S.Locked, S.Watching = true, nil
     if not LoadScreen(S, Model) then
         S.Locked = false
+        CancelPendingCamera(Name)
         return false
     end
     ApplyScreen(S, Entity, Model)
+    ExpirePendingCamera(Name)
     return true, S.Entity
 end
 
@@ -374,6 +382,7 @@ end
 local function Release(Name)
     local S = Screens[Name]
     if not S then return end
+    CancelPendingCamera(Name)
     if S.Active then
         PoolRelease(S)
         S.Entity, S.Model = nil, nil

@@ -80,7 +80,7 @@ local function CreateInteractions()
         local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
         local onScreen, sx, sy = GetScreenCoordFromWorldCoord(coords.x, coords.y, coords.z)
 
-        if onScreen then
+        if onScreen and not interaction.blocked then
             local amount = getVisibleOptions(interaction)
 
             if amount > 0 then
@@ -191,10 +191,34 @@ CreateThread(function ()
     end
 end)
 
+-- Line of sight (ox_lib lib.raycast): a point is blocked when the ray from the camera hits the world / an object
+-- (closed door) before it. Hitting the interaction's own entity counts as visible. Yields a frame per ray.
+local los = settings.LineOfSight
+local GetFinalRenderedCamCoord = GetFinalRenderedCamCoord
+
+local function updateLineOfSight()
+    if not los.enabled then return end
+    local list, cam = nearby, GetFinalRenderedCamCoord()
+    for i = 1, #list do
+        local interaction = list[i]
+        local coords = interaction.coords or utils.getCoordsFromInteract(interaction)
+        local hit, entityHit, endCoords = lib.raycast.fromCoords(cam, coords, 1 | 16, 4)
+        interaction.blocked = (hit == true or hit == 1) and entityHit ~= interaction.entity and #(endCoords - coords) > los.tolerance
+    end
+end
+
+CreateThread(function()
+    while true do
+        if next(nearby) then updateLineOfSight() end
+        Wait(los.interval)
+    end
+end)
+
 -- Slow checker thread
 CreateThread(function()
     while true do
         nearby = interactions.getNearbyInteractions()
+        updateLineOfSight() -- check fresh entries right away
         Wait(500)
     end
 end)

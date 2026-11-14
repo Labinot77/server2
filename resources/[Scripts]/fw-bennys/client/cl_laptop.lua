@@ -107,16 +107,21 @@ function OpenLaptop(Entity, Business)
 
     -- One player per laptop (server lock, see LaptopBlockReason).
     Laptop.Open = true
-    if not FW.SendCallback('fw-bennys:Server:Laptop:Claim', Entry.Id) then
-        Laptop.Open = false
-        return FW.Functions.Notify("Someone else is using this laptop.", "error")
-    end
-    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Preview, Laptop.Apps = Entity, Business, Entry.Id, false, Entry.Apps
+    -- Server lock and screen load at the same time: one round trip instead of two.
+    local Claim = promise.new()
+    CreateThread(function() Claim:resolve(FW.SendCallback('fw-bennys:Server:Laptop:Claim', Entry.Id)) end)
 
     local Ped = PlayerPedId()
     TaskTurnPedToFaceEntity(Ped, Entity, 600)
 
     local Shown, ScreenEntity = DUI:Show(SCREEN, Entity)
+    if not Citizen.Await(Claim) then
+        if Shown then DUI:Release(SCREEN) end
+        Laptop.Open = false
+        return FW.Functions.Notify("Someone else is using this laptop.", "error")
+    end
+    Laptop.Entity, Laptop.Business, Laptop.PropId, Laptop.Preview, Laptop.Apps = Entity, Business, Entry.Id, false, Entry.Apps
+
     if not Shown then
         Laptop.Open = false
         TriggerServerEvent('fw-bennys:Server:Laptop:Release', Laptop.PropId)

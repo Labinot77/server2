@@ -1,0 +1,47 @@
+@font-face {
+    font-family: 'KH Barlow';
+    src: url('./fonts/barlow-condensed-700-italic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+}
+
+#key-hints {
+    position: fixed;
+    right: 2.2vh;
+    bottom: 3.6vh;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 2.6vh;
+    pointer-events: none;
+    font: italic 700 1.9vh 'KH Barlow', 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+#key-hints.show { opacity: 1; }
+
+.kh-item { display: flex; align-items: center; gap: 0.9vh; white-space: nowrap; }
+
+.kh-key {
+    box-sizing: border-box;
+    min-width: 2.5vh;
+    height: 2.5vh;
+    padding: 0 0.6vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.45vh;
+    background: #fff;
+    color: #111;
+    font-size: 1.5vh;
+    font-style: normal;
+    text-shadow: none;
+    box-shadow: 0 0.2vh 0.6vh rgba(0, 0, 0, 0.35);
+}
+.kh-key + .kh-key { margin-left: -0.4vh; }
+
+.kh-space { width: 1.2vh; height: 0.5vh; border: 0.22vh solid currentColor; border-top: 0; }

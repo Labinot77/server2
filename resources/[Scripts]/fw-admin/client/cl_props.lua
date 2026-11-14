@@ -115,7 +115,14 @@ end)
 
 -- ── Placing (admin panel: Utility > Place Prop) ────────────────────────────
 
-local HELP = "[E] Place  [Scroll] Rotate  [SHIFT] Fine  [PgUp/PgDn] Height  [Q] Pitch  [BACKSPACE] Cancel"
+local HINTS = {
+    { 'E', 'Place' },
+    { 'SCROLL', 'Rotate' },
+    { 'SHIFT', 'Fine' },
+    { { 'PGUP', 'PGDN' }, 'Height' },
+    { 'Q', 'Pitch' },
+    { 'BACKSPACE', 'Cancel' },
+}
 local BLOCKED = { 14, 15, 16, 17, 24, 25, 37, 38, 44, 140, 177 }
 
 local function StartPlacing(Model, Frozen, Collision)
@@ -132,7 +139,7 @@ local function StartPlacing(Model, Frozen, Collision)
     SetModelAsNoLongerNeeded(Hash)
 
     local Heading, Pitch, Height, Placed = GetEntityHeading(Ped), 0.0, 0.0, false
-    exports['fw-ui']:ShowInteraction(HELP)
+    exports['fw-ui']:ShowKeyHints(HINTS)
 
     while IsPlacing do
         Wait(0)
@@ -159,7 +166,7 @@ local function StartPlacing(Model, Frozen, Collision)
         end
     end
 
-    exports['fw-ui']:HideInteraction()
+    exports['fw-ui']:HideKeyHints()
 
     if Placed then
         local Coords, Rotation = GetEntityCoords(Ghost), GetEntityRotation(Ghost, 2)
