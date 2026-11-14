@@ -996,7 +996,8 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
     white-space: nowrap;
 }
 .place-box[data-mode="hand"] .place-hand,
-.place-box[data-mode="place"] .place-aim { display: flex; }
+.place-box[data-mode="place"] .place-aim,
+.place-box[data-mode="throw"] .place-throw { display: flex; }
 
 /* Cash carried by the searched player */
 .inventory-box-cash { display: none; align-items: center; gap: 0.8vh; }

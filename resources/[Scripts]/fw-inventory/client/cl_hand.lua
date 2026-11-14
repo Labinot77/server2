@@ -1,13 +1,15 @@
 -- // Hand mode (ported from ox_inventory startPlaceMode) \\ --
 -- "Give" in the inventory context menu puts the item in your hand:
 --   [N]  aim mode -> place it exactly where you look ([Enter]/[LMB] confirm, scroll to rotate, [Shift] fine rotate)
---   [E]  throw it, or - when you're looking at a player - give it to them (interact prompt)
+--   [RMB] hold to aim a throw (arc preview), [LMB] while aiming throws it
+--   [E]  when you're looking at a player - give it to them (interact prompt)
 --   [Esc]/[Backspace] cancel (item stays in your inventory)
 -- The item only leaves the inventory once it's placed / has landed (server: fw-inventory:Server:PlaceItem).
 
 Config.PlaceMaxDistance = 5.0
 Config.GiveDistance = 2.5        -- max distance between you and the player you give to
 Config.GiveAimDistance = 6.0     -- how far the camera ray looks for a player
+Config.ThrowSpeed = 13.0         -- launch speed (m/s) of a thrown item
 
 local GiveTarget, GiveRequest = false, false   -- ped currently aimed at / ped chosen via interact
 local GiveInteractions = {}                    -- [ped] = interaction id
@@ -69,6 +71,29 @@ local function FindGiveTarget(Ped)
     if Blocked and #(BlockCoords - TheirHead) > 0.35 then return false end
 
     return Entity
+end
+
+-- // Throw: launch velocity from the camera + arc preview \\ --
+local Gravity = vector3(0.0, 0.0, -9.81)
+
+local function GetThrowVelocity()
+    local Dir = GetCameraDirection() + vector3(0.0, 0.0, 0.2)
+    return Dir / #Dir * Config.ThrowSpeed
+end
+
+local function DrawThrowArc(Pos, Vel, Ped)
+    local Dt = 0.05
+    for _ = 1, 50 do
+        local Next = Pos + Vel * Dt + Gravity * (0.5 * Dt * Dt)
+        local Hit, HitCoords = ShapeTest(Pos, Next, 1 | 16, Ped)
+        local To = Hit and HitCoords or Next
+        DrawLine(Pos.x, Pos.y, Pos.z, To.x, To.y, To.z, 255, 255, 255, 200)
+        if Hit then
+            DrawMarker(28, To.x, To.y, To.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.15, 0.15, 47, 208, 238, 180, false, false, 2, false, nil, nil, false)
+            return
+        end
+        Pos, Vel = Next, Vel + Gravity * Dt
+    end
 end
 
 local function ClearGiveInteractions()
@@ -170,7 +195,7 @@ function StartHoldMode(Slot, Amount)
 
     local Mode, Target, Valid = 'hand', nil, false
     local Heading = GetEntityHeading(Ped)
-    local Result, GivePed
+    local Result, GivePed, ThrowFrom, ThrowVel, Aiming
     local ItemData = Shared.Items[Item.Item]
     local GiveLabel = (ItemData and ItemData.Label or Item.Item) .. (Amount > 1 and (' (%sx)'):format(Amount) or '')
     local NextInteractRefresh = 0
@@ -191,7 +216,24 @@ function StartHoldMode(Slot, Amount)
         if not CanHold() or not DoesEntityExist(Prop) then break end
         if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then break end
 
-        if Mode == 'hand' then
+        if Mode == 'hand' and IsDisabledControlPressed(0, 25) then -- RMB held: aim throw
+            if not Aiming then
+                Aiming, GiveTarget = true, false
+                SetInteractDisabled(true)
+                Hint('throw')
+            end
+            SetEntityHeading(Ped, GetGameplayCamRot(2).z)
+
+            local From, Vel = GetEntityCoords(Prop), GetThrowVelocity()
+            DrawThrowArc(From, Vel, Ped)
+
+            if IsDisabledControlJustPressed(0, 24) then -- LMB
+                ThrowFrom, ThrowVel, Result = From, Vel, 'throw'
+                break
+            end
+        elseif Mode == 'hand' then
+            if Aiming then Aiming = false Hint(GiveTarget and 'give' or 'hand') end
+
             -- Who are we looking at? Interact (and its [E] prompt) is only on while aiming at a player,
             -- so [E] gives instead of throws and no other prompt can steal the key meanwhile.
             if GetGameTimer() > NextInteractRefresh then
@@ -216,10 +258,7 @@ function StartHoldMode(Slot, Amount)
                 GiveRequest = false
             end
 
-            if not GiveTarget and IsControlJustReleased(0, 38) then -- E
-                Result = 'throw'
-                break
-            elseif IsControlJustReleased(0, 306) then -- N
+            if IsControlJustReleased(0, 306) then -- N
                 Mode = 'place'
                 GiveTarget = false
                 SetInteractDisabled(true)
@@ -283,20 +322,18 @@ function StartHoldMode(Slot, Amount)
         DropCoords, DropHeading = Target, Heading
     elseif Result == 'throw' and DoesEntityExist(Prop) then
         Thrown = true
-        DetachEntity(Prop, true, true)
         if LoadAnimDictTimeout('melee@thrown@streamed_core') then
             TaskPlayAnim(Ped, 'melee@thrown@streamed_core', 'plyr_takedown_front', -8.0, 8.0, 600, 49, 0, false, false, false)
         end
-        Citizen.Wait(450)
+        Citizen.Wait(350)
 
-        local From = GetOffsetFromEntityInWorldCoords(Ped, 0.0, 0.6, 1.0)
-        local Fwd = GetEntityForwardVector(Ped)
-        SetEntityCoords(Prop, From.x, From.y, From.z, false, false, false, false)
+        DetachEntity(Prop, true, true)
+        SetEntityCoords(Prop, ThrowFrom.x, ThrowFrom.y, ThrowFrom.z, false, false, false, false)
         SetEntityCollision(Prop, true, true)
         FreezeEntityPosition(Prop, false)
         SetEntityDynamic(Prop, true)
         ActivatePhysics(Prop)
-        SetEntityVelocity(Prop, Fwd.x * 9.0, Fwd.y * 9.0, 4.0)
+        SetEntityVelocity(Prop, ThrowVel.x, ThrowVel.y, ThrowVel.z)
 
         local Started, Still = GetGameTimer(), 0
         while GetGameTimer() - Started < 6000 do
