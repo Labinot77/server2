@@ -1,4 +1,5 @@
-local KeyProp = `m23_2_prop_m32_carkey_fob_01a`
+-- Chop Shop prop needs game build 3095+, fall back to the base game key otherwise
+local KeyProp = IsModelInCdimage(`m23_2_prop_m32_carkey_fob_01a`) and `m23_2_prop_m32_carkey_fob_01a` or `p_car_keys_01`
 local Jacked = {}
 
 local function LoadDict(Dict)

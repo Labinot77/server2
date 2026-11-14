@@ -253,10 +253,16 @@ AddEventHandler("fw-vehicles:Server:SetVehicleState", function(Plate, State, Net
         OutsideVehicles[Plate] = NetId
     end
 
+    local Source = source
     exports['ghmattimysql']:executeSync("UPDATE `player_vehicles` SET `state` = @State WHERE `plate` = @Plate", {
         ['@Plate'] = Plate,
         ['@State'] = State,
     })
+
+    local Player = FW.Functions.GetPlayer(Source)
+    if State ~= 'out' or not Player then return end
+    local Owned = exports['ghmattimysql']:executeSync("SELECT 1 FROM `player_vehicles` WHERE `plate` = @Plate LIMIT 1", { ['@Plate'] = Plate })
+    if Owned and Owned[1] then GiveCarKey(Player, Plate) end
 end)
 
 RegisterNetEvent("fw-vehicles:Server:ParkVehicle")
@@ -269,7 +275,13 @@ AddEventHandler("fw-vehicles:Server:ParkVehicle", function(NetId, Garage, Vehicl
     if Vehicle == 0 then return end
 
     local Plate = GetVehicleNumberPlateText(Vehicle)
-    
+
+    -- Read everything from the vehicle before deleting it (any DB call after DeleteEntity yields and the entity is gone)
+    local Meta = GetVehicleMeta(NetId) or {}
+    Meta.Body = GetVehicleBodyHealth(Vehicle)
+    Meta.Engine = GetVehicleEngineHealth(Vehicle)
+    Meta.Damage = VehicleDamage
+
     DeleteEntity(Vehicle)
     OutsideVehicles[Plate] = nil
     if LockdownVehicles[Plate] then
@@ -277,16 +289,13 @@ AddEventHandler("fw-vehicles:Server:ParkVehicle", function(NetId, Garage, Vehicl
         Player.Functions.Notify(("Lockdown %s uitgeschakeld"):format(Plate), "success")
     end
 
-    local Meta = GetVehicleMeta(NetId)
-    Meta.Body = GetVehicleBodyHealth(Vehicle)
-    Meta.Engine = GetVehicleEngineHealth(Vehicle)
-    Meta.Damage = VehicleDamage
-
     exports['ghmattimysql']:executeSync("UPDATE `player_vehicles` SET `metadata` = @Meta, `garage` = @Garage, `state` = 'in' WHERE `plate` = @Plate", {
         ['@Meta'] = json.encode(Meta),
         ['@Plate'] = Plate,
         ['@Garage'] = Garage or "apartment_1",
     })
+
+    RemoveCarKey(Player, Plate)
 end)
 
 RegisterNetEvent("fw-vehicles:Server:DepotVehicle")
