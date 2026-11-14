@@ -2,7 +2,7 @@
 //  Right-click context menu: SPLIT / GIVE (ox_inventory style)
 //   Split -> modal, moves N of the stack into the first empty slot of the same inventory.
 //   Give  -> closes the inventory and puts the item in your hand (client/cl_hand.lua):
-//            N = place, hold RMB + LMB = throw, Esc = cancel.
+//            N = place, RMB aim + LMB throw (native), Esc = cancel.
 // ============================================================================
 
 let ContextData = false; // { Container, Slot }
