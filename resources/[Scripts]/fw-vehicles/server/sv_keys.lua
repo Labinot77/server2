@@ -1,4 +1,4 @@
-local DroppedKeys = {} -- [NetId] = Plate
+local JackedVehicles = {} -- [NetId] = true, one key drop per carjack
 
 FW.Functions.CreateCallback("fw-vehicles:Server:GetVehicleKeys", function(Source, Cb)
     Cb(Config.VehicleKeys)
@@ -51,25 +51,15 @@ FW.Functions.CreateUsableItem("carkeys", function(Source, Item)
     Player.Functions.Notify("Sleutels van " .. Item.Info.Plate .. " in je hand.")
 end)
 
--- Carjacking: NPC threw keys on the ground
+-- Carjacking: NPC threw the keys, they become a normal ground item (pick up via interact)
 RegisterNetEvent("fw-vehicles:Server:KeysDropped")
-AddEventHandler("fw-vehicles:Server:KeysDropped", function(NetId, Plate)
-    if not NetId or not Plate then return end
-    DroppedKeys[NetId] = Plate
-    TriggerClientEvent("fw-vehicles:Client:SetDroppedKeys", -1, NetId, true)
-end)
-
-RegisterNetEvent("fw-vehicles:Server:PickupKeys")
-AddEventHandler("fw-vehicles:Server:PickupKeys", function(NetId)
+AddEventHandler("fw-vehicles:Server:KeysDropped", function(VehNetId, Coords, Heading)
     local Source = source
-    local Player, Plate = FW.Functions.GetPlayer(Source), DroppedKeys[NetId]
-    if not Player or not Plate then return end
+    local Vehicle = NetworkGetEntityFromNetworkId(VehNetId or 0)
+    if Vehicle == 0 or JackedVehicles[VehNetId] or type(Coords) ~= 'vector3' then return end
+    if #(GetEntityCoords(GetPlayerPed(Source)) - Coords) > 20.0 then return end
 
-    local Prop = NetworkGetEntityFromNetworkId(NetId)
-    if Prop == 0 or #(GetEntityCoords(GetPlayerPed(Source)) - GetEntityCoords(Prop)) > 3.0 then return end
-
-    DroppedKeys[NetId] = nil
-    DeleteEntity(Prop)
-    TriggerClientEvent("fw-vehicles:Client:SetDroppedKeys", -1, NetId, nil)
-    GiveCarKey(Player, Plate)
+    JackedVehicles[VehNetId] = true
+    local Plate = GetVehicleNumberPlateText(Vehicle)
+    exports['fw-inventory']:SpawnItemDrop(Coords, 'carkeys', 1, { Plate = Plate, _Description = "Kenteken: " .. Plate }, Heading)
 end)
