@@ -3,7 +3,7 @@
 --   [N]  aim mode -> place it exactly where you look ([Enter]/[LMB] confirm, scroll to rotate, [Shift] fine rotate)
 --   [RMB] hold to aim a throw (arc preview), [LMB] while aiming throws it
 --   [E]  when you're looking at a player - give it to them (interact prompt)
---   [Esc]/[Backspace] cancel (item stays in your inventory)
+--   [Esc] cancel (item stays in your inventory)
 -- The item only leaves the inventory once it's placed / has landed (server: fw-inventory:Server:PlaceItem).
 
 Config.PlaceMaxDistance = 5.0
@@ -214,7 +214,7 @@ function StartHoldMode(Slot, Amount)
         if not Current or Current.Item ~= Item.Item then break end
 
         if not CanHold() or not DoesEntityExist(Prop) then break end
-        if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then break end
+        if IsDisabledControlJustPressed(0, 200) then break end -- Esc only (177 also fires on RMB)
 
         if Mode == 'hand' and IsDisabledControlPressed(0, 25) then -- RMB held: aim throw
             if not Aiming then
