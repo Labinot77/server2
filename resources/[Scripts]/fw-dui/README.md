@@ -54,6 +54,11 @@ game controls disabled; held keys repeat, shift gives capitals/symbols). Backspa
   hotbar ignore keys. Other resources with their own key mappings: check that flag too.
 - Holding a key repeats at `Config.KeyRepeat` (Delay / Rate in ms).
 
+## Camera per prop (/duicam)
+Stand at a screen prop and run `/duicam` (or `/duicam <model>`). W/S A/D Q/E move the camera, arrows move the point it
+looks at, scroll = FOV, SHIFT = fine, ENTER = save, BACKSPACE = cancel. The `Camera = { ... }` line is printed in F8:
+paste it into that model in `config/sh_config.lua`. It's also applied right away (until fw-dui restarts).
+
 ## One prop out of several (Anchor)
 `Anchor = vector3(...)` uses only the prop closest to that point, e.g. one of the four monitors on a bank desk.
 `/duiprop <model>` prints the coords of the nearest prop of a model.
