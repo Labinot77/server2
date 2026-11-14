@@ -1257,3 +1257,79 @@ Config.FemaleNoGloves = {
     [131] = true, [135] = true, [142] = true, [149] = true,
     [153] = true, [157] = true, [161] = true,[165] = true,
 }
+-- // Driving Feel / Handling \\ --
+-- Used by client/cl_handling.lua. Everything here is client-side and per-vehicle.
+Config.Handling = {
+    Enabled = true,
+
+    -- Vehicle classes that are skipped entirely (13 cycles, 14 boats, 15 helis, 16 planes, 21 trains)
+    IgnoredClasses = { [13] = true, [14] = true, [15] = true, [16] = true, [21] = true },
+
+    -- Smooth throttle: power builds up progressively like pressing a real pedal instead of 0 -> 100% instantly.
+    SmoothThrottle = {
+        Enabled = true,
+        RampUp = 0.55,        -- Seconds from 0 to full throttle (keyboard). Controller triggers follow the trigger but are still smoothed.
+        RampDown = 0.18,      -- Seconds from full throttle back to 0 when lifting off
+        MinTorque = 0.30,     -- Torque at the very start of the pedal travel (0.0 - 1.0)
+        HighSpeedFactor = 0.35, -- How much of the ramp still applies at high speed (rolling throttle is snappier than a standstill launch)
+        HighSpeed = 30.0,     -- m/s (~108 km/h) where HighSpeedFactor is fully reached
+
+        -- Launch: limit torque in 1st gear at very low speed to reduce unrealistic wheelspin
+        LaunchControl = true,
+        LaunchSpeed = 6.0,    -- m/s (~22 km/h)
+        LaunchTorque = 0.80,  -- Torque multiplier at standstill, eases to 1.0 at LaunchSpeed
+
+        -- Short torque dip on gear changes so shifts are felt like in a real car
+        ShiftDip = true,
+        ShiftDipTorque = 0.45,
+        ShiftDipTime = 0.22,  -- Seconds
+
+        -- Extra ramp time multiplier per vehicle class (heavier = lazier throttle)
+        ClassRamp = {
+            [0] = 1.0,  -- Compacts
+            [1] = 1.05, -- Sedans
+            [2] = 1.2,  -- SUVs
+            [3] = 1.0,  -- Coupes
+            [4] = 0.95, -- Muscle
+            [5] = 1.0,  -- Sports Classics
+            [6] = 0.85, -- Sports
+            [7] = 0.8,  -- Super
+            [8] = 0.6,  -- Motorcycles
+            [9] = 1.15, -- Off-road
+            [10] = 1.6, -- Industrial
+            [11] = 1.3, -- Utility
+            [12] = 1.35, -- Vans
+            [17] = 1.3, -- Service
+            [18] = 1.0, -- Emergency
+            [19] = 1.4, -- Military
+            [20] = 1.6, -- Commercial
+        },
+    },
+
+    -- Handling tweaks applied on top of each vehicle's own handling (multipliers, original values are restored when you leave)
+    Tweaks = {
+        Enabled = true,
+        CarsOnly = true, -- Don't touch motorcycles / quads
+        Fields = {
+            fLowSpeedTractionLossMult = 0.65,      -- Less arcade wheelspin / burnouts when launching
+            fClutchChangeRateScaleUpShift = 0.75,  -- Slightly slower, smoother upshifts
+            fClutchChangeRateScaleDownShift = 0.80, -- Slightly slower, smoother downshifts
+            fSuspensionCompDamp = 1.10,            -- A bit more damping, less floaty body
+            fSuspensionReboundDamp = 1.10,
+            fAntiRollBarForce = 1.10,              -- Slightly less body roll in corners
+            fTractionLossMult = 0.90,              -- Off-road surfaces a bit less ice-like
+        },
+    },
+
+    -- Better rollback & handbrake turns (ported from KuzQuality kq_rollback)
+    Rollback = {
+        Enabled = true,
+        Duration = 30, -- Duration/period of the rollback
+        Strength = 10, -- Strength/speed of the rollback
+    },
+    HandbrakeTurns = {
+        -- Happens when the player is off the throttle: turns the wheel + handbrake for a tighter turn
+        Enabled = true,
+        Strength = 1.5,
+    },
+}
