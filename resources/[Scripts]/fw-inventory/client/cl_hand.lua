@@ -9,6 +9,7 @@
 Config.PlaceMaxDistance = 5.0
 Config.GiveDistance = 2.5        -- max distance between you and the player you give to
 Config.GiveAimDistance = 6.0     -- how far the camera ray looks for a player
+Config.ThrowStrength = 0.5       -- multiplier on the native throw speed (1.0 = grenade strength)
 
 local GiveTarget, GiveRequest = false, false   -- ped currently aimed at / ped chosen via interact
 local GiveInteractions = {}                    -- [ped] = interaction id
@@ -321,6 +322,11 @@ function StartHoldMode(Slot, Amount)
         local Projectile = FindProjectile(Ped)
         if Projectile then
             SetEntityVisible(Projectile, false, false)
+            for _ = 1, 10 do -- velocity can still be zero on the release frame
+                local Vel = GetEntityVelocity(Projectile)
+                if #Vel > 0.1 then SetEntityVelocity(Projectile, Vel.x * Config.ThrowStrength, Vel.y * Config.ThrowStrength, Vel.z * Config.ThrowStrength) break end
+                Citizen.Wait(0)
+            end
             AttachEntityToEntity(Prop, Projectile, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
         else
             Projectile = Prop -- fallback: drop it in front of you
