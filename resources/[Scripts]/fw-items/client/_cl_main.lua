@@ -749,7 +749,7 @@ AddEventHandler("fw-items:Client:OpenBag", function(BagId, Type)
     elseif Type == "cassettebox" then
         Slots, Weight = 20, 0
     end
-    FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Bag', BagId, Slots, Weight)
+    exports['fw-inventory']:OpenOtherInventory('Bag', BagId, Slots, Weight)
 end)
 
 RegisterNetEvent('fw-items:Client:OpenMoneyCase')

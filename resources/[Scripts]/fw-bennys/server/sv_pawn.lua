@@ -226,7 +226,7 @@ function Actions.deliver(_, Data)
     local Spot = Route.Dropoffs[math.random(#Route.Dropoffs)]
     Order.Status, Order.Dropoff = 'transit', { Label = Spot.Label, Coords = { x = Spot.Coords.x, y = Spot.Coords.y, z = Spot.Coords.z } }
     Order.Expires = os.time() + Route.Transit * 60
-    return { Success = true, Message = ('Delivery started: %s'):format(Spot.Label), Waypoint = Order.Dropoff.Coords }
+    return { Success = true, Message = ('Delivery started: %s'):format(Spot.Label) }
 end
 
 function Actions.cashout(Player, Data)

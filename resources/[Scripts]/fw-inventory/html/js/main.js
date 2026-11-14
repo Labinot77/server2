@@ -129,6 +129,14 @@ $(document).ready(function(){
     });
 });
 
+// Using these opens them in the other panel, so the inventory stays open.
+const KeepOpenOnUse = ['business-bag'];
+const UseInventoryItem = Slot => {
+    if (MyInventory[Slot] && KeepOpenOnUse.includes(MyInventory[Slot].Item)) ResetDrag();
+    else CloseInventory();
+    setTimeout(() => $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot })), 250);
+};
+
 const CloseInventory = () => {
     InventoryOpen = false;
 
@@ -200,10 +208,7 @@ $(document).on('mouseup', '#inventory-use', function(e){
         return InventoryLog('Sleep kogels op het magazijn om het te laden.');
     }
 
-    CloseInventory();
-    setTimeout(() => {
-        $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot }));
-    }, 250);
+    UseInventoryItem(Slot);
 });
 
 $(document).on({

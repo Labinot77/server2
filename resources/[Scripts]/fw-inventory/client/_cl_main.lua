@@ -549,6 +549,15 @@ function SwitchOtherInventory()
     Citizen.SetTimeout(2000, function() SwitchPending = false end) -- server refused: try again later
 end
 
+-- Opens InvName in the other panel; an open inventory swaps it in place (e.g. a bag used from the inventory).
+exports('OpenOtherInventory', function(InvType, InvName, MaxSlots, MaxWeight)
+    if CurrentInventory then
+        SwitchPending = true
+        Citizen.SetTimeout(2000, function() SwitchPending = false end)
+    end
+    FW.TriggerServer('fw-inventory:Server:OpenInventory', InvType, InvName, MaxSlots, MaxWeight)
+end)
+
 function WatchOpenInventory(OtherData)
     local OpenCoords = GetEntityCoords(PlayerPedId())
     Citizen.CreateThread(function()
@@ -559,7 +568,9 @@ function WatchOpenInventory(OtherData)
             local Ped = PlayerPedId()
             local Seated, Moved = IsSeatedInVehicle(Ped), #(GetEntityCoords(Ped) - OpenCoords) > Config.InventoryMoveDistance
 
-            if OtherData.Type == 'Glovebox' then
+            if OtherData.Type == 'Bag' then
+                -- carried with you: stays open while walking
+            elseif OtherData.Type == 'Glovebox' then
                 if not Seated then SwitchOtherInventory() end
             elseif OtherData.Type == 'Drop' then
                 if Seated then

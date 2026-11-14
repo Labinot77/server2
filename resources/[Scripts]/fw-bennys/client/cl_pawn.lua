@@ -5,11 +5,17 @@ FW = FW or exports['fw-core']:GetCoreObject()
 local DUI = exports['fw-dui']
 local APP = Config.Laptop.Apps.Pawn.id
 local P = Config.Pawn
-local Dropoffs = {} -- [Id] = interaction id
-local Delivering = false
+local Dropoffs = {} -- [Id] = { Interaction, Blip }
+local Delivering, RouteId, Runner = false, nil, false
 
 local function Send(Action, Data, MirrorData) DUI:SendApp(LAPTOP_SCREEN, APP, Action, Data, MirrorData) end
 local function Sound(Name) PlaySoundFrontend(-1, Name, 'HUD_FRONTEND_DEFAULT_SOUNDSET', true) end
+
+-- GPS route to a shipment's drop-off blip (nil = none).
+local function RouteTo(Id)
+    RouteId = Id
+    for SpotId, Spot in pairs(Dropoffs) do SetBlipRoute(Spot.Blip, SpotId == Id) end
+end
 
 -- ── App (called by cl_laptop.lua) ──────────────────────────────────────────
 
@@ -32,7 +38,7 @@ RegisterNUICallback('pawn', function(Data, Cb)
     if Action == 'sound' then return Sound('NAV_UP_DOWN') end
     if Action == 'refresh' then return PawnLoad(Business) end
     if Action == 'gps' then
-        SetNewWaypoint(Data.X + 0.0, Data.Y + 0.0)
+        RouteTo(Data.Id)
         return Send('toast', { text = 'GPS set', type = 'success' })
     end
 
@@ -40,7 +46,7 @@ RegisterNUICallback('pawn', function(Data, Cb)
         local Result = FW.SendCallback('fw-bennys:Server:Pawn:Action', Action, { Id = Data.Id }) or {}
         Sound(Result.Success and 'SELECT' or 'ERROR')
         if Result.Message then Send('toast', { text = Result.Message, type = Result.Success and 'success' or 'error' }) end
-        if Result.Waypoint then SetNewWaypoint(Result.Waypoint.x, Result.Waypoint.y) end
+        if Result.Success and Action == 'deliver' then RouteId = Data.Id end -- routed when its blip arrives
         PawnLoad(Business)
     end)
 end)
@@ -81,19 +87,51 @@ end
 
 local function SetDropoffs(List)
     if GetResourceState('interact') ~= 'started' then return end
-    for _, Id in pairs(Dropoffs) do exports['interact']:RemoveInteraction(Id) end
+    for _, Spot in pairs(Dropoffs) do
+        exports['interact']:RemoveInteraction(Spot.Interaction)
+        RemoveBlip(Spot.Blip)
+    end
     Dropoffs = {}
     for _, Spot in ipairs(List or {}) do
-        Dropoffs[Spot.Id] = exports['interact']:AddInteraction({
+        local Coords = vector3(Spot.Coords.x, Spot.Coords.y, Spot.Coords.z)
+        local Blip = AddBlipForCoord(Coords.x, Coords.y, Coords.z)
+        SetBlipSprite(Blip, P.Blip.Sprite)
+        SetBlipColour(Blip, P.Blip.Color)
+        SetBlipScale(Blip, P.Blip.Scale)
+        SetBlipAsShortRange(Blip, false)
+        SetBlipDisplay(Blip, 0) -- shown by the thread below
+        BeginTextCommandSetBlipName('STRING')
+        AddTextComponentSubstringPlayerName('Pawn Drop-off: ' .. Spot.Label)
+        EndTextCommandSetBlipName(Blip)
+
+        Dropoffs[Spot.Id] = { Blip = Blip, Interaction = exports['interact']:AddInteraction({
             name = 'pawn_dropoff_' .. Spot.Id, coords = vector3(Spot.Coords.x, Spot.Coords.y, Spot.Coords.z), distance = 8.0, interactDst = 2.5,
             options = { {
                 label = 'Deliver Box (' .. Spot.Label .. ')',
                 canInteract = function() return not Delivering and exports['fw-inventory']:HasEnoughOfItem(P.BoxItem, 1) end,
                 action = function() CreateThread(DeliverBox) end,
             } },
-        })
+        }) }
     end
+    if RouteId and Dropoffs[RouteId] then RouteTo(RouteId) end
 end
+
+-- Blips: business members, and runners once they carried a box (until no shipment is on the road).
+CreateThread(function()
+    while true do
+        if next(Dropoffs) then
+            Runner = Runner or exports['fw-inventory']:HasEnoughOfItem(P.BoxItem, 1)
+            local Show = Runner or IsOrderMechanic(P.Business)
+            for Id, Spot in pairs(Dropoffs) do
+                SetBlipDisplay(Spot.Blip, Show and 2 or 0)
+                if Show and Id == RouteId then SetBlipRoute(Spot.Blip, true) end
+            end
+        else
+            Runner, RouteId = false, nil
+        end
+        Wait(2000)
+    end
+end)
 
 RegisterNetEvent('fw-bennys:Client:Pawn:Changed', function(List)
     SetDropoffs(List)

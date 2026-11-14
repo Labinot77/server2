@@ -13,7 +13,8 @@ Config.Pawn = {
     -- Rough position of the prop_monitor_w_large in the map: the monitor within 3.5m of it is the shop computer.
     Monitor = { Coords = vector3(150.96, -1711.62, 29.36) },
 
-    BoxItem = 'pawn-box', -- carried in hand (fw-assets Type 3): box carry animation, no running
+    BoxItem = 'pawn-box', -- carried in hand (fw-assets Type 3): box carry animation, no running. Drop-off storage only takes these (fw-inventory Config.InventoryWhitelist)
+    Blip = { Sprite = 478, Color = 46, Scale = 0.85 }, -- drop-offs on the map, for members and runners who carried a box
     DeliverTime = 4000,
 
     Offers = {

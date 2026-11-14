@@ -225,8 +225,7 @@ $(document).on('mouseup', 'body', async function(e) {
         // Magazine: loading is drag & drop, keep the inventory open.
         if (ItemData.Item == 'magazine') return InventoryLog('Sleep kogels op het magazijn om het te laden.');
 
-        CloseInventory()
-        $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot: ToSlot }));
+        UseInventoryItem(ToSlot);
 
         return;
     };

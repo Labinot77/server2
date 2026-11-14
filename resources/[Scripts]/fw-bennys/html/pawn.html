@@ -146,7 +146,7 @@
             const Transit = O.Status === "transit", Pct = Transit ? O.Delivered / O.Boxes * 100 : 100;
             const Due = Transit ? Math.max(0, O.Delivered === O.Boxes ? O.Payout - O.Paid : Math.floor(O.Payout * (O.Delivered - O.CashedOut) / O.Boxes)) : 0;
             const Buttons = Transit
-                ? `<div class="btn" data-act="gps" data-x="${O.Dropoff.Coords.x}" data-y="${O.Dropoff.Coords.y}">Set GPS</div><div class="btn ${Due ? "gold" : "off"}" data-act="cashout" data-id="${O.Id}">Cash Out (${Money(Due)})</div>`
+                ? `<div class="btn" data-act="gps" data-id="${O.Id}">Set GPS</div><div class="btn ${Due ? "gold" : "off"}" data-act="cashout" data-id="${O.Id}">Cash Out (${Money(Due)})</div>`
                 : `<div class="btn gold" data-act="deliver" data-id="${O.Id}">Begin Delivery</div>`;
             return `<div class="ship">
                 <div class="row"><h4 class="grow">${Esc(O.Label)}</h4></div>
@@ -182,9 +182,7 @@
         if (!El) return;
         if (El.dataset.tab) { S.tab = El.dataset.tab; Post("sound"); return Render(); }
         if (El.dataset.filter) { S.filter = El.dataset.filter; Post("sound"); return Render(); }
-        const A = El.dataset.act;
-        if (A === "gps") return Post("gps", { X: Number(El.dataset.x), Y: Number(El.dataset.y) });
-        Post(A, { Id: Number(El.dataset.id) });
+        Post(El.dataset.act, { Id: Number(El.dataset.id) });
     });
 
     window.addEventListener("message", Ev => {
