@@ -284,7 +284,7 @@ Config.AttachBackProps = {
 		Id = 'pawn-box',
 		Name = 'Pawn Box',
 		Model = 'pawnshop_box',
-		PropCoords = { X = 0.0, Y = -0.03, Z = 0.0, RX = 5.0, RY = 0.0, RZ = 0.0 },
+		PropCoords = { X = 0.0, Y = -0.03, Z = -0.17, RX = 5.0, RY = 0.0, RZ = 0.0 },
 		PropExtra = { DisableRun = true, Dict = 'anim@heists@box_carry@', Anim = 'idle' },
 	},
 	{

@@ -318,8 +318,8 @@ function FW.AddKeybind(CommandString, Category, Description, DefaultParameter, O
 	local Pressed, Blocked = false, false
 	RegisterCommand('+fw_'..CommandString, function()
 		if IsPauseMenuActive() then return end
-		-- Typing on a DUI screen (fw-dui): keys are text, not keybinds (phone, inventory, ...)
-		Blocked = LocalPlayer.state.duiFocus == true
+		-- Typing on a DUI screen (fw-dui) or in a full screen editor (keybindsBlocked): keys are not keybinds (phone, inventory, ...)
+		Blocked = LocalPlayer.state.duiFocus == true or LocalPlayer.state.keybindsBlocked == true
 		if Blocked then return end
 		if IsHold and Pressed then return end
 		Pressed = true

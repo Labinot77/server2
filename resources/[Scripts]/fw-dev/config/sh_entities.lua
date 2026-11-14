@@ -53911,3 +53911,5 @@ if not IsDuplicityVersion() then
 		end
 	end
 end
+-- Used by fw-housing's decorate catalog.
+exports('GetEntities', function() return Config.Entities end)

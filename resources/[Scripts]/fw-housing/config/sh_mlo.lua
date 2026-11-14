@@ -63,9 +63,29 @@ Config.Decorate = {
     MaxRayDistance = 8.0,
     -- Prop thumbnails (%s = model). Uses kq_propplacer's images while that resource is started.
     Thumbnails = 'https://cfx-nui-kq_propplacer/nui/dist/assets/%s.webp',
+    CamSpeed = 3.0,         -- freecam metres per second (SHIFT = x3)
+    MaxSelect = 10,         -- CTRL + click multi-select
+    Tints = 16,             -- Y cycles the prop texture variation 0 .. Tints - 1
+    RotSteps = { 1, 5, 15, 45, 90 }, RotInc = 2,                 -- CTRL + scroll, default 5 degrees
+    GridSteps = { 0.01, 0.05, 0.1, 0.25, 0.5, 1.0 }, GridInc = 3, -- ALT + scroll, G toggles grid snap
+    -- Bottom bar buttons. Categories are the ones from sh_catalog.lua ('Build' = resizable wall), Entities = every prop in fw-dev.
+    Groups = {
+        { Name = 'Structure', Icon = 'grid', Categories = { 'Build', 'Walls', 'Doors' } },
+        { Name = 'Office', Icon = 'clipboard', Categories = { 'Office' } },
+        { Name = 'Construction', Icon = 'tools', Categories = { 'Construction', 'Industrial', 'Garage', 'Equipment' } },
+        { Name = 'Outdoor', Icon = 'tree', Categories = { 'Outdoor', 'Outdoor furniture', 'Plants' } },
+        { Name = 'Interior', Icon = 'house', Categories = { 'Interior', 'Seating', 'Tables', 'Storage' } },
+        { Name = 'Electrical', Icon = 'bolt', Categories = { 'Electrical', 'Lights' } },
+        { Name = 'Plumbing', Icon = 'faucet', Categories = { 'Bathroom', 'Kitchen' } },
+        { Name = 'Utility', Icon = 'plug', Categories = { 'Utility' } },
+        { Name = 'Leisure', Icon = 'briefcase', Categories = { 'Bar', 'Recreational', 'Misc' } },
+        { Name = 'Clutter', Icon = 'kit', Categories = { 'Bins', 'Trash', 'Clutter' } },
+        { Name = 'Entities', Icon = 'E', Entities = true },
+    },
 }
 
--- Colours the owner can pick for walls / floor / ceiling.
+-- Colours the owner can pick for walls / floor / ceiling. The first 16 are also the built walls' tint palette
+-- (tools/make_wall_kit.py bakes them in the same order: change both together and rebuild the kit).
 Config.SurfaceColors = {
     { 'White', '#F2F2F2' }, { 'Cream', '#EADDC4' }, { 'Beige', '#CDB891' }, { 'Light grey', '#B5B5B5' },
     { 'Dark grey', '#4A4A4A' }, { 'Black', '#161616' }, { 'Sage', '#9CAF88' }, { 'Forest', '#2F4B37' },
@@ -89,6 +109,29 @@ for _, Cat in ipairs(Config.DecorCatalog) do
     for _, Item in ipairs(Cat.items) do
         Config.DecorByModel[Item.model] = { Type = Item.physics and 'door' or 'furniture', Category = Cat.category }
     end
+end
+
+-- Props from fw-dev (config/sh_entities.lua, { [hash] = name }), fetched once through its export. Empty when fw-dev isn't running.
+local EntityList = nil
+function GetEntityList()
+    if EntityList == nil then
+        local Ok, List = pcall(function() return exports['fw-dev']:GetEntities() end)
+        EntityList = Ok and type(List) == 'table' and List or {}
+    end
+    return EntityList
+end
+
+-- Lowercase names that aren't peds.
+local PedPrefixes = { '^a_[cfm]_', '^[gsu]_[fm]_', '^cs_', '^csb_', '^ig_', '^hc_', '^mp_[fgms]_', '^player_' }
+function IsEntityProp(Model)
+    if type(Model) ~= 'string' or Model ~= Model:lower() or GetEntityList()[GetHashKey(Model)] ~= Model then return false end
+    for _, P in ipairs(PedPrefixes) do if Model:find(P) then return false end end
+    return true
+end
+
+-- { Type, Category } of anything that may be placed.
+function GetDecorItem(Model)
+    return Config.DecorByModel[Model] or (IsEntityProp(Model) and { Type = 'furniture', Category = 'Entities' }) or nil
 end
 
 -- Houses made in game (/housecreator) are stored in the `mlo_houses` table and go through the same functions.

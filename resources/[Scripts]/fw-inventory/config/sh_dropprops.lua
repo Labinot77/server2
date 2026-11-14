@@ -46,6 +46,9 @@ Config.DropPropsOverride = {
     joint = 'p_cs_joint_02',
     ['duffel-bag'] = 'prop_cs_heist_bag_02',
     ['business-bag'] = 'prop_cs_heist_bag_02',
+    ["heist-drill-basic"] = "hei_prop_heist_drill",
+    ['heist-drill-adv'] = "hei_prop_heist_drill",
+    ['heist-drill-hard'] = 'ch_prop_ch_heist_drill',
 }
 
 -- Ported from ox_inventory (data/dropprops.lua).

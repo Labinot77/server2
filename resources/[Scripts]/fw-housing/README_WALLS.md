@@ -32,6 +32,13 @@ Decorate > **Build wall** > a 2 x 2.5 m wall appears where you look.
 * Move / rotate / snap / duplicate work like any prop. The wall counts as one object.
 * The owner's wall colour (House menu > Colours > Walls) also paints the kit.
 
+## Kit v3: collision + colour per wall
+`make_wall_kit.py` now gives every panel a CONCRETE box collision (vanilla prop flags, centred on the panel) and the tint
+shader `default_tnt.sps` with a generated 16 colour palette (`fw_wall_palette`, same order as the first 16
+`Config.SurfaceColors`). Rebuild the kit once, replace the whole `fw-walls` folder on the server, clear your FiveM cache.
+In the editor: right click a wall > Colour. Y cycles the colour. Each wall saves its own colour.
+`make_wall_collisions.py` only redoes the collision of an existing `wallkit.blend`.
+
 ## Troubleshooting
 * Script error: Window > Toggle System Console shows the reason (Sollumz not enabled, file not saved, .dds missing).
 * `.ydr.xml` files instead of `.ydr`: PyMateria isn't installed (step 2).

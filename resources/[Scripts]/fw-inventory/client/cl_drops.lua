@@ -198,7 +198,7 @@ local function SpawnSlot(DropId, Drop, Slot, Data)
             name = ('fw-inventory:drop:%s:%s'):format(DropId, Slot),
             options = {
                 {
-                    label = ('Oppakken %s'):format(Label),
+                    label = ('Pick up %s'):format(Label),
                     action = function()
                         PickupDropItem(DropId, Slot)
                     end,

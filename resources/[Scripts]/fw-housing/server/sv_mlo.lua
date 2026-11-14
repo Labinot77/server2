@@ -379,7 +379,7 @@ AddEventHandler("fw-housing:Server:Decor:Add", function(HouseId, Model, Coords, 
     if not Allowed then return Notify(Source, "You can't decorate this house.", "error") end
 
     local House, Mlo = GetMloHouse(HouseId)
-    local Item, Label, Price = Config.DecorByModel[Model], GetItemLabel(tostring(Model)), Config.Decorate.Price or 0
+    local Item, Label, Price = GetDecorItem(Model), GetItemLabel(tostring(Model)), Config.Decorate.Price or 0
     Coords, Rot = SanitizeVec(Coords), SanitizeVec(Rot)
     if not Item or not Coords or not Rot then return end
     if Item.Type == 'wall' then
@@ -436,7 +436,12 @@ AddEventHandler("fw-housing:Server:Decor:Update", function(HouseId, DecorId, Coo
     CommitHouse(HouseId)
 end)
 
--- Batch save from the decorate editor: { Adds = { { Model, Coords, Rot, Wall } }, Updates = { { Id, Coords, Rot, Wall } }, Removes = { Id } }
+local function SanitizeTint(Tint)
+    Tint = math.floor(tonumber(Tint) or 0)
+    return Tint > 0 and Tint < (Config.Decorate.Tints or 16) and Tint or nil
+end
+
+-- Batch save from the decorate editor: { Adds = { { Model, Coords, Rot, Wall, Tint } }, Updates = { { Id, Coords, Rot, Wall, Tint } }, Removes = { Id } }
 RegisterNetEvent("fw-housing:Server:Decor:Save")
 AddEventHandler("fw-housing:Server:Decor:Save", function(HouseId, Changes)
     local Source = source
@@ -467,6 +472,7 @@ AddEventHandler("fw-housing:Server:Decor:Save", function(HouseId, Changes)
         if Decor and Coords and Rot and IsPointInMloZone(House.Mlo, Coords) then
             Decor.Coords, Decor.Rot = Coords, Rot
             if Decor.Type == 'wall' and U.Wall then Decor.Wall = SanitizeWall(U.Wall) or Decor.Wall end
+            Decor.Tint = SanitizeTint(U.Tint)
             if DecorDoorStates[HouseId] then DecorDoorStates[HouseId][Decor.Id] = nil end
         else
             Skipped = Skipped + 1
@@ -474,7 +480,7 @@ AddEventHandler("fw-housing:Server:Decor:Save", function(HouseId, Changes)
     end
 
     for _, A in ipairs(type(Changes.Adds) == 'table' and Changes.Adds or {}) do
-        local Item = Config.DecorByModel[A.Model]
+        local Item = GetDecorItem(A.Model)
         local Coords, Rot = SanitizeVec(A.Coords), SanitizeVec(A.Rot)
         local Wall = Item and Item.Type == 'wall' and SanitizeWall(A.Wall) or nil
         if not Item or not Coords or not Rot or not IsPointInMloZone(House.Mlo, Coords) or (Item.Type == 'wall' and not Wall) then
@@ -486,7 +492,7 @@ AddEventHandler("fw-housing:Server:Decor:Save", function(HouseId, Changes)
             Notify(Source, "Not enough money in your bank account.", "error")
             break
         else
-            House.Decorations[#House.Decorations + 1] = { Id = GetNextDecorId(House.Decorations), Model = A.Model, Type = Item.Type, Wall = Wall, Coords = Coords, Rot = Rot }
+            House.Decorations[#House.Decorations + 1] = { Id = GetNextDecorId(House.Decorations), Model = A.Model, Type = Item.Type, Wall = Wall, Coords = Coords, Rot = Rot, Tint = SanitizeTint(A.Tint) }
         end
     end
 
@@ -538,6 +544,11 @@ end)
 
 FW.Functions.CreateCallback("fw-housing:Server:Decor:GetDoorStates", function(Source, Cb, HouseId)
     Cb(DecorDoorStates[HouseId] or {})
+end)
+
+FW.Functions.CreateCallback("fw-housing:Server:Decor:GetBalance", function(Source, Cb)
+    local Player = FW.Functions.GetPlayer(Source)
+    Cb(Player and exports['fw-financials']:GetAccountBalance(Player.PlayerData.charinfo.account) or 0)
 end)
 
 FW.Functions.CreateCallback("fw-housing:Server:Decor:CanDecorate", function(Source, Cb, HouseId)

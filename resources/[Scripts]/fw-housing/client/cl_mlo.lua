@@ -99,28 +99,47 @@ local function ColorTexture(Hex)
     return Name
 end
 
-function ApplySurfaces(House)
-    local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
-    if not Cfg then return end
-    local Colors = House.MloData and House.MloData.Surfaces or {}
-    for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
-        for _, Tex in ipairs(Cfg[Surface] or {}) do
-            RemoveReplaceTexture(Cfg.Txd, Tex)
-            if Colors[Surface] then AddReplaceTexture(Cfg.Txd, Tex, 'fw_housing_surfaces', ColorTexture(Colors[Surface])) end
+-- Surfaces.Txd may be several dictionaries ('a, b'): a .ytd name, or the .ydr name when the textures are embedded in the model.
+local function Txds(Cfg)
+    local List = {}
+    for Name in tostring(Cfg.Txd or ''):gmatch('[^,%s]+') do List[#List + 1] = Name end
+    return List
+end
+
+local Warned = {}
+local function CheckTxds(Cfg)
+    for _, Txd in ipairs(Txds(Cfg)) do
+        if not Warned[Txd] and not IsModelInCdimage(GetHashKey(Txd)) then
+            RequestStreamedTextureDict(Txd, false)
+            SetTimeout(2000, function()
+                if HasStreamedTextureDictLoaded(Txd) then return SetStreamedTextureDictAsNoLongerNeeded(Txd) end
+                Warned[Txd] = true
+                print(("^3[fw-housing]^7 Surfaces: texture dictionary '%s' not found. Use the .ytd name, or the .ydr name if the textures are embedded in the interior model (check in CodeWalker)."):format(Txd))
+            end)
         end
     end
-    local T = Config.Walls.Texture
-    RemoveReplaceTexture(T[1], T[2])
-    if Colors.Walls then AddReplaceTexture(T[1], T[2], 'fw_housing_surfaces', ColorTexture(Colors.Walls)) end
+end
+
+local function ReplaceSurfaces(Cfg, Colors)
+    for _, Txd in ipairs(Txds(Cfg)) do
+        for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
+            for _, Tex in ipairs(Cfg[Surface] or {}) do
+                RemoveReplaceTexture(Txd, Tex)
+                if Colors and Colors[Surface] then AddReplaceTexture(Txd, Tex, 'fw_housing_surfaces', ColorTexture(Colors[Surface])) end
+            end
+        end
+    end
+end
+
+-- Shell walls / floor / ceiling from the config. Built walls are coloured one by one (tint) in the decorate editor.
+function ApplySurfaces(House)
+    local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
+    if Cfg then ReplaceSurfaces(Cfg, House.MloData and House.MloData.Surfaces or {}) CheckTxds(Cfg) end
 end
 
 local function ClearSurfaces(House)
     local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
-    if not Cfg then return end
-    for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
-        for _, Tex in ipairs(Cfg[Surface] or {}) do RemoveReplaceTexture(Cfg.Txd, Tex) end
-    end
-    RemoveReplaceTexture(Config.Walls.Texture[1], Config.Walls.Texture[2])
+    if Cfg then ReplaceSurfaces(Cfg, nil) end
 end
 
 -- // Walls: invisible anchor (bottom centre) + kit pieces laid out from it \\ --
@@ -134,7 +153,8 @@ function LayoutWall(Obj)
     end
 end
 
-function CreateWall(W, Pos, Rot)
+-- Tint = row of the kit's tint palette (Config.SurfaceColors order), per wall.
+function CreateWall(W, Pos, Rot, Tint)
     local Hash = HousingLoadModel(Config.Walls.Anchor)
     if not Hash then return end
     local Obj = { Wall = W, Pieces = {}, Anchor = CreateObjectNoOffset(Hash, Pos.x, Pos.y, Pos.z, false, false, false) }
@@ -147,6 +167,7 @@ function CreateWall(W, Pos, Rot)
         if PieceHash then
             local E = CreateObjectNoOffset(PieceHash, Pos.x, Pos.y, Pos.z, false, false, false)
             FreezeEntityPosition(E, true)
+            if Tint then SetObjectTextureVariation(E, Tint) end
             SetModelAsNoLongerNeeded(PieceHash)
             Obj.Pieces[#Obj.Pieces + 1] = { Entity = E, X = P.X, Z = P.Z }
         end
@@ -164,7 +185,7 @@ end
 -- // Decorations (streamed by the PolyZone) \\ --
 
 local function DecorSig(v)
-    return ('%s|%.3f|%.3f|%.3f|%.2f|%.2f|%.2f|%s'):format(v.Model, v.Coords.x, v.Coords.y, v.Coords.z, v.Rot.x, v.Rot.y, v.Rot.z, v.Wall and json.encode(v.Wall) or '')
+    return ('%s|%.3f|%.3f|%.3f|%.2f|%.2f|%.2f|%s|%d'):format(v.Model, v.Coords.x, v.Coords.y, v.Coords.z, v.Rot.x, v.Rot.y, v.Rot.z, v.Wall and json.encode(v.Wall) or '', v.Tint or 0)
 end
 
 local function ApplyDecorDoor(DecorId)
@@ -187,7 +208,7 @@ local function SpawnDecor(HouseId, Decor, Generation)
     if not Decor.Coords or not Decor.Rot then return end
 
     if Decor.Type == 'wall' then
-        local Obj = Decor.Wall and CreateWall(Decor.Wall, Decor.Coords, Decor.Rot)
+        local Obj = Decor.Wall and CreateWall(Decor.Wall, Decor.Coords, Decor.Rot, Decor.Tint)
         if not Obj then return end
         if Generation ~= LoadGeneration or InsideHouseId ~= HouseId or Spawned[Decor.Id] then return DeleteWall(Obj) end
         Spawned[Decor.Id] = { Entity = Obj.Anchor, WallObj = Obj, Sig = DecorSig(Decor), Type = 'wall' }
@@ -202,6 +223,7 @@ local function SpawnDecor(HouseId, Decor, Generation)
 
     local Obj = CreateObjectNoOffset(Hash, Decor.Coords.x, Decor.Coords.y, Decor.Coords.z, false, false, false)
     SetEntityRotation(Obj, Decor.Rot.x, Decor.Rot.y, Decor.Rot.z, 2, true)
+    if Decor.Tint then SetObjectTextureVariation(Obj, Decor.Tint) end
     FreezeEntityPosition(Obj, true)
     SetModelAsNoLongerNeeded(Hash)
 

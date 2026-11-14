@@ -3,303 +3,389 @@
 <head>
 <meta charset="utf-8">
 <style>
-:root {
-    --bg: rgba(34, 40, 49, .94); --bg2: #30475e; --card: rgba(255,255,255,.05); --line: rgba(255,255,255,.08);
-    --pri: #95ef77; --sec: #f2a365; --err: #e05252; --text: #fff; --muted: #9aa5b4;
-    --x: #b94a4a; --y: #4f8a3c; --z: #3a5f9e;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, Arial, sans-serif; user-select: none; }
-body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(--text); font-size: 1.3vh; }
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&display=swap');
+:root { --dark: rgba(16,16,18,.82); --text: #fff; --ink: #141414; --muted: #8d8d94; --green: #4fe36b; --red: #ff3b4e; --warn: #ffb52e; --teal: #3ad6c7; --blue: #1e9bff; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(--text); font: italic 700 1.4vh 'Saira Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; }
+.sh { text-shadow: 0 .1vh .4vh rgba(0,0,0,.8); }
 #view { position: absolute; inset: 0; }
-.box { background: var(--bg); border-radius: .3vh; box-shadow: 0 .3vh 1.5vh rgba(0,0,0,.35); }
-.btn { padding: .7vh 1.2vh; background: var(--bg); border-radius: .3vh; cursor: pointer; text-align: center; white-space: nowrap; }
-.btn:hover { background: var(--bg2); }
-.btn.on { background: var(--pri); color: #111; }
-.btn.off { opacity: .4; pointer-events: none; }
-.btn.err:hover { background: var(--err); }
-input { width: 100%; background: rgba(255,255,255,.06); border: .1vh solid var(--line); color: var(--text); padding: .6vh .8vh; border-radius: .3vh; outline: none; font-size: 1.25vh; user-select: text; }
-input:focus { border-color: var(--pri); }
-::-webkit-scrollbar { width: .4vh; } ::-webkit-scrollbar-thumb { background: var(--pri); border-radius: .2vh; }
+.hidden { display: none !important; }
 
-/* top bar */
-#top { position: absolute; top: 1.2vh; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .6vh; }
-#top .row { display: flex; gap: .6vh; }
-#stats { font-size: 1.2vh; color: var(--text); }
-#stats b { color: var(--pri); font-weight: 400; } #stats i { color: var(--sec); font-style: normal; }
+/* // left info \\ */
+#info { position: absolute; left: 1vh; top: 5vh; width: 24vh; display: flex; flex-direction: column; gap: .7vh; }
+#address { font-size: 2.4vh; font-weight: 800; letter-spacing: .05vh; }
+.limit { background: #f2f2f2; color: var(--ink); display: flex; justify-content: space-between; padding: .25vh .8vh; font-size: 1.45vh; }
+.bar { height: .7vh; background: rgba(0,0,0,.55); margin-top: -.7vh; } .bar div { height: 100%; background: var(--teal); }
+#mode { font-size: 1.15vh; letter-spacing: .35vh; }
+#unsaved { font-size: 1.1vh; color: var(--warn); }
+#object { display: flex; flex-direction: column; gap: .5vh; margin-top: .8vh; }
+#oname { border-left: .35vh solid #fff; padding: .2vh .9vh; font-size: 1.55vh; background: linear-gradient(90deg, rgba(0,0,0,.55), transparent); }
+.req-h { background: #f2f2f2; color: var(--ink); font-size: 1.1vh; padding: .1vh .8vh; }
+.req { display: flex; justify-content: space-between; padding: 0 .8vh; font-size: 1.45vh; }
+.req .bad { color: var(--red); }
+#warn { background: linear-gradient(90deg, rgba(110,10,18,.75), rgba(40,0,5,.35)); padding: .7vh .8vh; display: flex; flex-direction: column; gap: .4vh; font-size: 1.15vh; text-transform: none; }
+#warn b { color: var(--red); display: flex; align-items: center; gap: .6vh; font-weight: 700; }
+#warn span { color: var(--warn); font-weight: 600; }
 
-/* side panels */
-.side { position: absolute; top: 5vh; bottom: 7vh; display: flex; gap: .6vh; }
-#left { left: 1.5vh; } #right { right: 1.5vh; flex-direction: row-reverse; }
-.head { position: absolute; top: -5vh; }
-#left .head { left: 0; } #right .head { right: 0; text-align: right; }
-.head h1 { color: var(--pri); font-size: 2vh; font-weight: 500; }
-.head p { color: var(--muted); font-size: 1.2vh; }
-.strip { width: 2.6vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .8vh 0; cursor: pointer; }
-.strip span { writing-mode: vertical-rl; color: var(--muted); font-size: 1.15vh; }
-.strip:hover span { color: var(--text); }
-.arrow { width: 1.8vh; height: 1.8vh; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.08); border-radius: .2vh; font-size: 1.1vh; }
-.panel { width: 34vh; display: flex; flex-direction: column; gap: .8vh; }
-.side.hidden .panel, .side.hidden .head { display: none; }
+/* // right hints \\ */
+#hints { position: absolute; right: 1.2vh; top: 4vh; display: flex; flex-direction: column; align-items: flex-end; gap: 1vh; }
+.modes { display: flex; gap: 1.4vh; margin-bottom: .6vh; }
+.modes div { display: flex; align-items: center; gap: .7vh; cursor: pointer; opacity: .45; font-size: 1.75vh; }
+.modes div.on { opacity: 1; }
+.hint { display: flex; align-items: center; gap: .7vh; font-size: 1.75vh; }
+.hint .lbl { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.hint small { font-size: 1.15vh; color: var(--muted); }
+.hint.g .lbl { color: var(--green); } .hint.r .lbl { color: var(--red); }
+.key { background: #f2f2f2; color: var(--ink); min-width: 2.9vh; height: 2.9vh; padding: 0 .6vh; border-radius: .3vh; display: inline-flex; align-items: center; justify-content: center; font-size: 1.35vh; font-style: normal; }
+.plus { font-size: 1.1vh; color: #ddd; }
+.ico-m { width: 2.4vh; height: 2.9vh; }
+.sep { width: 9vh; height: .1vh; background: rgba(255,255,255,.25); margin: .3vh 0; }
 
-/* furniture list */
-.search { position: relative; }
-.search span { position: absolute; right: .9vh; top: 50%; transform: translateY(-50%); color: var(--muted); cursor: pointer; }
-.tabs { display: flex; gap: .6vh; }
-.tabs .btn { flex: 1; }
-#tree { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: .5vh; padding: .8vh; }
-.cat, .item { display: flex; align-items: center; gap: .9vh; padding: .7vh .8vh; background: var(--card); border-radius: .3vh; cursor: pointer; }
-.cat:hover, .item:hover { background: var(--bg2); }
-.cat.open { background: rgba(149,239,119,.18); }
-.item { margin-left: 1.6vh; }
-.item.sel { color: var(--pri); background: var(--bg2); }
-.ico { width: 2.6vh; height: 2.6vh; flex: none; border-radius: .3vh; background: var(--sec); display: flex; align-items: center; justify-content: center; color: #111; font-size: 1.1vh; overflow: hidden; }
-.ico img { width: 100%; height: 100%; object-fit: cover; }
-.cat .ico { background: var(--pri); }
-.cat .name, .item .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chev { width: 1.8vh; height: 1.8vh; border-radius: .2vh; background: rgba(149,239,119,.25); color: var(--pri); display: flex; align-items: center; justify-content: center; font-size: 1vh; }
-.item small { color: var(--muted); }
+/* // bottom catalog \\ */
+#shop { position: absolute; left: 0; right: 0; bottom: 0; }
+#group { position: absolute; left: 1.1vh; bottom: 22.4vh; font-size: 1.1vh; letter-spacing: .2vh; }
+#cats { position: absolute; left: 1.1vh; bottom: 16.6vh; display: flex; gap: .9vh; }
+.cat { width: 4.2vh; height: 4.2vh; background: rgba(12,12,14,.85); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5vh; font-style: normal; }
+.cat svg { width: 2.4vh; height: 2.4vh; fill: #fff; }
+.cat.on { background: #f2f2f2; color: var(--ink); } .cat.on svg { fill: var(--ink); }
+.cat .n { border: .15vh solid currentColor; padding: 0 .4vh; font-size: 1.2vh; }
+#searchbox { position: absolute; right: 1.1vh; bottom: 16.6vh; display: flex; align-items: center; gap: 1.2vh; }
+.search { display: flex; align-items: center; gap: .8vh; background: rgba(12,12,14,.6); padding: 0 1vh; height: 4.2vh; }
+.search svg { width: 1.8vh; height: 1.8vh; fill: #fff; }
+#search { width: 22vh; background: none; border: 0; outline: none; color: #fff; font: inherit; font-size: 2.2vh; text-transform: uppercase; user-select: text; }
+#search::placeholder { color: rgba(255,255,255,.4); }
+#total { background: #f2f2f2; color: var(--ink); height: 4.2vh; padding: 0 1.3vh; display: flex; align-items: center; font-size: 1.9vh; }
+#grid { position: absolute; left: 0; right: 0; bottom: 0; height: 15.6vh; padding: .6vh 1.1vh; background: linear-gradient(0deg, rgba(10,10,12,.9), rgba(10,10,12,.6));
+    display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, 7vh); grid-auto-columns: 9.2vh; gap: .6vh .5vh; overflow-x: auto; overflow-y: hidden; }
+#grid::-webkit-scrollbar { height: .4vh; } #grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35); }
+.tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: .25vh; cursor: pointer; border: .2vh solid transparent; padding: .2vh; background: rgba(255,255,255,.04); }
+.tile:hover { background: rgba(255,255,255,.1); }
+.tile.on { border-color: #fff; }
+.thumb { width: 100%; height: 4.6vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.thumb img { max-width: 100%; max-height: 100%; }
+.thumb i { font-size: 1.8vh; color: rgba(255,255,255,.35); }
+.tile span { width: 100%; text-align: center; font-size: 1.2vh; font-weight: 600; font-style: normal; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zoom { position: absolute; top: .2vh; right: .2vh; width: 1.7vh; height: 1.7vh; background: var(--blue); display: flex; align-items: center; justify-content: center; }
+.zoom svg { width: 1.1vh; height: 1.1vh; fill: #fff; }
+#preview { position: absolute; width: 18vh; height: 18vh; background: rgba(10,10,12,.92); border: .2vh solid #fff; display: none; align-items: center; justify-content: center; pointer-events: none; }
+#preview img { max-width: 92%; max-height: 92%; }
 
-/* object settings */
-#settings { overflow-y: auto; display: flex; flex-direction: column; gap: .8vh; }
-.card { padding: 1.2vh; display: flex; flex-direction: column; gap: .7vh; }
-.slider .top { display: flex; justify-content: space-between; align-items: center; }
-.val { min-width: 4.5vh; padding: .3vh .6vh; background: rgba(255,255,255,.1); border-radius: .2vh; text-align: center; font-size: 1.15vh; }
-input[type=range] { -webkit-appearance: none; height: .35vh; padding: 0; border: 0; background: rgba(255,255,255,.15); }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 1.1vh; height: 1.1vh; border-radius: .2vh; background: #fff; cursor: pointer; }
-.title { color: var(--pri); font-size: 1.3vh; } .sub { color: var(--muted); font-size: 1.1vh; margin-top: -.6vh; }
-.kv { display: flex; gap: .5vh; align-items: center; }
-.kv label { width: 11vh; flex: none; padding: .6vh .8vh; background: rgba(255,255,255,.07); border-radius: .2vh; font-size: 1.2vh; }
-.kv .v { flex: 1; padding: .6vh .8vh; background: var(--sec); color: #111; border-radius: .2vh; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kv input { text-align: center; }
-.kv label.x { background: var(--x); } .kv label.y { background: var(--y); } .kv label.z { background: var(--z); }
-.btns { display: flex; gap: .5vh; justify-content: flex-end; flex-wrap: wrap; }
-.btns .btn { background: rgba(255,255,255,.07); padding: .6vh 1vh; }
-.btns .btn:hover { background: var(--bg2); }
-.mat { display: flex; gap: .6vh; align-items: center; }
-.mat .ico { width: 4.4vh; height: 4.4vh; background: rgba(255,255,255,.08); }
-.mat .v { flex: 1; padding: 1.3vh .9vh; background: var(--sec); color: #111; border-radius: .2vh; }
-.hole { background: rgba(255,255,255,.04); border-radius: .3vh; padding: .6vh; display: flex; flex-direction: column; gap: .4vh; }
-.hole .kv label { width: 7vh; }
+/* // options menu (right click) \\ */
+#options { position: absolute; width: 23vh; background: rgba(12,12,14,.94); display: none; flex-direction: column; }
+#options .head { background: #f2f2f2; color: var(--ink); padding: .4vh .9vh; font-size: 1.4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#options .opt { padding: .65vh .9vh; cursor: pointer; display: flex; justify-content: space-between; font-size: 1.35vh; }
+#options .opt:hover { background: rgba(255,255,255,.12); }
+#options .opt.r { color: var(--red); }
+#options .sub { padding: .4vh .9vh 0; font-size: 1vh; color: var(--muted); letter-spacing: .2vh; }
+.kv { display: flex; gap: .4vh; padding: .2vh .9vh; align-items: center; }
+.kv label { width: 5.5vh; font-size: 1.15vh; }
+.kv label.x { color: #ff6b6b; } .kv label.y { color: #6be37f; } .kv label.z { color: #5f9dff; }
+.kv input { flex: 1; min-width: 0; background: rgba(255,255,255,.08); border: .1vh solid rgba(255,255,255,.1); color: #fff; padding: .35vh .6vh; font: inherit; font-size: 1.2vh; font-style: normal; outline: none; user-select: text; }
+.kv input:focus { border-color: #fff; }
+.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: .4vh; padding: .3vh .9vh .6vh; }
+.swatches div { height: 2.2vh; cursor: pointer; border: .2vh solid transparent; }
+.swatches div:hover { border-color: rgba(255,255,255,.6); } .swatches div.on { border-color: #fff; }
+.hole { border-top: .1vh solid rgba(255,255,255,.08); padding-bottom: .3vh; }
 
-/* hints */
-#hints { position: absolute; bottom: 1.5vh; left: 50%; transform: translateX(-50%); display: flex; gap: .8vh; }
-.hint { display: flex; border-radius: .3vh; overflow: hidden; font-size: 1.15vh; }
-.hint b { padding: .5vh .8vh; background: var(--bg); font-weight: 400; }
-.hint span { padding: .5vh .8vh; background: var(--pri); color: #111; }
-
-/* modal */
-#modal { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.35); }
-#modal .box { padding: 2vh; display: flex; flex-direction: column; gap: 1.4vh; width: 34vh; }
-#modal .btns .btn.on:hover { background: var(--pri); }
+/* // close modal \\ */
+#modal { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.4); }
+#modal .box { width: 32vh; background: rgba(12,12,14,.95); }
+#modal .head { background: #f2f2f2; color: var(--ink); padding: .5vh 1vh; font-size: 1.6vh; }
+#modal p { padding: 1.2vh 1vh; font-size: 1.3vh; color: #ccc; text-transform: none; font-weight: 600; }
+#modal .row { display: flex; gap: .6vh; padding: 0 1vh 1vh; justify-content: flex-end; }
+.btn { padding: .5vh 1.2vh; background: rgba(255,255,255,.1); cursor: pointer; font-size: 1.3vh; }
+.btn:hover { background: rgba(255,255,255,.2); } .btn.w { background: #f2f2f2; color: var(--ink); } .btn.r:hover { background: var(--red); }
 </style>
 </head>
 <body>
 <div id="view"></div>
 
-<div id="top">
-    <div class="row">
-        <div class="btn" id="bSave" onclick="post('save')">Save</div>
-        <div class="btn" id="bUndo" onclick="post('undo')">Undo</div>
-        <div class="btn" id="bRedo" onclick="post('redo')">Redo</div>
-        <div class="btn" id="bDiscard" onclick="post('discard')">Discard</div>
-        <div class="btn" onclick="askClose()">Close</div>
-    </div>
-    <div id="stats"></div>
-</div>
-
-<div id="left" class="side">
-    <div class="box strip" onclick="toggle('left')"><div class="arrow">‹</div><span>Hide panel</span><div class="arrow">‹</div></div>
-    <div class="head"><h1>Furniture List</h1><p>Objects you can place or have placed</p></div>
-    <div class="panel">
-        <div class="search"><input id="search" placeholder="Search by name"><span onclick="$('search').value='';draw()">✕</span></div>
-        <div class="tabs"><div class="btn on" id="tEdit" onclick="tab='edit';draw()">Edit</div><div class="btn" id="tPlaced" onclick="tab='placed';draw()">Placed</div></div>
-        <div id="tree" class="box"></div>
+<div id="info" class="sh">
+    <div id="address"></div>
+    <div class="limit"><span>Object Limits</span><span id="limit">000/000</span></div>
+    <div class="bar"><div id="limitbar"></div></div>
+    <div id="mode">Build Mode</div>
+    <div id="unsaved" class="hidden">Unsaved changes · Ctrl+S save</div>
+    <div id="object" class="hidden">
+        <div id="oname"></div>
+        <div id="reqs"></div>
+        <div id="warn" class="hidden"><b>⚠ Error/Warning</b><span id="warntext"></span></div>
     </div>
 </div>
 
-<div id="right" class="side">
-    <div class="box strip" onclick="toggle('right')"><div class="arrow">›</div><span>Hide panel</span><div class="arrow">›</div></div>
-    <div class="head"><h1>Object Settings</h1><p>Fine tune your placed object</p></div>
-    <div class="panel" id="settings">
-        <div class="box card slider"><div class="top">Snap Movement<div class="val" id="vSnapMove">0</div></div><input type="range" id="SnapMove" min="0" max="1" step="0.05" value="0"></div>
-        <div class="box card slider"><div class="top">Snap Rotation<div class="val" id="vSnapRot">0</div></div><input type="range" id="SnapRot" min="0" max="90" step="5" value="0"></div>
-        <div class="box card slider"><div class="top">Camera Speed<div class="val" id="vCamSpeed">0.05</div></div><input type="range" id="CamSpeed" min="0.01" max="0.3" step="0.01" value="0.05"></div>
-        <div class="box card" id="info">
-            <div class="title">Item Information</div><div class="sub">Selected item details</div>
-            <div class="kv"><label>Model Hash</label><div class="v" id="iHash"></div></div>
-            <div class="kv"><label>Display Name</label><div class="v" id="iName"></div></div>
-            <div class="title">Item Position</div><div class="sub">Selected item position and rotation values</div>
-            <div class="kv"><label class="x">X position</label><input data-k="Pos.x"></div>
-            <div class="kv"><label class="y">Y position</label><input data-k="Pos.y"></div>
-            <div class="kv"><label class="z">Z position</label><input data-k="Pos.z"></div>
-            <div class="kv"><label class="x">X rotation</label><input data-k="Rot.x"></div>
-            <div class="kv"><label class="y">Y rotation</label><input data-k="Rot.y"></div>
-            <div class="kv"><label class="z">Z rotation</label><input data-k="Rot.z"></div>
-            <div class="btns"><div class="btn" onclick="copyT()">Copy</div><div class="btn" onclick="pasteT()">Paste</div></div>
-            <div id="wall" style="display:none;flex-direction:column;gap:.6vh">
-                <div class="title">Wall</div><div class="sub">Size and openings, in steps of 0.25 m</div>
-                <div class="kv"><label>Length</label><input id="wL" type="number" step="0.25"></div>
-                <div class="kv"><label>Height</label><input id="wH" type="number" step="0.25"></div>
-                <div id="holes" style="display:flex;flex-direction:column;gap:.5vh"></div>
-                <div class="btns"><div class="btn" onclick="addHole('Door')">+ Door hole</div><div class="btn" onclick="addHole('Window')">+ Window hole</div></div>
-            </div>
-            <div class="title">Item</div><div class="sub">Object placed in your house</div>
-            <div class="mat"><div class="ico" id="iImg"></div><div class="v" id="iLabel"></div></div>
-            <div class="kv"><label>Placed (same)</label><div class="v" id="iSame"></div></div>
-            <div class="btns"><div class="btn" onclick="post('ground')">Ground</div><div class="btn" onclick="post('duplicate')">Duplicate</div><div class="btn err" onclick="post('delete')">Delete</div></div>
-        </div>
-    </div>
-</div>
+<div id="hints" class="sh"></div>
 
-<div id="hints"></div>
+<div id="shop" class="sh">
+    <div id="group">Any</div>
+    <div id="cats"></div>
+    <div id="searchbox">
+        <div class="search"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg><input id="search" placeholder="Search"></div>
+        <div id="total">Total: 0/0</div>
+    </div>
+    <div id="grid"></div>
+</div>
+<div id="preview"></div>
+
+<div id="options"></div>
 
 <div id="modal"><div class="box">
-    <div class="title">Unsaved changes</div><div class="sub" style="margin:0">Save them before you close the editor?</div>
-    <div class="btns"><div class="btn" onclick="$('modal').style.display='none'">Cancel</div><div class="btn err" onclick="post('close',{Save:false})">Discard</div><div class="btn on" onclick="post('close',{Save:true})">Save</div></div>
+    <div class="head">Unsaved Changes</div>
+    <p>Save your changes before you close the editor?</p>
+    <div class="row"><div class="btn" onclick="hide('modal')">Cancel</div><div class="btn r" onclick="post('close',{Save:false})">Discard</div><div class="btn w" onclick="post('close',{Save:true})">Save</div></div>
 </div></div>
 
 <script>
 const $ = id => document.getElementById(id);
-let catalog = [], thumb = '', walls = false, s = { List: [] }, tab = "edit", expanded = {}, lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = null;
-
-const post = (name, data = {}) => fetch(`https://${GetParentResourceName()}/editor/${name}`, { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
-const img = m => thumb ? `<img src="${thumb.replace('%s', m)}" onerror="this.remove()">` : '';
+const hide = id => $(id).style.display = 'none';
+const post = (name, data = {}) => fetch(`https://${GetParentResourceName()}/editor/${name}`, { method: 'POST', body: JSON.stringify(data) }).then(r => r.json()).catch(() => ({}));
 const esc = t => String(t).replace(/[<>&"]/g, c => `&#${c.charCodeAt(0)};`);
+const title = t => String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const label = m => title(m.replace(/^[a-z]+_mp_h_/, '').replace(/^[a-z]+_prop_/, '').replace(/^prop_/, '').replace(/^v_[a-z]+_/, ''));
+const money = n => '$' + Math.floor(n).toLocaleString('en-US');
 
-function toggle(side) {
-    $(side).classList.toggle('hidden');
-    $(side).querySelectorAll('.arrow').forEach(a => a.textContent = ($(side).classList.contains('hidden') ? side === 'left' : side !== 'left') ? '›' : '‹');
+let catalog = [], groups = [], entities = [], colors = [], thumb = '', s = { List: [] }, group = -1, picked = null, shown = [], drawn = 0;
+let lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = null, warnTimer = 0;
+
+// // Icons \\
+const P = {
+    grid: 'M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z',
+    clipboard: 'M9 2h6v2h3a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm0 7v2h6V9zm0 4v2h6v-2z',
+    tools: 'M21.7 18.6l-8.6-8.6c.9-2.2.4-4.8-1.4-6.6C9.8 1.5 7 1.1 4.8 2.1l4 4-2.8 2.8-4-4C.9 7.1 1.4 9.9 3.3 11.8c1.8 1.8 4.4 2.3 6.6 1.4l8.6 8.6c.4.4 1 .4 1.4 0l1.8-1.8c.4-.4.4-1 0-1.4z',
+    tree: 'M12 2l7 9h-4l5 7h-7v4h-2v-4H4l5-7H5z',
+    house: 'M12 3l10 9h-3v9h-5v-6h-4v6H5v-9H2z',
+    bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
+    faucet: 'M4 10h9V8H9V6h8v2h-2v2h2a4 4 0 0 1 4 4v1h-3v-1a1 1 0 0 0-1-1H4zm14 7c0 1.5 1.5 3 1.5 3a1.5 1.5 0 0 1-3 0s1.5-1.5 1.5-3z',
+    plug: 'M8 2h2v5h4V2h2v5h2v5a6 6 0 0 1-5 5.9V22h-2v-4.1A6 6 0 0 1 6 12V7h2z',
+    briefcase: 'M9 3h6a2 2 0 0 1 2 2v2h4v13H3V7h4V5a2 2 0 0 1 2-2zm0 2v2h6V5z',
+    kit: 'M9 3h6v3h5a1 1 0 0 1 1 1v13H3V7a1 1 0 0 1 1-1h5zm2 2v1h2V5zm0 5v3H8v2h3v3h2v-3h3v-2h-3v-3z',
+    zoom: 'M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
+};
+const svg = n => `<svg viewBox="0 0 24 24"><path d="${P[n]}"/></svg>`;
+// Mouse with the used button filled: l, r, m (scroll), a (any / look).
+const mouse = b => `<svg class="ico-m" viewBox="0 0 20 26" fill="none" stroke="#fff" stroke-width="1.8"><rect x="2" y="1.5" width="16" height="23" rx="8"/><path d="M10 1.5v9M2 10.5h16"/>`
+    + (b === 'l' ? '<path d="M3 10.5V9a7 7 0 0 1 7-7v8.5z" fill="#fff"/>' : b === 'r' ? '<path d="M17 10.5V9a7 7 0 0 0-7-7v8.5z" fill="#fff"/>' : b === 'm' ? '<rect x="8.3" y="4" width="3.4" height="5" rx="1.7" fill="#fff"/>' : '') + '</svg>';
+const selIcon = '<svg class="ico-m" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="6.5" r="2"/><circle cx="12" cy="17.5" r="2"/><circle cx="6.5" cy="12" r="2"/><circle cx="17.5" cy="12" r="2"/></svg>';
+const key = k => `<span class="key">${k}</span>`;
+
+// // Catalog \\
+function items() {
+    if (group === -2) return s.List.map(i => ({ M: i.Model, L: i.Label, Key: i.Key, D: i.Dist }));
+    const g = groups[group];
+    if (g && g.Entities) return entities;
+    return g ? catalog.filter(i => g.Categories.includes(i.C)) : catalog;
 }
 
-// // Furniture list \\
-function draw() {
-    $('tEdit').classList.toggle('on', tab === 'edit'); $('tPlaced').classList.toggle('on', tab === 'placed');
+function tile(i) {
+    const name = i.L || label(i.M);
+    const on = picked === (i.Key || i.M) ? 'on' : '';
+    const img = i.W || !thumb ? `<i>▦</i>` : `<img src="${thumb.replace('%s', i.M)}" loading="lazy" onerror="this.outerHTML='<i>▦</i>'">`;
+    return `<div class="tile ${on}" data-m="${esc(i.M)}" data-k="${i.Key || ''}" data-w="${i.W ? 1 : ''}">${i.W || !thumb ? '' : `<div class="zoom">${svg('zoom')}</div>`}<div class="thumb">${img}</div><span>${esc(i.D !== undefined ? `${name} · ${i.D.toFixed(1)}m` : name)}</span></div>`;
+}
+
+const PAGE = 300;
+function drawGrid() {
     const q = $('search').value.trim().toLowerCase().replace(/\s+/g, '_');
-    let html = '';
-    if (tab === 'placed') {
-        html = s.List.filter(i => !q || i.Model.toLowerCase().includes(q)).map(i =>
-            `<div class="item ${s.Sel && s.Sel.Key === i.Key ? 'sel' : ''}" style="margin:0" onclick="post('select',{Key:'${i.Key}'})"><div class="ico">${img(i.Model)}</div><div class="name">${esc(i.Label)}</div><small>${i.Dist.toFixed(1)}m</small></div>`).join('')
-            || '<div class="sub" style="margin:0">Nothing placed yet.</div>';
-    } else {
-        const cats = (walls ? [{ Name: 'Build', Items: [{ Model: 'fw_wall', Label: 'Wall (resizable)', Wall: true }] }] : []).concat(catalog);
-        cats.forEach((c, ci) => {
-            const items = q ? c.Items.filter(i => i.Model.toLowerCase().includes(q) || i.Label.toLowerCase().includes(q)) : c.Items;
-            if (!items.length) return;
-            const isOpen = q ? true : expanded[ci];
-            html += `<div class="cat ${isOpen ? 'open' : ''}" onclick="expanded[${ci}]=!expanded[${ci}];draw()"><div class="ico">▤</div><div class="name">${esc(c.Name)}</div><small>${items.length}</small><div class="chev">${isOpen ? '⌄' : '›'}</div></div>`;
-            if (isOpen) html += items.slice(0, 200).map(i =>
-                `<div class="item" onclick='post("spawn",${JSON.stringify(i.Wall ? { Wall: true } : { Model: i.Model })})'><div class="ico">${i.Wall ? '▥' : img(i.Model)}</div><div class="name">${esc(i.Model)}</div></div>`).join('');
-        });
-    }
-    $('tree').innerHTML = html;
+    const all = items().map(i => typeof i === 'string' ? { M: i } : i);
+    shown = q ? all.filter(i => i.M.toLowerCase().includes(q) || (i.L || '').toLowerCase().replace(/\s+/g, '_').includes(q)) : all;
+    $('total').textContent = `Total: ${shown.length}/${all.length}`;
+    $('group').textContent = group === -2 ? 'Placed' : groups[group] ? groups[group].Name : 'Any';
+    drawn = Math.min(PAGE, shown.length);
+    $('grid').innerHTML = shown.slice(0, drawn).map(tile).join('');
+    $('grid').scrollLeft = 0;
 }
-$('search').addEventListener('input', draw);
-
-// // Object settings \\
-['SnapMove', 'SnapRot', 'CamSpeed'].forEach(id => $(id).addEventListener('input', () => {
-    $('v' + id).textContent = $(id).value;
-    post('settings', { SnapMove: +$('SnapMove').value, SnapRot: +$('SnapRot').value, CamSpeed: +$('CamSpeed').value });
-}));
-
-function sendTransform(t) { post('set', t); }
-document.querySelectorAll('#info input[data-k]').forEach(i => i.addEventListener('change', () => {
-    const t = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }, [a, b] = i.dataset.k.split('.');
-    t[a][b] = parseFloat(i.value) || 0; sendTransform(t);
-}));
-function copyT() { if (s.Sel) clip = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }; }
-function pasteT() { if (s.Sel && clip) sendTransform(clip); }
-
-const PRESETS = { Door: { X: 0, Z: 0, W: 1, H: 2.25 }, Window: { X: 0, Z: 1, W: 1, H: 1 } };
-const FIELDS = [['X', 'Offset'], ['Z', 'Bottom'], ['W', 'Width'], ['H', 'Height']];
-let wallKey = '';
-const wallCopy = () => JSON.parse(JSON.stringify(s.Sel.Wall));
-function addHole(t) { const w = wallCopy(); w.Holes.push({ ...PRESETS[t] }); post('wall', w); }
-function removeHole(i) { const w = wallCopy(); w.Holes.splice(i, 1); post('wall', w); }
-$('wall').addEventListener('change', e => {
-    const w = wallCopy(), i = e.target;
-    if (i.id === 'wL') w.L = +i.value; else if (i.id === 'wH') w.H = +i.value; else if (i.dataset.h) w.Holes[i.dataset.h][i.dataset.f] = +i.value;
-    wallKey = ''; post('wall', w);
+$('grid').addEventListener('scroll', e => {
+    const g = e.target;
+    if (drawn < shown.length && g.scrollLeft + g.clientWidth > g.scrollWidth - 200) {
+        g.insertAdjacentHTML('beforeend', shown.slice(drawn, drawn + PAGE).map(tile).join(''));
+        drawn += PAGE;
+    }
 });
-function renderWall(w) {
-    $('wall').style.display = w ? 'flex' : 'none';
-    if (!w) return;
-    const key = JSON.stringify(w);
-    if (key === wallKey || ($('wall').contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) return;
-    wallKey = key; $('wL').value = w.L; $('wH').value = w.H;
-    $('holes').innerHTML = (w.Holes || []).map((h, i) => `<div class="hole"><div class="kv"><div style="flex:1">Hole ${i + 1}</div><div class="btn err" style="padding:.3vh .8vh" onclick="removeHole(${i})">✕</div></div>
-        ${FIELDS.map(([k, l]) => `<div class="kv"><label>${l}</label><input type="number" step="0.25" data-h="${i}" data-f="${k}" value="${h[k]}"></div>`).join('')}</div>`).join('');
+$('grid').addEventListener('wheel', e => { e.preventDefault(); $('grid').scrollLeft += e.deltaY; }, { passive: false });
+$('grid').addEventListener('click', e => {
+    const t = e.target.closest('.tile');
+    if (!t) return;
+    document.querySelectorAll('.tile.on').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    if (t.dataset.k) { picked = t.dataset.k; return post('select', { Key: t.dataset.k }); }
+    picked = t.dataset.m;
+    post('spawn', t.dataset.w ? { Wall: true } : { Model: t.dataset.m });
+});
+$('grid').addEventListener('mouseover', e => {
+    const z = e.target.closest('.zoom'), p = $('preview');
+    if (!z) return p.style.display = 'none';
+    const r = z.getBoundingClientRect(), m = z.closest('.tile').dataset.m;
+    p.innerHTML = `<img src="${thumb.replace('%s', m)}">`;
+    p.style.left = Math.min(r.left, innerWidth - p.offsetWidth - 10) + 'px';
+    p.style.top = (r.top - innerHeight * .19) + 'px';
+    p.style.display = 'flex';
+});
+$('grid').addEventListener('mouseleave', () => hide('preview'));
+$('search').addEventListener('input', drawGrid);
+
+function drawCats() {
+    $('cats').innerHTML = `<div class="cat ${group === -2 ? 'on' : ''}" data-g="-2"><span class="n">${s.Placed ?? 0}</span></div>`
+        + groups.map((g, i) => `<div class="cat ${group === i ? 'on' : ''}" data-g="${i}" title="${esc(g.Name)}">${P[g.Icon] ? svg(g.Icon) : esc(g.Icon)}</div>`).join('');
+}
+$('cats').addEventListener('click', e => {
+    const c = e.target.closest('.cat');
+    if (!c) return;
+    group = group === +c.dataset.g ? -1 : +c.dataset.g;
+    drawCats(); drawGrid();
+});
+
+// // Info + hints \\
+function warn(text) {
+    clearTimeout(warnTimer);
+    $('warntext').textContent = text;
+    $('warn').classList.remove('hidden'); $('object').classList.remove('hidden');
+    warnTimer = setTimeout(() => { warnTimer = 0; render(); }, 3500);
+}
+
+function hintRows() {
+    const H = (icon, text, cls = '', sub = '') => `<div class="hint ${cls}">${icon}<div class="lbl"><span>${text}</span>${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+    const sep = '<div class="sep"></div>', plus = '<span class="plus">+</span>';
+    const tail = [sep, H(key('Esc'), 'Close'), H(key('Y'), 'Tint'), H(key('L'), 'Link Mode', s.Link ? 'g' : ''), H(key('M'), 'Shopping Mode', s.Shop ? '' : 'r')];
+    if (s.Placing) return [H(mouse('a'), 'Look'), H(mouse('l'), 'Place', 'g'), H(mouse('r'), 'Options', 'g'), H(mouse('m'), `Rotate (${s.Rot}°)`), H(key('R'), `Change Rotation (${s.Axis})`), H(selIcon, 'Selection'), ...tail];
+    if (!s.Sel) return [H(mouse('a'), 'Look'), H(mouse('l'), 'Selection'), H(key('Ctrl') + plus + key('Z'), 'Undo'), H(key('Ctrl') + plus + key('S'), 'Save'), ...tail];
+    return [
+        H(key('Ctrl') + plus + mouse('l'), 'Multi-Select', '', `${s.Multi}/${s.MaxSelect}`),
+        H(mouse('m'), `Rotate (${s.Rot}°)`),
+        H(key('R'), `Change Rotation (${s.Axis})`),
+        H(key('Ctrl') + plus + mouse('m'), 'Rotation Inc'),
+        H(key('Alt') + plus + mouse('m'), `Grid Inc (${s.GridStep}m)`),
+        H(key('Del'), 'Delete', 'r'),
+        H(mouse('r'), 'Options', 'g'),
+        H(mouse('a'), 'Look'),
+        H(selIcon, 'Selection'),
+        H(key('G'), 'Grid Snap', s.Grid ? 'g' : ''),
+        ...tail];
 }
 
 function render() {
-    $('stats').innerHTML = `Placed: <b>${s.Placed ?? 0}</b> / <i>${s.Max ?? 0}</i> &nbsp; Mode: <b>${s.Mode === 'rotate' ? 'Rotate' : 'Move'}</b> &nbsp; Axes: <b>${s.Space === 'local' ? 'Local' : 'World'}</b>` + (s.Dirty ? ' &nbsp; <i>Unsaved changes</i>' : '');
-    $('bSave').classList.toggle('on', !!s.Dirty); $('bSave').classList.toggle('off', !s.Dirty);
-    $('bDiscard').classList.toggle('off', !s.Dirty);
-    $('bUndo').classList.toggle('off', !s.Undo); $('bRedo').classList.toggle('off', !s.Redo);
+    drawCats();
+    $('address').textContent = s.Address || '';
+    $('limit').textContent = `${String(s.Placed ?? 0).padStart(3, '0')}/${s.Max ?? 0}`;
+    $('limitbar').style.width = Math.min(100, (s.Placed ?? 0) / (s.Max || 1) * 100) + '%';
+    $('unsaved').classList.toggle('hidden', !s.Dirty);
+    $('shop').classList.toggle('hidden', !s.Shop);
 
-    const sel = s.Sel;
-    $('info').style.display = sel ? 'flex' : 'none';
+    const sel = s.Sel, poor = s.Placing && s.Need !== undefined && s.Have < s.Need;
+    $('object').classList.toggle('hidden', !sel && !warnTimer);
+    $('oname').classList.toggle('hidden', !sel); $('reqs').classList.toggle('hidden', !sel);
     if (sel) {
-        $('iHash').textContent = sel.Wall ? 'fw_wall kit' : sel.Hash; $('iName').textContent = sel.Model;
-        $('iLabel').textContent = sel.Label + (sel.New ? ' (new)' : ''); $('iSame').textContent = sel.Same;
-        $('iImg').innerHTML = sel.Wall ? '▥' : img(sel.Model);
-        document.querySelectorAll('#info input[data-k]').forEach(i => {
-            if (document.activeElement === i) return;
-            const [a, b] = i.dataset.k.split('.'); i.value = (+sel[a][b]).toFixed(a === 'Pos' ? 3 : 1);
-        });
+        $('oname').textContent = title(sel.Label) + (s.Multi > 1 ? ` (+${s.Multi - 1})` : '');
+        $('reqs').innerHTML = s.Placing && s.Need !== undefined
+            ? `<div class="req-h">Object Requirements</div><div class="req"><span>Bank</span><span class="${poor ? 'bad' : ''}">${money(Math.max(0, s.Have))}/${money(s.Need)}</span></div>`
+            : '';
     }
-    renderWall(sel && sel.Wall);
+    if (!warnTimer) {
+        $('warn').classList.toggle('hidden', !poor);
+        if (poor) $('warntext').textContent = 'Not Enough Money: You do not have enough to build this object.';
+    }
 
-    const hints = s.Placing
-        ? [['LMB', 'Place'], ['Space', 'Place'], ['RMB', 'Cancel'], ['Scroll', 'Turn']]
-        : [['R', s.Mode === 'rotate' ? 'Move' : 'Rotate'], ['Q', s.Space === 'local' ? 'World' : 'Local'], ['Space', 'Deselect'], ['G', 'Ground'], ['Del', 'Delete'], ['Ctrl Z', 'Undo']];
-    $('hints').innerHTML = [['WASD', 'Fly'], ['E / Ctrl', 'Up / down'], ['RMB', 'Look']].concat(hints).map(([k, l]) => `<div class="hint"><b>${k}</b><span>${l}</span></div>`).join('');
-    if (tab === 'placed') draw();
+    $('hints').innerHTML = `<div class="modes"><div class="${s.Adv ? '' : 'on'}" onclick="post('key',{K:'basic'})">${key(1)}Basic</div><div class="${s.Adv ? 'on' : ''}" onclick="post('key',{K:'advanced'})">${key(2)}Advanced</div></div>` + hintRows().join('');
+    if (group === -2) drawGrid();
+    if (!sel) hide('options');
 }
+
+// // Options menu \\
+const PRESETS = { Door: { X: 0, Z: 0, W: 1, H: 2.25 }, Window: { X: 0, Z: 1, W: 1, H: 1 } };
+const wallCopy = () => JSON.parse(JSON.stringify(s.Sel.Wall));
+const opt = (text, fn, cls = '', right = '') => `<div class="opt ${cls}" onclick="${fn}">${text}<span>${right}</span></div>`;
+const field = (lbl, attrs, val, cls = '') => `<div class="kv"><label class="${cls}">${lbl}</label><input type="number" ${attrs} value="${val}"></div>`;
+
+function openOptions(x, y) {
+    const sel = s.Sel, o = $('options');
+    if (!sel) return;
+    let html = `<div class="head">${esc(title(sel.Label))}</div>`
+        + opt('Duplicate', "act('duplicate')") + opt('Place On Ground', "act('ground')") + opt('Reset Rotation', "act('reset')")
+        + (sel.Wall ? '<div class="sub">Colour</div><div class="swatches">' + colors.slice(0, 16).map((c, i) =>
+            `<div class="${sel.Tint === i ? 'on' : ''}" style="background:${c[1]}" title="${esc(c[0])}" onclick="post('tint',{Value:${i}}).then(()=>setTimeout(()=>openOptions(),50))"></div>`).join('') + '</div>'
+            : opt('Tint', "post('key',{K:'tint'}).then(()=>setTimeout(()=>openOptions(),50))", '', `${sel.Tint + 1}/16`))
+        + opt('Copy Position', 'clip={Pos:{...s.Sel.Pos},Rot:{...s.Sel.Rot}};hide(\'options\')') + (clip ? opt('Paste Position', "post('set',clip);hide('options')") : '');
+    if (s.Adv) {
+        html += '<div class="sub">Position</div>' + ['x', 'y', 'z'].map(a => field(a + ' pos', `data-t="Pos.${a}" step="0.01"`, (+sel.Pos[a]).toFixed(3), a)).join('')
+            + '<div class="sub">Rotation</div>' + ['x', 'y', 'z'].map(a => field(a + ' rot', `data-t="Rot.${a}" step="1"`, (+sel.Rot[a]).toFixed(1), a)).join('');
+    }
+    if (sel.Wall) {
+        html += '<div class="sub">Wall · steps of 0.25m</div>' + field('Length', 'data-w="L" step="0.25"', sel.Wall.L) + field('Height', 'data-w="H" step="0.25"', sel.Wall.H)
+            + sel.Wall.Holes.map((h, i) => `<div class="hole">${opt(`Hole ${i + 1}`, `wallEdit(w=>w.Holes.splice(${i},1))`, 'r', '✕')}`
+                + [['X', 'Offset'], ['Z', 'Bottom'], ['W', 'Width'], ['H', 'Height']].map(([k, l]) => field(l, `data-h="${i}" data-f="${k}" step="0.25"`, h[k])).join('') + '</div>').join('')
+            + opt('+ Door Hole', "wallEdit(w=>w.Holes.push({...PRESETS.Door}))") + opt('+ Window Hole', "wallEdit(w=>w.Holes.push({...PRESETS.Window}))");
+    }
+    o.innerHTML = html + opt('Delete', "act('key',{K:'delete'})", 'r');
+    if (x !== undefined) { o.dataset.x = x; o.dataset.y = y; }
+    o.style.display = 'flex';
+    o.style.left = Math.min(+o.dataset.x, innerWidth - o.offsetWidth - 8) + 'px';
+    o.style.top = Math.min(+o.dataset.y, innerHeight - o.offsetHeight - 8) + 'px';
+}
+function act(name, data) { hide('options'); post(name, data); }
+function wallEdit(fn) { const w = wallCopy(); fn(w); post('wall', w).then(() => setTimeout(() => openOptions(), 80)); }
+$('options').addEventListener('change', e => {
+    const i = e.target, v = parseFloat(i.value) || 0;
+    if (i.dataset.t) {
+        const t = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }, [a, b] = i.dataset.t.split('.');
+        t[a][b] = v; post('set', t);
+    } else wallEdit(w => i.dataset.w ? w[i.dataset.w] = v : w.Holes[i.dataset.h][i.dataset.f] = v);
+});
 
 // // Mouse / keys \\
 const view = $('view');
 view.addEventListener('contextmenu', e => e.preventDefault());
 view.addEventListener('mousedown', e => {
-    document.activeElement.blur();
-    if (e.button === 0) { lmb = true; post('down'); }
+    document.activeElement.blur(); hide('options');
+    if (e.button === 0) { lmb = true; post('down', { Ctrl: e.ctrlKey }); }
     if (e.button === 2) { rmb = true; rmbMoved = false; }
 });
 addEventListener('mouseup', e => {
     if (e.button === 0 && lmb) { lmb = false; post('up'); }
-    if (e.button === 2 && rmb) { rmb = false; if (!rmbMoved && s.Placing) post('cancel'); }
+    if (e.button === 2 && rmb) {
+        rmb = false;
+        if (!rmbMoved) post('options').then(r => setTimeout(() => r && r.Open && openOptions(e.clientX, e.clientY), 30));
+    }
 });
 addEventListener('mousemove', e => {
     if (!rmb) return;
-    rmbMoved = true; look[0] += e.movementX; look[1] += e.movementY;
+    if (Math.abs(e.movementX) + Math.abs(e.movementY) > 1) rmbMoved = true;
+    look[0] += e.movementX; look[1] += e.movementY;
     if (!busy) { busy = true; const [dx, dy] = look; look = [0, 0]; post('look', { dx, dy }).finally(() => busy = false); }
 });
-view.addEventListener('wheel', e => post('wheel', { d: e.deltaY }));
-document.addEventListener('focusin', e => { if (e.target.tagName === 'INPUT' && e.target.type !== 'range') post('typing', { State: true }); });
-document.addEventListener('focusout', e => { if (e.target.tagName === 'INPUT' && e.target.type !== 'range') post('typing', { State: false }); });
+view.addEventListener('wheel', e => post('wheel', { d: e.deltaY, Ctrl: e.ctrlKey, Alt: e.altKey }), { passive: true });
+const typing = e => e.target.tagName === 'INPUT';
+document.addEventListener('focusin', e => typing(e) && post('typing', { State: true }));
+document.addEventListener('focusout', e => typing(e) && post('typing', { State: false }));
 
 function askClose() { if (s.Dirty) $('modal').style.display = 'flex'; else post('close'); }
 
+const KEYS = { 1: 'basic', 2: 'advanced', r: 'axis', g: 'grid', y: 'tint', l: 'link', m: 'shop', delete: 'delete' };
 addEventListener('keydown', e => {
-    if (e.key === 'Escape') { if ($('modal').style.display === 'flex') $('modal').style.display = 'none'; else if (s.Placing) post('cancel'); else askClose(); return; }
-    if (document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'range') return;
+    if (e.key === 'Escape') {
+        if ($('modal').style.display === 'flex') hide('modal');
+        else if ($('options').style.display === 'flex') hide('options');
+        else if (s.Placing || s.Sel) { picked = null; post('key', { K: 'cancel' }); document.querySelectorAll('.tile.on').forEach(x => x.classList.remove('on')); }
+        else askClose();
+        return;
+    }
+    if (document.activeElement.tagName === 'INPUT') return;
     const k = e.key.toLowerCase();
-    if (e.ctrlKey && k === 'z') post('undo');
-    else if (e.ctrlKey && k === 'y') post('redo');
-    else if (e.ctrlKey && k === 's') post('save');
-    else if (e.ctrlKey) return;
-    else if (k === 'r') post('mode');
-    else if (k === 'q') post('space');
-    else if (k === ' ') post('place');
-    else if (k === 'g') post('ground');
-    else if (k === 'delete') post('delete');
+    if (e.altKey) e.preventDefault();
+    if (e.ctrlKey) {
+        const c = { z: 'undo', y: 'redo', s: 'save' }[k];
+        if (c) { e.preventDefault(); post('key', { K: c }); }
+        return;
+    }
+    if (KEYS[k]) post('key', { K: KEYS[k] });
 });
 
 addEventListener('message', ({ data: m }) => {
     if (m.Action === 'Open') {
-        catalog = m.Data.Catalog; thumb = m.Data.Thumb || ''; walls = m.Data.Walls; expanded = {}; tab = 'edit';
-        $('search').value = ''; $('modal').style.display = 'none';
-        document.body.style.display = 'block'; draw();
-    } else if (m.Action === 'State') { s = m.Data; s.List = s.List || []; render(); }
+        catalog = m.Data.Catalog || []; groups = m.Data.Groups || []; colors = m.Data.Colors || []; thumb = m.Data.Thumb || '';
+        if (m.Data.Entities) entities = m.Data.Entities;
+        s = { List: [], Address: m.Data.Address }; group = -1; picked = null;
+        $('search').value = ''; hide('modal'); hide('options');
+        document.body.style.display = 'block'; drawCats(); drawGrid();
+    } else if (m.Action === 'State') { s = { ...m.Data, Address: s.Address }; s.List = s.List || []; render(); }
+    else if (m.Action === 'Warn') warn(m.Text);
     else if (m.Action === 'Close') { document.body.style.display = 'none'; lmb = rmb = false; }
 });
 </script>
