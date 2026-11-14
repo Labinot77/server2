@@ -735,7 +735,7 @@ RegisterNUICallback("FetchMoney", function(Data, Cb)
 end)
 
 RegisterNUICallback("UseItem", function(Data, Cb)
-    Citizen.SetTimeout(250, function()
+    Citizen.SetTimeout(Data.KeepOpen and 0 or 250, function() -- the inventory stays open: no close to wait for
         FW.TriggerServer('fw-inventory:Server:UseItem', tonumber(Data.Slot), true)
     end)
 

@@ -436,9 +436,18 @@ const BuildGroundInventory = () => {
     UpdateInventoryWeights('ground');
 };
 
+// Bag panel right away with a spinner, until its items arrive (gone after 4s if it never opens).
+let BagLoadingTimer;
+const ShowBagLoading = () => {
+    const Box = GetContainerBox('bag').addClass('loading').show();
+    clearTimeout(BagLoadingTimer);
+    BagLoadingTimer = setTimeout(() => { Box.removeClass('loading'); if (!BagInvData) Box.hide(); }, 4000);
+};
+
 const BuildBagInventory = (Data) => {
     BagInvData = Data || false;
-    const Box = GetContainerBox('bag');
+    clearTimeout(BagLoadingTimer);
+    const Box = GetContainerBox('bag').removeClass('loading');
     const Grid = Box.find('.inventory-box-slots').empty();
     if (!BagInvData) return Box.hide();
 

@@ -136,8 +136,12 @@ $(document).ready(function(){
 // Using these opens them in the other panel, so the inventory stays open.
 const KeepOpenOnUse = ['business-bag'];
 const UseInventoryItem = Slot => {
-    if (MyInventory[Slot] && KeepOpenOnUse.includes(MyInventory[Slot].Item)) ResetDrag();
-    else CloseInventory();
+    if (MyInventory[Slot] && KeepOpenOnUse.includes(MyInventory[Slot].Item)) {
+        ResetDrag();
+        ShowBagLoading();
+        return $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot, KeepOpen: true }));
+    }
+    CloseInventory();
     setTimeout(() => $.post("https://fw-inventory/UseItem", JSON.stringify({ Slot })), 250);
 };
 
