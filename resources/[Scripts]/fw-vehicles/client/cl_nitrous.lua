@@ -177,6 +177,11 @@ end)
 
 -- // Functions \\ --
 
+function HasVehicleNosActive()
+    return DoingNitrous
+end
+
+
 -- Nitrous Loop
 
 function DoNitrousLoop(Vehicle, Plate)
