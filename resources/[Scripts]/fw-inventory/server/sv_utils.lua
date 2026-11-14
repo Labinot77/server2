@@ -228,6 +228,16 @@ function GetInventoryItems(InvName)
 end
 exports("GetInventoryItems", GetInventoryItems)
 
+-- Slots that hold something (a cheap query): opened inventories show a loader on them until the items arrive.
+function GetInventorySlots(InvName)
+    local Slots = {}
+    for _, Row in ipairs(exports['ghmattimysql']:executeSync("SELECT DISTINCT `slot` FROM `player_inventories` WHERE `inventory` = ?", { InvName }) or {}) do
+        Slots[#Slots + 1] = tonumber(Row.slot)
+    end
+    return Slots
+end
+exports("GetInventorySlots", GetInventorySlots)
+
 function GetInventoryItemsUnproccessed(InvName)
     local Result = exports['ghmattimysql']:executeSync("SELECT * FROM `player_inventories` WHERE `inventory` = @InvName", {
         ['@InvName'] = InvName

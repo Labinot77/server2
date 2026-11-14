@@ -161,6 +161,8 @@ const ValidatePlayerSlot = (Items, Slot, ItemName, Amount) => {
 // 'bag' is a bag used while the inventory is open, shown below the other inventory.
 let GroundInvData = false, BagInvData = false;
 const GetContainerData = (Container) => Container == 'ground' ? (GroundInvData || {}) : Container == 'bag' ? (BagInvData || {}) : OtherInvData;
+// Slot still loading (filled on the server, items not here yet): shows a loader, can't be used.
+const IsSlotLoading = (Container, Slot) => Container != 'player' && (GetContainerData(Container).Pending || []).includes(Number(Slot));
 const GetContainerByName = (InvName) => {
     if (InvName == 'player') return 'player';
     if (GroundInvData && InvName == GroundInvData.Name) return 'ground';
@@ -233,9 +235,10 @@ const ValidateMovement = (FromContainer, ToContainer, FromSlot, ToSlot, FromItem
 // ============================================================================
 //  Slot finding
 // ============================================================================
-const FindSlot = (Items, Slots, SlotData) => {
+const FindSlot = (Items, Slots, SlotData, IsLoading = () => false) => {
     for (let i = 1; i <= Slots; i++) {
         const Item = Items[i];
+        if (IsLoading(i)) continue;
         if (!Item || (Item && Item.Item == SlotData.Item && Item.CustomType == SlotData.CustomType && !ItemsList[SlotData.Item].NonStack)) {
             return i
         };
@@ -264,7 +267,7 @@ const FindPlayerSlot = (Items, SlotData) => {
 
 const FindTargetSlot = (Container, SlotData) => {
     if (IsPlayerContainer(Container)) return FindPlayerSlot(GetContainerItems(Container), SlotData);
-    return FindSlot(GetContainerItems(Container), GetContainerMaxSlots(Container), SlotData);
+    return FindSlot(GetContainerItems(Container), GetContainerMaxSlots(Container), SlotData, i => IsSlotLoading(Container, i));
 };
 
 // ============================================================================
@@ -360,6 +363,7 @@ const RenderSlot = (Container, Slot) => {
 
     Element.html(BuildSlotHtml(Container, Slot, Item));
     Element.toggleClass('has-item', !!(Item && ItemsList[Item.Item]));
+    Element.toggleClass('slot-loading', !Item && IsSlotLoading(Container, Slot));
     Element.toggleClass('is-broken', IsItemBroken(Item) && !(Container != 'player' && OtherInvData.Type == 'Store'));
     Element.toggleClass('locked', !!(IsPlayer && !IsBackpackSlotUnlocked(GetContainerItems(Container), Slot)));
 };

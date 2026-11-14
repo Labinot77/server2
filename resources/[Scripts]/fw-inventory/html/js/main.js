@@ -65,6 +65,7 @@ $(document).ready(function(){
                 // An item you're dragging from this inventory may be gone now: drop the drag.
                 if (DragData.IsDragging && DragData.FromContainer == Container) ResetDrag();
                 GetContainerData(Container).Items = event.data.Items || {};
+                delete GetContainerData(Container).Pending; // loading slots -> items
                 for (let i = 1; i <= GetContainerMaxSlots(Container); i++) RenderSlot(Container, i);
                 UpdateInventoryWeights(Container);
                 break;

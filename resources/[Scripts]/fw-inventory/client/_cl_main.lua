@@ -403,15 +403,11 @@ end)
 RegisterNetEvent("fw-inventory:Client:RefreshOther")
 AddEventHandler("fw-inventory:Client:RefreshOther", function(InvName, Items)
     if not CurrentInventory then return end
-    if CurrentInventory.Ground and CurrentInventory.Ground.Name == InvName then
-        CurrentInventory.Ground.Items = Items
-    elseif CurrentInventory.Name == InvName then
-        CurrentInventory.Items = Items
-    elseif ExtraInventory and ExtraInventory.Name == InvName then
-        ExtraInventory.Items = Items
-    else
-        return
-    end
+    local Data = (CurrentInventory.Ground and CurrentInventory.Ground.Name == InvName and CurrentInventory.Ground)
+        or (CurrentInventory.Name == InvName and CurrentInventory)
+        or (ExtraInventory and ExtraInventory.Name == InvName and ExtraInventory)
+    if not Data then return end
+    Data.Items, Data.Pending = Items, nil
     SendNUIMessage({ Action = "RefreshOther", Name = InvName, Items = Items })
 end)
 

@@ -1188,3 +1188,10 @@ body.inv-dragging .equip-target { border-color: rgba(47, 208, 238, 0.75); box-sh
 }
 .bag-layout.loading .bag-spinner { display: block; }
 @keyframes bag-spin { to { transform: rotate(360deg); } }
+/* Filled slot whose item hasn't arrived yet: loader, not usable */
+.inventory-box-slot.slot-loading { pointer-events: none; }
+.inventory-box-slot.slot-loading::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 2.4vh; height: 2.4vh; margin: -1.2vh 0 0 -1.2vh;
+    border: 0.3vh solid rgba(255, 255, 255, 0.18); border-top-color: #fff; border-radius: 50%;
+    animation: bag-spin 0.7s linear infinite;
+}
