@@ -253,10 +253,13 @@ AddEventHandler("fw-vehicles:Server:SetVehicleState", function(Plate, State, Net
         OutsideVehicles[Plate] = NetId
     end
 
-    exports['ghmattimysql']:executeSync("UPDATE `player_vehicles` SET `state` = @State WHERE `plate` = @Plate", {
+    local Result = exports['ghmattimysql']:executeSync("UPDATE `player_vehicles` SET `state` = @State WHERE `plate` = @Plate", {
         ['@Plate'] = Plate,
         ['@State'] = State,
     })
+
+    local Player = FW.Functions.GetPlayer(source)
+    if State == 'out' and Player and Result and Result.affectedRows > 0 then GiveCarKey(Player, Plate) end
 end)
 
 RegisterNetEvent("fw-vehicles:Server:ParkVehicle")
@@ -272,6 +275,7 @@ AddEventHandler("fw-vehicles:Server:ParkVehicle", function(NetId, Garage, Vehicl
     
     DeleteEntity(Vehicle)
     OutsideVehicles[Plate] = nil
+    RemoveCarKey(Player, Plate)
     if LockdownVehicles[Plate] then
         LockdownVehicles[Plate] = nil
         Player.Functions.Notify(("Lockdown %s uitgeschakeld"):format(Plate), "success")
