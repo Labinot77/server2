@@ -5,7 +5,7 @@ Config.Camera = {
     Offset = vector3(0.0, -0.55, 0.30), -- where the camera sits
     LookAt = vector3(0.0, 0.05, 0.13),  -- the middle of the screen
     Fov = 42.0,
-    Transition = 250, -- camera ease in ms (every model uses this unless its Camera sets its own)
+    Transition = 600,
 }
 
 Config.CursorSensitivity = 14.0
@@ -53,41 +53,41 @@ Config.Models = {
     },
     ['v_res_lest_monitor'] = {
         Variants = { 'v_res_lest_monitor_dui_01', 'v_res_lest_monitor_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0 },
+        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
     },
     ['prop_monitor_01a'] = {
         Variants = { 'prop_monitor_01a_dui_01', 'prop_monitor_01a_dui_02' }, Texture = 'prop_moniter_desktop_01', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0 },
+        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
     },
     ['prop_monitor_01b'] = {
         Variants = { 'prop_monitor_01b_dui_01', 'prop_monitor_01b_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
-        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0 },
+        Camera = { Offset = vector3(0.0, -0.62, 0.26), LookAt = vector3(0.0, 0.0, 0.24), Fov = 40.0, Transition = 600 },
     },
     ['ch_prop_casino_keypad_02'] = {
         Variants = { 'ch_prop_casino_keypad_02_dui_01', 'ch_prop_casino_keypad_02_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',Resolution = { 512, 256 },
-        Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0 },
+        Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
     },
     ['v_corp_bk_secpanel'] = {
         Variants = { 'v_corp_bk_secpanel_dui_01', 'v_corp_bk_secpanel_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',  Resolution = { 512, 384 },
-        Camera = { Offset = vector3(0.0, -0.45, 0.05), LookAt = vector3(0.0, 0.0, 0.05), Fov = 35.0 },
+        Camera = { Offset = vector3(0.0, -0.45, 0.05), LookAt = vector3(0.0, 0.0, 0.05), Fov = 35.0, Transition = 500 },
     },
 
     ['prop_fleeca_atm'] = {
         Variants = { 'prop_fleeca_atm_dui_01', 'prop_fleeca_atm_dui_02' }, Texture = 'prop_fleeca_atm_screen_dui', Resolution = { 1326, 948 }, -- screen is ~1.4 : 1
         Idle = { Texture = 'prop_fleece_emis' },
-        Camera = { Offset = vector3(-0.1205, -0.415, 1.2125), LookAt = vector3(-0.1205, 0.085, 1.1425), Fov = 40.0 },
+        Camera = { Offset = vector3(-0.1205, -0.415, 1.2125), LookAt = vector3(-0.1205, 0.085, 1.1425), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_01'] = {
         Variants = { 'prop_atm_01_dui_01', 'prop_atm_01_dui_02' }, Texture = 'prop_cashpoint_screen', Resolution = { 1326, 1004 }, Idle = true,
-        Camera = { Offset = vector3(-0.053, -0.62, 1.15), LookAt = vector3(-0.053, -0.12, 1.08), Fov = 40.0 },
+        Camera = { Offset = vector3(-0.053, -0.62, 1.15), LookAt = vector3(-0.053, -0.12, 1.08), Fov = 40.0, Transition = 500 },
     },
     ['prop_atm_02'] = {
         Variants = { 'prop_atm_02_dui_01', 'prop_atm_02_dui_02' }, Texture = 'prop_atm_02_screen_dui', Resolution = { 1326, 1004 }, Idle = true,
-        Camera = { Offset = vector3(-0.1205, -0.415, 1.21), LookAt = vector3(-0.1205, 0.085, 1.14), Fov = 30.0 },
+        Camera = { Offset = vector3(-0.1205, -0.415, 1.21), LookAt = vector3(-0.1205, 0.085, 1.14), Fov = 30.0, Transition = 500 },
     },
     ['prop_atm_03'] = {
         Variants = { 'prop_atm_03_dui_01', 'prop_atm_03_dui_02' }, Texture = 'prop_cashpoint_screen', Resolution = { 1326, 1004 }, Idle = true,
-        Camera = { Offset = vector3(-0.1205, -0.43, 1.21), LookAt = vector3(-0.1205, 0.07, 1.14), Fov = 30.0 },
+        Camera = { Offset = vector3(-0.1205, -0.43, 1.21), LookAt = vector3(-0.1205, 0.07, 1.14), Fov = 30.0, Transition = 500 },
     },
 }
 

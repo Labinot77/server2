@@ -5,6 +5,45 @@
 --   Options.Sensitivity   -> cursor speed (default Config.CursorSensitivity)
 
 Focused = nil -- { S, Cam, Transition, X, Y, Options, Closeable }
+local Pending = nil -- camera already flying in while Show loads the page: { Name, Cam, Transition }
+
+local function CreateScreenCam(Entity, Model)
+    local C = Model.Camera or Config.Camera
+    local Pos = GetOffsetFromEntityInWorldCoords(Entity, C.Offset.x, C.Offset.y, C.Offset.z)
+    local Target = GetOffsetFromEntityInWorldCoords(Entity, C.LookAt.x, C.LookAt.y, C.LookAt.z)
+    local Cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+    SetCamCoord(Cam, Pos.x, Pos.y, Pos.z)
+    PointCamAtCoord(Cam, Target.x, Target.y, Target.z)
+    SetCamFov(Cam, C.Fov or Config.Camera.Fov)
+    return Cam, C.Transition or Config.Camera.Transition
+end
+
+local function EaseBack(Cam, Transition)
+    local FirstPerson = GetFollowPedCamViewMode() == 4 -- easing into first person plays GTA's switch effect: cut
+    RenderScriptCams(false, not FirstPerson, FirstPerson and 0 or Transition, true, true)
+    DestroyCam(Cam, false)
+end
+
+-- Starts the fly-in the moment Show is called, so loading the page happens during it. Focus takes the camera over;
+-- without a Focus within 2s after Show returned (lock refused, preview command, ...) it eases back.
+function StartPendingCamera(Name, Entity, Model)
+    if Focused then return end
+    CancelPendingCamera()
+    local Cam, Transition = CreateScreenCam(Entity, Model)
+    RenderScriptCams(true, true, Transition, true, true)
+    Pending = { Name = Name, Cam = Cam, Transition = Transition }
+end
+
+function ExpirePendingCamera(Name)
+    local P = Pending
+    if P and P.Name == Name then SetTimeout(2000, function() if Pending == P then CancelPendingCamera() end end) end
+end
+
+function CancelPendingCamera(Name)
+    if not Pending or (Name and Pending.Name ~= Name) then return end
+    EaseBack(Pending.Cam, Pending.Transition)
+    Pending = nil
+end
 
 -- HUD + minimap off while focused. fw-hud keeps the radar on itself (pd watch), so it's blocked there.
 -- Other HUDs: listen to fw-dui:Client:Focus (true / false) or set Config.OnFocus.
@@ -44,10 +83,7 @@ function StopFocus()
     MirrorStop(F.S)
     DesktopCursor(F.S, nil, nil, false)
 
-    -- Easing back into first person plays GTA's switch effect, so cut straight back there.
-    local FirstPerson = GetFollowPedCamViewMode() == 4
-    RenderScriptCams(false, not FirstPerson, FirstPerson and 0 or F.Transition, true, true)
-    DestroyCam(F.Cam, false)
+    EaseBack(F.Cam, F.Transition)
 
     FreezeEntityPosition(PlayerPedId(), false)
     SetInteractDisabled(false)
@@ -60,16 +96,14 @@ local function Focus(Name, Options)
     if Focused or not S or not S.Entity or not S.Model then return false end
     Options = Options or {}
 
-    local C = S.Model.Camera or Config.Camera
-    local Pos = GetOffsetFromEntityInWorldCoords(S.Entity, C.Offset.x, C.Offset.y, C.Offset.z)
-    local Target = GetOffsetFromEntityInWorldCoords(S.Entity, C.LookAt.x, C.LookAt.y, C.LookAt.z)
-
-    local Cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
-    SetCamCoord(Cam, Pos.x, Pos.y, Pos.z)
-    PointCamAtCoord(Cam, Target.x, Target.y, Target.z)
-    SetCamFov(Cam, C.Fov or Config.Camera.Fov)
-    local Transition = C.Transition or Config.Camera.Transition
-    RenderScriptCams(true, true, Transition, true, true)
+    local Cam, Transition
+    if Pending and Pending.Name == Name then -- already flying in since Show: keep going, no second transition
+        Cam, Transition, Pending = Pending.Cam, Pending.Transition, nil
+    else
+        CancelPendingCamera()
+        Cam, Transition = CreateScreenCam(S.Entity, S.Model)
+        RenderScriptCams(true, true, Transition, true, true)
+    end
 
     local F = { S = S, Cam = Cam, Transition = Transition, X = Options.X or 50.0, Y = Options.Y or 50.0, Options = Options, Closeable = true }
     Focused = F

@@ -347,27 +347,33 @@ local function Show(Name, Entity)
     if Model.Variants then
         if S.Active and S.Entity == Entity then return true, S.Entity end
         local Started = GetGameTimer()
+        StartPendingCamera(Name, Entity, Model) -- fly-in starts now, the page loads meanwhile
         PoolRelease(S)
         S.Locked = true
         local Active, Reason = PoolClaim(S, Entity, Model)
         if not Active or Screens[Name] ~= S then
             S.Locked = false
+            CancelPendingCamera(Name)
             return false, Reason
         end
         S.Active, S.Entity, S.Model = Active, Active.Slot.Entity, Model
         MirrorPoolStart(S)
         Trace('shown %s in %d ms', Name, GetGameTimer() - Started) -- /duitrace: where the time went
+        ExpirePendingCamera(Name)
         TriggerEvent('fw-dui:Client:Shown', S.Name, S.Entity, GetPropId(S.Entity))
         return true, S.Entity
     end
 
+    StartPendingCamera(Name, Entity, Model)
     PoolRelease(S)
     S.Locked, S.Watching = true, nil
     if not LoadScreen(S, Model) then
         S.Locked = false
+        CancelPendingCamera(Name)
         return false
     end
     ApplyScreen(S, Entity, Model)
+    ExpirePendingCamera(Name)
     return true, S.Entity
 end
 
@@ -376,6 +382,7 @@ end
 local function Release(Name)
     local S = Screens[Name]
     if not S then return end
+    CancelPendingCamera(Name)
     if S.Active then
         PoolRelease(S)
         S.Entity, S.Model = nil, nil
