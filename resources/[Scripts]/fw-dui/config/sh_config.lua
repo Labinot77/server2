@@ -68,9 +68,8 @@ Config.Models = {
         Variants = { 'prop_monitor_01b_dui_01', 'prop_monitor_01b_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 960 }, Idle = true,
         Camera = { Offset = vector3(0.000, -0.627, 0.405), LookAt = vector3(-0.003, 0.000, 0.292), Fov = 56.0, Transition = 600 },
     },
-    -- The Brick House pawn monitor: one per map, so no screen copies (old way, texture swapped on the model).
-    ['prop_monitor_w_large'] = {
-        Texture = 'script_rt_tvscreen', Resolution = { 1280, 720 },
+    ['prop_monitor_w_large'] = { -- The Brick House pawn monitor
+        Variants = { 'prop_monitor_w_large_dui_01', 'prop_monitor_w_large_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 720 }, Idle = true,
         Camera = { Offset = vector3(0.0, -1.05, 0.45), LookAt = vector3(0.0, 0.0, 0.42), Fov = 45.0, Transition = 600 },
     },
     ['ch_prop_casino_keypad_02'] = {

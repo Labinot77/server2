@@ -98,12 +98,9 @@ function FindNearest(S, Coords)
         end
     end
 
-    -- Static copies are script entities, which GetClosestObjectOfType skips: check them directly.
-    -- false = a real map object stands at that point: use it.
-    for i, Obj in pairs(S.Proxies or {}) do
-        local P = S.Static[i]
-        if Obj == false then Obj = GetClosestObjectOfType(P.x, P.y, P.z, S.StaticRadius, next(S.Legacy), false, false, false) end
-        if Obj and Obj ~= 0 and DoesEntityExist(Obj) and S.Legacy[GetEntityModel(Obj)] then Check(Obj, S.Legacy[GetEntityModel(Obj)]) end
+    -- Static copies are script entities, which GetClosestObjectOfType skips: check them directly
+    for _, Obj in pairs(S.Proxies or {}) do
+        if Obj and DoesEntityExist(Obj) and S.Legacy[GetEntityModel(Obj)] then Check(Obj, S.Legacy[GetEntityModel(Obj)]) end
     end
 
     return Best, BestModel
@@ -264,7 +261,7 @@ CreateThread(function()
                 local Near, Obj = #(C - vector3(P.x, P.y, P.z)) < 60.0, S.Proxies[i]
                 if Near and Obj == nil then
                     Swap(S, P, true)
-                    if GetClosestObjectOfType(P.x, P.y, P.z, S.StaticRadius, Hash, false, false, false) ~= 0 then
+                    if GetClosestObjectOfType(P.x, P.y, P.z, 0.3, Hash, false, false, false) ~= 0 then
                         S.Proxies[i] = false -- a real object is there
                     else
                         RequestModel(Hash)
@@ -312,7 +309,6 @@ end
     Anchor   = vector3: only the prop closest to this point (within 3m) is used
     Static   = { vector4(x, y, z, heading), ... }: positions of the model placed as static map props (see above)
     SwapFrom = 'map_model': the props at the Static points are this model, swapped to the screen's model there
-    StaticRadius = a real map object of the model within this range of a Static point is used (default 0.3)
     MirrorKeys = true: watchers get the typed characters (default: * so passwords don't leak)
 
     Distance / Placed / Anchor / Static / SwapFrom / SameInterior only matter for models without Variants (old way).
@@ -324,7 +320,7 @@ local function RegisterScreen(Name, Options)
         Name = Name, Url = Options.Url or (Options.Desktop and DESKTOP_URL), Desktop = Options.Desktop == true, Distance = Options.Distance or 15.0, Placed = Options.Placed == true, Mirror = Options.Mirror == true,
         SameInterior = Options.SameInterior == true, MirrorKeys = Options.MirrorKeys == true,
         Anchor = Options.Anchor and vector3(Options.Anchor.x, Options.Anchor.y, Options.Anchor.z),
-        Static = Options.Static, StaticRadius = Options.StaticRadius or 0.3, Proxies = {}, SwapFrom = Options.SwapFrom,
+        Static = Options.Static, Proxies = {}, SwapFrom = Options.SwapFrom,
         Owner = GetInvokingResource() or GetCurrentResourceName(), Models = {}, Legacy = {},
     }
     for _, Model in ipairs(Options.Models or {}) do
