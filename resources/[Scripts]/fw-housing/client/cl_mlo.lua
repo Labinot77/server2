@@ -1,10 +1,8 @@
--- MLO houses (client): physical doors (interact + door system), PolyZone furniture streaming, stash / wardrobe.
+-- MLO houses (client): PolyZone furniture streaming, surface colours, stash / wardrobe. Doors are handled by fw-doors.
 -- Uses from _cl_main.lua: HasKeyToHouseId, CanRealtor, OpenDoorAnim, HasOverdueDebts, SetMloCurrentHouse
 local FW = exports['fw-core']:GetCoreObject()
 
 local MloZones = {}       -- [Key] = PolyZone
-local DoorHashes = {}     -- [Key] = { Front = { hash, ... }, Back = { ... } }
-local AccessCache = {}    -- [HouseId] = { Value, Expires }
 local DecorDoorOpen = {}  -- [HouseId] = { [DecorId] = true }
 
 local InsideKey, InsideHouseId = nil, nil
@@ -24,6 +22,15 @@ end
 function GetMloInsideHouseId() return InsideHouseId end
 function GetMloZone(Key) return MloZones[Key] end
 function GetMloDecorEntity(DecorId) return Spawned[DecorId] and Spawned[DecorId].Entity or nil end
+function GetMloWall(DecorId) return Spawned[DecorId] and Spawned[DecorId].WallObj end
+function GetMloDecorIdByEntity(Entity)
+    for Id, S in pairs(Spawned) do
+        if S.Entity == Entity then return Id end
+        for _, P in ipairs(S.WallObj and S.WallObj.Pieces or {}) do
+            if P.Entity == Entity then return Id end
+        end
+    end
+end
 
 local function RotationToDirection(Rot)
     local Z, X = math.rad(Rot.z), math.rad(Rot.x)
@@ -48,15 +55,26 @@ function HousingLoadModel(Model)
     return HasModelLoaded(Hash) and Hash or false
 end
 
-function HasMloAccess(HouseId)
-    local Cached = AccessCache[HouseId]
-    if Cached and Cached.Expires > GetGameTimer() then return Cached.Value end
-
+-- Perm: 'Doors' | 'Stash' | 'Decorate' (owner always). Unowned houses: realtors.
+function HasMloAccess(HouseId, Perm)
     local House = Config.Houses and Config.Houses[HouseId]
-    local Value = House ~= nil and (HasKeyToHouseId(HouseId) or (not House.Owned and CanRealtor())) or false
-    AccessCache[HouseId] = { Value = Value, Expires = GetGameTimer() + 1000 }
-    return Value
+    if not House then return false end
+    if not House.Owned then return CanRealtor() end
+    local Cid = FW.Functions.GetPlayerData().citizenid
+    if House.Owner == Cid then return true end
+    if not HasKeyToHouseId(HouseId) then return false end
+    local A = Perm and House.MloData and House.MloData.Access and House.MloData.Access[Cid]
+    return not A or A[Perm] ~= false
 end
+
+function IsMloOwner(HouseId)
+    local House = Config.Houses and Config.Houses[HouseId]
+    return House ~= nil and House.Owned and House.Owner == FW.Functions.GetPlayerData().citizenid
+end
+
+-- fw-menu checks
+exports("CanDecorateMlo", function() return InsideHouseId ~= nil and HasMloAccess(InsideHouseId, 'Decorate') end)
+exports("IsMloOwnerInside", function() return InsideHouseId ~= nil and IsMloOwner(InsideHouseId) end)
 
 local function GetDecorType(Decor)
     if Decor.Type then return Decor.Type end
@@ -64,130 +82,89 @@ local function GetDecorType(Decor)
     return Item and Item.Type or 'furniture'
 end
 
--- // Doors (real MLO doors) \\ --
+-- // Surface colours (runtime texture replaces, local to this client) \\ --
 
-local function GetDoorLocked(House, DoorKey)
-    if not House then return true end
-    if House.DoorLocks and House.DoorLocks[DoorKey] ~= nil then return House.DoorLocks[DoorKey] end
-    return true
+local SurfaceTxd, Replaced = nil, {}
+
+local function ColorTexture(Hex)
+    local Name = 'c' .. Hex:sub(2)
+    SurfaceTxd = SurfaceTxd or CreateRuntimeTxd('fw_housing_surfaces')
+    if not Replaced[Name] then
+        local R, G, B = tonumber(Hex:sub(2, 3), 16), tonumber(Hex:sub(4, 5), 16), tonumber(Hex:sub(6, 7), 16)
+        local Tex = CreateRuntimeTexture(SurfaceTxd, Name, 4, 4)
+        for X = 0, 3 do for Y = 0, 3 do SetRuntimeTexturePixel(Tex, X, Y, R, G, B, 255) end end
+        CommitRuntimeTexture(Tex)
+        Replaced[Name] = true
+    end
+    return Name
 end
 
-local function ApplyDoorLocks(House)
-    if not House or not House.Mlo or not DoorHashes[House.Mlo] then return end
-    for DoorKey, Hashes in pairs(DoorHashes[House.Mlo]) do
-        local Locked = GetDoorLocked(House, DoorKey)
-        for _, Hash in ipairs(Hashes) do
-            if Locked then DoorSystemSetOpenRatio(Hash, 0.0, false, false) end
-            DoorSystemSetDoorState(Hash, Locked and 1 or 0, false, true)
+function ApplySurfaces(House)
+    local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
+    if not Cfg then return end
+    local Colors = House.MloData and House.MloData.Surfaces or {}
+    for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
+        for _, Tex in ipairs(Cfg[Surface] or {}) do
+            RemoveReplaceTexture(Cfg.Txd, Tex)
+            if Colors[Surface] then AddReplaceTexture(Cfg.Txd, Tex, 'fw_housing_surfaces', ColorTexture(Colors[Surface])) end
         end
     end
+    local T = Config.Walls.Texture
+    RemoveReplaceTexture(T[1], T[2])
+    if Colors.Walls then AddReplaceTexture(T[1], T[2], 'fw_housing_surfaces', ColorTexture(Colors.Walls)) end
 end
 
-local function RegisterMloDoors()
-    for Key in pairs(Config.MLOHouses) do
-        DoorHashes[Key] = {}
-        for _, Door in ipairs(GetMloDoorList(Key)) do
-            DoorHashes[Key][Door.Key] = {}
-            for Index, Entry in ipairs(Door.Data.Doors or {}) do
-                local Hash = GetHashKey(('fw-housing:%s:%s:%d'):format(Key, Door.Key, Index))
-                local Model = type(Entry.Model) == 'string' and GetHashKey(Entry.Model) or Entry.Model
-                if not IsDoorRegisteredWithSystem(Hash) then
-                    AddDoorToSystem(Hash, Model, Entry.Coords.x, Entry.Coords.y, Entry.Coords.z, false, false, false)
-                end
-                DoorSystemSetAutomaticRate(Hash, 1.0, false, false)
-                DoorSystemSetDoorState(Hash, 1, false, true) -- locked until the server tells us otherwise
-                table.insert(DoorHashes[Key][Door.Key], Hash)
-            end
+local function ClearSurfaces(House)
+    local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
+    if not Cfg then return end
+    for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
+        for _, Tex in ipairs(Cfg[Surface] or {}) do RemoveReplaceTexture(Cfg.Txd, Tex) end
+    end
+    RemoveReplaceTexture(Config.Walls.Texture[1], Config.Walls.Texture[2])
+end
+
+-- // Walls: invisible anchor (bottom centre) + kit pieces laid out from it \\ --
+
+function LayoutWall(Obj)
+    local R = GetEntityRotation(Obj.Anchor, 2)
+    for _, P in ipairs(Obj.Pieces) do
+        local C = GetOffsetFromEntityInWorldCoords(Obj.Anchor, P.X, 0.0, P.Z)
+        SetEntityCoordsNoOffset(P.Entity, C.x, C.y, C.z, false, false, false)
+        SetEntityRotation(P.Entity, R.x, R.y, R.z, 2, true)
+    end
+end
+
+function CreateWall(W, Pos, Rot)
+    local Hash = HousingLoadModel(Config.Walls.Anchor)
+    if not Hash then return end
+    local Obj = { Wall = W, Pieces = {}, Anchor = CreateObjectNoOffset(Hash, Pos.x, Pos.y, Pos.z, false, false, false) }
+    SetEntityVisible(Obj.Anchor, false, false)
+    SetEntityCollision(Obj.Anchor, false, false)
+    FreezeEntityPosition(Obj.Anchor, true)
+    SetEntityRotation(Obj.Anchor, Rot.x, Rot.y, Rot.z, 2, true)
+    for _, P in ipairs(BuildWallPieces(W)) do
+        local PieceHash = HousingLoadModel(P.Model)
+        if PieceHash then
+            local E = CreateObjectNoOffset(PieceHash, Pos.x, Pos.y, Pos.z, false, false, false)
+            FreezeEntityPosition(E, true)
+            SetModelAsNoLongerNeeded(PieceHash)
+            Obj.Pieces[#Obj.Pieces + 1] = { Entity = E, X = P.X, Z = P.Z }
         end
     end
+    LayoutWall(Obj)
+    return Obj
 end
 
-local function ToggleMloDoor(Key, DoorKey)
-    local HouseId = GetMloHouseId(Key)
-    local House = HouseId and Config.Houses[HouseId]
-    if not House then return end
-
-    local WasLocked = GetDoorLocked(House, DoorKey)
-    if WasLocked and House.Owned and HasOverdueDebts(House.Adress) then
-        return FW.Functions.Notify("This house has overdue maintenance fees, pay them first.", "error")
-    end
-
-    Citizen.CreateThread(OpenDoorAnim)
-    TriggerEvent("fw-misc:Client:PlaySound", 'general.doorKeys')
-
-    local Result = FW.SendCallback("fw-housing:Server:Mlo:ToggleDoor", HouseId, DoorKey)
-    if Result and Result.Success then
-        FW.Functions.Notify(Result.Locked and "Door locked." or "Door unlocked.", Result.Locked and "error" or "success")
-    end
-end
-
-local function KnockMloDoor(Key, DoorKey)
-    local HouseId = GetMloHouseId(Key)
-    if not HouseId then return end
-
-    Citizen.CreateThread(function()
-        local Dict = 'timetable@jimmy@doorknock@'
-        RequestAnimDict(Dict)
-        local Timeout = GetGameTimer() + 2000
-        while not HasAnimDictLoaded(Dict) and GetGameTimer() < Timeout do Citizen.Wait(10) end
-        TaskPlayAnim(PlayerPedId(), Dict, 'knockdoor_idle', 8.0, 8.0, 2500, 16, 0, false, false, false)
-    end)
-
-    TriggerServerEvent("fw-housing:Server:Mlo:Knock", HouseId, DoorKey)
-end
-
-local function CreateDoorInteractions()
-    for Key in pairs(Config.MLOHouses) do
-        for _, Door in ipairs(GetMloDoorList(Key)) do
-            local DoorKey = Door.Key
-            local Name = DoorKey == 'Front' and 'front door' or 'back door'
-
-            local function State()
-                local HouseId = GetMloHouseId(Key)
-                if not HouseId then return nil end
-                return Config.Houses[HouseId], HouseId
-            end
-
-            exports['interact']:AddInteraction({
-                name = ('fw-housing:%s:%s'):format(Key, DoorKey),
-                coords = Door.Data.Coords,
-                distance = 4.0,
-                interactDst = 1.6,
-                options = {
-                    {
-                        label = 'Unlock ' .. Name,
-                        canInteract = function()
-                            local House, HouseId = State()
-                            return House ~= nil and GetDoorLocked(House, DoorKey) and HasMloAccess(HouseId)
-                        end,
-                        action = function() Citizen.CreateThread(function() ToggleMloDoor(Key, DoorKey) end) end,
-                    },
-                    {
-                        label = 'Lock ' .. Name,
-                        canInteract = function()
-                            local House, HouseId = State()
-                            return House ~= nil and not GetDoorLocked(House, DoorKey) and HasMloAccess(HouseId)
-                        end,
-                        action = function() Citizen.CreateThread(function() ToggleMloDoor(Key, DoorKey) end) end,
-                    },
-                    {
-                        label = 'Knock',
-                        canInteract = function()
-                            local House, HouseId = State()
-                            return House ~= nil and GetDoorLocked(House, DoorKey) and not HasMloAccess(HouseId)
-                        end,
-                        action = function() KnockMloDoor(Key, DoorKey) end,
-                    },
-                },
-            })
-        end
-    end
+function DeleteWall(Obj)
+    if not Obj then return end
+    for _, P in ipairs(Obj.Pieces) do if DoesEntityExist(P.Entity) then DeleteEntity(P.Entity) end end
+    if DoesEntityExist(Obj.Anchor) then DeleteEntity(Obj.Anchor) end
 end
 
 -- // Decorations (streamed by the PolyZone) \\ --
 
 local function DecorSig(v)
-    return ('%s|%.3f|%.3f|%.3f|%.2f|%.2f|%.2f'):format(v.Model, v.Coords.x, v.Coords.y, v.Coords.z, v.Rot.x, v.Rot.y, v.Rot.z)
+    return ('%s|%.3f|%.3f|%.3f|%.2f|%.2f|%.2f|%s'):format(v.Model, v.Coords.x, v.Coords.y, v.Coords.z, v.Rot.x, v.Rot.y, v.Rot.z, v.Wall and json.encode(v.Wall) or '')
 end
 
 local function ApplyDecorDoor(DecorId)
@@ -202,12 +179,20 @@ local function DespawnDecor(DecorId)
     local S = Spawned[DecorId]
     if not S then return end
     if S.InteractId then exports['interact']:RemoveInteraction(S.InteractId) end
-    if DoesEntityExist(S.Entity) then DeleteEntity(S.Entity) end
+    if S.WallObj then DeleteWall(S.WallObj) elseif DoesEntityExist(S.Entity) then DeleteEntity(S.Entity) end
     Spawned[DecorId] = nil
 end
 
 local function SpawnDecor(HouseId, Decor, Generation)
     if not Decor.Coords or not Decor.Rot then return end
+
+    if Decor.Type == 'wall' then
+        local Obj = Decor.Wall and CreateWall(Decor.Wall, Decor.Coords, Decor.Rot)
+        if not Obj then return end
+        if Generation ~= LoadGeneration or InsideHouseId ~= HouseId or Spawned[Decor.Id] then return DeleteWall(Obj) end
+        Spawned[Decor.Id] = { Entity = Obj.Anchor, WallObj = Obj, Sig = DecorSig(Decor), Type = 'wall' }
+        return
+    end
 
     local Hash = HousingLoadModel(Decor.Model)
     if Generation ~= LoadGeneration or InsideHouseId ~= HouseId or Spawned[Decor.Id] then return end
@@ -243,7 +228,10 @@ local function SpawnDecor(HouseId, Decor, Generation)
 end
 
 -- Only (re)spawns what changed, so placing one object doesn't make the whole house flicker.
+local DecorPaused = false -- the decorate editor owns the entities while open
+
 local function SyncDecor(HouseId)
+    if DecorPaused then return end
     local House = Config.Houses[HouseId]
     if not House or InsideHouseId ~= HouseId then return end
 
@@ -260,6 +248,11 @@ local function SyncDecor(HouseId)
     for DecorId, v in pairs(Wanted) do
         if not Spawned[DecorId] then SpawnDecor(HouseId, v, Generation) end
     end
+end
+
+function SetMloDecorPaused(State)
+    DecorPaused = State
+    if not State and InsideHouseId then SyncDecor(InsideHouseId) end
 end
 
 local function UnloadDecor()
@@ -285,7 +278,7 @@ local function OpenStash(HouseId)
         return FW.Functions.Notify("This house is in lockdown!", "error")
     end
 
-    local StashCfg = Config.MLOHouses[House.Mlo].Stash or {}
+    local StashCfg = (Config.MLOHouses[House.Mlo] or {}).Stash or {}
     TriggerEvent("fw-misc:Client:PlaySound", 'general.stashOpen')
     FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Stash', 'housing-' .. House.Name, StashCfg.Slots or 30, StashCfg.Weight or 750)
 end
@@ -295,7 +288,7 @@ local function CreateInteriorInteractions(HouseId)
     local House = Config.Houses[HouseId]
     if not House or not House.Locations then return end
 
-    local function Access() return HasMloAccess(HouseId) end
+    local function Access() return HasMloAccess(HouseId, 'Stash') end
 
     if House.Locations.Stash then
         local C = House.Locations.Stash
@@ -323,6 +316,7 @@ end
 
 local function LeaveCurrent()
     if InsideHouseId then
+        ClearSurfaces(Config.Houses[InsideHouseId])
         UnloadDecor()
         ClearInteriorInteractions()
         SetMloCurrentHouse(nil)
@@ -346,6 +340,7 @@ local function RefreshInside()
     if InsideHouseId ~= HouseId then return end -- left while waiting on the server
 
     CreateInteriorInteractions(HouseId)
+    ApplySurfaces(Config.Houses[HouseId])
     SyncDecor(HouseId)
 end
 
@@ -362,34 +357,21 @@ end
 
 RegisterNetEvent("fw-housing:Client:SyncHouse")
 AddEventHandler("fw-housing:Client:SyncHouse", function(HouseId, Data)
-    AccessCache[HouseId] = nil
-
     if Data == nil then
         if InsideHouseId == HouseId then LeaveCurrent() end
         return
     end
 
     if not Data.Mlo then return end
-    ApplyDoorLocks(Data)
 
     if InsideHouseId == HouseId then
         SetMloCurrentHouse(Data)
         CreateInteriorInteractions(HouseId)
+        ApplySurfaces(Data)
         SyncDecor(HouseId)
     elseif InsideKey == Data.Mlo then
         RefreshInside()
     end
-end)
-
-RegisterNetEvent("fw-housing:Client:Mlo:SetDoorLock")
-AddEventHandler("fw-housing:Client:Mlo:SetDoorLock", function(HouseId, DoorKey, Locked)
-    local House = Config.Houses and Config.Houses[HouseId]
-    if not House then return end
-
-    House.DoorLocks = House.DoorLocks or { Front = true, Back = true }
-    House.DoorLocks[DoorKey] = Locked
-    if DoorKey == 'Front' then House.Locked = Locked end
-    ApplyDoorLocks(House)
 end)
 
 RegisterNetEvent("fw-housing:Client:Decor:SetDoorOpen")
@@ -422,42 +404,62 @@ AddEventHandler("fw-housing:Client:Mlo:DoorInfo", function()
     end
 
     local C = GetEntityCoords(Entity)
-    print("^5[fw-housing]^7 Paste into FrontDoor / BackDoor:")
-    print(("Coords = vector3(%.2f, %.2f, %.2f),"):format(C.x, C.y, C.z))
-    print(("Doors = { { Model = %d, Coords = vector3(%.2f, %.2f, %.2f) } },"):format(GetEntityModel(Entity), C.x, C.y, C.z))
+    print("^5[fw-housing]^7 Paste into FrontDoor / BackDoor Doors:")
+    print(("{ Model = %d, Coords = vector3(%.3f, %.3f, %.3f) },"):format(GetEntityModel(Entity), C.x, C.y, C.z))
     FW.Functions.Notify("Door info printed in F8.", "success")
 end)
 
 -- // Setup \\ --
 
-Citizen.CreateThread(function()
-    RegisterMloDoors()
-    CreateDoorInteractions()
-
+-- (Re)builds every zone from Config.MLOHouses. Inside the zone = furniture loaded, outside = furniture deleted.
+-- One ComboZone (single 500 ms check) for every house, however many there are.
+local Combo = nil
+local function BuildZones()
+    if InsideKey then OnZoneChange(InsideKey, false) end
+    if Combo then Combo:destroy() end
+    MloZones = {}
+    local List = {}
     for Key, Mlo in pairs(Config.MLOHouses) do
         MloZones[Key] = PolyZone:Create(Mlo.Zone.points, {
-            name = 'fw-housing-mlo-' .. Key,
-            minZ = Mlo.Zone.minZ,
-            maxZ = Mlo.Zone.maxZ,
-            debugPoly = Mlo.Zone.debug == true,
+            name = Key, minZ = Mlo.Zone.minZ, maxZ = Mlo.Zone.maxZ, debugPoly = Mlo.Zone.debug == true,
         })
-
-        -- Inside the zone = furniture loaded, outside = furniture deleted.
-        MloZones[Key]:onPlayerInOut(function(IsInside)
-            OnZoneChange(Key, IsInside)
-        end, 500)
+        List[#List + 1] = MloZones[Key]
     end
+    Combo = nil
+    if #List == 0 then return end
+    Combo = ComboZone:Create(List, { name = 'fw-housing-mlo' })
+    Combo:onPlayerInOut(function(IsInside, _, Zone)
+        if IsInside and Zone then OnZoneChange(Zone.name, true) elseif InsideKey then OnZoneChange(InsideKey, false) end
+    end, 500)
+end
 
-    -- Waits for the house list (and re-applies door states once it arrives).
-    local Applied = false
+local function SetDefs(Defs)
+    for Key in pairs(Config.MLOHouses) do
+        if not Defs[Key] then RegisterMloDef(Key, nil) end
+    end
+    for Key, Def in pairs(Defs) do RegisterMloDef(Key, Def) end
+    BuildZones()
+end
+
+-- A house was created / edited / deleted with /housecreator.
+RegisterNetEvent("fw-housing:Client:Mlo:Reload", function(Defs, Houses)
+    if exports['fw-housing']:IsDecorating() then CloseMloEditor() end
+    Config.Houses = Houses
+    SetDefs(Defs)
+end)
+
+Citizen.CreateThread(function()
+    -- Houses made in game live on the server, ask for every definition once.
+    local Defs
+    while not Defs do
+        Defs = FW.SendCallback("fw-housing:Server:Mlo:GetDefs")
+        if not Defs then Citizen.Wait(2000) end
+    end
+    SetDefs(Defs)
+
+    -- Waits for the house list.
     while true do
-        if Config.Houses ~= nil and next(Config.Houses) ~= nil then
-            if not Applied then
-                Applied = true
-                for _, House in pairs(Config.Houses) do ApplyDoorLocks(House) end
-            end
-            if InsideKey and not InsideHouseId then RefreshInside() end
-        end
+        if InsideKey and not InsideHouseId and Config.Houses and next(Config.Houses) then RefreshInside() end
         Citizen.Wait(1000)
     end
 end)
@@ -465,12 +467,6 @@ end)
 AddEventHandler('onResourceStop', function(Resource)
     if Resource ~= GetCurrentResourceName() then return end
     UnloadDecor()
-    for _, Zone in pairs(MloZones) do Zone:destroy() end
-    for _, Doors in pairs(DoorHashes) do
-        for _, Hashes in pairs(Doors) do
-            for _, Hash in ipairs(Hashes) do
-                if IsDoorRegisteredWithSystem(Hash) then RemoveDoorFromSystem(Hash) end
-            end
-        end
-    end
+    if InsideHouseId then ClearSurfaces(Config.Houses[InsideHouseId]) end
+    if Combo then Combo:destroy() end
 end)

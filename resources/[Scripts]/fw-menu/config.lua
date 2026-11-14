@@ -453,6 +453,26 @@ Config.Menu = {
         end,
     },
     {
+        Id = "mlo_decorate",
+        Title = "Decorate",
+        Icon = "#animation-tools",
+        Close = true,
+        Event = "fw-housing:Client:Mlo:OpenDecorate",
+        Enabled = function()
+            return not exports['fw-medical']:GetDeathStatus() and exports['fw-housing']:CanDecorateMlo()
+        end,
+    },
+    {
+        Id = "mlo_house",
+        Title = "House",
+        Icon = "#global-appartment",
+        Close = true,
+        Event = "fw-housing:Client:Mlo:OpenHouse",
+        Enabled = function()
+            return not exports['fw-medical']:GetDeathStatus() and exports['fw-housing']:IsMloOwnerInside()
+        end,
+    },
+    {
         Id = "jail_current_task",
         Title = "Current Task",
         Icon = "#jail-current-task",

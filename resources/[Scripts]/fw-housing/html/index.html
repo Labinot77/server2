@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+    --bg: rgba(34, 40, 49, .94); --bg2: #30475e; --card: rgba(255,255,255,.05); --line: rgba(255,255,255,.08);
+    --pri: #95ef77; --sec: #f2a365; --err: #e05252; --text: #fff; --muted: #9aa5b4;
+    --x: #b94a4a; --y: #4f8a3c; --z: #3a5f9e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, Arial, sans-serif; user-select: none; }
+body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(--text); font-size: 1.3vh; }
+#view { position: absolute; inset: 0; }
+.box { background: var(--bg); border-radius: .3vh; box-shadow: 0 .3vh 1.5vh rgba(0,0,0,.35); }
+.btn { padding: .7vh 1.2vh; background: var(--bg); border-radius: .3vh; cursor: pointer; text-align: center; white-space: nowrap; }
+.btn:hover { background: var(--bg2); }
+.btn.on { background: var(--pri); color: #111; }
+.btn.off { opacity: .4; pointer-events: none; }
+.btn.err:hover { background: var(--err); }
+input { width: 100%; background: rgba(255,255,255,.06); border: .1vh solid var(--line); color: var(--text); padding: .6vh .8vh; border-radius: .3vh; outline: none; font-size: 1.25vh; user-select: text; }
+input:focus { border-color: var(--pri); }
+::-webkit-scrollbar { width: .4vh; } ::-webkit-scrollbar-thumb { background: var(--pri); border-radius: .2vh; }
+
+/* top bar */
+#top { position: absolute; top: 1.2vh; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .6vh; }
+#top .row { display: flex; gap: .6vh; }
+#stats { font-size: 1.2vh; color: var(--text); }
+#stats b { color: var(--pri); font-weight: 400; } #stats i { color: var(--sec); font-style: normal; }
+
+/* side panels */
+.side { position: absolute; top: 5vh; bottom: 7vh; display: flex; gap: .6vh; }
+#left { left: 1.5vh; } #right { right: 1.5vh; flex-direction: row-reverse; }
+.head { position: absolute; top: -5vh; }
+#left .head { left: 0; } #right .head { right: 0; text-align: right; }
+.head h1 { color: var(--pri); font-size: 2vh; font-weight: 500; }
+.head p { color: var(--muted); font-size: 1.2vh; }
+.strip { width: 2.6vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .8vh 0; cursor: pointer; }
+.strip span { writing-mode: vertical-rl; color: var(--muted); font-size: 1.15vh; }
+.strip:hover span { color: var(--text); }
+.arrow { width: 1.8vh; height: 1.8vh; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.08); border-radius: .2vh; font-size: 1.1vh; }
+.panel { width: 34vh; display: flex; flex-direction: column; gap: .8vh; }
+.side.hidden .panel, .side.hidden .head { display: none; }
+
+/* furniture list */
+.search { position: relative; }
+.search span { position: absolute; right: .9vh; top: 50%; transform: translateY(-50%); color: var(--muted); cursor: pointer; }
+.tabs { display: flex; gap: .6vh; }
+.tabs .btn { flex: 1; }
+#tree { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: .5vh; padding: .8vh; }
+.cat, .item { display: flex; align-items: center; gap: .9vh; padding: .7vh .8vh; background: var(--card); border-radius: .3vh; cursor: pointer; }
+.cat:hover, .item:hover { background: var(--bg2); }
+.cat.open { background: rgba(149,239,119,.18); }
+.item { margin-left: 1.6vh; }
+.item.sel { color: var(--pri); background: var(--bg2); }
+.ico { width: 2.6vh; height: 2.6vh; flex: none; border-radius: .3vh; background: var(--sec); display: flex; align-items: center; justify-content: center; color: #111; font-size: 1.1vh; overflow: hidden; }
+.ico img { width: 100%; height: 100%; object-fit: cover; }
+.cat .ico { background: var(--pri); }
+.cat .name, .item .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chev { width: 1.8vh; height: 1.8vh; border-radius: .2vh; background: rgba(149,239,119,.25); color: var(--pri); display: flex; align-items: center; justify-content: center; font-size: 1vh; }
+.item small { color: var(--muted); }
+
+/* object settings */
+#settings { overflow-y: auto; display: flex; flex-direction: column; gap: .8vh; }
+.card { padding: 1.2vh; display: flex; flex-direction: column; gap: .7vh; }
+.slider .top { display: flex; justify-content: space-between; align-items: center; }
+.val { min-width: 4.5vh; padding: .3vh .6vh; background: rgba(255,255,255,.1); border-radius: .2vh; text-align: center; font-size: 1.15vh; }
+input[type=range] { -webkit-appearance: none; height: .35vh; padding: 0; border: 0; background: rgba(255,255,255,.15); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 1.1vh; height: 1.1vh; border-radius: .2vh; background: #fff; cursor: pointer; }
+.title { color: var(--pri); font-size: 1.3vh; } .sub { color: var(--muted); font-size: 1.1vh; margin-top: -.6vh; }
+.kv { display: flex; gap: .5vh; align-items: center; }
+.kv label { width: 11vh; flex: none; padding: .6vh .8vh; background: rgba(255,255,255,.07); border-radius: .2vh; font-size: 1.2vh; }
+.kv .v { flex: 1; padding: .6vh .8vh; background: var(--sec); color: #111; border-radius: .2vh; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kv input { text-align: center; }
+.kv label.x { background: var(--x); } .kv label.y { background: var(--y); } .kv label.z { background: var(--z); }
+.btns { display: flex; gap: .5vh; justify-content: flex-end; flex-wrap: wrap; }
+.btns .btn { background: rgba(255,255,255,.07); padding: .6vh 1vh; }
+.btns .btn:hover { background: var(--bg2); }
+.mat { display: flex; gap: .6vh; align-items: center; }
+.mat .ico { width: 4.4vh; height: 4.4vh; background: rgba(255,255,255,.08); }
+.mat .v { flex: 1; padding: 1.3vh .9vh; background: var(--sec); color: #111; border-radius: .2vh; }
+.hole { background: rgba(255,255,255,.04); border-radius: .3vh; padding: .6vh; display: flex; flex-direction: column; gap: .4vh; }
+.hole .kv label { width: 7vh; }
+
+/* hints */
+#hints { position: absolute; bottom: 1.5vh; left: 50%; transform: translateX(-50%); display: flex; gap: .8vh; }
+.hint { display: flex; border-radius: .3vh; overflow: hidden; font-size: 1.15vh; }
+.hint b { padding: .5vh .8vh; background: var(--bg); font-weight: 400; }
+.hint span { padding: .5vh .8vh; background: var(--pri); color: #111; }
+
+/* modal */
+#modal { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.35); }
+#modal .box { padding: 2vh; display: flex; flex-direction: column; gap: 1.4vh; width: 34vh; }
+#modal .btns .btn.on:hover { background: var(--pri); }
+</style>
+</head>
+<body>
+<div id="view"></div>
+
+<div id="top">
+    <div class="row">
+        <div class="btn" id="bSave" onclick="post('save')">Save</div>
+        <div class="btn" id="bUndo" onclick="post('undo')">Undo</div>
+        <div class="btn" id="bRedo" onclick="post('redo')">Redo</div>
+        <div class="btn" id="bDiscard" onclick="post('discard')">Discard</div>
+        <div class="btn" onclick="askClose()">Close</div>
+    </div>
+    <div id="stats"></div>
+</div>
+
+<div id="left" class="side">
+    <div class="box strip" onclick="toggle('left')"><div class="arrow">‹</div><span>Hide panel</span><div class="arrow">‹</div></div>
+    <div class="head"><h1>Furniture List</h1><p>Objects you can place or have placed</p></div>
+    <div class="panel">
+        <div class="search"><input id="search" placeholder="Search by name"><span onclick="$('search').value='';draw()">✕</span></div>
+        <div class="tabs"><div class="btn on" id="tEdit" onclick="tab='edit';draw()">Edit</div><div class="btn" id="tPlaced" onclick="tab='placed';draw()">Placed</div></div>
+        <div id="tree" class="box"></div>
+    </div>
+</div>
+
+<div id="right" class="side">
+    <div class="box strip" onclick="toggle('right')"><div class="arrow">›</div><span>Hide panel</span><div class="arrow">›</div></div>
+    <div class="head"><h1>Object Settings</h1><p>Fine tune your placed object</p></div>
+    <div class="panel" id="settings">
+        <div class="box card slider"><div class="top">Snap Movement<div class="val" id="vSnapMove">0</div></div><input type="range" id="SnapMove" min="0" max="1" step="0.05" value="0"></div>
+        <div class="box card slider"><div class="top">Snap Rotation<div class="val" id="vSnapRot">0</div></div><input type="range" id="SnapRot" min="0" max="90" step="5" value="0"></div>
+        <div class="box card slider"><div class="top">Camera Speed<div class="val" id="vCamSpeed">0.05</div></div><input type="range" id="CamSpeed" min="0.01" max="0.3" step="0.01" value="0.05"></div>
+        <div class="box card" id="info">
+            <div class="title">Item Information</div><div class="sub">Selected item details</div>
+            <div class="kv"><label>Model Hash</label><div class="v" id="iHash"></div></div>
+            <div class="kv"><label>Display Name</label><div class="v" id="iName"></div></div>
+            <div class="title">Item Position</div><div class="sub">Selected item position and rotation values</div>
+            <div class="kv"><label class="x">X position</label><input data-k="Pos.x"></div>
+            <div class="kv"><label class="y">Y position</label><input data-k="Pos.y"></div>
+            <div class="kv"><label class="z">Z position</label><input data-k="Pos.z"></div>
+            <div class="kv"><label class="x">X rotation</label><input data-k="Rot.x"></div>
+            <div class="kv"><label class="y">Y rotation</label><input data-k="Rot.y"></div>
+            <div class="kv"><label class="z">Z rotation</label><input data-k="Rot.z"></div>
+            <div class="btns"><div class="btn" onclick="copyT()">Copy</div><div class="btn" onclick="pasteT()">Paste</div></div>
+            <div id="wall" style="display:none;flex-direction:column;gap:.6vh">
+                <div class="title">Wall</div><div class="sub">Size and openings, in steps of 0.25 m</div>
+                <div class="kv"><label>Length</label><input id="wL" type="number" step="0.25"></div>
+                <div class="kv"><label>Height</label><input id="wH" type="number" step="0.25"></div>
+                <div id="holes" style="display:flex;flex-direction:column;gap:.5vh"></div>
+                <div class="btns"><div class="btn" onclick="addHole('Door')">+ Door hole</div><div class="btn" onclick="addHole('Window')">+ Window hole</div></div>
+            </div>
+            <div class="title">Item</div><div class="sub">Object placed in your house</div>
+            <div class="mat"><div class="ico" id="iImg"></div><div class="v" id="iLabel"></div></div>
+            <div class="kv"><label>Placed (same)</label><div class="v" id="iSame"></div></div>
+            <div class="btns"><div class="btn" onclick="post('ground')">Ground</div><div class="btn" onclick="post('duplicate')">Duplicate</div><div class="btn err" onclick="post('delete')">Delete</div></div>
+        </div>
+    </div>
+</div>
+
+<div id="hints"></div>
+
+<div id="modal"><div class="box">
+    <div class="title">Unsaved changes</div><div class="sub" style="margin:0">Save them before you close the editor?</div>
+    <div class="btns"><div class="btn" onclick="$('modal').style.display='none'">Cancel</div><div class="btn err" onclick="post('close',{Save:false})">Discard</div><div class="btn on" onclick="post('close',{Save:true})">Save</div></div>
+</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let catalog = [], thumb = '', walls = false, s = { List: [] }, tab = "edit", expanded = {}, lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = null;
+
+const post = (name, data = {}) => fetch(`https://${GetParentResourceName()}/editor/${name}`, { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
+const img = m => thumb ? `<img src="${thumb.replace('%s', m)}" onerror="this.remove()">` : '';
+const esc = t => String(t).replace(/[<>&"]/g, c => `&#${c.charCodeAt(0)};`);
+
+function toggle(side) {
+    $(side).classList.toggle('hidden');
+    $(side).querySelectorAll('.arrow').forEach(a => a.textContent = ($(side).classList.contains('hidden') ? side === 'left' : side !== 'left') ? '›' : '‹');
+}
+
+// // Furniture list \\
+function draw() {
+    $('tEdit').classList.toggle('on', tab === 'edit'); $('tPlaced').classList.toggle('on', tab === 'placed');
+    const q = $('search').value.trim().toLowerCase().replace(/\s+/g, '_');
+    let html = '';
+    if (tab === 'placed') {
+        html = s.List.filter(i => !q || i.Model.toLowerCase().includes(q)).map(i =>
+            `<div class="item ${s.Sel && s.Sel.Key === i.Key ? 'sel' : ''}" style="margin:0" onclick="post('select',{Key:'${i.Key}'})"><div class="ico">${img(i.Model)}</div><div class="name">${esc(i.Label)}</div><small>${i.Dist.toFixed(1)}m</small></div>`).join('')
+            || '<div class="sub" style="margin:0">Nothing placed yet.</div>';
+    } else {
+        const cats = (walls ? [{ Name: 'Build', Items: [{ Model: 'fw_wall', Label: 'Wall (resizable)', Wall: true }] }] : []).concat(catalog);
+        cats.forEach((c, ci) => {
+            const items = q ? c.Items.filter(i => i.Model.toLowerCase().includes(q) || i.Label.toLowerCase().includes(q)) : c.Items;
+            if (!items.length) return;
+            const isOpen = q ? true : expanded[ci];
+            html += `<div class="cat ${isOpen ? 'open' : ''}" onclick="expanded[${ci}]=!expanded[${ci}];draw()"><div class="ico">▤</div><div class="name">${esc(c.Name)}</div><small>${items.length}</small><div class="chev">${isOpen ? '⌄' : '›'}</div></div>`;
+            if (isOpen) html += items.slice(0, 200).map(i =>
+                `<div class="item" onclick='post("spawn",${JSON.stringify(i.Wall ? { Wall: true } : { Model: i.Model })})'><div class="ico">${i.Wall ? '▥' : img(i.Model)}</div><div class="name">${esc(i.Model)}</div></div>`).join('');
+        });
+    }
+    $('tree').innerHTML = html;
+}
+$('search').addEventListener('input', draw);
+
+// // Object settings \\
+['SnapMove', 'SnapRot', 'CamSpeed'].forEach(id => $(id).addEventListener('input', () => {
+    $('v' + id).textContent = $(id).value;
+    post('settings', { SnapMove: +$('SnapMove').value, SnapRot: +$('SnapRot').value, CamSpeed: +$('CamSpeed').value });
+}));
+
+function sendTransform(t) { post('set', t); }
+document.querySelectorAll('#info input[data-k]').forEach(i => i.addEventListener('change', () => {
+    const t = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }, [a, b] = i.dataset.k.split('.');
+    t[a][b] = parseFloat(i.value) || 0; sendTransform(t);
+}));
+function copyT() { if (s.Sel) clip = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }; }
+function pasteT() { if (s.Sel && clip) sendTransform(clip); }
+
+const PRESETS = { Door: { X: 0, Z: 0, W: 1, H: 2.25 }, Window: { X: 0, Z: 1, W: 1, H: 1 } };
+const FIELDS = [['X', 'Offset'], ['Z', 'Bottom'], ['W', 'Width'], ['H', 'Height']];
+let wallKey = '';
+const wallCopy = () => JSON.parse(JSON.stringify(s.Sel.Wall));
+function addHole(t) { const w = wallCopy(); w.Holes.push({ ...PRESETS[t] }); post('wall', w); }
+function removeHole(i) { const w = wallCopy(); w.Holes.splice(i, 1); post('wall', w); }
+$('wall').addEventListener('change', e => {
+    const w = wallCopy(), i = e.target;
+    if (i.id === 'wL') w.L = +i.value; else if (i.id === 'wH') w.H = +i.value; else if (i.dataset.h) w.Holes[i.dataset.h][i.dataset.f] = +i.value;
+    wallKey = ''; post('wall', w);
+});
+function renderWall(w) {
+    $('wall').style.display = w ? 'flex' : 'none';
+    if (!w) return;
+    const key = JSON.stringify(w);
+    if (key === wallKey || ($('wall').contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) return;
+    wallKey = key; $('wL').value = w.L; $('wH').value = w.H;
+    $('holes').innerHTML = (w.Holes || []).map((h, i) => `<div class="hole"><div class="kv"><div style="flex:1">Hole ${i + 1}</div><div class="btn err" style="padding:.3vh .8vh" onclick="removeHole(${i})">✕</div></div>
+        ${FIELDS.map(([k, l]) => `<div class="kv"><label>${l}</label><input type="number" step="0.25" data-h="${i}" data-f="${k}" value="${h[k]}"></div>`).join('')}</div>`).join('');
+}
+
+function render() {
+    $('stats').innerHTML = `Placed: <b>${s.Placed ?? 0}</b> / <i>${s.Max ?? 0}</i> &nbsp; Mode: <b>${s.Mode === 'rotate' ? 'Rotate' : 'Move'}</b> &nbsp; Axes: <b>${s.Space === 'local' ? 'Local' : 'World'}</b>` + (s.Dirty ? ' &nbsp; <i>Unsaved changes</i>' : '');
+    $('bSave').classList.toggle('on', !!s.Dirty); $('bSave').classList.toggle('off', !s.Dirty);
+    $('bDiscard').classList.toggle('off', !s.Dirty);
+    $('bUndo').classList.toggle('off', !s.Undo); $('bRedo').classList.toggle('off', !s.Redo);
+
+    const sel = s.Sel;
+    $('info').style.display = sel ? 'flex' : 'none';
+    if (sel) {
+        $('iHash').textContent = sel.Wall ? 'fw_wall kit' : sel.Hash; $('iName').textContent = sel.Model;
+        $('iLabel').textContent = sel.Label + (sel.New ? ' (new)' : ''); $('iSame').textContent = sel.Same;
+        $('iImg').innerHTML = sel.Wall ? '▥' : img(sel.Model);
+        document.querySelectorAll('#info input[data-k]').forEach(i => {
+            if (document.activeElement === i) return;
+            const [a, b] = i.dataset.k.split('.'); i.value = (+sel[a][b]).toFixed(a === 'Pos' ? 3 : 1);
+        });
+    }
+    renderWall(sel && sel.Wall);
+
+    const hints = s.Placing
+        ? [['LMB', 'Place'], ['Space', 'Place'], ['RMB', 'Cancel'], ['Scroll', 'Turn']]
+        : [['R', s.Mode === 'rotate' ? 'Move' : 'Rotate'], ['Q', s.Space === 'local' ? 'World' : 'Local'], ['Space', 'Deselect'], ['G', 'Ground'], ['Del', 'Delete'], ['Ctrl Z', 'Undo']];
+    $('hints').innerHTML = [['WASD', 'Fly'], ['E / Ctrl', 'Up / down'], ['RMB', 'Look']].concat(hints).map(([k, l]) => `<div class="hint"><b>${k}</b><span>${l}</span></div>`).join('');
+    if (tab === 'placed') draw();
+}
+
+// // Mouse / keys \\
+const view = $('view');
+view.addEventListener('contextmenu', e => e.preventDefault());
+view.addEventListener('mousedown', e => {
+    document.activeElement.blur();
+    if (e.button === 0) { lmb = true; post('down'); }
+    if (e.button === 2) { rmb = true; rmbMoved = false; }
+});
+addEventListener('mouseup', e => {
+    if (e.button === 0 && lmb) { lmb = false; post('up'); }
+    if (e.button === 2 && rmb) { rmb = false; if (!rmbMoved && s.Placing) post('cancel'); }
+});
+addEventListener('mousemove', e => {
+    if (!rmb) return;
+    rmbMoved = true; look[0] += e.movementX; look[1] += e.movementY;
+    if (!busy) { busy = true; const [dx, dy] = look; look = [0, 0]; post('look', { dx, dy }).finally(() => busy = false); }
+});
+view.addEventListener('wheel', e => post('wheel', { d: e.deltaY }));
+document.addEventListener('focusin', e => { if (e.target.tagName === 'INPUT' && e.target.type !== 'range') post('typing', { State: true }); });
+document.addEventListener('focusout', e => { if (e.target.tagName === 'INPUT' && e.target.type !== 'range') post('typing', { State: false }); });
+
+function askClose() { if (s.Dirty) $('modal').style.display = 'flex'; else post('close'); }
+
+addEventListener('keydown', e => {
+    if (e.key === 'Escape') { if ($('modal').style.display === 'flex') $('modal').style.display = 'none'; else if (s.Placing) post('cancel'); else askClose(); return; }
+    if (document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'range') return;
+    const k = e.key.toLowerCase();
+    if (e.ctrlKey && k === 'z') post('undo');
+    else if (e.ctrlKey && k === 'y') post('redo');
+    else if (e.ctrlKey && k === 's') post('save');
+    else if (e.ctrlKey) return;
+    else if (k === 'r') post('mode');
+    else if (k === 'q') post('space');
+    else if (k === ' ') post('place');
+    else if (k === 'g') post('ground');
+    else if (k === 'delete') post('delete');
+});
+
+addEventListener('message', ({ data: m }) => {
+    if (m.Action === 'Open') {
+        catalog = m.Data.Catalog; thumb = m.Data.Thumb || ''; walls = m.Data.Walls; expanded = {}; tab = 'edit';
+        $('search').value = ''; $('modal').style.display = 'none';
+        document.body.style.display = 'block'; draw();
+    } else if (m.Action === 'State') { s = m.Data; s.List = s.List || []; render(); }
+    else if (m.Action === 'Close') { document.body.style.display = 'none'; lmb = rmb = false; }
+});
+</script>
+</body>
+</html>

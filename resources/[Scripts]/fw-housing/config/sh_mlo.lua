@@ -2,29 +2,11 @@ Config = Config or {}
 
 --[[
     MLO HOUSES
-    ----------
-    Every entry below becomes a normal row in `player_houses` (created/updated automatically on resource start,
-    linked by the `mlo` column), so keys, the phone Housing app, selling and the fw-vehicles garage all keep working.
-
-    Differences from shell houses:
-      * No teleport. The real MLO door(s) are locked/unlocked through `interact` + the GTA door system.
-      * Furniture is streamed by the PolyZone: entering the zone spawns it, leaving the zone deletes it.
-      * Decorating is only possible inside `Zone` (checked on the client AND the server).
-      * The garage can only be placed outside the zone, within `Config.MLOGarage.MaxDistanceFromZone` of its edge.
-
-    Fields:
-      Label           Address shown in the phone / contracts. Must be unique.
-      Price           Sale price while nobody owns it.
-      Class           Realtor class (see Config.PricesPerClass).
-      Spawn           (optional) vector4 inside the house, used when the player spawns at this house.
-      FrontDoor       Required. The physical front door.
-      BackDoor        Optional. Same format as FrontDoor, set to false / remove it if the MLO has none.
-        Coords          Where the [E] prompt is drawn (usually the door centre).
-        Doors           The door entities. Use /mlodoor while looking at a door to print Model + Coords.
-                        Add two entries for a double door.
-      Zone            The interior PolyZone (points, minZ, maxZ). Only the inside of the house!
-      Stash           Size of the house stash. The position is set by the owner via the phone (like shells).
-      MaxDecorations  Max number of placed objects (furniture + walls + doors).
+      FrontDoor / BackDoor  Doors = { { Model, Coords } } (two entries = double door). Registered in fw-doors as
+                            HOUSE_<key>_<Front|Back>_<n>; owner + keyholders with door access get the keys.
+      Zone                  Interior PolyZone. Decorate / house menu (fw-menu) only work inside it.
+      Surfaces              Textures of the MLO's .ytd that the owner can recolour (Walls / Floor / Ceiling).
+                            Find names with OpenIV / CodeWalker (texture dictionary of the interior).
 ]]
 
 Config.MLOHouses = {
@@ -32,24 +14,10 @@ Config.MLOHouses = {
         Label = 'Grove Street MLO 1',
         Price = 250000,
         Class = 2,
-
         Spawn = vector4(423.20, -1837.40, 28.46, 45.0),
 
-        FrontDoor = {
-            Coords = vector3(426.55, -1841.95, 28.57),
-            Doors = {
-                { Model = 224373542, Coords = vector3(426.55, -1841.95, 28.57) },
-            },
-        },
-
-        -- Optional back door. Stand at the door, run /mlodoor and paste the output here.
-        BackDoor = false,
-        -- BackDoor = {
-        --     Coords = vector3(0.0, 0.0, 0.0),
-        --     Doors = {
-        --         { Model = 0, Coords = vector3(0.0, 0.0, 0.0) },
-        --     },
-        -- },
+        FrontDoor = { Doors = { { Model = 224373542, Coords = vector3(426.548, -1841.948, 28.523) } } },
+        BackDoor = { Doors = { { Model = -496675514, Coords = vector3(418.475, -1832.568, 28.539) } } },
 
         Zone = {
             points = {
@@ -68,138 +36,101 @@ Config.MLOHouses = {
             -- Floor is ~28.0. Keep minZ slightly under the floor, raise maxZ if the MLO has an upstairs.
             minZ = 27.0,
             maxZ = 33.0,
-            debug = true, -- true = draw the zone in-game
+            debug = false, -- true = draw the zone in-game
+        },
+
+        Surfaces = {
+            Txd = 'mloqf3_tex',
+            Walls = { 'mloqf3_plaster_white', 'mloqf3_brick_cream' },
+            Floor = { 'mloqf3_plaster_grey' },
+            Ceiling = { 'mloqf3_metal_sheet' },
         },
 
         Stash = { Slots = 40, Weight = 1000 },
-        MaxDecorations = 100,
+        MaxDecorations = 150,
     },
 }
 
-Config.MLOTest = {
-    Enabled = true,          -- registers /buymlo and /sellmlo
-    Permission = 'admin',    -- fw-core permission for the test commands ('user' = everyone)
-    ChargeMoney = true,      -- /buymlo takes the price from the player's bank account
-}
+Config.MLOTest = { Enabled = true, Permission = 'admin', ChargeMoney = true } -- /buymlo /sellmlo
 
-Config.MLOGarage = {
-    MaxDistanceFromZone = 12.0, -- metres from the closest edge of the house zone
-    MaxHeightDifference = 4.0,  -- metres above/below the zone floor (stops rooftop / bridge garages)
-}
-
-Config.MLOClearDecorOnSell = true -- remove all furniture + the garage when the house is sold
+Config.MLOGarage = { MaxDistanceFromZone = 12.0, MaxHeightDifference = 4.0 }
+Config.MLOClearDecorOnSell = true
 
 Config.Decorate = {
-    KeyholdersCanDecorate = true, -- false = only the owner can decorate
-    ChargeMoney = false,          -- test menu: free. Set true to charge the catalog Price from the bank
-    RefundPercentage = 50,        -- % refunded when an object is removed (only when ChargeMoney = true)
-    MaxRayDistance = 8.0,         -- how far from the camera an object can be placed
-    RotateStep = 5.0,             -- degrees per scroll tick (hold SHIFT for 1 degree)
-    HeightStep = 0.01,            -- metres per frame while holding arrow up/down
-    SnapAngle = 90.0,             -- [G] toggles heading snapping (handy for walls/doors)
+    ChargeMoney = false,
+    Price = 250,            -- price per object when ChargeMoney = true
+    RefundPercentage = 50,
+    MaxRayDistance = 8.0,
+    -- Prop thumbnails (%s = model). Uses kq_propplacer's images while that resource is started.
+    Thumbnails = 'https://cfx-nui-kq_propplacer/nui/dist/assets/%s.webp',
 }
 
---[[
-    Decoration catalog. Only models in this list can be placed (enforced server side).
-    Type:
-      furniture  static object
-      wall       static object, placed flush on the floor (use SNAP to line them up)
-      door       static object that players with access can open/close (rotates 90 degrees around its hinge)
-
-    NOTE (test menu): GTA has no real "wall panel" props, the walls below are vanilla placeholders.
-    Models that don't exist in your game build are hidden from the menu automatically (see F8).
-    For the advanced version, stream your own wall / door props and add them here.
-]]
-Config.DecorCatalog = {
-    {
-        Category = 'Seating', Icon = 'couch', Type = 'furniture',
-        Items = {
-            { Model = 'prop_couch_01',     Label = 'Couch (brown)',     Price = 1200 },
-            { Model = 'prop_couch_03',     Label = 'Couch (leather)',   Price = 1500 },
-            { Model = 'v_res_mp_sofa',     Label = 'Modern sofa',       Price = 2200 },
-            { Model = 'prop_armchair_01',  Label = 'Armchair',          Price = 600 },
-            { Model = 'prop_chair_01a',    Label = 'Wooden chair',      Price = 150 },
-            { Model = 'prop_off_chair_01', Label = 'Office chair',      Price = 400 },
-            { Model = 'prop_bar_stool_01', Label = 'Bar stool',         Price = 200 },
-        },
-    },
-    {
-        Category = 'Tables', Icon = 'table', Type = 'furniture',
-        Items = {
-            { Model = 'prop_table_01',      Label = 'Table (small)', Price = 300 },
-            { Model = 'prop_table_03',      Label = 'Table (wooden)', Price = 400 },
-            { Model = 'v_res_m_dinetble',   Label = 'Dining table',  Price = 900 },
-            { Model = 'v_res_fh_coftablea', Label = 'Coffee table',  Price = 450 },
-        },
-    },
-    {
-        Category = 'Beds & Storage', Icon = 'bed', Type = 'furniture',
-        Items = {
-            { Model = 'v_res_msonbed',      Label = 'Double bed', Price = 1800 },
-            { Model = 'v_res_tre_bed1',     Label = 'Single bed', Price = 900 },
-            { Model = 'v_res_tre_wardrobe', Label = 'Wardrobe',   Price = 800 },
-            { Model = 'v_res_mddresser',    Label = 'Dresser',    Price = 700 },
-        },
-    },
-    {
-        Category = 'Electronics & Kitchen', Icon = 'tv', Type = 'furniture',
-        Items = {
-            { Model = 'prop_tv_flat_01',    Label = 'Flat TV (large)', Price = 2500 },
-            { Model = 'prop_tv_flat_03',    Label = 'Flat TV (small)', Price = 900 },
-            { Model = 'prop_laptop_01a',    Label = 'Laptop',          Price = 1200 },
-            { Model = 'prop_fridge_01',     Label = 'Fridge',          Price = 1100 },
-            { Model = 'prop_cooker_03',     Label = 'Cooker',          Price = 900 },
-            { Model = 'prop_micro_01',      Label = 'Microwave',       Price = 200 },
-        },
-    },
-    {
-        Category = 'Decoration', Icon = 'seedling', Type = 'furniture',
-        Items = {
-            { Model = 'prop_plant_int_01a', Label = 'Plant (tall)',  Price = 120 },
-            { Model = 'prop_plant_int_03a', Label = 'Plant (palm)',  Price = 150 },
-            { Model = 'v_res_m_lampstand',  Label = 'Standing lamp', Price = 250 },
-            { Model = 'v_res_d_lampa',      Label = 'Table lamp',    Price = 150 },
-        },
-    },
-    {
-        Category = 'Walls', Icon = 'border-all', Type = 'wall',
-        Items = {
-            { Model = 'prop_ld_fragwall_01a', Label = 'Plaster wall',      Price = 300 },
-            { Model = 'prop_cons_ply01',      Label = 'Plywood panel',     Price = 150 },
-            { Model = 'prop_cons_ply02',      Label = 'Plywood panel (2)', Price = 150 },
-            { Model = 'prop_ld_balcfnc_01a',  Label = 'Low railing',       Price = 200 },
-        },
-    },
-    {
-        Category = 'Doors', Icon = 'door-open', Type = 'door',
-        Items = {
-            { Model = 'v_ilev_fh_frontdoor',      Label = 'Wooden door',     Price = 500 },
-            { Model = 'v_ilev_trevtraildr',       Label = 'Trailer door',    Price = 250 },
-            { Model = 'v_ilev_janitor_frontdoor', Label = 'Plain door',      Price = 350 },
-            { Model = 'v_ilev_lester_doorfront',  Label = 'Old wooden door', Price = 300 },
-            { Model = 'v_ilev_fa_frontdoor',      Label = 'Panel door',      Price = 450 },
-            { Model = 'v_ilev_mm_doorm_l',        Label = 'Luxury door',     Price = 900 },
-        },
-    },
+-- Colours the owner can pick for walls / floor / ceiling.
+Config.SurfaceColors = {
+    { 'White', '#F2F2F2' }, { 'Cream', '#EADDC4' }, { 'Beige', '#CDB891' }, { 'Light grey', '#B5B5B5' },
+    { 'Dark grey', '#4A4A4A' }, { 'Black', '#161616' }, { 'Sage', '#9CAF88' }, { 'Forest', '#2F4B37' },
+    { 'Sky', '#9EC5E0' }, { 'Navy', '#1F2E4D' }, { 'Terracotta', '#B5583B' }, { 'Blush', '#E3B5B0' },
+    { 'Mustard', '#D4A63A' }, { 'Oak', '#8A6239' }, { 'Walnut', '#5A3D26' }, { 'Bordeaux', '#5C1F2A' },
 }
 
--- // Derived data (don't edit) \\ --
+-- Resizable walls, built from the fw_wall_<w>x<h> kit (w, h in cm: 25, 50, 100, 200). See README_WALLS.md.
+Config.Walls = {
+    Cell = 0.25,            -- grid size in metres (smallest kit piece)
+    MaxLength = 8.0, MaxHeight = 4.0, MaxHoles = 4,
+    Anchor = 'prop_golf_ball',                  -- invisible pivot (bottom centre of the wall)
+    Texture = { 'fw_walls', 'fw_wall_plaster' }, -- recoloured with the owner's wall colour
+    Presets = { Door = { W = 1.0, H = 2.25, Z = 0.0 }, Window = { W = 1.0, H = 1.0, Z = 1.0 } },
+}
+
+-- // Derived (don't edit) \\ --
 
 Config.DecorByModel = {}
-for _, Category in ipairs(Config.DecorCatalog) do
-    for _, Item in ipairs(Category.Items) do
-        Item.Type = Category.Type
-        Config.DecorByModel[Item.Model] = Item
+for _, Cat in ipairs(Config.DecorCatalog) do
+    for _, Item in ipairs(Cat.items) do
+        Config.DecorByModel[Item.model] = { Type = Item.physics and 'door' or 'furniture', Category = Cat.category }
     end
 end
 
-for Key, Mlo in pairs(Config.MLOHouses) do
-    local X, Y = 0.0, 0.0
-    for _, P in ipairs(Mlo.Zone.points) do X, Y = X + P.x, Y + P.y end
-    local Count = #Mlo.Zone.points
-    Mlo.Key = Key
-    Mlo.Center = vector3(X / Count, Y / Count, Mlo.Zone.minZ or 0.0)
+-- Houses made in game (/housecreator) are stored in the `mlo_houses` table and go through the same functions.
+local function V3(T) return T and vector3(T.x + 0.0, T.y + 0.0, T.z + 0.0) end
+
+-- Adds / replaces (or removes with Def = nil) a house definition, from config, the database or the network.
+function RegisterMloDef(Key, Def)
+    if not Def then Config.MLOHouses[Key] = nil return end
+    local Points, X, Y = {}, 0.0, 0.0
+    for _, P in ipairs(Def.Zone.points) do
+        Points[#Points + 1] = vector2(P.x + 0.0, P.y + 0.0)
+        X, Y = X + P.x, Y + P.y
+    end
+    Def.Zone.points = Points
+    for _, Side in ipairs({ 'FrontDoor', 'BackDoor' }) do
+        for _, D in ipairs(Def[Side] and Def[Side].Doors or {}) do D.Coords, D.Model = V3(D.Coords), tonumber(D.Model) end
+    end
+    if Def.Spawn then Def.Spawn = vector4(Def.Spawn.x + 0.0, Def.Spawn.y + 0.0, Def.Spawn.z + 0.0, (Def.Spawn.w or 0.0) + 0.0) end
+    Def.Key = Key
+    Def.Center = vector3(X / #Points, Y / #Points, Def.Zone.minZ or 0.0)
+    Config.MLOHouses[Key] = Def
 end
+
+-- Plain table (json / network safe) of a definition.
+function MloDefToData(Def)
+    local function T(V) return V and { x = V.x, y = V.y, z = V.z, w = V.w } or nil end
+    local Data = {
+        Label = Def.Label, Price = Def.Price, Class = Def.Class, Spawn = T(Def.Spawn), MaxDecorations = Def.MaxDecorations,
+        Stash = Def.Stash, Surfaces = Def.Surfaces, Dynamic = Def.Dynamic,
+        Zone = { minZ = Def.Zone.minZ, maxZ = Def.Zone.maxZ, points = {} },
+    }
+    for _, P in ipairs(Def.Zone.points) do Data.Zone.points[#Data.Zone.points + 1] = { x = P.x, y = P.y } end
+    for _, Side in ipairs({ 'FrontDoor', 'BackDoor' }) do
+        if Def[Side] and Def[Side].Doors and #Def[Side].Doors > 0 then
+            Data[Side] = { Doors = {} }
+            for _, D in ipairs(Def[Side].Doors) do Data[Side].Doors[#Data[Side].Doors + 1] = { Model = D.Model, Coords = T(D.Coords) } end
+        end
+    end
+    return Data
+end
+
+for Key, Mlo in pairs(Config.MLOHouses) do RegisterMloDef(Key, Mlo) end
 
 function GetMloConfig(Key)
     return Key and Config.MLOHouses[Key] or nil
@@ -249,11 +180,77 @@ function GetDistanceToMloZoneEdge(Key, Coords)
     return Best
 end
 
--- Every configured door of a house as { Key = 'Front'|'Back', Data = {...} }
-function GetMloDoorList(Key)
+-- { { Info, Model, Coords, Side }, ... } for every physical door of a house.
+function GetMloDoors(Key)
     local Mlo, List = GetMloConfig(Key), {}
-    if not Mlo then return List end
-    if Mlo.FrontDoor then List[#List + 1] = { Key = 'Front', Data = Mlo.FrontDoor } end
-    if Mlo.BackDoor then List[#List + 1] = { Key = 'Back', Data = Mlo.BackDoor } end
+    for _, Side in ipairs({ 'Front', 'Back' }) do
+        local D = Mlo and Mlo[Side .. 'Door']
+        for I, E in ipairs(D and D.Doors or {}) do
+            List[#List + 1] = { Info = ('HOUSE_%s_%s_%d'):format(Key, Side, I), Model = E.Model, Coords = E.Coords, Side = Side }
+        end
+    end
     return List
+end
+
+function GetItemLabel(Model)
+    if Model == 'fw_wall' then return 'Wall' end
+    return (Model:gsub('^%a+_mp_h_', ''):gsub('^%a+_prop_', ''):gsub('^prop_', ''):gsub('^v_%a+_', ''):gsub('_', ' '):gsub('^%l', string.upper))
+end
+
+-- // Walls \\ --
+
+Config.DecorByModel['fw_wall'] = { Type = 'wall', Category = 'Build' }
+
+local function Cells(V) return math.floor((tonumber(V) or 0) / Config.Walls.Cell + 0.5) end
+local function Clamp(V, Min, Max) return math.max(Min, math.min(Max, V)) end
+
+-- Wall = { L, H, Holes = { { X = centre offset along the wall, Z = bottom, W, H } } }, everything on the grid.
+function SanitizeWall(W)
+    if type(W) ~= 'table' then return end
+    local C, Cfg = Config.Walls.Cell, Config.Walls
+    local L, H = Clamp(Cells(W.L), 2, Cells(Cfg.MaxLength)), Clamp(Cells(W.H), 2, Cells(Cfg.MaxHeight))
+    local Wall = { L = L * C, H = H * C, Holes = {} }
+    for I, Hole in ipairs(type(W.Holes) == 'table' and W.Holes or {}) do
+        if I > Cfg.MaxHoles then break end
+        local Hw, Hh = Clamp(Cells(Hole.W), 1, L), Clamp(Cells(Hole.H), 1, H)
+        local Left = Clamp(Cells((tonumber(Hole.X) or 0) - Hw * C / 2 + Wall.L / 2), 0, L - Hw)
+        local Bottom = Clamp(Cells(Hole.Z), 0, H - Hh)
+        Wall.Holes[#Wall.Holes + 1] = { X = (Left + Hw / 2) * C - Wall.L / 2, Z = Bottom * C, W = Hw * C, H = Hh * C }
+    end
+    return Wall
+end
+
+-- Splits the wall (minus its holes) into as few kit pieces as possible: { { Model, X, Z } }.
+function BuildWallPieces(W)
+    local C, Sizes = Config.Walls.Cell, { 8, 4, 2, 1 }
+    local Cols, Rows, Grid, Pieces = Cells(W.L), Cells(W.H), {}, {}
+    local function Fit(N) for _, S in ipairs(Sizes) do if S <= N then return S end end end
+
+    for R = 0, Rows - 1 do Grid[R] = {} for Col = 0, Cols - 1 do Grid[R][Col] = true end end
+    for _, Hole in ipairs(W.Holes or {}) do
+        local Left, Bottom = Cells(Hole.X - Hole.W / 2 + W.L / 2), Cells(Hole.Z)
+        for R = Bottom, Bottom + Cells(Hole.H) - 1 do
+            for Col = Left, Left + Cells(Hole.W) - 1 do if Grid[R] then Grid[R][Col] = nil end end
+        end
+    end
+
+    for R = 0, Rows - 1 do
+        for Col = 0, Cols - 1 do
+            if Grid[R][Col] then
+                local Wd, Ht = 0, 1
+                while Wd < 8 and Grid[R][Col + Wd] do Wd = Wd + 1 end
+                Wd = Fit(Wd)
+                local function RowFree(Row)
+                    if not Grid[Row] then return false end
+                    for I = 0, Wd - 1 do if not Grid[Row][Col + I] then return false end end
+                    return true
+                end
+                while Ht < 8 and RowFree(R + Ht) do Ht = Ht + 1 end
+                Ht = Fit(Ht)
+                for Y = R, R + Ht - 1 do for X = Col, Col + Wd - 1 do Grid[Y][X] = nil end end
+                Pieces[#Pieces + 1] = { Model = ('fw_wall_%dx%d'):format(Wd * 25, Ht * 25), X = (Col + Wd / 2) * C - W.L / 2, Z = R * C }
+            end
+        end
+    end
+    return Pieces
 end

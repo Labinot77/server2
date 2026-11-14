@@ -165,6 +165,7 @@ AddEventHandler("fw-housing:Server:SetKeyState", function(HouseId, Target, State
     end
 
     Config.Houses[HouseId].Keyholders = Keyholders
+    if Config.Houses[HouseId].Mlo then RefreshMloDoorAccess(HouseId) end
     TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
 
     exports['ghmattimysql']:executeSync("UPDATE `player_houses` SET `keyholders` = @Keyholders WHERE `id` = @Id", {
@@ -244,11 +245,7 @@ FW.Functions.CreateCallback('fw-housing:Server:LockProperty', function(Source, C
     Config.Houses[HouseId].Locked = not Config.Houses[HouseId].Locked
 
     -- MLO: the phone / radial lock drives the physical front door.
-    if Config.Houses[HouseId].Mlo then
-        Config.Houses[HouseId].DoorLocks = Config.Houses[HouseId].DoorLocks or { Front = true, Back = true }
-        Config.Houses[HouseId].DoorLocks.Front = Config.Houses[HouseId].Locked
-        TriggerClientEvent("fw-housing:Client:Mlo:SetDoorLock", -1, HouseId, 'Front', Config.Houses[HouseId].Locked)
-    end
+    if Config.Houses[HouseId].Mlo then SetMloDoorsLocked(HouseId, Config.Houses[HouseId].Locked, 'Front') end
     TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
 
     Cb(true)
@@ -448,32 +445,31 @@ function LoadHouses()
             },
             Decorations = EnsureDecorIds(json.decode(v.decorations or '[]') or {}),
 
-            -- MLO houses (sv_mlo.lua). Mlo = key in Config.MLOHouses, DoorLocks = physical door states.
+            -- MLO houses (sv_mlo.lua). MloData = { Surfaces = { Walls = '#hex' }, Access = { [cid] = { Doors, Stash, Decorate } } }
             Mlo = IsMlo and v.mlo or nil,
-            DoorLocks = IsMlo and { Front = true, Back = true } or nil,
+            MloData = IsMlo and (json.decode(v.mlo_data or '{}') or {}) or nil,
         }
 
         if IsMlo then
             NewHouses[HouseId].Label = Config.MLOHouses[v.mlo].Label
             local Old = OldByDbId[v.id]
-            if Old and Old.DoorLocks then
-                NewHouses[HouseId].DoorLocks = Old.DoorLocks
-                NewHouses[HouseId].Locked = Old.DoorLocks.Front
-            end
+            if Old then NewHouses[HouseId].Locked = Old.Locked end
         end
     end
 
     print("Loaded " .. #NewHouses .. " houses.")
 
     Config.Houses = NewHouses
+    RegisterAllMloDoors()
 end
 
 function SaveHouse(HouseId)
     local HouseData = Config.Houses[HouseId]
-    exports['ghmattimysql']:executeSync("UPDATE `player_houses` SET `locations` = @Locations, `garage` = @Garage, `decorations` = @Decorations WHERE `id` = @Id", {
+    exports['ghmattimysql']:executeSync("UPDATE `player_houses` SET `locations` = @Locations, `garage` = @Garage, `decorations` = @Decorations, `mlo_data` = @MloData WHERE `id` = @Id", {
         ['@Locations'] = json.encode(HouseData.Locations),
         ['@Garage'] = HouseData.Garage and json.encode(HouseData.Garage) or '{}',
         ['@Decorations'] = json.encode(HouseData.Decorations),
+        ['@MloData'] = HouseData.MloData and json.encode(HouseData.MloData) or nil,
         ["@Id"] = HouseData.DbId,
     })
 end
