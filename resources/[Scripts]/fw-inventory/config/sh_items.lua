@@ -5931,7 +5931,7 @@ Shared.Items["radioscanner"] = {
 Shared.Items["pawn-box"] = {
     Name = "pawn-box",
     Label = "Pawn Box",
-    Image = "h_box.png",
+    Image = "pawnshop-box.png",
     Description = "A sealed shipment box from the pawn shop. Heavy, carry it with both hands.",
     Weapon = false, Illegal = false,
     Metal = false, NonStack = true, HasProp = true,

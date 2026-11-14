@@ -34,6 +34,7 @@ Config.DropPropsOverride = {
     heavyarmor = 'prop_armour_pickup',
     radio = 'prop_cs_hand_radio',
     repairkit = 'prop_tool_box_04',
+    ['pawn-box'] = 'pawnshop_box',
     ['money-roll'] = 'prop_cash_pile_01',
     moneybag = 'prop_money_bag_01',
     markedbills = 'prop_money_bag_01',
