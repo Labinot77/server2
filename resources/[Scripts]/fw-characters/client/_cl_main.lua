@@ -78,6 +78,7 @@ function HideSelector()
 
     TriggerScreenblurFadeOut(0)
     ClearFocus()
+    exports['fw-sync']:SetClientSync(false, {Time = 12, Weather = "CLEAR"}) -- daylight for the spawn map
     DestroyCam(SpawnCam)
     DestroyCam(MenuCam)
 

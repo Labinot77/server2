@@ -209,7 +209,7 @@
                     <div class="menu-panel-glow" class:active={MenuIndex == i}>
                         <div
                             class="menu-panel panel-{i}"
-                            style="--img: url('./images/characters/{Panel.Image}.jpg')"
+                            style="background-image: url('./images/characters/{Panel.Image}.jpg')"
                             on:keyup on:mouseenter={() => MenuIndex = i} on:click={() => SelectMenu(i)}
                         >
                             {#if MenuIndex == i}<p class="menu-caption">{Panel.Caption}</p>{/if}
@@ -501,29 +501,31 @@
 
     .menu-panel {
         position: absolute;
-        inset: 0;
+        top: 0;
+        height: 100%;
         pointer-events: auto;
         cursor: pointer;
-        background: var(--img) center / cover, linear-gradient(160deg, #233645, #0d151d);
-        filter: grayscale(1) brightness(.45);
+        background: #16222c center / cover no-repeat;
+        filter: grayscale(1) brightness(.35);
         transition: filter .2s;
     }
     .active > .menu-panel { filter: none; }
 
-    .panel-0 { clip-path: polygon(0 0, 36.2% 0, 26.8% 100%, 0 100%); }
-    .panel-1 { clip-path: polygon(36.6% 0, 71.6% 0, 62.3% 100%, 27.2% 100%); }
-    .panel-2 { clip-path: polygon(72% 0, 100% 0, 100% 100%, 62.7% 100%); }
+    .panel-0 { left: 0; width: 36.2%; clip-path: polygon(0 0, 100% 0, 74% 100%, 0 100%); }
+    .panel-1 { left: 27.2%; width: 44.4%; clip-path: polygon(21.2% 0, 100% 0, 79.1% 100%, 0 100%); }
+    .panel-2 { left: 62.7%; width: 37.3%; clip-path: polygon(24.9% 0, 100% 0, 100% 100%, 0 100%); }
 
     .menu-caption {
         position: absolute;
         bottom: 2.6vh;
         font-size: 1.9vh;
+        white-space: nowrap;
         text-shadow: 0 0 1vh rgba(0,0,0,.8);
         transform: translateX(-50%);
     }
-    .panel-0 .menu-caption { left: 13.4%; }
-    .panel-1 .menu-caption { left: 44.8%; }
-    .panel-2 .menu-caption { left: 81.4%; }
+    .panel-0 .menu-caption { left: 37%; }
+    .panel-1 .menu-caption { left: 39.5%; }
+    .panel-2 .menu-caption { left: 50%; }
 
     .menu-buttons {
         position: absolute;
