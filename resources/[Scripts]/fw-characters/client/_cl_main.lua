@@ -36,7 +36,14 @@ Citizen.CreateThread(function()
 		if NetworkIsSessionStarted() and IsUiReady then
             Citizen.Wait(750)
             ShutdownLoadingScreenNui(); ShutdownLoadingScreen()
-			OpenSelector()
+
+            -- Resource restarted while a character is already loaded: stay in-game.
+            local PlayerData = FW.Functions.GetPlayerData()
+            if PlayerData and PlayerData.citizenid then
+                LoggedIn = true
+            else
+                OpenSelector()
+            end
             break
 		end
         Citizen.Wait(4)
