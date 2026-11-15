@@ -1,4 +1,4 @@
--- Admin house creator (/housecreator): zone, front / back doors (fw-doors), spawn, surfaces and details.
+-- Admin house creator (/housecreator): zone, front / back doors (fw-doors), spawn, tablet, surfaces and details.
 -- Saved on the server in the `mlo_houses` table (sv_mlo.lua), every client gets the house right away.
 local FW = exports['fw-core']:GetCoreObject()
 
@@ -58,6 +58,7 @@ local function DrawDraft()
     for _, D in ipairs(Draft.FrontDoor.Doors) do Marker(D.Coords, 0.25, COLOR) end
     for _, D in ipairs(Draft.BackDoor.Doors) do Marker(D.Coords, 0.25, { 242, 163, 101 }) end
     if Draft.Spawn then Marker(Draft.Spawn, 0.3, { 70, 140, 240 }) end
+    if Draft.Tablet and Tool ~= 'tablet' then Marker(Draft.Tablet.Coords, 0.12, { 230, 210, 80 }) end
 end
 
 local function StartDrawing()
@@ -129,6 +130,60 @@ local function DoorTool(Side)
     end)
 end
 
+-- Tablet: aim at a wall or desk, it sticks to the surface (G: align to the surface on/off).
+-- Scroll rotates (R switches the axis, SHIFT = 1 degree steps), arrows move it away from the surface, E places it.
+local NEXT_AXIS = { z = 'x', x = 'y', y = 'z' }
+
+local function TabletTool()
+    local Hash = HousingLoadModel(Config.Storage.Tablet)
+    if not Hash then FW.Functions.Notify("Tablet model " .. Config.Storage.Tablet .. " isn't in the game files.", "error") return Reopen() end
+    Tool = 'tablet'
+    local Ghost = CreateObjectNoOffset(Hash, 0.0, 0.0, 0.0, false, false, false)
+    SetEntityCollision(Ghost, false, false)
+    SetEntityAlpha(Ghost, 210, false)
+    FreezeEntityPosition(Ghost, true)
+    local Old = Draft.Tablet
+    local Turn, Axis, Offset, Align = vector3(0.0, 0.0, 0.0), 'z', 0.0, true
+
+    Citizen.CreateThread(function()
+        while Tool == 'tablet' and Draft do
+            for _, C in ipairs({ 14, 15, 16, 17, 24, 25, 45, 47, 99, 100, 261, 262 }) do DisableControlAction(0, C, true) end
+            local Hit, Coords, _, Normal = HousingRaycast(8.0, Ghost, 1 + 16)
+            if Hit then
+                -- Walls: the tablet's front (+Y) faces out of the wall. Desks / floors: it faces the player.
+                local Heading = (Align and math.abs(Normal.z) < 0.7) and math.deg(math.atan(-Normal.x, Normal.y)) or GetGameplayCamRot(2).z + 180.0
+                local P = Coords + Normal * Offset
+                SetEntityCoordsNoOffset(Ghost, P.x, P.y, P.z, false, false, false)
+                SetEntityRotation(Ghost, Turn.x, Turn.y, Heading + Turn.z, 2, true)
+            end
+            Help(('~INPUT_CONTEXT~ place  ~INPUT_CURSOR_SCROLL_UP~ rotate %s  ~INPUT_RELOAD~ axis  ~INPUT_SPRINT~ fine  ~INPUT_CELLPHONE_UP~ ~INPUT_CELLPHONE_DOWN~ distance (%.3fm)  ~INPUT_DETONATE~ align (%s)  ~INPUT_FRONTEND_RRIGHT~ cancel')
+                :format(Axis:upper(), Offset, Align and 'on' or 'off'))
+
+            local Step = IsControlPressed(0, 21) and 1.0 or 15.0
+            local Wheel = (IsDisabledControlJustPressed(0, 15) or IsDisabledControlJustPressed(0, 261)) and Step
+                or (IsDisabledControlJustPressed(0, 14) or IsDisabledControlJustPressed(0, 262)) and -Step or 0.0
+            if Wheel ~= 0.0 then Turn = Turn + vector3(Axis == 'x' and Wheel or 0.0, Axis == 'y' and Wheel or 0.0, Axis == 'z' and Wheel or 0.0) end
+            if IsDisabledControlJustPressed(0, 45) then Axis = NEXT_AXIS[Axis] end
+            if IsDisabledControlJustPressed(0, 47) then Align = not Align end
+            if IsControlJustPressed(0, 172) or IsControlJustPressed(0, 173) then
+                Offset = Offset + (IsControlJustPressed(0, 172) and 1 or -1) * (IsControlPressed(0, 21) and 0.001 or 0.01)
+            end
+
+            if IsControlJustPressed(0, 38) and Hit then
+                local C, R = GetEntityCoords(Ghost), GetEntityRotation(Ghost, 2)
+                Draft.Tablet = { Coords = { x = C.x, y = C.y, z = C.z }, Rot = { x = R.x, y = R.y, z = R.z } }
+                Tool = nil
+            elseif IsControlJustPressed(0, 194) or IsControlJustPressed(0, 177) then
+                Draft.Tablet = Old
+                Tool = nil
+            end
+            Citizen.Wait(0)
+        end
+        DeleteEntity(Ghost)
+        Reopen()
+    end)
+end
+
 -- // Menus \\ --
 
 OpenDraftMenu = function()
@@ -152,6 +207,10 @@ OpenDraftMenu = function()
         { Title = 'Front door', Icon = 'door-closed', Desc = #Draft.FrontDoor.Doors .. ' / 2 doors (required)', SecondMenu = DoorMenu('FrontDoor') },
         { Title = 'Back door', Icon = 'door-open', Desc = #Draft.BackDoor.Doors .. ' / 2 doors (optional)', SecondMenu = DoorMenu('BackDoor') },
         { Title = 'Spawn point', Icon = 'street-view', Desc = Draft.Spawn and 'Set' or 'Not set (zone centre)', CloseMenu = true, Data = Ev('Spawn') },
+        { Title = 'House tablet', Icon = 'tablet-alt', Desc = Draft.Tablet and 'Placed (players can\'t move it)' or 'Not placed: no House app in this house', SecondMenu = {
+            { Title = 'Place tablet', Desc = 'Aim at a wall or desk, E to place', CloseMenu = true, Data = Ev('Tool', { Tool = 'tablet' }) },
+            { Title = 'Remove tablet', CloseMenu = true, Data = Ev('Clear', { What = 'Tablet' }) },
+        } },
         { Title = 'Surfaces', Icon = 'paint-roller', Desc = S.Txd and S.Txd or 'None (no wall / floor colours)', CloseMenu = true, Data = Ev('Surfaces') },
         { Title = 'Storage crates', Icon = 'box', Desc = ('%s crates · %s slots · %s weight each'):format(Draft.Stash.Crates or 0, Draft.Stash.Slots, Draft.Stash.Weight), CloseMenu = true, Data = Ev('Stash') },
         { Title = 'Save house', Icon = 'save', Desc = CanSave and 'Creates / updates the house, doors get locked' or 'Needs a name, 3 zone points and a front door', Disabled = not CanSave, CloseMenu = true, Data = Ev('Save') },
@@ -222,11 +281,11 @@ On('Command', function(D) ExecuteCommand(D.Command) end)
 On('Delete', function(D) TriggerServerEvent("fw-housing:Server:Creator:Delete", D.Key) end)
 
 On('Tool', function(D)
-    if D.Tool == 'zone' then ZoneTool() else DoorTool(D.Side) end
+    if D.Tool == 'zone' then ZoneTool() elseif D.Tool == 'tablet' then TabletTool() else DoorTool(D.Side) end
 end)
 
 On('Clear', function(D)
-    if D.What == 'Zone' then Draft.Zone = { points = {} } else Draft[D.What].Doors = {} end
+    if D.What == 'Zone' then Draft.Zone = { points = {} } elseif D.What == 'Tablet' then Draft.Tablet = nil else Draft[D.What].Doors = {} end
     Reopen()
 end)
 

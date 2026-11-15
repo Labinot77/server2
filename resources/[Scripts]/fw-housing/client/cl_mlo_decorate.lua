@@ -1,5 +1,5 @@
 -- MLO decorate editor: freecam locked to the house zone, gizmo, multi-select / link, tint, grid snap,
--- local working copy (Ctrl+S save / Ctrl+Z undo / Ctrl+Y redo). NUI in html/index.html. Owner house menu at the bottom.
+-- local working copy (Ctrl+S save / Ctrl+Z undo / Ctrl+Y redo). NUI in html/index.html. House management: the tablet (cl_tablet.lua).
 -- Uses from cl_mlo.lua: GetMloInsideHouseId, GetMloZone, GetMloDecorEntity, GetMloWall, HousingLoadModel, HasMloAccess,
 -- IsMloOwner, CreateWall, LayoutWall, DeleteWall, SetMloDecorPaused
 local FW = exports['fw-core']:GetCoreObject()
@@ -39,8 +39,8 @@ end
 local function Cast(From, Dir, Ignore, Flags)
     local To = From + Dir * 30.0
     local Ray = StartExpensiveSynchronousShapeTestLosProbe(From.x, From.y, From.z, To.x, To.y, To.z, Flags or (1 + 16), Ignore or PlayerPedId(), 4)
-    local _, Hit, Coords, _, Entity = GetShapeTestResult(Ray)
-    return Hit == 1, Coords, Entity
+    local _, Hit, Coords, Normal, Entity = GetShapeTestResult(Ray)
+    return Hit == 1, Coords, Entity, Normal
 end
 
 local function PlaneHit(Origin, Dir, Point, Normal)
@@ -136,6 +136,37 @@ local function NewProp(Model, Pos, Rot)
     FreezeEntityPosition(Ent, true)
     SetModelAsNoLongerNeeded(Hash)
     return Ent
+end
+
+-- Where an item goes on the surface under the cursor (State = per placing / drag session):
+--   floors: standing on it (grid snap), ceilings: hanging under it,
+--   walls (house shell, other walls, ...): flush against the wall, turned to face out of it. It's turned once per
+--   wall, so a rotation you add (scroll) sticks while you slide along the same wall.
+-- Returns the position and, when it turned, the rotation.
+local function SurfacePose(It, Coords, Normal, State)
+    if It.WallObj or not Normal or Normal.z > 0.7 then
+        State.Wall = nil
+        local Step = GridStep()
+        return vector3(SnapTo(Coords.x, Step), SnapTo(Coords.y, Step), Coords.z + BottomOffset(It))
+    end
+    local Min, Max = GetModelDimensions(GetEntityModel(It.Ent))
+    if Normal.z < -0.7 then
+        State.Wall = nil
+        return vector3(Coords.x, Coords.y, Coords.z - Max.z)
+    end
+
+    local N = Norm(vector3(Normal.x, Normal.y, 0.0))
+    local Heading = math.deg(math.atan(-N.x, N.y)) -- the item's front (+Y) points out of the wall
+    local _, R = Transform(It)
+    local Rot
+    if not State.Wall or math.abs((Heading - State.Wall + 180.0) % 360.0 - 180.0) > 1.0 then
+        State.Wall = Heading
+        Rot = vector3(R.x, R.y, Heading)
+    end
+    -- Back of the item against the wall: -Y side when it faces out, +Y side when turned around.
+    local Facing = math.cos(math.rad((Rot or R).z - Heading))
+    local Depth = Facing >= 0 and -Min.y or Max.y
+    return vector3(Coords.x, Coords.y, Coords.z - (Min.z + Max.z) / 2) + N * Depth, Rot
 end
 
 -- Moves the primary selection; in link mode the rest of the selection follows (offsets turn with the yaw).
@@ -253,10 +284,10 @@ end
 
 local function MaxCrates() return (Config.MLOHouses[Ed.House.Mlo].Stash or {}).Crates or 0 end
 
-local function CrateCount()
+local function CrateCount(Model)
     local N = 0
     for _, O in pairs(Ed.Items) do
-        if not O.Removed and O.Model == Config.Storage.Crate then N = N + 1 end
+        if not O.Removed and O.Model == (Model or Config.Storage.Crate) then N = N + 1 end
     end
     return N
 end
@@ -355,7 +386,7 @@ local function StartPlacing(Model, Wall, Rot, Tint)
     SetAlpha(It, 190)
     Ed.Items[It.Key] = It
     SelectOnly(It.Key)
-    Ed.Placing = It.Key
+    Ed.Placing, Ed.Surface = It.Key, {}
 end
 
 local function FinishPlacing()
@@ -499,10 +530,14 @@ local function UpdateDrag(It)
 
     local Step, New = GridStep(), nil
     if D.Axis == 's' then
-        -- Slide over surfaces under the cursor.
-        local Hit, Coords = Cast(Origin, Dir, It.Ent, It.WallObj and 1 or nil)
+        -- Slide over surfaces under the cursor (floors, walls, ceilings).
+        local Hit, Coords, _, Normal = Cast(Origin, Dir, It.Ent, It.WallObj and 1 or nil)
         if not Hit then return end
-        New = vector3(SnapTo(Coords.x, Step), SnapTo(Coords.y, Step), Coords.z + BottomOffset(It))
+        D.Surface = D.Surface or {}
+        local Rot
+        New, Rot = SurfacePose(It, Coords, Normal, D.Surface)
+        if InZone(New) then MoveSel(New, Rot) end
+        return
     else
         local Hit = PlaneHit(Origin, Dir, D.Pos, D.Normal)
         if not Hit then return end
@@ -736,13 +771,12 @@ function OpenMloDecorateMenu()
             for Key in pairs(Ed.Multi) do Outline(Ed.Items[Key], true) end
             local It = Sel()
             if Ed.Placing and Valid(It) then
-                -- New object follows the cursor over surfaces.
+                -- New object follows the cursor over surfaces (sticks to walls).
                 local Origin, Dir = CursorRay()
-                local Hit, Coords = Cast(Origin, Dir, It.Ent, It.WallObj and 1 or nil)
-                local Step = GridStep()
+                local Hit, Coords, _, Normal = Cast(Origin, Dir, It.Ent, It.WallObj and 1 or nil)
                 if Hit then
-                    local P = vector3(SnapTo(Coords.x, Step), SnapTo(Coords.y, Step), Coords.z + BottomOffset(It))
-                    if InZone(P) then SetTransform(It, P) end
+                    local P, R = SurfacePose(It, Coords, Normal, Ed.Surface)
+                    if InZone(P) then SetTransform(It, P, R) end
                 end
             elseif Valid(It) then
                 local _, _, Mouse = CursorRay()
@@ -981,77 +1015,7 @@ AddEventHandler('onResourceStop', function(Res)
     if Res == GetCurrentResourceName() and Ed then CloseMloEditor() end
 end)
 
-local function GetPlayerHouse(Perm)
-    local HouseId = GetMloInsideHouseId()
-    local House = HouseId and Config.Houses[HouseId]
-    if not House or not HasMloAccess(HouseId, Perm) then return end
-    return HouseId, House
-end
-
--- // Owner house menu \\ --
-
-local function Ev(Name, Args) Args.Event, Args.Type = 'fw-housing:Client:House:' .. Name, 'Client' return Args end
-
-function OpenMloHouseMenu()
-    local HouseId, House = GetPlayerHouse()
-    if not HouseId or not IsMloOwner(HouseId) then return FW.Functions.Notify("Only the owner can manage this house.", "error") end
-
-    local Data = FW.SendCallback("fw-housing:Server:Mlo:GetManage", HouseId)
-    if not Data then return end
-
-    local Keys, Nearby, Colours = {}, {}, {}
-    for _, K in ipairs(Data.Keys) do
-        local Access = {}
-        for _, Perm in ipairs({ 'Doors', 'Stash', 'Decorate' }) do
-            Access[#Access + 1] = { Title = Perm .. ': ' .. (K[Perm] and 'Yes' or 'No'), Icon = K[Perm] and 'check' or 'times', CloseMenu = true, Data = Ev('SetAccess', { HouseId = HouseId, Cid = K.Cid, Perm = Perm, Value = not K[Perm] }) }
-        end
-        Access[#Access + 1] = { Title = 'Take keys', Icon = 'user-minus', CloseMenu = true, Data = Ev('RemoveKey', { HouseId = HouseId, Cid = K.Cid }) }
-        Keys[#Keys + 1] = { Title = K.Name, Desc = K.Cid, SecondMenu = Access }
-    end
-    for _, P in ipairs(Data.Nearby) do
-        Nearby[#Nearby + 1] = { Title = P.Name, Desc = 'ID ' .. P.Id, CloseMenu = true, Data = Ev('AddKey', { HouseId = HouseId, Target = P.Id }) }
-    end
-
-    local Cfg = (Config.MLOHouses[House.Mlo] or {}).Surfaces or {}
-    for _, Surface in ipairs({ 'Walls', 'Floor', 'Ceiling' }) do
-        if Cfg[Surface] and #Cfg[Surface] > 0 then
-            local List = {
-                { Title = 'Custom colour', Icon = 'palette', Desc = 'Enter a hex code', CloseMenu = true, Data = Ev('CustomColour', { HouseId = HouseId, Surface = Surface }) },
-                { Title = 'Original', Icon = 'undo', CloseMenu = true, Data = Ev('SetSurface', { HouseId = HouseId, Surface = Surface, Hex = false }) },
-            }
-            for _, C in ipairs(Config.SurfaceColors) do
-                List[#List + 1] = { Title = C[1], Desc = C[2], CloseMenu = true, Data = Ev('SetSurface', { HouseId = HouseId, Surface = Surface, Hex = C[2] }) }
-            end
-            Colours[#Colours + 1] = { Title = Surface, Desc = Data.Surfaces[Surface] or 'Original', SecondMenu = List }
-        end
-    end
-
-    FW.Functions.OpenMenu({ MainMenuItems = {
-        { Title = House.Adress, Desc = 'House management' },
-        { Title = 'Keyholders', Icon = 'key', Desc = #Keys .. ' people', SecondMenu = Keys, Disabled = #Keys == 0 },
-        { Title = 'Give keys', Icon = 'user-plus', Desc = 'Players next to you', SecondMenu = Nearby, Disabled = #Nearby == 0 },
-        { Title = 'Colours', Icon = 'paint-roller', Desc = 'Walls, floor and ceiling', SecondMenu = Colours, Disabled = #Colours == 0 },
-        { Title = 'Lock / unlock doors', Icon = 'lock', CloseMenu = true, Data = { Event = 'fw-housing:Client:LockProperty', Type = 'Client' } },
-    } })
-end
-exports("OpenMloHouseMenu", OpenMloHouseMenu)
-
-local function ReopenHouse() SetTimeout(400, OpenMloHouseMenu) end
-
-RegisterNetEvent("fw-housing:Client:House:AddKey", function(D) TriggerServerEvent("fw-housing:Server:Mlo:AddKey", D.HouseId, D.Target) ReopenHouse() end)
-RegisterNetEvent("fw-housing:Client:House:RemoveKey", function(D) TriggerServerEvent("fw-housing:Server:Mlo:RemoveKey", D.HouseId, D.Cid) ReopenHouse() end)
-RegisterNetEvent("fw-housing:Client:House:SetAccess", function(D) TriggerServerEvent("fw-housing:Server:Mlo:SetAccess", D.HouseId, D.Cid, D.Perm, D.Value) ReopenHouse() end)
-RegisterNetEvent("fw-housing:Client:House:SetSurface", function(D) TriggerServerEvent("fw-housing:Server:Mlo:SetSurface", D.HouseId, D.Surface, D.Hex) end)
-RegisterNetEvent("fw-housing:Client:House:CustomColour", function(D)
-    Wait(100)
-    local R = exports['fw-ui']:CreateInput({ { Label = 'Hex colour (e.g. #A1B2C3)', Icon = 'fas fa-palette', Name = 'Hex' } })
-    local Hex = R and R.Hex and ('#' .. R.Hex:gsub('#', '')):upper()
-    if not Hex or not Hex:match('^#%x%x%x%x%x%x$') then return R and FW.Functions.Notify("Invalid colour.", "error") end
-    TriggerServerEvent("fw-housing:Server:Mlo:SetSurface", D.HouseId, D.Surface, Hex)
-end)
-
 RegisterNetEvent("fw-housing:Client:Mlo:OpenDecorate", function() OpenMloDecorateMenu() end)
-RegisterNetEvent("fw-housing:Client:Mlo:OpenHouse", function() OpenMloHouseMenu() end)
 
 -- /wallcheck: spawns a kit panel in front of you and tells whether the streamed .ydr has collision.
 RegisterCommand('wallcheck', function()

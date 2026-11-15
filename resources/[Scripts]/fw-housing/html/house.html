@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+/* Measured on a 1120px wide window: 1rem = 10px there, everything scales with the window. */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap');
+:root { --green: #8fd14f; --green-dark: rgba(70, 105, 35, .45); --grey: #a9a9a9; --card: rgba(36, 36, 36, .88); --line: rgba(255, 255, 255, .1); }
+html { font-size: calc(100vw / 112); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 100vw; height: 100vh; overflow: hidden; color: #fff; background: #151515; font: 600 1.2rem 'Poppins', sans-serif; user-select: none; }
+body.embedded, body.embedded * { cursor: none !important; }
+h1, h2, h3, .big { font-family: 'Oswald', sans-serif; font-weight: 400; }
+.hidden { display: none !important; }
+.scroll { overflow-y: auto; } .scroll::-webkit-scrollbar { width: .3rem; } .scroll::-webkit-scrollbar-thumb { background: var(--green); }
+
+/* // header \\ */
+#nav { position: absolute; left: 3rem; top: .6rem; height: 3.6rem; display: flex; align-items: center; gap: 3.6rem; padding: 0 1.8rem; background: rgba(28, 28, 28, .9); border: .1rem solid var(--line); border-radius: .6rem; }
+#nav div { cursor: pointer; font-size: 1.2rem; padding: .3rem 0; border-bottom: .2rem solid transparent; }
+#nav div.on { color: var(--green); border-color: var(--green); }
+#close { position: absolute; right: 2.8rem; top: 1.6rem; display: flex; align-items: center; gap: 1.4rem; font-size: 1rem; cursor: pointer; }
+#close svg { width: 1.5rem; height: 1.5rem; stroke: #fff; fill: none; stroke-width: 2.2; }
+.page { position: absolute; inset: 6.2rem 3rem 2rem 3rem; }
+
+/* // shared \\ */
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 3.2rem; padding: 0 1.2rem; border: .15rem solid var(--green); background: var(--green-dark); border-radius: .5rem; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: rgba(110, 160, 55, .6); }
+.btn.off { border-color: rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .06); color: var(--grey); cursor: default; }
+.card { position: relative; background: radial-gradient(120% 90% at 100% 100%, rgba(95, 140, 45, .28), transparent 55%), var(--card); border-radius: 1.6rem; padding: 2rem; overflow: hidden; }
+.title { font-size: 4.4rem; line-height: 1.25; margin: .4rem 0 2.6rem; }
+.label { font: 400 1rem 'Oswald', sans-serif; color: var(--grey); text-transform: uppercase; }
+
+/* // home \\ */
+#info { display: flex; gap: 3.8rem; margin-top: -.6rem; font-size: 1.1rem; }
+#info span { display: flex; align-items: center; gap: 1.6rem; }
+#info svg { width: 1.6rem; height: 1.6rem; stroke: var(--green); fill: none; stroke-width: 2; }
+#welcome { font-size: 5.6rem; line-height: 8.5rem; width: 48rem; margin-top: 2.2rem; }
+.hr { width: 48rem; height: .1rem; background: var(--line); margin: 1.2rem 0 3.6rem; }
+#usage-title { font-size: 2rem; margin-bottom: 2.6rem; }
+.meter { width: 48rem; margin-bottom: 1.75rem; }
+.meter .top { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; margin-bottom: .9rem; }
+.meter .top span { display: flex; align-items: center; gap: .9rem; }
+.meter .top b { font-weight: 700; } .meter .top i { font-style: normal; color: #fff; margin-left: .6rem; }
+.meter .track { height: .7rem; background: #2c2c2c; border-radius: 1rem; overflow: hidden; } .meter .fill { height: 100%; border-radius: 1rem; }
+.meter.dim { color: #8a8a8a; } .meter.dim b { color: #8a8a8a; }
+#cards { position: absolute; left: 53.2rem; right: 0; top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2.4rem 2.2rem; }
+#cards .card { height: 23.4rem; display: flex; flex-direction: column; }
+#cards h2 { font-size: 3.4rem; line-height: 4.3rem; margin-top: .8rem; }
+#cards p { font-weight: 400; color: var(--grey); font-size: 1.25rem; line-height: 1.9rem; margin: 1.6rem 0 1.8rem; }
+#cards .btn { align-self: flex-start; margin-top: auto; }
+#cards .num { position: absolute; right: 2rem; top: 1.4rem; font: 400 3.6rem 'Oswald', sans-serif; color: var(--green); }
+#cards .ico { width: 4.8rem; height: 4.8rem; }
+
+/* // upgrades \\ */
+#upgrades .grid { position: absolute; inset: 9.6rem 0 0 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 28.2rem; gap: 2rem; padding-right: 2rem; }
+#upgrades .card { display: flex; flex-direction: column; }
+#upgrades .head { display: flex; justify-content: space-between; align-items: flex-start; }
+#upgrades .head span { font-weight: 400; color: var(--grey); font-size: 1.2rem; margin-top: .8rem; }
+#upgrades .head svg { width: 3.4rem; height: 3.4rem; }
+#upgrades h2 { font-size: 3.2rem; line-height: 4.3rem; margin-top: 1.6rem; }
+#upgrades p { font-weight: 400; color: var(--grey); font-size: 1.2rem; line-height: 1.9rem; margin-top: 1.2rem; }
+#upgrades .btn { align-self: flex-start; margin-top: auto; }
+
+/* // maintenance \\ */
+.cols { display: grid; grid-template-columns: 61.2rem 1fr; gap: 6.4rem; }
+.cols h3 { font-size: 2.2rem; text-transform: uppercase; margin-bottom: 2rem; }
+.table { background: rgba(32, 32, 32, .9); border: .1rem solid var(--line); border-radius: .4rem; padding: 2rem 2.2rem; }
+.table .row { display: grid; align-items: center; padding: .8rem 0; font-size: 1.1rem; }
+.table .row + .row { border-top: .1rem solid var(--line); }
+.table .hd { font: 400 1rem 'Oswald', sans-serif; color: #d0d0d0; text-transform: uppercase; padding-top: 0; }
+.hist .row { grid-template-columns: 1.3fr 1.2fr 1.1fr 1.1fr .8fr; }
+.panel { background: radial-gradient(90% 120% at 100% 100%, rgba(95, 140, 45, .22), transparent 60%), rgba(36, 36, 36, .9); border: .1rem solid var(--line); border-radius: .4rem; padding: 2.2rem; margin-bottom: 4.4rem; }
+.due { display: grid; grid-template-columns: 1fr 1fr; }
+.due .label { text-transform: none; font-size: 1rem; }
+.due b { display: block; font: 700 2.2rem 'Poppins', sans-serif; letter-spacing: .1rem; margin-top: .2rem; }
+.panel p { font-size: 1.15rem; line-height: 1.8rem; margin-bottom: 1.6rem; }
+fieldset { border: .15rem solid var(--green); border-radius: .4rem; padding: 0 .9rem .9rem; position: relative; }
+legend { font-size: .9rem; color: var(--green); padding: 0 .3rem; }
+select { width: 100%; background: transparent; border: 0; color: #fff; font: 500 1.25rem 'Poppins', sans-serif; outline: none; appearance: none; padding-top: .2rem; }
+select option { background: #222; }
+fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; border: .45rem solid transparent; border-top-color: #ddd; }
+
+/* // access \\ */
+.titlebar { display: flex; align-items: center; justify-content: space-between; }
+.titlebar .acts { display: flex; align-items: center; gap: 2.2rem; }
+.titlebar .count { font: 400 4.4rem 'Oswald', sans-serif; }
+.keys .row { grid-template-columns: 2.4fr 2.4fr 3fr 1fr; padding: 1rem 0; }
+.keys { padding: 1.6rem 4rem; }
+.perm { display: inline-flex; align-items: center; gap: .5rem; margin-right: 1.4rem; cursor: pointer; font-size: 1.05rem; }
+.perm i { width: 1.4rem; height: 1.4rem; border: .15rem solid var(--green); border-radius: .3rem; display: inline-block; }
+.perm.on i { background: var(--green); box-shadow: inset 0 0 0 .25rem #222; }
+.empty { color: var(--grey); font-weight: 400; padding: 1.2rem 0 .4rem; }
+#modal { position: fixed; inset: 0; z-index: 5; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; }
+#modal .box { width: 40rem; background: rgba(28, 30, 26, .97); border: .15rem solid rgba(143, 209, 79, .6); border-radius: .6rem; padding: 1.6rem 1.6rem 1.4rem; }
+#modal h3 { font: 500 1.6rem 'Oswald', sans-serif; margin-bottom: 1.6rem; }
+#modal p { font: 500 1.05rem 'Oswald', sans-serif; letter-spacing: .02rem; color: #e6e6e6; }
+#modal .field { margin: 1.6rem 0 0; border-top: .1rem solid var(--line); border-bottom: .1rem solid var(--line); padding: 1rem; }
+#modal input { width: 100%; background: transparent; border: 0; outline: none; color: #fff; font: 500 1.3rem 'Oswald', sans-serif; }
+#modal input::placeholder { color: #8a8a8a; }
+#modal small { display: block; font: 400 .9rem 'Oswald', sans-serif; color: #bbb; margin: .8rem 1rem 0; }
+#modal .foot { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2.2rem; }
+
+/* // settings \\ */
+#settings .box { background: rgba(36, 36, 36, .9); border: .1rem solid var(--line); border-radius: .4rem; padding: 2rem 2.2rem; }
+#settings h4 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1.2rem; }
+.dots { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.dots div { width: 1.7rem; height: 1.7rem; border-radius: 50%; cursor: pointer; transition: transform .1s; }
+.dots div.on { transform: scale(1.35); box-shadow: 0 0 0 .2rem #151515, 0 0 0 .35rem #fff; }
+.dots div.none { background: repeating-linear-gradient(45deg, #444 0 .3rem, #222 .3rem .6rem); }
+.sep { height: .1rem; background: var(--line); margin: 2rem 0; }
+#settings fieldset { border-color: rgba(255, 255, 255, .25); padding: .9rem 1rem; } #settings fieldset::after { top: 1.5rem; }
+.req { color: #e22; font-size: .9rem; margin-top: 1.2rem; font-weight: 500; }
+.note { color: var(--grey); font-size: 1rem; font-weight: 400; }
+
+#toast { position: absolute; left: 50%; bottom: 2.4rem; transform: translateX(-50%); padding: 1rem 1.8rem; border-radius: .5rem; background: rgba(28, 30, 26, .97); border: .15rem solid var(--green); font-size: 1.15rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; } #toast.err { border-color: #e2455a; }
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div id="close" onclick="post('close')">Close <svg viewBox="0 0 24 24"><path d="M12 2v10M5.6 6.6a9 9 0 1 0 12.8 0"/></svg></div>
+
+<div class="page" id="home">
+    <div id="info"></div>
+    <h1 id="welcome"></h1>
+    <div class="hr"></div>
+    <h2 id="usage-title">House Usage</h2>
+    <div id="meters"></div>
+    <div id="cards"></div>
+</div>
+
+<div class="page hidden" id="upgrades">
+    <h1 class="title">Property Upgrades</h1>
+    <div class="grid scroll" id="upgrade-grid"></div>
+</div>
+
+<div class="page hidden" id="maintenance">
+    <h1 class="title">Maintenance Fee</h1>
+    <div class="cols">
+        <div><h3 id="hist-title">History (0 Transactions)</h3><div class="table hist scroll" id="hist" style="max-height:38rem"></div></div>
+        <div>
+            <h3>Outgoing Fee</h3>
+            <div class="panel"><div class="due"><div><span class="label">Due Date</span><b id="due"></b></div><div><span class="label">Amount</span><b id="amount"></b></div></div></div>
+            <h3>Account Used For Auto-Withdrawal</h3>
+            <div class="panel"><p>This will automatically be paid on the due date if the account has sufficient balance.</p>
+                <fieldset><legend>Bank Account</legend><select id="account"></select></fieldset></div>
+        </div>
+    </div>
+</div>
+
+<div class="page hidden" id="access">
+    <div class="titlebar"><h1 class="title">Property Access</h1><div class="acts"><div class="btn" id="add-btn" onclick="showModal()">Add Access</div><span class="count" id="count">0/5</span></div></div>
+    <div class="table keys scroll" id="keys" style="max-height:44rem"></div>
+    <div id="modal" class="hidden"><div class="box">
+        <h3>Add User</h3>
+        <p>This will add the user to the property. You still need to manage their privileges when done.</p>
+        <div class="field"><input id="cid" placeholder="State ID"><small>This is the state ID of the person you want to add.</small></div>
+        <div class="foot"><div class="btn off" onclick="hideModal()">Cancel</div><div class="btn" onclick="addKey()">Add</div></div>
+    </div></div>
+</div>
+
+<div class="page hidden" id="settings">
+    <h1 class="title">Settings</h1>
+    <div class="box" id="settings-box"></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="nui://fw-dui/html/keys.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const money = n => '$' + Math.round(n || 0).toLocaleString('en-US');
+const date = t => { const d = new Date(t * 1000); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
+if (window.parent !== window) document.body.classList.add('embedded');
+
+let D = null, tab = 'home', resource = 'fw-housing', toastTimer = 0;
+const post = (action, data = {}) => fetch(`https://${resource}/house`, { method: 'POST', body: JSON.stringify({ Action: action, ...data }) }).catch(() => {});
+
+const ICON = {
+    clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    cal: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-6-6.2-6-11a6 6 0 0 1 12 0c0 4.8-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/><path d="M4 21h16"/></svg>',
+    map: '<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>',
+    garage: '<svg class="ico" viewBox="0 0 48 48" fill="#fff"><path d="M24 4L3 14v30h8V24h26v20h8V14z"/><rect x="14" y="27" width="20" height="4" rx="1"/><rect x="14" y="33" width="20" height="4" rx="1"/><rect x="14" y="39" width="20" height="4" rx="1"/></svg>',
+    people: '<svg class="ico" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2.6"><circle cx="18" cy="15" r="7"/><path d="M5 40c0-8 6-13 13-13s13 5 13 13z"/><path d="M29 8.6a7 7 0 0 1 0 13M33 27c6 1 10 6 10 13h-6"/></svg>',
+    book: '<svg viewBox="0 0 34 34" fill="none" stroke="#fff" stroke-width="2.6"><rect x="3" y="3" width="28" height="28" rx="5"/><path d="M12 3v11l5-3.5 5 3.5V3"/></svg>',
+};
+const METERS = [
+    ['Electricity Level', 'Electricity', 200, ' kWh', '#f3c623', '⚡'],
+    ['Humidity Level', 'Humidity', 100, '%', '#2f8fe6', '💧'],
+    ['Temperature', 'Temperature', 43, '°C', '#f39a2e', '🌡'],
+    ['Heating Level', 'Heating', 0, '', '#666', '♨'],
+    ['Gas Level', 'Gas', 100, '', '#666', '🔥'],
+];
+const TABS = [['home', 'Home'], ['upgrades', 'Upgrades'], ['maintenance', 'Maintenance'], ['access', 'Access'], ['settings', 'Settings']];
+
+function setTab(t) {
+    tab = t;
+    TABS.forEach(([id]) => $(id).classList.toggle('hidden', id !== t));
+    $('nav').innerHTML = TABS.map(([id, l]) => `<div class="${id === t ? 'on' : ''}" onclick="setTab('${id}')">${l}</div>`).join('');
+    post('sound');
+}
+
+function toast(text, ok = true) {
+    if (!text) return;
+    clearTimeout(toastTimer);
+    $('toast').textContent = text;
+    $('toast').className = 'show' + (ok ? '' : ' err');
+    toastTimer = setTimeout(() => $('toast').className = '', 3000);
+}
+
+const act = (action, data) => post('action', { Do: action, Data: data });
+
+// // Render \\
+function renderHome() {
+    const now = new Date();
+    $('info').innerHTML = `<span>${ICON.clock}${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span><span>${ICON.cal}${date(now / 1000)}</span>`
+        + `<span>${ICON.pin}${esc(D.Street)}</span><span>${ICON.map}${esc(D.Label)}</span>`;
+    $('welcome').textContent = `Welcome, ${D.Me}`;
+    $('meters').innerHTML = METERS.map(([label, key, max, unit, color, icon]) => {
+        const v = D.Usage[key];
+        const off = v === false;
+        return `<div class="meter ${off || !max ? 'dim' : ''}"><div class="top"><span>${icon} ${label}</span><span>`
+            + (off ? '<b>Disabled</b>' : `<b style="color:${color}">${v}${unit}</b><i>/ ${max}${unit === '%' ? '%' : unit}</i>`)
+            + `</span></div><div class="track"><div class="fill" style="width:${off || !max ? 0 : Math.min(100, v / max * 100)}%;background:${color}"></div></div></div>`;
+    }).join('');
+    const roommates = D.Keyholders.length, due = date(D.Fee.Due);
+    $('cards').innerHTML = `
+        <div class="card"><h2>Protection</h2><p>${D.Upgrades.security ? 'Your house is protected: you get notified when someone breaks in.' : 'Easily monitor your house locks and get notified when someone tries to lockpick your lock.'}</p>
+            <div class="${D.Upgrades.security ? 'btn off' : 'btn'}" onclick="setTab('upgrades')">${D.Upgrades.security ? 'Active' : 'Upgrade'}</div></div>
+        <div class="card">${ICON.garage}<span class="num">${D.Parking}</span><h2>Parking Spots</h2><p>This is how many parking spots you have outside of your house.</p></div>
+        <div class="card">${ICON.people}<span class="num">${roommates}</span><h2>Manage your roommates</h2><div class="btn" onclick="setTab('access')">Manage</div></div>
+        <div class="card"><h2>Maintenance Fee</h2><p>Remember to pay your maintenance fee before ${due}, the total is ${money(D.Fee.Amount)}.</p><div class="btn" onclick="setTab('maintenance')">Manage</div></div>`;
+}
+
+function renderUpgrades() {
+    $('upgrade-grid').innerHTML = D.UpgradeList.map(u => {
+        const owned = D.Upgrades[u.Id];
+        const btn = owned ? '<div class="btn off">Owned</div>' : D.IsOwner ? `<div class="btn" onclick="act('upgrade',{Id:'${u.Id}'})">${money(u.Price)} - Unlock</div>` : `<div class="btn off">${money(u.Price)}</div>`;
+        return `<div class="card"><div class="head">${ICON.book}<span>Upgrade</span></div><h2>${esc(u.Label)}</h2><p>${esc(u.Desc)}</p>${btn}</div>`;
+    }).join('');
+}
+
+function renderMaintenance() {
+    $('hist-title').textContent = `History (${D.History.length} Transactions)`;
+    $('hist').innerHTML = '<div class="row hd"><span>Citizen Name</span><span>Citizen ID</span><span>Fee Amount</span><span>Date</span><span>Status</span></div>'
+        + D.History.map(h => `<div class="row"><span>${esc(h.Name)}</span><span>${esc(h.Cid)}</span><span>${money(h.Amount)}</span><span>${date(h.Date)}</span><span style="color:${h.Status === 'Paid' ? 'var(--green)' : '#e2455a'}">${esc(h.Status)}</span></div>`).join('');
+    $('due').textContent = date(D.Fee.Due);
+    $('amount').textContent = money(D.Fee.Amount);
+    const sel = $('account');
+    sel.disabled = !D.IsOwner;
+    sel.innerHTML = D.IsOwner ? D.Accounts.map(a => `<option value="${esc(a.Id)}" ${a.Id === D.Fee.Account ? 'selected' : ''}>${esc(a.Label)} (${esc(a.Id)}) - ${money(a.Balance)}</option>`).join('') : '<option>Only the owner can see this</option>';
+}
+
+function renderAccess() {
+    $('count').textContent = `${D.Keyholders.length}/${D.MaxKeys}`;
+    $('add-btn').classList.toggle('hidden', !D.IsOwner);
+    const perm = (k, p) => `<span class="perm ${k[p] ? 'on' : ''}" onclick="${D.IsOwner ? `act('perm',{Cid:'${esc(k.Cid)}',Perm:'${p}',Value:${!k[p]}})` : ''}"><i></i>${p}</span>`;
+    $('keys').innerHTML = '<div class="row hd"><span>Citizen Name</span><span>Citizen ID</span><span>Privileges</span><span></span></div>'
+        + (D.Keyholders.length ? D.Keyholders.map(k => `<div class="row"><span>${esc(k.Name)}</span><span>${esc(k.Cid)}</span><span>${perm(k, 'Doors')}${perm(k, 'Stash')}${perm(k, 'Decorate')}</span>`
+            + `<span>${D.IsOwner ? `<div class="btn" onclick="act('removekey',{Cid:'${esc(k.Cid)}'})">Remove</div>` : ''}</span></div>`).join('')
+            : '<div class="empty">Nobody else has access to this property.</div>');
+}
+
+function renderSettings() {
+    const surf = { Walls: 'Wall Color', Floor: 'Floor Color', Ceiling: 'Ceiling Color' };
+    const dots = s => `<div class="dots"><div class="none ${D.Colors[s] ? '' : 'on'}" title="Default" onclick="act('color',{Surface:'${s}'})"></div>`
+        + D.Palette.map(c => `<div class="${D.Colors[s] === c ? 'on' : ''}" style="background:${c}" onclick="act('color',{Surface:'${s}',Hex:'${c}'})"></div>`).join('') + '</div>';
+    const html = ['Walls', 'Floor', 'Ceiling'].map(s => `<h4>${surf[s]}</h4>` + (D.Surfaces.includes(s) ? dots(s) : '<div class="note">This house has no recolourable ' + s.toLowerCase() + '.</div>')).join('<div class="sep"></div>');
+    const locked = !D.Upgrades.timecycle;
+    $('settings-box').innerHTML = html + `<div class="sep"></div><h4>Timecycle</h4><fieldset><select id="tc" ${locked || !D.IsOwner ? 'disabled' : ''}>`
+        + D.Timecycles.map(t => `<option value="${esc(t.Id)}" ${t.Id === D.Timecycle ? 'selected' : ''}>${esc(t.Label)}</option>`).join('') + '</select></fieldset>'
+        + (locked ? '<div class="req">Requires Timecycle Changer Upgrade</div>' : '');
+    $('tc').onchange = e => act('timecycle', { Id: e.target.value });
+}
+
+function render() {
+    if (!D) return;
+    renderHome(); renderUpgrades(); renderMaintenance(); renderAccess(); renderSettings();
+}
+
+$('account').onchange = e => act('account', { Account: e.target.value });
+function showModal() { $('cid').value = ''; $('modal').classList.remove('hidden'); $('cid').focus(); }
+function hideModal() { $('modal').classList.add('hidden'); }
+function addKey() { const v = $('cid').value.trim(); if (v) { act('addkey', { Cid: v }); hideModal(); } }
+$('cid').addEventListener('keydown', e => { if (e.key === 'Enter') addKey(); });
+
+window.addEventListener('message', e => {
+    let m = e.data;
+    if (typeof m === 'string') { try { m = JSON.parse(m); } catch { return; } }
+    if (!m || !m.action) return;
+    if (m.action === 'init') { resource = m.data.resource || resource; setTab('home'); }
+    else if (m.action === 'data') { D = m.data; render(); }
+    else if (m.action === 'toast') toast(m.data.text, m.data.ok);
+    else if (m.action === 'tab') setTab(m.data);
+});
+
+setTab('home');
+setInterval(() => D && tab === 'home' && renderHome(), 30000);
+</script>
+</body>
+</html>

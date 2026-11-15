@@ -463,16 +463,6 @@ Config.Menu = {
         end,
     },
     {
-        Id = "mlo_house",
-        Title = "House",
-        Icon = "#global-appartment",
-        Close = true,
-        Event = "fw-housing:Client:Mlo:OpenHouse",
-        Enabled = function()
-            return not exports['fw-medical']:GetDeathStatus() and exports['fw-housing']:IsMloOwnerInside()
-        end,
-    },
-    {
         Id = "mlo_garage",
         Title = "Place Garage",
         Icon = "#citizen-action-garage",

@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 ui_page 'html/index.html'
-files { 'html/index.html' }
+files { 'html/index.html', 'html/house.html' } -- house.html = House app on the tablet (fw-dui)
 
 client_scripts {
     '@fw-assets/client/cl_errorlog.lua',
@@ -24,4 +24,5 @@ server_scripts {
 dependencies {
     'PolyZone',
     'interact',
+    'fw-dui', -- house tablet
 }

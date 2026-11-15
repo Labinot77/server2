@@ -30,6 +30,14 @@ body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: #fff
 .row .v { font-family: 'Barlow Semi Condensed', sans-serif; font-style: normal; font-weight: 600; font-size: 1.2vh; text-transform: none; }
 .row .bad { color: var(--red); }
 .btns { display: flex; gap: .55vh; padding: 0 .8vh; }
+.axes { display: flex; flex-direction: column; gap: .35vh; padding: .2vh .8vh 0; }
+.axis { display: flex; align-items: center; gap: .55vh; }
+.axis b { width: 2.2vh; font-size: 1.2vh; } .axis b.x { color: #ff6b6b; } .axis b.y { color: #6be37f; } .axis b.z { color: #5f9dff; }
+.axis input { flex: 1; min-width: 0; height: 2.2vh; background: rgba(40, 38, 40, .75); border: .1vh solid transparent; color: #fff; padding: 0 .6vh; font: 600 1.2vh 'Barlow Semi Condensed', sans-serif; outline: none; user-select: text; }
+.axis input:focus { border-color: #fff; }
+.mini { height: 2.2vh; padding: 0 .7vh; display: flex; align-items: center; background: rgba(40, 38, 40, .75); cursor: pointer; font-size: 1.05vh; }
+.mini:hover { background: var(--paper); color: var(--ink); }
+.head .acts { display: flex; gap: .8vh; } .head .acts span { cursor: pointer; } .head .acts span:hover { text-decoration: underline; }
 .btn { flex: 1; text-align: center; padding: .35vh 0; background: rgba(40, 38, 40, .75); cursor: pointer; font-size: 1.2vh; }
 .btn:hover { background: var(--paper); color: var(--ink); }
 #warn { background: linear-gradient(90deg, rgba(110, 10, 18, .75), rgba(40, 0, 5, .35)); padding: .7vh .8vh; display: flex; flex-direction: column; gap: .4vh; font-size: 1.15vh; text-transform: none; }
@@ -156,7 +164,7 @@ const money = n => '$' + Math.floor(n).toLocaleString('en-US');
 const num = (v, d) => (+v).toFixed(d);
 
 let catalog = [], groups = [], entities = [], colors = [], thumb = '', s = { List: [] }, group = -1, picked = null, shown = [], drawn = 0;
-let lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = null, warnTimer = 0;
+let lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = {}, warnTimer = 0;
 
 // // Icons \\
 const P = {
@@ -283,11 +291,14 @@ function drawObject() {
     ['oname', 'transform', 'reqs'].forEach(id => $(id).classList.toggle('hidden', !sel));
     if (sel) {
         $('oname').textContent = title(sel.Label) + (s.Multi > 1 ? ` (+${s.Multi - 1})` : '');
-        const p = sel.Pos, r = sel.Rot;
-        $('transform').innerHTML = `<div class="head"><span>Transform</span><span>Ctrl+C / Ctrl+V</span></div>`
-            + `<div class="row"><span>Position</span><span class="v">${num(p.x, 3)}, ${num(p.y, 3)}, ${num(p.z, 3)}</span></div>`
-            + `<div class="row"><span>Rotation</span><span class="v">${num(r.x, 2)}, ${num(r.y, 2)}, ${num(r.z, 2)}</span></div>`
-            + `<div class="btns" style="margin-top:.35vh"><div class="btn" onclick="copyTransform()">Copy</div><div class="btn ${clip ? '' : 'hidden'}" onclick="pasteTransform()">Paste</div></div>`;
+        if (!$('transform').contains(document.activeElement)) $('transform').innerHTML = ['Pos', 'Rot'].map(T => {
+            const v = sel[T], d = T === 'Pos' ? 3 : 2;
+            return `<div class="head"><span>${T === 'Pos' ? 'Position' : 'Rotation'}</span><span class="acts"><span onclick="copyPart('${T}')">Copy</span>`
+                + (clip[T] ? `<span onclick="pastePart('${T}')">Paste</span>` : '') + `</span></div><div class="axes">`
+                + ['x', 'y', 'z'].map(a => `<div class="axis"><b class="${a}">${T === 'Rot' ? 'R' : ''}${a.toUpperCase()}</b>`
+                    + `<input type="number" step="${T === 'Pos' ? 0.01 : 1}" data-t="${T}" data-a="${a}" value="${num(v[a], d)}">`
+                    + `<div class="mini" onclick="copyValue('${T}','${a}')">Copy</div></div>`).join('') + '</div>';
+        }).join('');
         $('reqs').innerHTML = s.Placing && s.Need !== undefined
             ? `<div class="head"><span>Object Requirements</span></div><div class="row"><span>Bank</span><span class="${poor ? 'bad' : ''}">${money(Math.max(0, s.Have))}/${money(s.Need)}</span></div>` : '';
     }
@@ -314,18 +325,29 @@ function render() {
     if (!s.Sel) hide('options');
 }
 
-// // Copy / paste position + rotation (also to the system clipboard, as text) \\
-function copyTransform() {
-    if (!s.Sel) return;
-    const p = s.Sel.Pos, r = s.Sel.Rot;
-    clip = { Pos: { ...p }, Rot: { ...r } };
+// // Copy / paste: position and rotation separately, or one axis (also to the system clipboard, as text) \\
+function toClipboard(text) {
     const ta = $('clipboard');
-    ta.value = `vector3(${num(p.x, 3)}, ${num(p.y, 3)}, ${num(p.z, 3)}), vector3(${num(r.x, 2)}, ${num(r.y, 2)}, ${num(r.z, 2)})`;
-    ta.select(); document.execCommand('copy'); ta.blur();
-    warn('Copied: ' + ta.value);
+    ta.value = text; ta.select(); document.execCommand('copy'); ta.blur();
+    warn('Copied: ' + text);
+}
+const vec = (v, d) => `vector3(${num(v.x, d)}, ${num(v.y, d)}, ${num(v.z, d)})`;
+function copyPart(T) {
+    if (!s.Sel) return;
+    clip[T] = { ...s.Sel[T] };
+    toClipboard(vec(s.Sel[T], T === 'Pos' ? 3 : 2));
     drawObject();
 }
-function pasteTransform() { if (clip && s.Sel) post('set', clip); }
+function copyValue(T, a) { if (s.Sel) toClipboard(num(s.Sel[T][a], T === 'Pos' ? 3 : 2)); }
+function setTransform(T, v) { if (s.Sel) post('set', { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot }, [T]: v }); }
+function pastePart(T) { if (clip[T]) setTransform(T, { ...clip[T] }); }
+function copyTransform() { if (!s.Sel) return; clip = { Pos: { ...s.Sel.Pos }, Rot: { ...s.Sel.Rot } }; toClipboard(vec(s.Sel.Pos, 3) + ', ' + vec(s.Sel.Rot, 2)); drawObject(); }
+function pasteTransform() { if (clip.Pos && clip.Rot && s.Sel) post('set', { Pos: { ...clip.Pos }, Rot: { ...clip.Rot } }); }
+$('transform').addEventListener('change', e => {
+    const i = e.target, T = i.dataset.t;
+    if (T) setTransform(T, { ...s.Sel[T], [i.dataset.a]: parseFloat(i.value) || 0 });
+});
+$('transform').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 
 // // Options menu (right click) \\
 const PRESETS = { Door: { X: 0, Z: 0, W: 1, H: 2.25 }, Window: { X: 0, Z: 1, W: 1, H: 1 } };
@@ -344,7 +366,8 @@ function openOptions(x, y) {
     }
     html += opt('Duplicate', "act('duplicate')") + opt('Place On Ground', "act('ground')") + opt('Reset Rotation', "act('reset')")
         + (sel.Tintable ? '' : opt('Tint', `post('key',{K:'tint'}).then(()=>${reopen})`, '', `${sel.Tint + 1}/16`))
-        + opt('Copy Position', "copyTransform();hide('options')") + (clip ? opt('Paste Position', "pasteTransform();hide('options')") : '');
+        + opt('Copy Position', "copyPart('Pos');hide('options')") + opt('Copy Rotation', "copyPart('Rot');hide('options')")
+        + (clip.Pos ? opt('Paste Position', "pastePart('Pos');hide('options')") : '') + (clip.Rot ? opt('Paste Rotation', "pastePart('Rot');hide('options')") : '');
     if (s.Adv) {
         html += '<div class="sub">Position</div>' + ['x', 'y', 'z'].map(a => field(a + ' pos', `data-t="Pos.${a}" step="0.01"`, num(sel.Pos[a], 3), a)).join('')
             + '<div class="sub">Rotation</div>' + ['x', 'y', 'z'].map(a => field(a + ' rot', `data-t="Rot.${a}" step="1"`, num(sel.Rot[a], 1), a)).join('');

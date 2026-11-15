@@ -72,7 +72,11 @@ Config.Models = {
         Variants = { 'prop_monitor_w_large_dui_01', 'prop_monitor_w_large_dui_02' }, Texture = 'script_rt_tvscreen', Resolution = { 1280, 720 }, Idle = true,
         Camera = { Offset = vector3(0.0, -1.05, 0.45), LookAt = vector3(0.0, 0.0, 0.42), Fov = 45.0, Transition = 600 },
     },
-    ['ch_prop_casino_keypad_02'] = {
+    ['sf_prop_sf_tablet_01a'] = { -- house tablet (fw-housing, House app)
+        Variants = { 'sf_prop_sf_tablet_01a_dui_01', 'sf_prop_sf_tablet_01a_dui_02' }, Texture = 'prop_arena_tablet_drone_screen_d', Resolution = { 1280, 800 }, Idle = true,
+        Camera = { Offset = vector3(-0.002, -0.402, 0.004), LookAt = vector3(-0.003, 0.000, -0.001), Fov = 29.0, Transition = 600 },
+},
+        ['ch_prop_casino_keypad_02'] = {
         Variants = { 'ch_prop_casino_keypad_02_dui_01', 'ch_prop_casino_keypad_02_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',Resolution = { 512, 256 },
         Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
     },

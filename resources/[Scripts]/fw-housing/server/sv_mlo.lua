@@ -137,7 +137,7 @@ local function FindDecor(Decorations, DecorId)
     end
 end
 
-local function CommitHouse(HouseId)
+function CommitHouse(HouseId)
     RefreshMloDoorAccess(HouseId)
     SaveHouse(HouseId)
     TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
@@ -289,90 +289,19 @@ AddEventHandler('onResourceStart', function(Res)
     if Res == 'fw-doors' and Config.Houses then SetTimeout(1000, RegisterAllMloDoors) end
 end)
 
--- // Owner menu: keys, access, surfaces \\ --
-
-local function GetOwnedHouse(Source, HouseId)
-    local Player = FW.Functions.GetPlayer(Source)
-    local House = GetMloHouse(HouseId)
-    if Player and House and House.Owner == Player.PlayerData.citizenid then return House end
-end
-
-local function SaveKeys(HouseId)
-    local House = Config.Houses[HouseId]
-    exports['ghmattimysql']:executeSync("UPDATE `player_houses` SET `keyholders` = ? WHERE `id` = ?", { json.encode(House.Keyholders), House.DbId })
-    CommitHouse(HouseId)
-end
-
-FW.Functions.CreateCallback("fw-housing:Server:Mlo:GetManage", function(Source, Cb, HouseId)
-    local House = GetOwnedHouse(Source, HouseId)
-    if not House then return Cb(false) end
-
-    local Keys, Nearby, Ped = {}, {}, GetPedCoords(Source)
-    for _, Cid in ipairs(House.Keyholders) do
-        if Cid ~= House.Owner then
-            local A = House.MloData.Access and House.MloData.Access[Cid] or {}
-            Keys[#Keys + 1] = { Cid = Cid, Name = FW.Functions.GetPlayerCharName(Cid), Doors = A.Doors ~= false, Stash = A.Stash ~= false, Decorate = A.Decorate ~= false }
-        end
-    end
-    for _, Id in ipairs(GetPlayers()) do
-        local Target = FW.Functions.GetPlayer(tonumber(Id))
-        if Target and tonumber(Id) ~= Source and #(GetPedCoords(Id) - Ped) < 5.0 then
-            Nearby[#Nearby + 1] = { Id = tonumber(Id), Name = Target.PlayerData.charinfo.firstname .. ' ' .. Target.PlayerData.charinfo.lastname }
-        end
-    end
-    Cb({ Keys = Keys, Nearby = Nearby, Surfaces = House.MloData.Surfaces or {} })
-end)
-
-RegisterNetEvent("fw-housing:Server:Mlo:AddKey", function(HouseId, TargetId)
-    local Source = source
-    local House, Target = GetOwnedHouse(Source, HouseId), FW.Functions.GetPlayer(tonumber(TargetId) or -1)
-    if not House or not Target or #(GetPedCoords(Source) - GetPedCoords(Target.PlayerData.source)) > 5.0 then return end
-
-    local Cid = Target.PlayerData.citizenid
-    if HasKeyToHouse(HouseId, Cid) then return Notify(Source, "They already have keys.", "error") end
-    table.insert(House.Keyholders, Cid)
-    SaveKeys(HouseId)
-    Notify(Source, "Keys given.", "success")
-    Notify(Target.PlayerData.source, "You received the keys of " .. House.Adress .. ".", "success")
-end)
-
-RegisterNetEvent("fw-housing:Server:Mlo:RemoveKey", function(HouseId, Cid)
-    local House = GetOwnedHouse(source, HouseId)
-    if not House or Cid == House.Owner then return end
-    for I, v in ipairs(House.Keyholders) do
-        if v == Cid then table.remove(House.Keyholders, I) break end
-    end
-    if House.MloData.Access then House.MloData.Access[Cid] = nil end
-    SaveKeys(HouseId)
-    Notify(source, "Keys removed.", "success")
-end)
-
-local Perms = { Doors = true, Stash = true, Decorate = true }
-RegisterNetEvent("fw-housing:Server:Mlo:SetAccess", function(HouseId, Cid, Perm, Value)
-    local House = GetOwnedHouse(source, HouseId)
-    if not House or not Perms[Perm] or not HasKeyToHouse(HouseId, Cid) then return end
-    House.MloData.Access = House.MloData.Access or {}
-    House.MloData.Access[Cid] = House.MloData.Access[Cid] or {}
-    House.MloData.Access[Cid][Perm] = Value == true
-    CommitHouse(HouseId)
-end)
-
-local Surfaces = { Walls = true, Floor = true, Ceiling = true }
-RegisterNetEvent("fw-housing:Server:Mlo:SetSurface", function(HouseId, Surface, Hex)
-    local House = GetOwnedHouse(source, HouseId)
-    if not House or not Surfaces[Surface] or (Hex and not tostring(Hex):match('^#%x%x%x%x%x%x$')) then return end
-    House.MloData.Surfaces = House.MloData.Surfaces or {}
-    House.MloData.Surfaces[Surface] = Hex or nil
-    CommitHouse(HouseId)
-end)
+-- Keys, access, colours, upgrades: the house tablet (sv_tablet.lua).
 
 -- // Decorations \\ --
 
 -- Storage crates are capped per house (Stash.Crates, set in /housecreator).
-local function CrateRoom(House, Mlo)
+local function CountType(House, Type)
     local N = 0
-    for _, D in ipairs(House.Decorations or {}) do if D.Type == 'crate' then N = N + 1 end end
-    return N < ((Mlo.Stash or {}).Crates or 0)
+    for _, D in ipairs(House.Decorations or {}) do if D.Type == Type then N = N + 1 end end
+    return N
+end
+
+local function CrateRoom(House, Mlo)
+    return CountType(House, 'crate') < ((Mlo.Stash or {}).Crates or 0)
 end
 
 RegisterNetEvent("fw-housing:Server:Decor:Add")
@@ -541,6 +470,9 @@ AddEventHandler("fw-housing:Server:Decor:ToggleDoor", function(HouseId, DecorId)
 
     local _, Decor = FindDecor(House.Decorations or {}, DecorId)
     if not Decor or Decor.Type ~= 'door' then return end
+    if HasUpgrade(House, 'doors') and not HasMloAccess(House, Player.PlayerData.citizenid, 'Doors') then
+        return Notify(Source, "This door is locked.", "error")
+    end
     if #(GetPedCoords(Source) - vector3(Decor.Coords.x, Decor.Coords.y, Decor.Coords.z)) > 4.0 then return end
 
     DecorDoorStates[HouseId] = DecorDoorStates[HouseId] or {}
@@ -710,6 +642,11 @@ local function CleanDef(D)
         if #Doors > 0 then Def[Side] = { Doors = Doors } end
     end
     if not Def.FrontDoor then return nil, "Add the front door." end
+
+    if type(D.Tablet) == 'table' then -- fixed house tablet { Coords, Rot }
+        local Coords, Rot = Vec(D.Tablet.Coords), Vec(D.Tablet.Rot)
+        if Coords and Rot then Def.Tablet = { Coords = Coords, Rot = Rot } end
+    end
 
     if type(D.Surfaces) == 'table' and type(D.Surfaces.Txd) == 'string' and D.Surfaces.Txd ~= '' then
         Def.Surfaces = { Txd = D.Surfaces.Txd:sub(1, 64) }

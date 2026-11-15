@@ -49,6 +49,7 @@ Config.DropPropsOverride = {
     ["heist-drill-basic"] = "hei_prop_heist_drill",
     ['heist-drill-adv'] = "hei_prop_heist_drill",
     ['heist-drill-hard'] = 'ch_prop_ch_heist_drill',
+    ['business-ticket'] = 'business_ticket'
 }
 
 -- Ported from ox_inventory (data/dropprops.lua).

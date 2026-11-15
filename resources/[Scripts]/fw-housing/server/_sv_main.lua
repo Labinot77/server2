@@ -237,6 +237,7 @@ FW.Functions.CreateCallback('fw-housing:Server:LockProperty', function(Source, C
     end
 
     Config.Houses[HouseId].Locked = not Config.Houses[HouseId].Locked
+    if IsDetcord and Config.Houses[HouseId].Mlo then NotifyBreakIn(HouseId) end -- Security upgrade (sv_tablet.lua)
 
     -- MLO: the phone / radial lock drives the physical front door.
     if Config.Houses[HouseId].Mlo then SetMloDoorsLocked(HouseId, Config.Houses[HouseId].Locked, 'Front') end
@@ -363,6 +364,11 @@ FW.Functions.CreateCallback("fw-housing:Server:HasKeys", function(Source, Cb, Ho
 
     if Result[1].citizenid == Player.PlayerData.citizenid then
         return Cb(true)
+    end
+
+    -- MLO houses: keyholders only use the garage with the Shared Garage upgrade (house tablet).
+    for _, House in pairs(Config.Houses) do
+        if House.Name == HouseName and House.Mlo and not HasUpgrade(House, 'garage') then return Cb(false) end
     end
 
     for k, v in pairs(json.decode(Result[1].keyholders)) do

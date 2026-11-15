@@ -149,15 +149,27 @@ local function ReplaceSurfaces(Cfg, Colors)
     end
 end
 
--- Shell walls / floor / ceiling from the config. Built walls are coloured one by one (tint) in the decorate editor.
+-- Shell walls / floor / ceiling from the config (built walls are tinted one by one), plus the timecycle (upgrade).
+local TimecycleSet = false
+
 function ApplySurfaces(House)
     local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
     if Cfg then ReplaceSurfaces(Cfg, House.MloData and House.MloData.Surfaces or {}) CheckTxds(Cfg) end
+    local Data = House and House.MloData or {}
+    local Tc = Data.Upgrades and Data.Upgrades.timecycle and Data.Timecycle
+    if Tc and Tc ~= '' then
+        SetTimecycleModifier(Tc)
+        TimecycleSet = true
+    elseif TimecycleSet then
+        ClearTimecycleModifier()
+        TimecycleSet = false
+    end
 end
 
 local function ClearSurfaces(House)
     local Cfg = House and House.Mlo and (Config.MLOHouses[House.Mlo] or {}).Surfaces
     if Cfg then ReplaceSurfaces(Cfg, nil) end
+    if TimecycleSet then ClearTimecycleModifier() TimecycleSet = false end
 end
 
 -- // Walls: invisible anchor (bottom centre) + kit pieces laid out from it \\ --
@@ -227,8 +239,9 @@ local function OpenCrate(HouseId, DecorId)
     end
 
     local StashCfg = (Config.MLOHouses[House.Mlo] or {}).Stash or {}
+    local Bonus = House.MloData and House.MloData.Upgrades and House.MloData.Upgrades.storage and Config.HouseApp.StorageBonus or { Slots = 0, Weight = 0 }
     TriggerEvent("fw-misc:Client:PlaySound", 'general.stashOpen')
-    FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Stash', ('housing-%s-%s'):format(House.Name, DecorId), StashCfg.Slots or 30, StashCfg.Weight or 750)
+    FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Stash', ('housing-%s-%s'):format(House.Name, DecorId), (StashCfg.Slots or 30) + Bonus.Slots, (StashCfg.Weight or 750) + Bonus.Weight)
 end
 
 local function StorageOptions(HouseId, DecorId, Type)
@@ -249,6 +262,97 @@ local function DespawnDecor(DecorId)
     if S.WallObj then DeleteWall(S.WallObj) elseif DoesEntityExist(S.Entity) then DeleteEntity(S.Entity) end
     Spawned[DecorId] = nil
 end
+
+-- Interact on a prop, centred on its model.
+local function EntityInteraction(Entity, Options)
+    local Min, Max = GetModelDimensions(GetEntityModel(Entity))
+    return exports['interact']:AddLocalEntityInteraction({
+        entity = Entity,
+        offset = vector3((Min.x + Max.x) / 2, (Min.y + Max.y) / 2, (Min.z + Max.z) / 2),
+        distance = 3.0,
+        interactDst = 1.6,
+        options = Options,
+    })
+end
+
+-- Interact on doors, crates and wardrobes.
+local function AddDecorInteraction(DecorId)
+    local S = Spawned[DecorId]
+    if not S or not DoesEntityExist(S.Entity) then return end
+    if S.InteractId then exports['interact']:RemoveInteraction(S.InteractId) S.InteractId = nil end
+
+    local HouseId, Options = S.HouseId, nil
+    if S.Type == 'door' then
+        local function IsOpen() return DecorDoorOpen[HouseId] and DecorDoorOpen[HouseId][DecorId] == true end
+        local function Toggle() TriggerServerEvent("fw-housing:Server:Decor:ToggleDoor", HouseId, DecorId) end
+        Options = {
+            { label = 'Open door', canInteract = function() return not IsOpen() end, action = Toggle },
+            { label = 'Close door', canInteract = IsOpen, action = Toggle },
+        }
+    elseif S.Type == 'crate' or S.Type == 'wardrobe' then
+        Options = StorageOptions(HouseId, DecorId, S.Type)
+    end
+    if Options then S.InteractId = EntityInteraction(S.Entity, Options) end
+end
+
+-- // House tablet: fixed spot set in the house creator (Def.Tablet = { Coords, Rot }), not furniture \\ --
+
+local HouseTablet = nil -- { HouseId, Def, Entity, InteractId }
+
+local function TabletInteraction()
+    local T = HouseTablet
+    if T.InteractId then exports['interact']:RemoveInteraction(T.InteractId) end
+    T.InteractId = EntityInteraction(T.Entity, { {
+        label = 'Use tablet',
+        canInteract = function() return HasKeyToHouseId(T.HouseId) and not IsHouseTabletOpen() end,
+        action = function() OpenHouseTablet(T.HouseId, T.Entity) end,
+    } })
+end
+
+local function DespawnTablet()
+    if not HouseTablet then return end
+    if HouseTablet.InteractId then exports['interact']:RemoveInteraction(HouseTablet.InteractId) end
+    if DoesEntityExist(HouseTablet.Entity) then DeleteEntity(HouseTablet.Entity) end
+    HouseTablet = nil
+end
+
+local function SpawnTablet(HouseId)
+    local House = Config.Houses[HouseId]
+    local Def = House and (Config.MLOHouses[House.Mlo] or {}).Tablet
+    if HouseTablet and HouseTablet.HouseId == HouseId and HouseTablet.Def == Def then return end
+    DespawnTablet()
+    local Hash = Def and HousingLoadModel(Config.Storage.Tablet)
+    if not Hash or InsideHouseId ~= HouseId then return end
+    local C, R = Def.Coords, Def.Rot
+    local Obj = CreateObjectNoOffset(Hash, C.x, C.y, C.z, false, false, false)
+    SetEntityRotation(Obj, R.x, R.y, R.z, 2, true)
+    FreezeEntityPosition(Obj, true)
+    SetModelAsNoLongerNeeded(Hash)
+    HouseTablet = { HouseId = HouseId, Def = Def, Entity = Obj }
+    TabletInteraction()
+end
+
+-- fw-dui swaps the tablet in use to its screen copy (and back). Our props are local, so we respawn it as that model.
+exports('SwapDecorModel', function(Entity, Model)
+    if not HouseTablet or HouseTablet.Entity ~= Entity then return end
+    local Hash = HousingLoadModel(Model)
+    if not Hash then return end
+    local C, R = GetEntityCoords(Entity), GetEntityRotation(Entity, 2)
+    local New = CreateObjectNoOffset(Hash, C.x, C.y, C.z, false, false, false)
+    SetEntityRotation(New, R.x, R.y, R.z, 2, true)
+    FreezeEntityPosition(New, true)
+    SetModelAsNoLongerNeeded(Hash)
+    DeleteEntity(Entity)
+    HouseTablet.Entity = New
+    TabletInteraction()
+    return New
+end)
+
+local function RegisterSwapper()
+    if GetResourceState('fw-dui') == 'started' then exports['fw-dui']:RegisterSwapper('SwapDecorModel') end
+end
+CreateThread(RegisterSwapper)
+AddEventHandler('onClientResourceStart', function(Resource) if Resource == 'fw-dui' then RegisterSwapper() end end)
 
 local function SpawnDecor(HouseId, Decor, Generation)
     if not Decor.Coords or not Decor.Rot then return end
@@ -274,34 +378,9 @@ local function SpawnDecor(HouseId, Decor, Generation)
     SetModelAsNoLongerNeeded(Hash)
 
     local Type = GetDecorType(Decor)
-    Spawned[Decor.Id] = { Entity = Obj, Sig = DecorSig(Decor), Type = Type, Rot = vector3(Decor.Rot.x, Decor.Rot.y, Decor.Rot.z) }
-
-    if Type == 'door' then
-        local Min, Max = GetModelDimensions(Hash)
-        local DecorId = Decor.Id
-        local function IsOpen() return DecorDoorOpen[HouseId] and DecorDoorOpen[HouseId][DecorId] == true end
-
-        Spawned[DecorId].InteractId = exports['interact']:AddLocalEntityInteraction({
-            entity = Obj,
-            offset = vector3((Min.x + Max.x) / 2, (Min.y + Max.y) / 2, (Min.z + Max.z) / 2),
-            distance = 3.0,
-            interactDst = 1.6,
-            options = {
-                { label = 'Open door', canInteract = function() return not IsOpen() end, action = function() TriggerServerEvent("fw-housing:Server:Decor:ToggleDoor", HouseId, DecorId) end },
-                { label = 'Close door', canInteract = function() return IsOpen() end, action = function() TriggerServerEvent("fw-housing:Server:Decor:ToggleDoor", HouseId, DecorId) end },
-            },
-        })
-        ApplyDecorDoor(DecorId)
-    elseif Type == 'crate' or Type == 'wardrobe' then
-        local Min, Max = GetModelDimensions(Hash)
-        Spawned[Decor.Id].InteractId = exports['interact']:AddLocalEntityInteraction({
-            entity = Obj,
-            offset = vector3((Min.x + Max.x) / 2, (Min.y + Max.y) / 2, (Min.z + Max.z) / 2),
-            distance = 3.0,
-            interactDst = 1.6,
-            options = StorageOptions(HouseId, Decor.Id, Type),
-        })
-    end
+    Spawned[Decor.Id] = { Entity = Obj, Sig = DecorSig(Decor), Type = Type, HouseId = HouseId, Rot = vector3(Decor.Rot.x, Decor.Rot.y, Decor.Rot.z) }
+    AddDecorInteraction(Decor.Id)
+    if Type == 'door' then ApplyDecorDoor(Decor.Id) end
 end
 
 -- Only (re)spawns what changed, so placing one object doesn't make the whole house flicker.
@@ -347,6 +426,7 @@ local function UnloadNow()
     if Pending then ClearSurfaces(Config.Houses[Pending.HouseId]) end
     Pending = nil
     UnloadDecor()
+    DespawnTablet()
 end
 
 local function LeaveCurrent(Immediate)
@@ -384,6 +464,7 @@ local function RefreshInside()
 
     ApplySurfaces(Config.Houses[HouseId])
     SyncDecor(HouseId)
+    SpawnTablet(HouseId)
 end
 
 local function OnZoneChange(Key, IsInside)
@@ -508,6 +589,7 @@ end)
 AddEventHandler('onResourceStop', function(Resource)
     if Resource ~= GetCurrentResourceName() then return end
     UnloadDecor()
+    DespawnTablet()
     if InsideHouseId then ClearSurfaces(Config.Houses[InsideHouseId]) end
     if Combo then Combo:destroy() end
 end)

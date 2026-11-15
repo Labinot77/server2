@@ -120,6 +120,11 @@ with their own texture, so they're not affected. No idle page? The original's te
 Making a copy: duplicate the `.ydr`/`.yft` + `.ytd` as `<model>_dui_01` and `_dui_02`, give each `.ytyp` archetype its
 own `textureDictionary` (= its own name), stream them, and list them in `Variants`.
 
+## Props spawned by a resource (fw-housing furniture)
+Props each client spawns itself (not networked, not map / fw-admin props) can't be model-swapped by fw-dui. The
+resource swaps them: `exports['fw-dui']:RegisterSwapper('SwapDecorModel')`, then fw-dui calls
+`exports[resource]:SwapDecorModel(Entity, ToModel)` and uses the entity it returns (nil = not that resource's prop).
+
 ## Houses next to each other (SameInterior)
 `SameInterior = true` only uses props in the interior the player stands in, and watchers only see a mirrored
 screen from inside the same interior. Two houses with the same computer never show each other's screen:

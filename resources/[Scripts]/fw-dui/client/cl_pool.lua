@@ -62,6 +62,23 @@ local function LoadModel(Hash)
     return HasModelLoaded(Hash)
 end
 
+-- Resources that spawn their own props locally (fw-housing furniture) swap them themselves:
+-- exports['fw-dui']:RegisterSwapper('ExportName') -> exports[resource]:ExportName(Entity, ToModel) returns the new
+-- entity, or nil when the entity isn't theirs.
+local Swappers = {} -- [resource] = export name
+exports('RegisterSwapper', function(Export) Swappers[GetInvokingResource()] = Export end)
+
+local function ExternalSwap(Entity, ToModel)
+    for Resource, Export in pairs(Swappers) do
+        if GetResourceState(Resource) == 'started' then
+            local Ok, New = pcall(function() local E = exports[Resource] return E[Export](E, Entity, ToModel) end)
+            if Ok and New and DoesEntityExist(New) then return New end
+        else
+            Swappers[Resource] = nil
+        end
+    end
+end
+
 -- Makes the prop model ToModel (a copy, or the base back). Returns the entity that stands there now.
 local function SwapTo(Entity, Data, ToModel)
     local To, From = joaat(ToModel), GetEntityModel(Entity)
@@ -72,6 +89,12 @@ local function SwapTo(Entity, Data, ToModel)
         return Entity
     end
     if not LoadModel(To) then Trace('swap FAILED %s -> %s: model did not load in 5s', NameOf(From), ToModel) return Entity end
+
+    local External = ExternalSwap(Entity, ToModel)
+    if External then
+        Trace('swap %s -> %s (resource prop): OK, entity %d', NameOf(From), ToModel, External)
+        return External
+    end
 
     local PropId = GetPropId(Entity)
     if PropId then -- fw-admin prop: respawned as the other model in the same frame (local, every client does it)

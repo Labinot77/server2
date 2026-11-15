@@ -58,7 +58,35 @@ Config.MLOTest = { Enabled = true, Permission = 'admin', ChargeMoney = true } --
 Config.MLOGarage = { MaxDistanceFromZone = 12.0, MaxHeightDifference = 4.0 }
 
 -- Storage is real furniture: crates are stashes (limit per house = Stash.Crates), wardrobes open outfits / sleep.
-Config.Storage = { Crate = 'm23_1_prop_m31_roostercrate_02a', Wardrobe = 'v_res_tre_wardrobe' }
+-- Tablet: placed in /housecreator (fixed, can't be moved), runs the House app (fw-dui desktop, copies _dui_01 / _dui_02).
+Config.Storage = { Crate = 'm23_1_prop_m31_roostercrate_02a', Wardrobe = 'v_res_tre_wardrobe', Tablet = 'sf_prop_sf_tablet_01a' }
+
+-- House app (tablet). Upgrades are bought once per house from the owner's bank account.
+Config.HouseApp = {
+    Window = { Width = 72, Height = 66 }, -- app window on the tablet desktop, % of the screen
+    Keyholders = 5,               -- max keyholders, +5 with the Keyholder upgrade
+    StorageBonus = { Slots = 20, Weight = 500 }, -- extra per crate with the Storage upgrade
+    Fee = { Percent = 0.25, Days = 7 }, -- maintenance: % of the house price every X days, auto-withdrawn
+    Upgrades = {
+        { Id = 'storage', Label = 'Storage', Price = 12500, Desc = 'Gives you more storage slots inside your house.' },
+        { Id = 'security', Label = 'Security', Price = 7500, Desc = 'You receive a notification when your house has been broken into.' },
+        { Id = 'keyholder', Label = 'Keyholder Upgrade', Price = 7500, Desc = 'This upgrade allows you to add 5 more keyholders to your house.' },
+        { Id = 'doors', Label = 'Door Upgrade', Price = 15000, Desc = 'Only people with door access can open the doors you place down.' },
+        { Id = 'timecycle', Label = 'Timecycle', Price = 5000, Desc = 'Change the lighting mood inside your house from the settings.' },
+        { Id = 'garage', Label = 'Shared Garage', Price = 10000, Desc = 'Keyholders can use your house garage too.' },
+        { Id = 'electricity', Label = 'Electricity (10% Off)', Price = 5000, Desc = 'Efficient wiring: your house uses 10% less electricity.' },
+    },
+    Timecycles = {
+        { Id = '', Label = 'Default' }, { Id = 'MP_Arena_theme_evening', Label = 'Warm Evening' }, { Id = 'mp_lad_night', Label = 'Night Club' },
+        { Id = 'NG_filmic02', Label = 'Cinematic' }, { Id = 'MP_corona_heist_DOF', Label = 'Soft Focus' }, { Id = 'nightvision', Label = 'Green Night' },
+    },
+    -- Wall / floor / ceiling colours in the Settings tab (needs Surfaces textures in the house config).
+    Colors = {
+        '#FFFFFF', '#E8E1D9', '#D9C3A5', '#E3A766', '#7C93B5', '#7068D6', '#3E3A72', '#A0573F', '#E8344E', '#8A4A57', '#A7AD99', '#5E6B60',
+        '#4B4466', '#D3A6DB', '#6B6B6B', '#2F2F33', '#C5CEDB', '#0F3B2B', '#4BE3E3', '#55B7E8', '#F06A6A', '#0A0A0A', '#F5DD7A', '#BFC4C9',
+        '#123827', '#F08BBF', '#A5E38A', '#3C8C3C', '#7A0E0E', '#8A5A2B', '#D8F2B5', '#9B4DE8',
+    },
+}
 Config.MLOClearDecorOnSell = true
 
 Config.Decorate = {
@@ -201,6 +229,7 @@ function MloDefToData(Def)
         Label = Def.Label, Price = Def.Price, Class = Def.Class, Spawn = T(Def.Spawn), MaxDecorations = Def.MaxDecorations,
         Stash = Def.Stash, Surfaces = Def.Surfaces, Dynamic = Def.Dynamic,
         Zone = { minZ = Def.Zone.minZ, maxZ = Def.Zone.maxZ, points = {} },
+        Tablet = Def.Tablet and { Coords = T(Def.Tablet.Coords), Rot = T(Def.Tablet.Rot) } or nil,
     }
     for _, P in ipairs(Def.Zone.points) do Data.Zone.points[#Data.Zone.points + 1] = { x = P.x, y = P.y } end
     for _, Side in ipairs({ 'FrontDoor', 'BackDoor' }) do
