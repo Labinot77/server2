@@ -1,7 +1,7 @@
 FW = exports['fw-core']:GetCoreObject()
 LoggedIn = false
 
-local SpawnCam, Peds, InCharacterSelection = false, {}, false
+local SpawnCam, MenuCam, Peds, InCharacterSelection = false, false, {}, false
 local IsUiReady = false
 
 -- todo: add logout spots
@@ -48,8 +48,6 @@ function OpenSelector()
 
     InCharacterSelection = true
     exports['fw-ui']:SetUIFocus(true, true)
-    exports['fw-sync']:SetClientSync(false, {Time = 18, Weather = "FOGGY"})
-
     DoScreenFadeOut(0)
     while not IsScreenFadedOut() do Citizen.Wait(10) end
 
@@ -58,7 +56,8 @@ function OpenSelector()
     SetEntityVisible(PlayerPedId(), false)
 
     SpawnCam = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", Config.CamCoords.x, Config.CamCoords.y, Config.CamCoords.z, 0.0, 0.0, Config.CamCoords.w, 33.0, false, false)
-    SetCamActive(SpawnCam, true)
+    MenuCam = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", Config.MenuCam.x, Config.MenuCam.y, Config.MenuCam.z, -4.0, 0.0, Config.MenuCam.w, 50.0, false, false)
+    SetView("menu")
     RenderScriptCams(true, true, 0, true, false, false)
 
     Citizen.Wait(1000)
@@ -77,11 +76,28 @@ function HideSelector()
     FreezeEntityPosition(PlayerPedId(), false)
     SetEntityVisible(PlayerPedId(), true)
 
-    SetCamActive(SpawnCam, false)
+    TriggerScreenblurFadeOut(0)
+    ClearFocus()
     DestroyCam(SpawnCam)
+    DestroyCam(MenuCam)
 
     for i = 1, #Peds, 1 do
         DeletePed(Peds[i])
+    end
+end
+
+function SetView(View)
+    local IsMenu = View == "menu"
+    SetCamActive(MenuCam, IsMenu)
+    SetCamActive(SpawnCam, not IsMenu)
+    exports['fw-sync']:SetClientSync(false, IsMenu and {Time = 23, Weather = "CLEAR"} or {Time = 18, Weather = "FOGGY"})
+
+    if IsMenu then
+        SetFocusPosAndVel(Config.MenuCam.x, Config.MenuCam.y, Config.MenuCam.z, 0.0, 0.0, 0.0)
+        TriggerScreenblurFadeIn(0)
+    else
+        ClearFocus()
+        TriggerScreenblurFadeOut(0)
     end
 end
 
@@ -172,6 +188,16 @@ end)
 RegisterNUICallback("Characters/DeleteCharacter", function(Data, Cb)
     DoScreenFadeOut(0)
     FW.TriggerServer("fw-characters:Server:DeleteCharacter", Data)
+    Cb("Ok")
+end)
+
+RegisterNUICallback("Characters/SetView", function(Data, Cb)
+    SetView(Data.View)
+    Cb("Ok")
+end)
+
+RegisterNUICallback("Characters/Disconnect", function(Data, Cb)
+    FW.TriggerServer("fw-characters:Server:Disconnect")
     Cb("Ok")
 end)
 

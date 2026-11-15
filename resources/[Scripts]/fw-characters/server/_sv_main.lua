@@ -12,7 +12,7 @@ FW.Commands.Add("logout", "Ga terug naar het karakterscherm.", {}, false, functi
 end, "admin")
 
 FW.Functions.CreateCallback("fw-characters:Server:GetCharacters", function(Source, Cb)
-    local Result = exports['ghmattimysql']:executeSync("SELECT `citizenid`, `charinfo`, `skin` FROM `players` WHERE `steam` = @Steam ORDER BY `citizenid` ASC", {
+    local Result = exports['ghmattimysql']:executeSync("SELECT `citizenid`, `charinfo`, `skin`, `last_updated` FROM `players` WHERE `steam` = @Steam ORDER BY `citizenid` ASC", {
         ['@Steam'] = GetPlayerIdentifierByType(Source, "steam"),
     })
 
@@ -24,6 +24,7 @@ FW.Functions.CreateCallback("fw-characters:Server:GetCharacters", function(Sourc
             Cid = v.citizenid,
             Name = CharInfo.firstname .. " " .. CharInfo.lastname,
             Skin = json.decode(v.skin),
+            LastPlayed = v.last_updated,
         }
     end
 
@@ -64,6 +65,10 @@ FW.RegisterServer("fw-characters:Server:PlayCharacter", function(Source, Data)
         TriggerClientEvent('fw-charachters:Client:OpenSpawn', Source, Player.PlayerData)
         TriggerEvent("fw-logs:Server:Log", 'joinleave', "Character Loaded", ("User: [%s] - %s\nLoaded CID#: %s"):format(Source, GetPlayerName(Source), Data.Cid), "green")
     end
+end)
+
+FW.RegisterServer("fw-characters:Server:Disconnect", function(Source)
+    DropPlayer(Source, "Disconnected.")
 end)
 
 FW.Functions.CreateCallback("fw-characters:Server:AllowOverride", function(Source, Cb)

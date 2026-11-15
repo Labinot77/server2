@@ -27,7 +27,53 @@
 
     OnEvent("Characters", "SetVisibility", (Data) => {
         Visible = Data.Visible;
+        if (!Visible) { Screen = "splash"; MenuIndex = 0; ShowOptions = false; }
     });
+
+    // Title screen + main menu
+    const Version = "1.0.0";
+    let Screen = "splash"; // splash | menu | characters
+    let MenuIndex = 0;
+    let ShowOptions = false;
+
+    $: LastChar = Characters.reduce((Last, Char) => !Last || (Char.LastPlayed || 0) > (Last.LastPlayed || 0) ? Char : Last, null);
+    $: Panels = [
+        { Label: LastChar ? `Continue as ${LastChar.Name}` : "Create Character", Caption: "Pick up where you left off", Image: "continue" },
+        { Label: "Characters", Caption: "Select or create a character", Image: "characters" },
+        { Label: "Options", Caption: "Adjust your experience", Image: "options" },
+    ];
+
+    const SetView = (View) => {
+        Screen = View;
+        SendEvent("Characters/SetView", { View: View == "characters" ? "peds" : "menu" });
+    };
+
+    const SelectMenu = (Index) => {
+        MenuIndex = Index;
+        if (Index == 0) {
+            if (!LastChar) { SetView("characters"); return OpenCreateForm(); }
+            CurrentCharacter.Cid = LastChar.Cid;
+            return PlayCharacter();
+        }
+        if (Index == 1) return SetView("characters");
+        ShowOptions = true;
+    };
+
+    const OnKey = (e) => {
+        if (!Visible) return;
+        if (Screen == "splash") {
+            if (e.key == "Enter") Screen = "menu";
+        } else if (Screen == "menu") {
+            if (ShowOptions) { if (e.key == "Escape") ShowOptions = false; return; }
+            if (e.key == "ArrowLeft") MenuIndex = (MenuIndex + 2) % 3;
+            else if (e.key == "ArrowRight") MenuIndex = (MenuIndex + 1) % 3;
+            else if (e.key == "Enter") SelectMenu(MenuIndex);
+            else if (e.key == "Escape") Screen = "splash";
+        } else if (e.key == "Escape" && !CurrentCharacter.Delete && !CreateCharacterForm.IsCreating) {
+            CurrentCharacter.Selected = false;
+            SetView("menu");
+        }
+    };
 
     let CreateCharacterForm = {
         IsCreating: false,
@@ -143,11 +189,55 @@
     };
 </script>
 
+<svelte:window on:keydown={OnKey} />
+
 <AppWrapper
     AppName="Characters"
     Focused={Visible}
 >
-    {#if Visible}
+    {#if Visible && Screen == "splash"}
+        <div class="title-screen">
+            <div class="title-logo"><span class="pixel">costa</span><span class="rp">RP</span></div>
+            <p class="title-beta">CLOSED BETA</p>
+            <div class="title-start" on:keyup on:click={() => Screen = "menu"}>PRESS <span class="key dark">⏎</span> TO START</div>
+            <span class="version">{Version}</span>
+        </div>
+    {:else if Visible && Screen == "menu"}
+        <div class="menu-screen">
+            <div class="menu-panels">
+                {#each Panels as Panel, i}
+                    <div class="menu-panel-glow" class:active={MenuIndex == i}>
+                        <div
+                            class="menu-panel panel-{i}"
+                            style="--img: url('./images/characters/{Panel.Image}.jpg')"
+                            on:keyup on:mouseenter={() => MenuIndex = i} on:click={() => SelectMenu(i)}
+                        >
+                            {#if MenuIndex == i}<p class="menu-caption">{Panel.Caption}</p>{/if}
+                        </div>
+                    </div>
+                {/each}
+            </div>
+
+            <div class="menu-buttons">
+                {#each Panels as Panel, i}
+                    <div class="menu-button" class:active={MenuIndex == i} on:keyup on:mouseenter={() => MenuIndex = i} on:click={() => SelectMenu(i)}>{Panel.Label}</div>
+                {/each}
+            </div>
+
+            {#if ShowOptions}
+                <div class="menu-options">
+                    <p>OPTIONS</p>
+                    <div class="menu-button" on:keyup on:click={() => SendEvent("Characters/Disconnect")}>Disconnect</div>
+                    <div class="menu-button active" on:keyup on:click={() => ShowOptions = false}>Back</div>
+                </div>
+            {/if}
+
+            <div class="menu-hints">
+                <span class="key">◂▸</span>MOVE <i>/</i> <span class="key">⏎</span>SELECT <i>/</i> <span class="key">ESC</span>EXIT
+            </div>
+            <span class="version">{Version}</span>
+        </div>
+    {:else if Visible}
         {#if Characters.length > 6}
             <div class="characters-extra">
                 <TextField
@@ -304,6 +394,7 @@
                 </div>
 
                 <div class="character-buttons">
+                    <div class="character-buttons__btn" data-tooltip="Back" on:keyup on:click={() => { CurrentCharacter.Selected = false; SetView("menu"); }}><i class="fas fa-arrow-left"></i></div>
                     {#if CurrentCharacter.Selected}
                         <div class="character-buttons__btn" data-tooltip="Create new Character" on:keyup on:click={OpenCreateForm}><i class="fas fa-plus"></i></div>
                     {/if}
@@ -314,6 +405,173 @@
 </AppWrapper>
 
 <style>
+    .title-screen, .menu-screen {
+        position: absolute;
+        inset: 0;
+        color: white;
+        font-family: 'Barlow Semi Condensed', sans-serif;
+        font-style: italic;
+        font-weight: 800;
+        text-transform: uppercase;
+        user-select: none;
+    }
+
+    .title-screen {
+        background:
+            linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 5vw 5vw,
+            linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 5vw 5vw,
+            radial-gradient(ellipse at center, rgba(0,20,30,.15), rgba(0,10,20,.6));
+    }
+
+    .title-logo {
+        position: absolute;
+        top: 43vh;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        line-height: .8;
+        font-style: normal;
+        text-transform: none;
+    }
+    .title-logo .pixel { font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 13vh; letter-spacing: -.4vh; }
+    .title-logo .rp { font-family: 'Barlow Semi Condensed'; font-weight: 800; font-size: 17vh; margin-left: 1.2vh; }
+
+    .title-beta {
+        position: absolute;
+        top: 63vh;
+        width: 100%;
+        text-align: center;
+        font-size: 2.4vh;
+        text-shadow: 0 0 1vh rgba(0,0,0,.6);
+    }
+
+    .title-start {
+        position: absolute;
+        top: 86.5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 32.3vw;
+        height: 4.4vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: white;
+        color: black;
+        font-size: 1.5vh;
+        cursor: pointer;
+    }
+
+    .key {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 2.2vh;
+        height: 2.2vh;
+        padding: 0 .3vh;
+        margin: 0 .7vh;
+        border-radius: .3vh;
+        background: white;
+        color: black;
+        font-size: 1.2vh;
+        font-style: normal;
+    }
+    .key.dark { background: #1c1c1c; color: white; }
+
+    .version {
+        position: absolute;
+        right: .8vh;
+        bottom: .5vh;
+        font-size: 1.2vh;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    .menu-screen { background: linear-gradient(rgba(10,18,26,.55), rgba(10,18,26,.85)); }
+
+    .menu-panels {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 71vh;
+        -webkit-box-reflect: below 0 linear-gradient(transparent 75%, rgba(0,0,0,.18));
+    }
+
+    .menu-panel-glow { position: absolute; inset: 0; pointer-events: none; transition: filter .2s; }
+    .menu-panel-glow.active { z-index: 1; filter: drop-shadow(0 0 .15vh #3ee8ff) drop-shadow(0 0 .6vh #19c6f0); }
+
+    .menu-panel {
+        position: absolute;
+        inset: 0;
+        pointer-events: auto;
+        cursor: pointer;
+        background: var(--img) center / cover, linear-gradient(160deg, #233645, #0d151d);
+        filter: grayscale(1) brightness(.45);
+        transition: filter .2s;
+    }
+    .active > .menu-panel { filter: none; }
+
+    .panel-0 { clip-path: polygon(0 0, 36.2% 0, 26.8% 100%, 0 100%); }
+    .panel-1 { clip-path: polygon(36.6% 0, 71.6% 0, 62.3% 100%, 27.2% 100%); }
+    .panel-2 { clip-path: polygon(72% 0, 100% 0, 100% 100%, 62.7% 100%); }
+
+    .menu-caption {
+        position: absolute;
+        bottom: 2.6vh;
+        font-size: 1.9vh;
+        text-shadow: 0 0 1vh rgba(0,0,0,.8);
+        transform: translateX(-50%);
+    }
+    .panel-0 .menu-caption { left: 13.4%; }
+    .panel-1 .menu-caption { left: 44.8%; }
+    .panel-2 .menu-caption { left: 81.4%; }
+
+    .menu-buttons {
+        position: absolute;
+        top: 75.8vh;
+        left: 3vw;
+        right: 4.5vw;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.9vw;
+    }
+
+    .menu-button {
+        height: 6.7vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(15,18,22,.85);
+        font-size: 2vh;
+        cursor: pointer;
+    }
+    .menu-button.active { background: white; color: black; }
+
+    .menu-options {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30vw;
+        padding: 2vh;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2vh;
+        background: rgba(10,14,18,.95);
+        border: .15vh solid #3ee8ff;
+        z-index: 2;
+    }
+    .menu-options > p { font-size: 2.4vh; text-align: center; }
+
+    .menu-hints {
+        position: absolute;
+        right: 6vh;
+        bottom: 3.4vh;
+        display: flex;
+        align-items: center;
+        font-size: 1.4vh;
+    }
+    .menu-hints i { margin: 0 1.2vh; opacity: .6; }
+
     .characters-extra {
         position: absolute;
         left: 0;
