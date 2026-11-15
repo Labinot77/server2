@@ -7,7 +7,7 @@ local COLOR = { 149, 239, 119 }
 local OpenDraftMenu
 
 local function Blank()
-    return { Label = '', Price = 250000, Class = 2, MaxDecorations = 150, Height = 4.5, Stash = { Slots = 40, Weight = 1000 },
+    return { Label = '', Price = 250000, Class = 2, MaxDecorations = 150, Height = 4.5, Stash = { Crates = 2, Slots = 40, Weight = 1000 },
         Zone = { points = {} }, FrontDoor = { Doors = {} }, BackDoor = { Doors = {} } }
 end
 
@@ -153,7 +153,7 @@ OpenDraftMenu = function()
         { Title = 'Back door', Icon = 'door-open', Desc = #Draft.BackDoor.Doors .. ' / 2 doors (optional)', SecondMenu = DoorMenu('BackDoor') },
         { Title = 'Spawn point', Icon = 'street-view', Desc = Draft.Spawn and 'Set' or 'Not set (zone centre)', CloseMenu = true, Data = Ev('Spawn') },
         { Title = 'Surfaces', Icon = 'paint-roller', Desc = S.Txd and S.Txd or 'None (no wall / floor colours)', CloseMenu = true, Data = Ev('Surfaces') },
-        { Title = 'Stash', Icon = 'box', Desc = ('%s slots · %s weight'):format(Draft.Stash.Slots, Draft.Stash.Weight), CloseMenu = true, Data = Ev('Stash') },
+        { Title = 'Storage crates', Icon = 'box', Desc = ('%s crates · %s slots · %s weight each'):format(Draft.Stash.Crates or 0, Draft.Stash.Slots, Draft.Stash.Weight), CloseMenu = true, Data = Ev('Stash') },
         { Title = 'Save house', Icon = 'save', Desc = CanSave and 'Creates / updates the house, doors get locked' or 'Needs a name, 3 zone points and a front door', Disabled = not CanSave, CloseMenu = true, Data = Ev('Save') },
         { Title = 'Discard draft', Icon = 'trash', CloseMenu = true, Data = Ev('Discard') },
     } })
@@ -203,7 +203,7 @@ On('Edit', function(D)
     Draft, DraftKey = D.Def, D.Key
     Draft.FrontDoor = Draft.FrontDoor or { Doors = {} }
     Draft.BackDoor = Draft.BackDoor or { Doors = {} }
-    Draft.Stash = Draft.Stash or { Slots = 40, Weight = 1000 }
+    Draft.Stash = Draft.Stash or { Crates = 2, Slots = 40, Weight = 1000 }
     Draft.Height = (Draft.Zone.maxZ or 0) - (Draft.Zone.minZ or 0)
     if not D.Dynamic then FW.Functions.Notify("Saving stores this config house in the database, the database copy wins from now on.", "primary") end
     StartDrawing()
@@ -268,10 +268,11 @@ end)
 
 On('Stash', function()
     local R = Input({
-        { Label = 'Slots', Icon = 'fas fa-th', Name = 'Slots', Value = tostring(Draft.Stash.Slots) },
-        { Label = 'Max weight', Icon = 'fas fa-weight-hanging', Name = 'Weight', Value = tostring(Draft.Stash.Weight) },
+        { Label = 'Max storage crates', Icon = 'fas fa-box', Name = 'Crates', Value = tostring(Draft.Stash.Crates or 2) },
+        { Label = 'Slots per crate', Icon = 'fas fa-th', Name = 'Slots', Value = tostring(Draft.Stash.Slots) },
+        { Label = 'Max weight per crate', Icon = 'fas fa-weight-hanging', Name = 'Weight', Value = tostring(Draft.Stash.Weight) },
     })
-    if R then Draft.Stash = { Slots = tonumber(R.Slots) or Draft.Stash.Slots, Weight = tonumber(R.Weight) or Draft.Stash.Weight } end
+    if R then Draft.Stash = { Crates = tonumber(R.Crates) or Draft.Stash.Crates, Slots = tonumber(R.Slots) or Draft.Stash.Slots, Weight = tonumber(R.Weight) or Draft.Stash.Weight } end
     Reopen()
 end)
 

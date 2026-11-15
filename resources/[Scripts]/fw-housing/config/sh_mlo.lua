@@ -7,6 +7,7 @@ Config = Config or {}
       Zone                  Interior PolyZone. Decorate / house menu (fw-menu) only work inside it.
       Surfaces              Textures of the MLO's .ytd that the owner can recolour (Walls / Floor / Ceiling).
                             Find names with OpenIV / CodeWalker (texture dictionary of the interior).
+      Stash                 Storage crates placed in decorate mode: Crates = how many, Slots / Weight = per crate.
 ]]
 
 Config.MLOHouses = {
@@ -46,14 +47,18 @@ Config.MLOHouses = {
             Ceiling = { 'mloqf3_metal_sheet' },
         },
 
-        Stash = { Slots = 40, Weight = 1000 },
+        Stash = { Crates = 2, Slots = 40, Weight = 1000 },
         MaxDecorations = 150,
     },
 }
 
 Config.MLOTest = { Enabled = true, Permission = 'admin', ChargeMoney = true } -- /buymlo /sellmlo
 
+-- Garage (F1 menu > Place garage): inside the house or within MaxDistanceFromZone of it, around floor height.
 Config.MLOGarage = { MaxDistanceFromZone = 12.0, MaxHeightDifference = 4.0 }
+
+-- Storage is real furniture: crates are stashes (limit per house = Stash.Crates), wardrobes open outfits / sleep.
+Config.Storage = { Crate = 'm23_1_prop_m31_roostercrate_02a', Wardrobe = 'v_res_tre_wardrobe' }
 Config.MLOClearDecorOnSell = true
 
 Config.Decorate = {
@@ -61,6 +66,7 @@ Config.Decorate = {
     Price = 250,            -- price per object when ChargeMoney = true
     RefundPercentage = 50,
     MaxRayDistance = 8.0,
+    UnloadDelay = 5,        -- seconds after leaving the zone before the furniture is deleted
     -- Prop thumbnails (%s = model). Uses kq_propplacer's images while that resource is started.
     Thumbnails = 'https://cfx-nui-kq_propplacer/nui/dist/assets/%s.webp',
     CamSpeed = 3.0,         -- freecam metres per second (SHIFT = x3)
@@ -70,7 +76,7 @@ Config.Decorate = {
     GridSteps = { 0.01, 0.05, 0.1, 0.25, 0.5, 1.0 }, GridInc = 3, -- ALT + scroll, G toggles grid snap
     -- Bottom bar buttons. Categories are the ones from sh_catalog.lua ('Build' = resizable wall), Entities = every prop in fw-dev.
     Groups = {
-        { Name = 'Structure', Icon = 'grid', Categories = { 'Build', 'Walls', 'Doors' } },
+        { Name = 'Structure', Icon = 'grid', Categories = { 'Custom Walls', 'Build', 'Walls', 'Doors' } },
         { Name = 'Office', Icon = 'clipboard', Categories = { 'Office' } },
         { Name = 'Construction', Icon = 'tools', Categories = { 'Construction', 'Industrial', 'Garage', 'Equipment' } },
         { Name = 'Outdoor', Icon = 'tree', Categories = { 'Outdoor', 'Outdoor furniture', 'Plants' } },
@@ -102,6 +108,28 @@ Config.Walls = {
     Presets = { Door = { W = 1.0, H = 2.25, Z = 0.0 }, Window = { W = 1.0, H = 1.0, Z = 1.0 } },
 }
 
+-- Custom walls (tools/make_custom_walls.py, resource fw-custom-walls): one prop per material and size, with collision.
+-- Colourable: the paint bucket picks a row of TintColors (row 1 = white = the texture's own colours).
+-- Model = fw_cw_<material>_<size>. Change materials / sizes / colours here AND in the script, then rebuild.
+Config.CustomWalls = {
+    Txd = 'fw_custom_walls',
+    TintColors = {
+        '#FFFFFF', '#EADDC4', '#CDB891', '#B5B5B5', '#6E6E6E', '#2B2B2B', '#9CAF88', '#2F4B37',
+        '#9EC5E0', '#2E4A7D', '#B5583B', '#E3B5B0', '#D4A63A', '#8A6239', '#5A3D26', '#7A2633',
+    },
+    Materials = {
+        { Id = 'plaster', Label = 'Plaster Wall Panel' }, { Id = 'woodlight', Label = 'Hardwood Wall Light' },
+        { Id = 'wooddark', Label = 'Hardwood Wall Dark' }, { Id = 'tile', Label = 'Tile Wall Panel' },
+        { Id = 'brick', Label = 'Brick Wall' }, { Id = 'brickred', Label = 'Brick Wall B' },
+        { Id = 'stone', Label = 'Stone Wall' }, { Id = 'marble', Label = 'White Marble Wall' },
+    },
+    Sizes = { -- metres, 10 cm thick
+        { Id = 'xs', Label = 'XS', W = 0.5, H = 0.5 }, { Id = 's', Label = 'Small', W = 1.0, H = 1.0 },
+        { Id = 'm', Label = 'Medium', W = 1.0, H = 2.5 }, { Id = 'l', Label = 'Large', W = 2.0, H = 2.5 },
+        { Id = 'xl', Label = 'XL', W = 3.0, H = 3.0 },
+    },
+}
+
 -- // Derived (don't edit) \\ --
 
 Config.DecorByModel = {}
@@ -111,11 +139,22 @@ for _, Cat in ipairs(Config.DecorCatalog) do
     end
 end
 
--- Props from fw-dev (config/sh_entities.lua, { [hash] = name }), fetched once through its export. Empty when fw-dev isn't running.
+Config.CustomWalls.List = {} -- { { Model, Label, Material, W, H } } in catalog order
+for _, M in ipairs(Config.CustomWalls.Materials) do
+    for _, S in ipairs(Config.CustomWalls.Sizes) do
+        local Model = ('fw_cw_%s_%s'):format(M.Id, S.Id)
+        Config.CustomWalls.List[#Config.CustomWalls.List + 1] = { Model = Model, Label = M.Label .. ' ' .. S.Label, Material = M.Id, W = S.W, H = S.H }
+        Config.DecorByModel[Model] = { Type = 'furniture', Category = 'Custom Walls', Tint = true }
+    end
+end
+Config.DecorByModel[Config.Storage.Crate] = { Type = 'crate', Category = 'Storage' }
+Config.DecorByModel[Config.Storage.Wardrobe] = { Type = 'wardrobe', Category = 'Storage' }
+
+-- Props from fw-dev (config/sh_entities.lua, { [hash] = name }): included by the manifest, else through its export.
 local EntityList = nil
 function GetEntityList()
     if EntityList == nil then
-        local Ok, List = pcall(function() return exports['fw-dev']:GetEntities() end)
+        local Ok, List = pcall(function() return Config.Entities or exports['fw-dev']:GetEntities() end)
         EntityList = Ok and type(List) == 'table' and List or {}
     end
     return EntityList
@@ -235,8 +274,14 @@ function GetMloDoors(Key)
     return List
 end
 
+local CustomWallLabels = {}
+for _, W in ipairs(Config.CustomWalls.List) do CustomWallLabels[W.Model] = W.Label end
+
 function GetItemLabel(Model)
     if Model == 'fw_wall' then return 'Wall' end
+    if CustomWallLabels[Model] then return CustomWallLabels[Model] end
+    if Model == Config.Storage.Crate then return 'Storage Crate' end
+    if Model == Config.Storage.Wardrobe then return 'Wardrobe' end
     return (Model:gsub('^%a+_mp_h_', ''):gsub('^%a+_prop_', ''):gsub('^prop_', ''):gsub('^v_%a+_', ''):gsub('_', ' '):gsub('^%l', string.upper))
 end
 

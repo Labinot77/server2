@@ -473,6 +473,16 @@ Config.Menu = {
         end,
     },
     {
+        Id = "mlo_garage",
+        Title = "Place Garage",
+        Icon = "#citizen-action-garage",
+        Close = true,
+        Event = "fw-housing:Client:Mlo:PlaceGarage",
+        Enabled = function()
+            return not exports['fw-medical']:GetDeathStatus() and exports['fw-housing']:CanPlaceMloGarage()
+        end,
+    },
+    {
         Id = "jail_current_task",
         Title = "Current Task",
         Icon = "#jail-current-task",

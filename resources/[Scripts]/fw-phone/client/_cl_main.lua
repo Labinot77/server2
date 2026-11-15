@@ -371,6 +371,7 @@ function OpenPhone(IsPressed, IsBurner)
         },
     })
 
+    SetPhoneFolded(not IsBurner and GetPhoneSetting('Unfold'))
     StartPhoneAnim()
 end
 

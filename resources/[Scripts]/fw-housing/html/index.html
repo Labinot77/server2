@@ -3,98 +3,107 @@
 <head>
 <meta charset="utf-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&display=swap');
-:root { --dark: rgba(16,16,18,.82); --text: #fff; --ink: #141414; --muted: #8d8d94; --green: #4fe36b; --red: #ff3b4e; --warn: #ffb52e; --teal: #3ad6c7; --blue: #1e9bff; }
+/* Sizes are measured from a 1079px tall reference (1vh = 10.79px). */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,500;1,600;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600&display=swap');
+:root { --ink: #121214; --paper: #f1f1f1; --muted: #8e8f96; --green: #4fe36b; --red: #ff3b4e; --warn: #ffb52e; --teal: #2fdccb; --tile: rgba(14, 16, 18, .92); --panel: rgba(18, 20, 24, .85); }
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(--text); font: italic 700 1.4vh 'Saira Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; }
-.sh { text-shadow: 0 .1vh .4vh rgba(0,0,0,.8); }
+body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: #fff; font: italic 700 1.48vh 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; }
+.sh { text-shadow: 0 .1vh .3vh rgba(0, 0, 0, .7); }
 #view { position: absolute; inset: 0; }
 .hidden { display: none !important; }
 
-/* // left info \\ */
-#info { position: absolute; left: 1vh; top: 5vh; width: 24vh; display: flex; flex-direction: column; gap: .7vh; }
-#address { font-size: 2.4vh; font-weight: 800; letter-spacing: .05vh; }
-.limit { background: #f2f2f2; color: var(--ink); display: flex; justify-content: space-between; padding: .25vh .8vh; font-size: 1.45vh; }
-.bar { height: .7vh; background: rgba(0,0,0,.55); margin-top: -.7vh; } .bar div { height: 100%; background: var(--teal); }
-#mode { font-size: 1.15vh; letter-spacing: .35vh; }
-#unsaved { font-size: 1.1vh; color: var(--warn); }
-#object { display: flex; flex-direction: column; gap: .5vh; margin-top: .8vh; }
-#oname { border-left: .35vh solid #fff; padding: .2vh .9vh; font-size: 1.55vh; background: linear-gradient(90deg, rgba(0,0,0,.55), transparent); }
-.req-h { background: #f2f2f2; color: var(--ink); font-size: 1.1vh; padding: .1vh .8vh; }
-.req { display: flex; justify-content: space-between; padding: 0 .8vh; font-size: 1.45vh; }
-.req .bad { color: var(--red); }
-#warn { background: linear-gradient(90deg, rgba(110,10,18,.75), rgba(40,0,5,.35)); padding: .7vh .8vh; display: flex; flex-direction: column; gap: .4vh; font-size: 1.15vh; text-transform: none; }
-#warn b { color: var(--red); display: flex; align-items: center; gap: .6vh; font-weight: 700; }
-#warn span { color: var(--warn); font-weight: 600; }
+/* // left column \\ */
+#info { position: absolute; left: 4.45vh; top: 4.45vh; width: 22.25vh; }
+#address { font-size: 2.05vh; font-weight: 800; height: 2.75vh; line-height: 2.75vh; letter-spacing: .03vh; }
+#limits { margin-top: .45vh; height: 3.25vh; background: var(--paper); color: var(--ink); display: flex; align-items: center; justify-content: space-between; padding: 0 1.3vh; font-size: 1.48vh; letter-spacing: .12vh; }
+#bar { height: 1.1vh; background: rgba(8, 8, 8, .95); } #bar div { height: 100%; background: var(--teal); }
+#stats { display: flex; gap: 1.1vh; margin-top: .55vh; }
+.stat { flex: 1; height: 2.2vh; background: rgba(40, 38, 40, .7); border-bottom: .2vh solid #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 .65vh 0 .9vh; font-size: 1.38vh; }
+.stat svg { width: 1.3vh; height: 1.3vh; fill: #fff; }
+#mode { margin-top: 1.3vh; font-size: 1.2vh; letter-spacing: .55vh; font-weight: 800; }
+#unsaved { margin-top: .5vh; font-size: 1.1vh; color: var(--warn); letter-spacing: .05vh; }
+
+#object { margin-top: 1.4vh; display: flex; flex-direction: column; gap: .55vh; }
+#oname { border-left: .35vh solid #fff; padding: .2vh .9vh; font-size: 1.55vh; background: linear-gradient(90deg, rgba(0, 0, 0, .55), transparent); }
+.head { background: var(--paper); color: var(--ink); font-size: 1.1vh; padding: .15vh .8vh; display: flex; justify-content: space-between; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 0 .8vh; font-size: 1.38vh; }
+.row .v { font-family: 'Barlow Semi Condensed', sans-serif; font-style: normal; font-weight: 600; font-size: 1.2vh; text-transform: none; }
+.row .bad { color: var(--red); }
+.btns { display: flex; gap: .55vh; padding: 0 .8vh; }
+.btn { flex: 1; text-align: center; padding: .35vh 0; background: rgba(40, 38, 40, .75); cursor: pointer; font-size: 1.2vh; }
+.btn:hover { background: var(--paper); color: var(--ink); }
+#warn { background: linear-gradient(90deg, rgba(110, 10, 18, .75), rgba(40, 0, 5, .35)); padding: .7vh .8vh; display: flex; flex-direction: column; gap: .4vh; font-size: 1.15vh; text-transform: none; }
+#warn b { color: var(--red); font-weight: 700; }
+#warn span { color: var(--warn); font-family: 'Barlow Semi Condensed', sans-serif; font-style: normal; font-weight: 600; word-break: break-word; }
 
 /* // right hints \\ */
-#hints { position: absolute; right: 1.2vh; top: 4vh; display: flex; flex-direction: column; align-items: flex-end; gap: 1vh; }
-.modes { display: flex; gap: 1.4vh; margin-bottom: .6vh; }
-.modes div { display: flex; align-items: center; gap: .7vh; cursor: pointer; opacity: .45; font-size: 1.75vh; }
-.modes div.on { opacity: 1; }
-.hint { display: flex; align-items: center; gap: .7vh; font-size: 1.75vh; }
-.hint .lbl { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
-.hint small { font-size: 1.15vh; color: var(--muted); }
+#hints { position: absolute; right: 5vh; top: 5.3vh; display: flex; flex-direction: column; align-items: flex-end; gap: 2.04vh; }
+.modes { display: flex; gap: 3.05vh; }
+.modes div { display: flex; align-items: center; gap: .95vh; cursor: pointer; color: rgba(255, 255, 255, .45); }
+.modes div .key { background: rgba(241, 241, 241, .45); }
+.modes div.on { color: #fff; } .modes div.on .key { background: var(--paper); }
+.hint { display: flex; align-items: center; gap: 1.2vh; height: 1.85vh; }
 .hint.g .lbl { color: var(--green); } .hint.r .lbl { color: var(--red); }
-.key { background: #f2f2f2; color: var(--ink); min-width: 2.9vh; height: 2.9vh; padding: 0 .6vh; border-radius: .3vh; display: inline-flex; align-items: center; justify-content: center; font-size: 1.35vh; font-style: normal; }
+.ico { position: relative; display: flex; align-items: center; gap: .4vh; }
+.ico small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-size: .95vh; color: #d8d8d8; white-space: nowrap; }
+.key { background: var(--paper); color: var(--ink); min-width: 1.85vh; height: 1.85vh; padding: 0 .45vh; border-radius: .15vh; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2vh; font-style: normal; font-weight: 700; }
 .plus { font-size: 1.1vh; color: #ddd; }
-.ico-m { width: 2.4vh; height: 2.9vh; }
-.sep { width: 9vh; height: .1vh; background: rgba(255,255,255,.25); margin: .3vh 0; }
+.ico svg { width: 1.85vh; height: 2.05vh; }
+.sep { width: 4.35vh; height: .1vh; background: rgba(255, 255, 255, .35); margin: -.37vh -1.1vh -.37vh 0; }
 
 /* // bottom catalog \\ */
-#shop { position: absolute; left: 0; right: 0; bottom: 0; }
-#group { position: absolute; left: 1.1vh; bottom: 22.4vh; font-size: 1.1vh; letter-spacing: .2vh; }
-#cats { position: absolute; left: 1.1vh; bottom: 16.6vh; display: flex; gap: .9vh; }
-.cat { width: 4.2vh; height: 4.2vh; background: rgba(12,12,14,.85); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5vh; font-style: normal; }
-.cat svg { width: 2.4vh; height: 2.4vh; fill: #fff; }
-.cat.on { background: #f2f2f2; color: var(--ink); } .cat.on svg { fill: var(--ink); }
-.cat .n { border: .15vh solid currentColor; padding: 0 .4vh; font-size: 1.2vh; }
-#searchbox { position: absolute; right: 1.1vh; bottom: 16.6vh; display: flex; align-items: center; gap: 1.2vh; }
-.search { display: flex; align-items: center; gap: .8vh; background: rgba(12,12,14,.6); padding: 0 1vh; height: 4.2vh; }
-.search svg { width: 1.8vh; height: 1.8vh; fill: #fff; }
-#search { width: 22vh; background: none; border: 0; outline: none; color: #fff; font: inherit; font-size: 2.2vh; text-transform: uppercase; user-select: text; }
-#search::placeholder { color: rgba(255,255,255,.4); }
-#total { background: #f2f2f2; color: var(--ink); height: 4.2vh; padding: 0 1.3vh; display: flex; align-items: center; font-size: 1.9vh; }
-#grid { position: absolute; left: 0; right: 0; bottom: 0; height: 15.6vh; padding: .6vh 1.1vh; background: linear-gradient(0deg, rgba(10,10,12,.9), rgba(10,10,12,.6));
-    display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, 7vh); grid-auto-columns: 9.2vh; gap: .6vh .5vh; overflow-x: auto; overflow-y: hidden; }
-#grid::-webkit-scrollbar { height: .4vh; } #grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35); }
-.tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: .25vh; cursor: pointer; border: .2vh solid transparent; padding: .2vh; background: rgba(255,255,255,.04); }
-.tile:hover { background: rgba(255,255,255,.1); }
+#shop { position: absolute; left: 0; right: 0; bottom: 0; height: 30vh; }
+#group { position: absolute; left: 4.45vh; bottom: 26.6vh; font-size: 1.05vh; letter-spacing: .3vh; font-weight: 800; }
+#cats { position: absolute; left: 4.45vh; bottom: 20.5vh; display: flex; gap: .55vh; }
+.cat { width: 4.45vh; height: 4.45vh; background: var(--panel); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.6vh; font-style: normal; }
+.cat svg { width: 2.2vh; height: 2.2vh; fill: #fff; }
+.cat.on { background: var(--paper); color: var(--ink); } .cat.on svg { fill: var(--ink); }
+.cat.gap { margin-right: .55vh; } .cat.gapl { margin-left: .55vh; }
+.cat .n { border: .15vh solid currentColor; border-radius: .15vh; padding: 0 .35vh; font-size: 1.2vh; line-height: 1.55vh; font-weight: 700; }
+#searchbox { position: absolute; right: 4vh; bottom: 20.5vh; display: flex; gap: 1.1vh; height: 4.45vh; }
+.search { width: 27.15vh; display: flex; align-items: center; gap: 1.1vh; background: var(--panel); padding: 0 1.2vh; }
+.search svg { width: 1.85vh; height: 1.85vh; fill: #fff; flex: none; }
+#search { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: #fff; font: inherit; font-size: 2.04vh; font-weight: 800; text-transform: uppercase; user-select: text; }
+#search::placeholder { color: rgba(255, 255, 255, .35); }
+#total { background: var(--paper); color: var(--ink); padding: 0 1.2vh; display: flex; align-items: center; font-size: 1.48vh; }
+#grid { position: absolute; left: 4.45vh; right: 0; bottom: 3.25vh; height: 16.05vh; padding-right: 4.45vh;
+    display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, 7.1vh); grid-auto-columns: 9.9vh; gap: .75vh .7vh; align-content: start; overflow-x: auto; overflow-y: hidden; }
+#grid::-webkit-scrollbar { height: .37vh; } #grid::-webkit-scrollbar-track { background: transparent; } #grid::-webkit-scrollbar-thumb { background: #aaacb2; }
+.tile { position: relative; background: var(--tile); border: .2vh solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .55vh .6vh .5vh; }
+.tile:hover { border-color: rgba(255, 255, 255, .35); }
 .tile.on { border-color: #fff; }
-.thumb { width: 100%; height: 4.6vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.thumb img { max-width: 100%; max-height: 100%; }
-.thumb i { font-size: 1.8vh; color: rgba(255,255,255,.35); }
-.tile span { width: 100%; text-align: center; font-size: 1.2vh; font-weight: 600; font-style: normal; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.zoom { position: absolute; top: .2vh; right: .2vh; width: 1.7vh; height: 1.7vh; background: var(--blue); display: flex; align-items: center; justify-content: center; }
-.zoom svg { width: 1.1vh; height: 1.1vh; fill: #fff; }
-#preview { position: absolute; width: 18vh; height: 18vh; background: rgba(10,10,12,.92); border: .2vh solid #fff; display: none; align-items: center; justify-content: center; pointer-events: none; }
-#preview img { max-width: 92%; max-height: 92%; }
+.thumb { width: 100%; height: 3.9vh; display: flex; align-items: center; justify-content: center; }
+.thumb img { max-width: 80%; max-height: 100%; }
+.thumb .panel { background-size: 2.6vh 2.6vh; box-shadow: 0 .1vh .3vh rgba(0, 0, 0, .5); }
+.thumb i { font-size: 1.8vh; color: rgba(255, 255, 255, .3); font-style: normal; }
+.tile span { width: 100%; text-align: center; font: 600 1.15vh 'Barlow Semi Condensed', sans-serif; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bucket { position: absolute; top: .75vh; right: .65vh; width: 1.75vh; height: 1.75vh; background: rgba(26, 46, 51, .95); display: flex; align-items: center; justify-content: center; }
+.bucket svg { width: 1.15vh; height: 1.15vh; fill: #5dd0dd; }
 
-/* // options menu (right click) \\ */
-#options { position: absolute; width: 23vh; background: rgba(12,12,14,.94); display: none; flex-direction: column; }
-#options .head { background: #f2f2f2; color: var(--ink); padding: .4vh .9vh; font-size: 1.4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#options .opt { padding: .65vh .9vh; cursor: pointer; display: flex; justify-content: space-between; font-size: 1.35vh; }
-#options .opt:hover { background: rgba(255,255,255,.12); }
+/* // right click options \\ */
+#options { position: absolute; width: 23vh; background: rgba(12, 12, 14, .94); display: none; flex-direction: column; padding-bottom: .3vh; }
+#options .head { font-size: 1.4vh; padding: .4vh .9vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#options .opt { padding: .6vh .9vh; cursor: pointer; display: flex; justify-content: space-between; font-size: 1.35vh; }
+#options .opt:hover { background: rgba(255, 255, 255, .12); }
 #options .opt.r { color: var(--red); }
-#options .sub { padding: .4vh .9vh 0; font-size: 1vh; color: var(--muted); letter-spacing: .2vh; }
+#options .sub { padding: .5vh .9vh .2vh; font-size: 1vh; color: var(--muted); letter-spacing: .2vh; }
+.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: .4vh; padding: .3vh .9vh .5vh; }
+.swatches div { height: 2.2vh; cursor: pointer; border: .2vh solid transparent; }
+.swatches div:hover { border-color: rgba(255, 255, 255, .6); } .swatches div.on { border-color: #fff; }
 .kv { display: flex; gap: .4vh; padding: .2vh .9vh; align-items: center; }
 .kv label { width: 5.5vh; font-size: 1.15vh; }
 .kv label.x { color: #ff6b6b; } .kv label.y { color: #6be37f; } .kv label.z { color: #5f9dff; }
-.kv input { flex: 1; min-width: 0; background: rgba(255,255,255,.08); border: .1vh solid rgba(255,255,255,.1); color: #fff; padding: .35vh .6vh; font: inherit; font-size: 1.2vh; font-style: normal; outline: none; user-select: text; }
+.kv input { flex: 1; min-width: 0; background: rgba(255, 255, 255, .08); border: .1vh solid rgba(255, 255, 255, .1); color: #fff; padding: .35vh .6vh; font: 600 1.2vh 'Barlow Semi Condensed', sans-serif; outline: none; user-select: text; }
 .kv input:focus { border-color: #fff; }
-.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: .4vh; padding: .3vh .9vh .6vh; }
-.swatches div { height: 2.2vh; cursor: pointer; border: .2vh solid transparent; }
-.swatches div:hover { border-color: rgba(255,255,255,.6); } .swatches div.on { border-color: #fff; }
-.hole { border-top: .1vh solid rgba(255,255,255,.08); padding-bottom: .3vh; }
+.hole { border-top: .1vh solid rgba(255, 255, 255, .08); padding-bottom: .3vh; }
 
 /* // close modal \\ */
-#modal { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.4); }
-#modal .box { width: 32vh; background: rgba(12,12,14,.95); }
-#modal .head { background: #f2f2f2; color: var(--ink); padding: .5vh 1vh; font-size: 1.6vh; }
-#modal p { padding: 1.2vh 1vh; font-size: 1.3vh; color: #ccc; text-transform: none; font-weight: 600; }
-#modal .row { display: flex; gap: .6vh; padding: 0 1vh 1vh; justify-content: flex-end; }
-.btn { padding: .5vh 1.2vh; background: rgba(255,255,255,.1); cursor: pointer; font-size: 1.3vh; }
-.btn:hover { background: rgba(255,255,255,.2); } .btn.w { background: #f2f2f2; color: var(--ink); } .btn.r:hover { background: var(--red); }
+#modal { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, .4); }
+#modal .box { width: 32vh; background: rgba(12, 12, 14, .95); }
+#modal .head { font-size: 1.6vh; padding: .5vh 1vh; }
+#modal p { padding: 1.2vh 1vh; font: 600 1.3vh 'Barlow Semi Condensed', sans-serif; color: #ccc; text-transform: none; }
+#modal .btns { padding: 0 1vh 1vh; }
+#modal .btn.w { background: var(--paper); color: var(--ink); } #modal .btn.r:hover { background: var(--red); color: #fff; }
 </style>
 </head>
 <body>
@@ -102,12 +111,14 @@ body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(
 
 <div id="info" class="sh">
     <div id="address"></div>
-    <div class="limit"><span>Object Limits</span><span id="limit">000/000</span></div>
-    <div class="bar"><div id="limitbar"></div></div>
+    <div id="limits"><span>Object Limits</span><span id="limit">000/000</span></div>
+    <div id="bar"><div id="limitbar"></div></div>
+    <div id="stats"></div>
     <div id="mode">Build Mode</div>
     <div id="unsaved" class="hidden">Unsaved changes · Ctrl+S save</div>
     <div id="object" class="hidden">
         <div id="oname"></div>
+        <div id="transform"></div>
         <div id="reqs"></div>
         <div id="warn" class="hidden"><b>⚠ Error/Warning</b><span id="warntext"></span></div>
     </div>
@@ -119,19 +130,19 @@ body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: var(
     <div id="group">Any</div>
     <div id="cats"></div>
     <div id="searchbox">
-        <div class="search"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg><input id="search" placeholder="Search"></div>
+        <div class="search"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2.6a5.4 5.4 0 1 0 0 10.8 5.4 5.4 0 0 0 0-10.8z"/></svg><input id="search" placeholder="Search"></div>
         <div id="total">Total: 0/0</div>
     </div>
     <div id="grid"></div>
 </div>
-<div id="preview"></div>
 
 <div id="options"></div>
+<textarea id="clipboard" style="position:absolute;left:-100vw"></textarea>
 
 <div id="modal"><div class="box">
     <div class="head">Unsaved Changes</div>
     <p>Save your changes before you close the editor?</p>
-    <div class="row"><div class="btn" onclick="hide('modal')">Cancel</div><div class="btn r" onclick="post('close',{Save:false})">Discard</div><div class="btn w" onclick="post('close',{Save:true})">Save</div></div>
+    <div class="btns"><div class="btn" onclick="hide('modal')">Cancel</div><div class="btn r" onclick="post('close',{Save:false})">Discard</div><div class="btn w" onclick="post('close',{Save:true})">Save</div></div>
 </div></div>
 
 <script>
@@ -142,6 +153,7 @@ const esc = t => String(t).replace(/[<>&"]/g, c => `&#${c.charCodeAt(0)};`);
 const title = t => String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const label = m => title(m.replace(/^[a-z]+_mp_h_/, '').replace(/^[a-z]+_prop_/, '').replace(/^prop_/, '').replace(/^v_[a-z]+_/, ''));
 const money = n => '$' + Math.floor(n).toLocaleString('en-US');
+const num = (v, d) => (+v).toFixed(d);
 
 let catalog = [], groups = [], entities = [], colors = [], thumb = '', s = { List: [] }, group = -1, picked = null, shown = [], drawn = 0;
 let lmb = false, rmb = false, rmbMoved = false, look = [0, 0], busy = false, clip = null, warnTimer = 0;
@@ -158,13 +170,16 @@ const P = {
     plug: 'M8 2h2v5h4V2h2v5h2v5a6 6 0 0 1-5 5.9V22h-2v-4.1A6 6 0 0 1 6 12V7h2z',
     briefcase: 'M9 3h6a2 2 0 0 1 2 2v2h4v13H3V7h4V5a2 2 0 0 1 2-2zm0 2v2h6V5z',
     kit: 'M9 3h6v3h5a1 1 0 0 1 1 1v13H3V7a1 1 0 0 1 1-1h5zm2 2v1h2V5zm0 5v3H8v2h3v3h2v-3h3v-2h-3v-3z',
-    zoom: 'M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
+    bucket: 'M10.6 2.3l9.1 9.1-7.8 7.8a2 2 0 0 1-2.8 0L2.8 13a2 2 0 0 1 0-2.8l5.5-5.5-2-2L7.7 1.3zm-.9 3.8L4.9 11h11.6zM20 14.5s2 2.4 2 3.8a2 2 0 0 1-4 0c0-1.4 2-3.8 2-3.8z',
+    crate: 'M3 7l9-4 9 4v10l-9 4-9-4zm9-1.8L6.6 7.6 12 10l5.4-2.4zM5 9.3v6.4l6 2.7v-6.4z',
+    hanger: 'M12 3a3 3 0 0 1 1 5.8V10l9 6.5V19H2v-2.5L11 10V8h2V6.9A1 1 0 1 0 11 6H9a3 3 0 0 1 3-3zm0 9.3L4.6 17h14.8z',
+    brick: 'M2 5h9v4H2zm11 0h9v4h-9zM2 11h4v4H2zm6 0h8v4H8zm10 0h4v4h-4zM2 17h9v4H2zm11 0h9v4h-9z',
 };
 const svg = n => `<svg viewBox="0 0 24 24"><path d="${P[n]}"/></svg>`;
-// Mouse with the used button filled: l, r, m (scroll), a (any / look).
-const mouse = b => `<svg class="ico-m" viewBox="0 0 20 26" fill="none" stroke="#fff" stroke-width="1.8"><rect x="2" y="1.5" width="16" height="23" rx="8"/><path d="M10 1.5v9M2 10.5h16"/>`
-    + (b === 'l' ? '<path d="M3 10.5V9a7 7 0 0 1 7-7v8.5z" fill="#fff"/>' : b === 'r' ? '<path d="M17 10.5V9a7 7 0 0 0-7-7v8.5z" fill="#fff"/>' : b === 'm' ? '<rect x="8.3" y="4" width="3.4" height="5" rx="1.7" fill="#fff"/>' : '') + '</svg>';
-const selIcon = '<svg class="ico-m" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="6.5" r="2"/><circle cx="12" cy="17.5" r="2"/><circle cx="6.5" cy="12" r="2"/><circle cx="17.5" cy="12" r="2"/></svg>';
+// Mouse with the used button filled: l, r, m (wheel), '' (look).
+const mouse = b => `<svg viewBox="0 0 20 24" fill="none" stroke="#fff" stroke-width="1.7"><rect x="2.5" y="1" width="15" height="22" rx="7.5"/><path d="M10 1v8.5M2.5 9.5h15"/>`
+    + (b === 'l' ? '<path d="M3.4 9.5V8.5a6.6 6.6 0 0 1 6.6-6.6v7.6z" fill="#fff"/>' : b === 'r' ? '<path d="M16.6 9.5V8.5A6.6 6.6 0 0 0 10 1.9v7.6z" fill="#fff"/>' : b === 'm' ? '<rect x="8.4" y="3.5" width="3.2" height="4.6" rx="1.6" fill="#fff"/>' : '') + '</svg>';
+const selIcon = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 3.2l-2.6 3h5.2zm0 15.6l2.6-3H9.4zM4.2 12l3 2.6V9.4zm15.6 0l-3-2.6v5.2z"/></svg>';
 const key = k => `<span class="key">${k}</span>`;
 
 // // Catalog \\
@@ -175,11 +190,20 @@ function items() {
     return g ? catalog.filter(i => g.Categories.includes(i.C)) : catalog;
 }
 
+function thumbHtml(i) {
+    if (i.I) { // custom wall: texture swatch shaped like the panel
+        const w = i.A >= 1 ? Math.min(7.6, 3.9 * i.A) : 3.9 * i.A, h = i.A >= 1 ? w / i.A : 3.9;
+        return `<div class="panel" style="width:${w}vh;height:${h}vh;background-image:url(${i.I})"></div>`;
+    }
+    if (i.W || !thumb) return '<i>▦</i>';
+    return `<img src="${thumb.replace('%s', i.M)}" loading="lazy" onerror="this.outerHTML='<i>▦</i>'">`;
+}
+
 function tile(i) {
     const name = i.L || label(i.M);
     const on = picked === (i.Key || i.M) ? 'on' : '';
-    const img = i.W || !thumb ? `<i>▦</i>` : `<img src="${thumb.replace('%s', i.M)}" loading="lazy" onerror="this.outerHTML='<i>▦</i>'">`;
-    return `<div class="tile ${on}" data-m="${esc(i.M)}" data-k="${i.Key || ''}" data-w="${i.W ? 1 : ''}">${i.W || !thumb ? '' : `<div class="zoom">${svg('zoom')}</div>`}<div class="thumb">${img}</div><span>${esc(i.D !== undefined ? `${name} · ${i.D.toFixed(1)}m` : name)}</span></div>`;
+    return `<div class="tile ${on}" data-m="${esc(i.M)}" data-k="${i.Key || ''}" data-w="${i.W ? 1 : ''}">${i.T ? `<div class="bucket">${svg('bucket')}</div>` : ''}`
+        + `<div class="thumb">${thumbHtml(i)}</div><span>${esc(i.D !== undefined ? `${name} · ${i.D.toFixed(1)}m` : name)}</span></div>`;
 }
 
 const PAGE = 300;
@@ -210,21 +234,13 @@ $('grid').addEventListener('click', e => {
     picked = t.dataset.m;
     post('spawn', t.dataset.w ? { Wall: true } : { Model: t.dataset.m });
 });
-$('grid').addEventListener('mouseover', e => {
-    const z = e.target.closest('.zoom'), p = $('preview');
-    if (!z) return p.style.display = 'none';
-    const r = z.getBoundingClientRect(), m = z.closest('.tile').dataset.m;
-    p.innerHTML = `<img src="${thumb.replace('%s', m)}">`;
-    p.style.left = Math.min(r.left, innerWidth - p.offsetWidth - 10) + 'px';
-    p.style.top = (r.top - innerHeight * .19) + 'px';
-    p.style.display = 'flex';
-});
-$('grid').addEventListener('mouseleave', () => hide('preview'));
 $('search').addEventListener('input', drawGrid);
 
+// Layout of the screenshots: [placed] | groups | [E], with a wider gap around the outer two.
 function drawCats() {
-    $('cats').innerHTML = `<div class="cat ${group === -2 ? 'on' : ''}" data-g="-2"><span class="n">${s.Placed ?? 0}</span></div>`
-        + groups.map((g, i) => `<div class="cat ${group === i ? 'on' : ''}" data-g="${i}" title="${esc(g.Name)}">${P[g.Icon] ? svg(g.Icon) : esc(g.Icon)}</div>`).join('');
+    const last = groups.length - 1;
+    $('cats').innerHTML = `<div class="cat gap ${group === -2 ? 'on' : ''}" data-g="-2"><span class="n">${s.Placed ?? 0}</span></div>`
+        + groups.map((g, i) => `<div class="cat ${i === last && g.Entities ? 'gapl' : ''} ${group === i ? 'on' : ''}" data-g="${i}" title="${esc(g.Name)}">${P[g.Icon] ? svg(g.Icon) : esc(g.Icon)}</div>`).join('');
 }
 $('cats').addEventListener('click', e => {
     const c = e.target.closest('.cat');
@@ -242,11 +258,11 @@ function warn(text) {
 }
 
 function hintRows() {
-    const H = (icon, text, cls = '', sub = '') => `<div class="hint ${cls}">${icon}<div class="lbl"><span>${text}</span>${sub ? `<small>${sub}</small>` : ''}</div></div>`;
-    const sep = '<div class="sep"></div>', plus = '<span class="plus">+</span>';
+    const H = (icon, text, cls = '', sub = '') => `<div class="hint ${cls}"><div class="ico">${icon}${sub ? `<small>${sub}</small>` : ''}</div><span class="lbl">${text}</span></div>`;
+    const plus = '<span class="plus">+</span>', sep = '<div class="sep"></div>';
     const tail = [sep, H(key('Esc'), 'Close'), H(key('Y'), 'Tint'), H(key('L'), 'Link Mode', s.Link ? 'g' : ''), H(key('M'), 'Shopping Mode', s.Shop ? '' : 'r')];
-    if (s.Placing) return [H(mouse('a'), 'Look'), H(mouse('l'), 'Place', 'g'), H(mouse('r'), 'Options', 'g'), H(mouse('m'), `Rotate (${s.Rot}°)`), H(key('R'), `Change Rotation (${s.Axis})`), H(selIcon, 'Selection'), ...tail];
-    if (!s.Sel) return [H(mouse('a'), 'Look'), H(mouse('l'), 'Selection'), H(key('Ctrl') + plus + key('Z'), 'Undo'), H(key('Ctrl') + plus + key('S'), 'Save'), ...tail];
+    if (s.Placing) return [H(mouse(''), 'Look'), H(mouse('l'), 'Place', 'g'), H(mouse('r'), 'Options', 'g'), H(selIcon, 'Selection'), ...tail];
+    if (!s.Sel) return [H(mouse(''), 'Look', '', `${s.Multi || 0}/${s.MaxSelect || 10}`), H(selIcon, 'Selection'), ...tail];
     return [
         H(key('Ctrl') + plus + mouse('l'), 'Multi-Select', '', `${s.Multi}/${s.MaxSelect}`),
         H(mouse('m'), `Rotate (${s.Rot}°)`),
@@ -255,10 +271,30 @@ function hintRows() {
         H(key('Alt') + plus + mouse('m'), `Grid Inc (${s.GridStep}m)`),
         H(key('Del'), 'Delete', 'r'),
         H(mouse('r'), 'Options', 'g'),
-        H(mouse('a'), 'Look'),
+        H(mouse(''), 'Look'),
         H(selIcon, 'Selection'),
         H(key('G'), 'Grid Snap', s.Grid ? 'g' : ''),
         ...tail];
+}
+
+function drawObject() {
+    const sel = s.Sel, poor = s.Placing && s.Need !== undefined && s.Have < s.Need;
+    $('object').classList.toggle('hidden', !sel && !warnTimer);
+    ['oname', 'transform', 'reqs'].forEach(id => $(id).classList.toggle('hidden', !sel));
+    if (sel) {
+        $('oname').textContent = title(sel.Label) + (s.Multi > 1 ? ` (+${s.Multi - 1})` : '');
+        const p = sel.Pos, r = sel.Rot;
+        $('transform').innerHTML = `<div class="head"><span>Transform</span><span>Ctrl+C / Ctrl+V</span></div>`
+            + `<div class="row"><span>Position</span><span class="v">${num(p.x, 3)}, ${num(p.y, 3)}, ${num(p.z, 3)}</span></div>`
+            + `<div class="row"><span>Rotation</span><span class="v">${num(r.x, 2)}, ${num(r.y, 2)}, ${num(r.z, 2)}</span></div>`
+            + `<div class="btns" style="margin-top:.35vh"><div class="btn" onclick="copyTransform()">Copy</div><div class="btn ${clip ? '' : 'hidden'}" onclick="pasteTransform()">Paste</div></div>`;
+        $('reqs').innerHTML = s.Placing && s.Need !== undefined
+            ? `<div class="head"><span>Object Requirements</span></div><div class="row"><span>Bank</span><span class="${poor ? 'bad' : ''}">${money(Math.max(0, s.Have))}/${money(s.Need)}</span></div>` : '';
+    }
+    if (!warnTimer) {
+        $('warn').classList.toggle('hidden', !poor);
+        if (poor) $('warntext').textContent = 'Not Enough Money: You do not have enough to build this object.';
+    }
 }
 
 function render() {
@@ -266,46 +302,52 @@ function render() {
     $('address').textContent = s.Address || '';
     $('limit').textContent = `${String(s.Placed ?? 0).padStart(3, '0')}/${s.Max ?? 0}`;
     $('limitbar').style.width = Math.min(100, (s.Placed ?? 0) / (s.Max || 1) * 100) + '%';
+    const st = s.Stats || {};
+    $('stats').innerHTML = `<div class="stat" title="Storage crates">${svg('crate')}<span>${st.Crates ?? 0}/${st.MaxCrates ?? 0}</span></div>`
+        + `<div class="stat" title="Wardrobes">${svg('hanger')}<span>${st.Wardrobes ?? 0}</span></div>`
+        + `<div class="stat" title="Walls">${svg('brick')}<span>${st.Walls ?? 0}</span></div>`;
     $('unsaved').classList.toggle('hidden', !s.Dirty);
     $('shop').classList.toggle('hidden', !s.Shop);
-
-    const sel = s.Sel, poor = s.Placing && s.Need !== undefined && s.Have < s.Need;
-    $('object').classList.toggle('hidden', !sel && !warnTimer);
-    $('oname').classList.toggle('hidden', !sel); $('reqs').classList.toggle('hidden', !sel);
-    if (sel) {
-        $('oname').textContent = title(sel.Label) + (s.Multi > 1 ? ` (+${s.Multi - 1})` : '');
-        $('reqs').innerHTML = s.Placing && s.Need !== undefined
-            ? `<div class="req-h">Object Requirements</div><div class="req"><span>Bank</span><span class="${poor ? 'bad' : ''}">${money(Math.max(0, s.Have))}/${money(s.Need)}</span></div>`
-            : '';
-    }
-    if (!warnTimer) {
-        $('warn').classList.toggle('hidden', !poor);
-        if (poor) $('warntext').textContent = 'Not Enough Money: You do not have enough to build this object.';
-    }
-
+    drawObject();
     $('hints').innerHTML = `<div class="modes"><div class="${s.Adv ? '' : 'on'}" onclick="post('key',{K:'basic'})">${key(1)}Basic</div><div class="${s.Adv ? 'on' : ''}" onclick="post('key',{K:'advanced'})">${key(2)}Advanced</div></div>` + hintRows().join('');
     if (group === -2) drawGrid();
-    if (!sel) hide('options');
+    if (!s.Sel) hide('options');
 }
 
-// // Options menu \\
+// // Copy / paste position + rotation (also to the system clipboard, as text) \\
+function copyTransform() {
+    if (!s.Sel) return;
+    const p = s.Sel.Pos, r = s.Sel.Rot;
+    clip = { Pos: { ...p }, Rot: { ...r } };
+    const ta = $('clipboard');
+    ta.value = `vector3(${num(p.x, 3)}, ${num(p.y, 3)}, ${num(p.z, 3)}), vector3(${num(r.x, 2)}, ${num(r.y, 2)}, ${num(r.z, 2)})`;
+    ta.select(); document.execCommand('copy'); ta.blur();
+    warn('Copied: ' + ta.value);
+    drawObject();
+}
+function pasteTransform() { if (clip && s.Sel) post('set', clip); }
+
+// // Options menu (right click) \\
 const PRESETS = { Door: { X: 0, Z: 0, W: 1, H: 2.25 }, Window: { X: 0, Z: 1, W: 1, H: 1 } };
 const wallCopy = () => JSON.parse(JSON.stringify(s.Sel.Wall));
 const opt = (text, fn, cls = '', right = '') => `<div class="opt ${cls}" onclick="${fn}">${text}<span>${right}</span></div>`;
 const field = (lbl, attrs, val, cls = '') => `<div class="kv"><label class="${cls}">${lbl}</label><input type="number" ${attrs} value="${val}"></div>`;
+const reopen = "setTimeout(()=>openOptions(),60)";
 
 function openOptions(x, y) {
     const sel = s.Sel, o = $('options');
     if (!sel) return;
-    let html = `<div class="head">${esc(title(sel.Label))}</div>`
-        + opt('Duplicate', "act('duplicate')") + opt('Place On Ground', "act('ground')") + opt('Reset Rotation', "act('reset')")
-        + (sel.Wall ? '<div class="sub">Colour</div><div class="swatches">' + colors.slice(0, 16).map((c, i) =>
-            `<div class="${sel.Tint === i ? 'on' : ''}" style="background:${c[1]}" title="${esc(c[0])}" onclick="post('tint',{Value:${i}}).then(()=>setTimeout(()=>openOptions(),50))"></div>`).join('') + '</div>'
-            : opt('Tint', "post('key',{K:'tint'}).then(()=>setTimeout(()=>openOptions(),50))", '', `${sel.Tint + 1}/16`))
-        + opt('Copy Position', 'clip={Pos:{...s.Sel.Pos},Rot:{...s.Sel.Rot}};hide(\'options\')') + (clip ? opt('Paste Position', "post('set',clip);hide('options')") : '');
+    let html = `<div class="head">${esc(title(sel.Label))}</div>`;
+    if (sel.Tintable) {
+        html += '<div class="sub">Colour</div><div class="swatches">' + colors.map((c, i) =>
+            `<div class="${sel.Tint === i ? 'on' : ''}" style="background:${c}" onclick="post('tint',{Value:${i}}).then(()=>${reopen})"></div>`).join('') + '</div>';
+    }
+    html += opt('Duplicate', "act('duplicate')") + opt('Place On Ground', "act('ground')") + opt('Reset Rotation', "act('reset')")
+        + (sel.Tintable ? '' : opt('Tint', `post('key',{K:'tint'}).then(()=>${reopen})`, '', `${sel.Tint + 1}/16`))
+        + opt('Copy Position', "copyTransform();hide('options')") + (clip ? opt('Paste Position', "pasteTransform();hide('options')") : '');
     if (s.Adv) {
-        html += '<div class="sub">Position</div>' + ['x', 'y', 'z'].map(a => field(a + ' pos', `data-t="Pos.${a}" step="0.01"`, (+sel.Pos[a]).toFixed(3), a)).join('')
-            + '<div class="sub">Rotation</div>' + ['x', 'y', 'z'].map(a => field(a + ' rot', `data-t="Rot.${a}" step="1"`, (+sel.Rot[a]).toFixed(1), a)).join('');
+        html += '<div class="sub">Position</div>' + ['x', 'y', 'z'].map(a => field(a + ' pos', `data-t="Pos.${a}" step="0.01"`, num(sel.Pos[a], 3), a)).join('')
+            + '<div class="sub">Rotation</div>' + ['x', 'y', 'z'].map(a => field(a + ' rot', `data-t="Rot.${a}" step="1"`, num(sel.Rot[a], 1), a)).join('');
     }
     if (sel.Wall) {
         html += '<div class="sub">Wall · steps of 0.25m</div>' + field('Length', 'data-w="L" step="0.25"', sel.Wall.L) + field('Height', 'data-w="H" step="0.25"', sel.Wall.H)
@@ -370,6 +412,8 @@ addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
     if (e.altKey) e.preventDefault();
     if (e.ctrlKey) {
+        if (k === 'c') return copyTransform();
+        if (k === 'v') return pasteTransform();
         const c = { z: 'undo', y: 'redo', s: 'save' }[k];
         if (c) { e.preventDefault(); post('key', { K: c }); }
         return;

@@ -6,8 +6,11 @@ lua54 'yes'
 ui_page 'web/public/index.html'
 
 files {
-    'web/public/**/*'
+    'web/public/**/*',
+    'stream/codera_phone_ytyp.ytyp',
 }
+
+data_file 'DLC_ITYP_REQUEST' 'stream/codera_phone_ytyp.ytyp'
 
 client_scripts {
     '@fw-assets/client/cl_errorlog.lua',

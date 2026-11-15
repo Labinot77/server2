@@ -177,21 +177,17 @@ end
 
 -- // Validation used by _sv_main.lua (phone "set location") \\ --
 
--- Garage: outside the zone, close to its edge, around floor height.
+-- Garage: inside the zone or close to its edge, around floor height.
 function ValidateMloGarage(HouseId, Coords)
     local House = GetMloHouse(HouseId)
     if not House then return false, "Invalid house." end
-
-    if IsPointInMloZone(House.Mlo, Coords) then
-        return false, "The garage has to be outside the house."
-    end
 
     local Mlo = Config.MLOHouses[House.Mlo]
     if Mlo.Zone.minZ and math.abs(Coords.z - Mlo.Zone.minZ) > Config.MLOGarage.MaxHeightDifference then
         return false, "The garage has to be at street level next to the house."
     end
 
-    local Dist = GetDistanceToMloZoneEdge(House.Mlo, Coords)
+    local Dist = IsPointInMloZone(House.Mlo, Coords) and 0.0 or GetDistanceToMloZoneEdge(House.Mlo, Coords)
     if Dist > Config.MLOGarage.MaxDistanceFromZone then
         return false, ("Too far from the house (%.1fm, max %.0fm)."):format(Dist, Config.MLOGarage.MaxDistanceFromZone)
     end
@@ -372,6 +368,13 @@ end)
 
 -- // Decorations \\ --
 
+-- Storage crates are capped per house (Stash.Crates, set in /housecreator).
+local function CrateRoom(House, Mlo)
+    local N = 0
+    for _, D in ipairs(House.Decorations or {}) do if D.Type == 'crate' then N = N + 1 end end
+    return N < ((Mlo.Stash or {}).Crates or 0)
+end
+
 RegisterNetEvent("fw-housing:Server:Decor:Add")
 AddEventHandler("fw-housing:Server:Decor:Add", function(HouseId, Model, Coords, Rot, Wall)
     local Source = source
@@ -394,6 +397,9 @@ AddEventHandler("fw-housing:Server:Decor:Add", function(HouseId, Model, Coords, 
     House.Decorations = House.Decorations or {}
     if #House.Decorations >= (Mlo.MaxDecorations or 100) then
         return Notify(Source, "This house is full, remove something first.", "error")
+    end
+    if Item.Type == 'crate' and not CrateRoom(House, Mlo) then
+        return Notify(Source, "This house can't have more storage crates.", "error")
     end
 
     if Config.Decorate.ChargeMoney and Price > 0 then
@@ -488,6 +494,8 @@ AddEventHandler("fw-housing:Server:Decor:Save", function(HouseId, Changes)
         elseif #House.Decorations >= (Mlo.MaxDecorations or 100) then
             Notify(Source, "This house is full, not everything was placed.", "error")
             break
+        elseif Item.Type == 'crate' and not CrateRoom(House, Mlo) then
+            Notify(Source, "Storage crate limit reached, extra crates weren't placed.", "error")
         elseif Config.Decorate.ChargeMoney and Price > 0 and not exports['fw-financials']:RemoveMoneyFromAccount("1001", "1", Account, Price, 'PURCHASE', 'Furniture purchased: ' .. GetItemLabel(A.Model) .. ' (' .. House.Adress .. ')') then
             Notify(Source, "Not enough money in your bank account.", "error")
             break
@@ -681,7 +689,7 @@ local function CleanDef(D)
         Label = tostring(D.Label or ''):sub(1, 64),
         Price = math.floor(Num(D.Price, 0, 1e9, 0)), Class = math.floor(Num(D.Class, 0, 10, 0)),
         MaxDecorations = math.floor(Num(D.MaxDecorations, 1, 1000, 150)),
-        Stash = { Slots = math.floor(Num(D.Stash and D.Stash.Slots, 1, 200, 40)), Weight = math.floor(Num(D.Stash and D.Stash.Weight, 1, 100000, 1000)) },
+        Stash = { Crates = math.floor(Num(D.Stash and D.Stash.Crates, 0, 50, 2)), Slots = math.floor(Num(D.Stash and D.Stash.Slots, 1, 200, 40)), Weight = math.floor(Num(D.Stash and D.Stash.Weight, 1, 100000, 1000)) },
         Zone = { minZ = tonumber(D.Zone.minZ), maxZ = tonumber(D.Zone.maxZ), points = {} },
         Spawn = Vec(D.Spawn, true),
     }

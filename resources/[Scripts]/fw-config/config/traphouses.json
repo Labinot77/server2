@@ -1,66 +1,66 @@
 {
   "traphouses": [
     {
+      "cash": 0,
       "z": 27.19,
-      "owner": "Unclaimed",
-      "y": -872.06,
       "code": "A2B7C8",
       "w": 180.34,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -872.06,
       "x": -534.16
     },
     {
+      "cash": 0,
       "z": 5.03,
-      "owner": "Unclaimed",
-      "y": -1433.95,
       "code": "3X9Y4Z",
       "w": 215.58,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -1433.95,
       "x": -1132.54
     },
     {
+      "cash": 0,
       "z": 28.1,
-      "owner": "Unclaimed",
-      "y": -1836.51,
       "code": "L6K2J1",
       "w": 139.71,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -1836.51,
       "x": 183.11
     },
     {
+      "cash": 0,
       "z": 69.28,
-      "owner": "Unclaimed",
-      "y": 98.93,
       "code": "P5Q0R9",
       "w": 270.01,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": 98.93,
       "x": -264.09
     },
     {
+      "cash": 0,
       "z": 47.53,
-      "owner": "Unclaimed",
-      "y": -401.69,
       "code": "M4N3O2",
       "w": 54.77,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -401.69,
       "x": -1678.71
     },
     {
+      "cash": 0,
       "z": 29.32,
-      "owner": "Unclaimed",
-      "y": -710.76,
       "code": "H7I8G6",
       "w": 249.06,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -710.76,
       "x": 314.7
     },
     {
+      "cash": 0,
       "z": 24.98,
-      "owner": "Unclaimed",
-      "y": -1943.28,
       "code": "R7AF9T",
       "w": 121.69,
-      "cash": 0,
+      "owner": "Unclaimed",
+      "y": -1943.28,
       "x": 478.23
     }
   ]

@@ -5,6 +5,7 @@
     import { AddNotification, IsEnvBrowser, Notifications, OnEvent, RemoveNotification, SendEvent, SetDropdown, SetExitHandler, ShowSuccessModal, UpdateNotification } from "../../utils/Utils"
     import AppProvider from "./AppProvider.svelte";
     import Application from "./components/Application.svelte";
+    import Icon from "./components/Icon.svelte";
     import { HomeApps, CarShops, DockApps, BurnerApps, Hotkeys } from "./apps";
     import Container from "./Container.svelte";
     import Input from "./Modals/Input.svelte";
@@ -25,6 +26,24 @@
     let CurrentWeather = "EXTRASUNNY";
     let CurrentLocation = "Los Santos";
     let UnreadApps = {};
+    let Unfold = false, Morph = false;
+
+    const ToggleFold = () => {
+        if (IsBurnerCurrent || Morph) return;
+        Morph = true;
+        setTimeout(() => {
+            Unfold = !Unfold;
+            Settings.update(S => ({ ...S, Unfold }));
+            SendEvent("Settings/Set", { Key: "Unfold", Value: Unfold });
+            SendEvent("Phone/Fold", { Open: Unfold });
+        }, 160);
+        setTimeout(() => Morph = false, 440);
+    };
+
+    // Typing in any field switches the hand animation to texting.
+    const IsField = El => El?.isContentEditable || ["INPUT", "TEXTAREA"].includes(El?.tagName);
+    const OnFocus = e => PhoneVisible && IsField(e.target) && SendEvent("Phone/InputFocus", { Focused: true });
+    const OnBlur = () => setTimeout(() => PhoneVisible && !IsField(document.activeElement) && SendEvent("Phone/InputFocus", { Focused: false }), 50);
 
     const SetCurrentApp = (App) => {
         CurrentApp = App;
@@ -120,6 +139,7 @@
         CurrentWeather = Data.Weather;
         CurrentLocation = Data.Location || CurrentLocation;
         Settings.set(Data.Settings || {});
+        Unfold = !Data.IsBurner && !!$Settings.Unfold;
         PhoneBackground.set($Settings.Background || DefaultBackground);
         HasVpn.set(Data.HasVPN);
         HasRacingUsb.set(Data.HasRacingUsb);
@@ -163,7 +183,7 @@
     $: State = { HasVpn: $HasVpn, HasRacingUsb: $HasRacingUsb, HasPDRacingUsb: $HasPDRacingUsb, Network: CurrentNetwork };
     $: Apps = [
         ...HomeApps.filter(A => !A.Show || A.Show(State)),
-        ...(Shop ? [{ Id: "cars", Label: "Dealership", Tooltip: Shop[0], Icon: Shop[1], Color: ["#ff5252", "#b71c1c"] }] : []),
+        ...(Shop ? [{ Id: "cars", Label: "Dealership", Tooltip: Shop[0], Icon: Shop[1], Tile: "red" }] : []),
     ];
 
     $: Clock = `${CurrentTime[0] % 12 || 12}:${String(CurrentTime[1]).padStart(2, "0")}`;
@@ -171,7 +191,7 @@
 
     const GoBack = () => $InputModal.Visible ? InputModal.set({ Visible: false }) : GoHome();
     const Select = () => [...document.querySelectorAll(":hover")].pop()?.click();
-    const Keys = { y: GoHome, u: ToggleSound, Enter: Select, Backspace: GoBack };
+    const Keys = { y: GoHome, u: ToggleSound, t: ToggleFold, Enter: Select, Backspace: GoBack };
 
     const OnKeyDown = (e) => {
         const El = document.activeElement;
@@ -187,13 +207,13 @@
     });
 </script>
 
-<svelte:window on:keydown={OnKeyDown} />
+<svelte:window on:keydown={OnKeyDown} on:focusin={OnFocus} on:focusout={OnBlur} />
 
-<div class="phone-wrapper">
+<div class="phone-wrapper" class:morph={Morph}>
     {#if PhoneVisible}
-        <div transition:fade={{ duration: 250 }} class="phone-hotkeys" style={IsBurnerCurrent ? "right: 58vh" : ""}>
-            {#each Hotkeys as [Key, Label]}
-                <div class="phone-hotkey"><span>{Key}</span><p>{Label}</p></div>
+        <div transition:fade={{ duration: 250 }} class="phone-hints" style="right: {IsBurnerCurrent ? 61 : Unfold ? 50.8 : 33}vh">
+            {#each Hotkeys.filter(([Key]) => Key != "T" || !IsBurnerCurrent) as [Key, Label]}
+                <div><kbd class:wide={Key.length > 1}>{Key}</kbd><span>{Key == "T" && Unfold ? "Fold" : Label}</span></div>
             {/each}
         </div>
     {/if}
@@ -201,6 +221,7 @@
     {#each [false, true] as Burner}
         <Container
             isBurner={Burner}
+            unfold={!Burner && Unfold}
             class={Burner
                 ? `phone-container ${PhoneVisible && IsBurnerCurrent ? "phone-visible" : "phone-hidden"}`
                 : `phone-container ${IsEnvBrowser() ? "phone-debug" : ""} ${PhoneVisible && !IsBurnerCurrent ? "phone-visible" : $Notifications.length > 0 ? "phone-half" : "phone-hidden"}`}
@@ -214,13 +235,13 @@
 
                 {#if CurrentApp == "home"}
                     <div in:fade={{ duration: 250 }} class="phone-home">
-                        <div class="phone-clock">{Clock} <span>{Meridiem}</span></div>
-                        <div class="phone-location">
+                        <div class="phone-clock">{Clock} {Meridiem}</div>
+                        <div class="phone-zone">
                             <i class="fas fa-{WheaterIcons[CurrentWeather]}" />
                             {CurrentLocation}
                         </div>
 
-                        <div class="phone-applications">
+                        <div class="phone-grid">
                             {#each Burner ? BurnerApps : Apps as App (App.Id)}
                                 <Application {...App} HasUnread={UnreadApps[App.Id]} on:click={() => SetCurrentApp(App.Id)} />
                             {/each}
@@ -230,11 +251,11 @@
                             <div class="phone-dock">
                                 {#each DockApps as App (App.Id)}
                                     <div class="phone-dock-app" data-tooltip={App.Label} on:keyup on:click={() => SetCurrentApp(App.Id)}>
-                                        <i class="fas fa-{App.Icon}" />
-                                        {#if UnreadApps[App.Id]}<div class="phone-dock-unread" />{/if}
+                                        <Icon Name={App.Icon} />
+                                        {#if UnreadApps[App.Id]}<span class="phone-dock-badge" />{/if}
                                     </div>
                                 {/each}
-                                <div class="phone-dock-app" data-tooltip="Selfie!" on:keyup on:click={Selfie}><i class="fas fa-camera" /></div>
+                                <div class="phone-dock-app" data-tooltip="Selfie!" on:keyup on:click={Selfie}><Icon Name="camera" /></div>
                             </div>
                         {/if}
                     </div>
@@ -243,179 +264,194 @@
                 {/if}
 
                 <div class="phone-statusbar">
-                    <div class="phone-statusbar-time">{Clock} {Meridiem}</div>
+                    <span>{Clock} {Meridiem}</span>
                     <div class="phone-statusbar-icons">
-                        <i on:keyup on:click={ToggleSound} data-tooltip="Notifications On/Off" class="fas fa-bell{SoundsMuted ? "-slash" : ""}" />
+                        <span on:keyup on:click={ToggleSound} class:dim={SoundsMuted} data-tooltip="Notifications On/Off"><Icon Name="bell" /></span>
                         {#if $HasVpn}<i class="fas fa-lock" />{/if}
-                        {#if IsNetworkEnabled}
-                            <i
-                                on:keyup
-                                on:click={ConnectNetwork}
-                                class:dim={IsNearNetwork && !CurrentNetwork}
-                                class="fas fa-{IsNearNetwork ? "wifi" : "signal"}"
-                            />
-                        {:else}
-                            <i class="fas fa-signal-slash dim" />
+                        <svg viewBox="0 0 24 24" class:dim={!IsNetworkEnabled}><rect x="2" y="15" width="3" height="6" rx="1"/><rect x="8" y="11" width="3" height="10" rx="1"/><rect x="14" y="7" width="3" height="14" rx="1"/><rect x="20" y="3" width="3" height="18" rx="1"/></svg>
+                        {#if IsNetworkEnabled && IsNearNetwork}
+                            <svg viewBox="0 0 24 24" on:keyup on:click={ConnectNetwork} class:dim={!CurrentNetwork} class="click"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10.5 10.5 0 0 1 14 0M8.5 16a5.5 5.5 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19.5" r="1.6"/></svg>
                         {/if}
-                        <i class="fas fa-battery-full" />
+                        <svg viewBox="0 0 28 24"><rect x="1" y="6" width="22" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="8.5" width="14" height="7" rx="1.5"/><rect x="24" y="10" width="3" height="4" rx="1"/></svg>
                     </div>
                 </div>
 
-                <div on:keyup on:click={GoHome} class="phone-home-indicator"><div /></div>
+                <div on:keyup on:click={GoHome} class="phone-homebar" class:dark={CurrentApp == "bank"}><i /></div>
             {/if}
         </Container>
     {/each}
 </div>
 
 <style>
+    /* Codera palette, shared by every app through these variables */
     .phone-wrapper {
-        --phone-bg: #0e0f12;
-        --phone-surface: rgba(30, 31, 36, 0.97);
-        --phone-card: rgba(255, 255, 255, 0.07);
-        --phone-card-hover: rgba(255, 255, 255, 0.12);
-        --phone-line: rgba(255, 255, 255, 0.09);
-        --phone-muted: rgba(235, 235, 245, 0.6);
-        --phone-accent: #0a84ff;
-        --phone-green: #34c759;
-        --phone-red: #ff3b30;
-        --phone-orange: #ff9f0a;
-        --phone-radius: 1.2vh;
+        --phone-bg: #16181c;
+        --phone-surface: #1f2227;
+        --phone-card: #1f2227;
+        --phone-card-hover: #292d34;
+        --phone-line: rgba(255, 255, 255, 0.08);
+        --phone-muted: #9aa0aa;
+        --phone-accent: #4f8cff;
+        --phone-green: #2ecc71;
+        --phone-red: #ff4d4f;
+        --phone-orange: #f5b73b;
+        --phone-radius: 1.1vh;
 
         position: absolute;
         inset: 0;
-        font-family: Roboto;
+        font-family: Inter, Roboto, sans-serif;
         font-size: 1vh;
-        color: white;
+        color: #f3f4f6;
         user-select: none;
     }
 
     /* Keybind hints, left of the phone */
-    .phone-hotkeys {
+    .phone-hints {
         position: absolute;
         right: 30vh;
-        bottom: 4vh;
+        bottom: 3vh;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 0.6vh;
+        gap: 0.93vh;
     }
 
-    .phone-hotkey {
+    .phone-hints > div {
         display: flex;
-        gap: 0.3vh;
-        font-family: "Barlow Condensed", Roboto;
-        font-weight: 700;
-        font-size: 1.25vh;
-        letter-spacing: 0.08vh;
+        align-items: center;
+        gap: 0.74vh;
+        padding: 0.37vh 1vh 0.37vh 0.37vh;
+        border-radius: 0.46vh;
+        background: white;
+        box-shadow: 0 0.19vh 0.74vh rgba(0, 0, 0, 0.35);
+        font-family: "Barlow Condensed", Inter, sans-serif;
+        font-size: 1.39vh;
+        font-weight: 800;
+        font-style: italic;
+        letter-spacing: 0.04vh;
         text-transform: uppercase;
-        color: #111;
+        line-height: 1;
+        color: #0b0b0c;
     }
 
-    .phone-hotkey > span,
-    .phone-hotkey > p {
-        margin: 0;
-        padding: 0.45vh 0.7vh;
-        border-radius: 0.25vh;
-        box-shadow: 0 0.2vh 0.5vh rgba(0, 0, 0, 0.4);
+    .phone-hints kbd {
+        display: grid;
+        place-items: center;
+        min-width: 2.2vh;
+        height: 2.04vh;
+        padding: 0 0.56vh;
+        border-radius: 0.37vh;
+        background: #0b0b0c;
+        color: white;
+        font-family: Inter, sans-serif;
+        font-size: 1.06vh;
+        font-weight: 800;
+        font-style: normal;
     }
 
-    .phone-hotkey > span { min-width: 1.2vh; text-align: center; background: white; }
-    .phone-hotkey > p { min-width: 8vh; background: rgba(235, 235, 235, 0.92); }
+    .phone-hints kbd.wide { min-width: 3.3vh; }
 
     /* Home screen */
     .phone-home {
         position: absolute;
         inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 3.6vh;
+        padding: 5.2vh 1.5vh 0;
+        z-index: 5;
     }
 
     .phone-clock {
-        font-family: "Barlow Condensed", Roboto;
+        font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
         font-style: italic;
         font-weight: 800;
-        font-size: 4.6vh;
+        font-size: 5.2vh;
         line-height: 1;
-        text-shadow: 0 0.3vh 1vh rgba(0, 0, 0, 0.6);
+        text-align: center;
+        letter-spacing: 0.08vh;
+        text-shadow: 0 0.17vh 1.18vh rgba(0, 0, 0, 0.5);
     }
 
-    .phone-clock > span { font-size: 3.4vh; }
-
-    .phone-location {
+    .phone-zone {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 0.7vh;
-        width: 82%;
-        margin-top: 0.8vh;
-        padding: 0.55vh 0;
-        background: rgba(0, 0, 0, 0.55);
-        font-family: "Barlow Condensed", Roboto;
+        gap: 0.6vh;
+        width: max-content;
+        margin: 0.67vh auto 2.2vh;
+        padding: 0.25vh 1.18vh;
+        border-radius: 0.5vh;
+        background: #0a0a0b;
+        transform: skewX(-6deg);
+        font-family: "Barlow Condensed", sans-serif;
         font-style: italic;
-        font-weight: 700;
-        font-size: 1.35vh;
-        letter-spacing: 0.15vh;
+        font-weight: 800;
+        font-size: 1.43vh;
+        letter-spacing: 0.13vh;
         text-transform: uppercase;
     }
 
-    .phone-applications {
+    .phone-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-auto-rows: min-content;
-        row-gap: 1.5vh;
-        width: 90%;
-        flex: 1;
-        margin: 2.2vh 0 1vh;
+        gap: 1.52vh 0.34vh;
+        max-height: 38vh;
         overflow-y: auto;
     }
 
-    .phone-applications::-webkit-scrollbar { display: none; }
+    .phone-grid::-webkit-scrollbar { display: none; }
 
     .phone-dock {
+        position: absolute;
+        left: 50%;
+        bottom: 2.53vh;
+        transform: translateX(-50%);
+        width: 20.4vh;
+        height: 4.2vh;
         display: flex;
         justify-content: space-around;
-        width: 86%;
-        margin-bottom: 2.6vh;
-        padding: 0.9vh 0.6vh;
-        border-radius: 2.2vh;
-        background: rgba(30, 30, 34, 0.55);
-        backdrop-filter: blur(1vh);
+        align-items: center;
+        border-radius: 1.85vh;
+        background: rgba(14, 15, 18, 0.84);
+        backdrop-filter: blur(1.5vh);
+        border: 0.08vh solid rgba(255, 255, 255, 0.06);
     }
 
     .phone-dock-app {
         position: relative;
-        font-size: 1.7vh;
-        padding: 0.4vh 0.7vh;
+        display: grid;
+        place-items: center;
+        width: 3.37vh;
+        height: 3.37vh;
+        border-radius: 1vh;
+        color: white;
         cursor: pointer;
-        opacity: 0.9;
     }
 
-    .phone-dock-app:hover { opacity: 1; }
+    .phone-dock-app:hover { background: rgba(255, 255, 255, 0.1); }
+    .phone-dock-app > :global(.ic) { width: 1.69vh; height: 1.69vh; }
 
-    .phone-dock-unread {
+    .phone-dock-badge {
         position: absolute;
-        top: 0;
-        right: 0.2vh;
-        width: 0.8vh;
-        height: 0.8vh;
+        top: 0.3vh;
+        right: 0.3vh;
+        width: 0.9vh;
+        height: 0.9vh;
         border-radius: 50%;
-        background: #ff3b30;
+        background: #ff4d4f;
+        border: 0.13vh solid rgba(14, 15, 18, 0.9);
     }
 
     /* Status bar */
     .phone-statusbar {
         position: absolute;
-        top: 0;
+        top: 0.34vh;
         left: 0;
         right: 0;
-        height: 2.6vh;
+        height: 2.2vh;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 2.2vh 0 2.6vh;
-        font-size: 1.15vh;
+        padding: 0 2.2vh;
+        font-size: 1.01vh;
         font-weight: 600;
         z-index: 250;
         pointer-events: none;
@@ -424,28 +460,46 @@
     .phone-statusbar-icons {
         display: flex;
         align-items: center;
-        gap: 0.6vh;
+        gap: 0.5vh;
         pointer-events: all;
     }
 
-    .phone-statusbar-icons > i { cursor: pointer; }
-    .phone-statusbar-icons > .dim { opacity: 0.5; }
+    .phone-statusbar-icons svg, .phone-statusbar-icons :global(.ic) { width: 1.26vh; height: 1.26vh; fill: currentColor; }
+    .phone-statusbar-icons :global(.ic) { fill: none; }
+    .phone-statusbar-icons > span, .click { cursor: pointer; display: flex; }
+    .dim { opacity: 0.45; }
+
+    /* Fold / unfold */
+    .phone-home, :global(.phone-app-wrapper) { transition: opacity 0.15s; }
+    .morph .phone-home, .morph :global(.phone-app-wrapper) { opacity: 0; }
+    .phone-hints { transition: right 0.6s cubic-bezier(0.65, 0, 0.35, 1); }
+    :global(.unfold) .phone-home { padding-top: 4vh; }
+    :global(.unfold) .phone-clock { font-size: 6.07vh; }
+    :global(.unfold) .phone-zone { width: auto; margin: 0.1vh -1.5vh 1.7vh; justify-content: center; border-radius: 0; transform: none; background: rgba(0, 0, 0, 0.28); }
+    :global(.unfold) .phone-grid { grid-template-columns: repeat(5, 7.17vh); justify-content: center; gap: 1.26vh 0; max-height: 30vh; }
+    :global(.unfold) .phone-dock { width: 16vh; }
+    :global(.unfold) .phone-dock-app { width: 2.87vh; height: 2.87vh; }
 
     /* Home indicator */
-    .phone-home-indicator {
+    .phone-homebar {
         position: absolute;
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        padding: 0.9vh 3vh 0.7vh;
-        cursor: pointer;
+        width: 14.3vh;
+        height: 2.53vh;
+        display: grid;
+        place-items: center;
         z-index: 250;
+        cursor: pointer;
     }
 
-    .phone-home-indicator > div {
-        width: 9vh;
-        height: 0.45vh;
-        border-radius: 0.3vh;
+    .phone-homebar.dark > i { background: #1b1f24; }
+
+    .phone-homebar > i {
+        width: 9.95vh;
+        height: 0.42vh;
+        border-radius: 0.25vh;
         background: white;
         opacity: 0.85;
     }

@@ -1,4 +1,4 @@
--- MLO houses (client): PolyZone furniture streaming, surface colours, stash / wardrobe. Doors are handled by fw-doors.
+-- MLO houses (client): PolyZone furniture streaming, surface colours, storage crates / wardrobes, garage. Doors: fw-doors.
 -- Uses from _cl_main.lua: HasKeyToHouseId, CanRealtor, OpenDoorAnim, HasOverdueDebts, SetMloCurrentHouse
 local FW = exports['fw-core']:GetCoreObject()
 
@@ -7,7 +7,6 @@ local DecorDoorOpen = {}  -- [HouseId] = { [DecorId] = true }
 
 local InsideKey, InsideHouseId = nil, nil
 local Spawned = {}        -- [DecorId] = { Entity, Sig, InteractId, Type, Rot }
-local InteriorInteractions = {}
 local LoadGeneration = 0  -- bumps on every unload, so a slow model load can't spawn into a house we already left
 
 -- // Helpers \\ --
@@ -76,10 +75,29 @@ end
 exports("CanDecorateMlo", function() return InsideHouseId ~= nil and HasMloAccess(InsideHouseId, 'Decorate') end)
 exports("IsMloOwnerInside", function() return InsideHouseId ~= nil and IsMloOwner(InsideHouseId) end)
 
+-- Owned MLO house (with keys) the player is in or within Config.MLOGarage.MaxDistanceFromZone of.
+local function GetGarageHouseId()
+    local C = GetEntityCoords(PlayerPedId())
+    for HouseId, House in pairs(Config.Houses or {}) do
+        if House.Mlo and House.Owned and Config.MLOHouses[House.Mlo] and HasKeyToHouseId(HouseId)
+            and (IsPointInMloZone(House.Mlo, C) or GetDistanceToMloZoneEdge(House.Mlo, C) <= Config.MLOGarage.MaxDistanceFromZone) then
+            return HouseId
+        end
+    end
+end
+exports("CanPlaceMloGarage", function() return GetGarageHouseId() ~= nil end)
+
+-- F1 menu: parks the house garage where the player (or their vehicle) is. The server validates the spot.
+RegisterNetEvent("fw-housing:Client:Mlo:PlaceGarage", function()
+    local HouseId = GetGarageHouseId()
+    if not HouseId then return FW.Functions.Notify("You're not at a house you have keys to.", "error") end
+    TriggerServerEvent("fw-housing:Server:Mlo:SetGarage", HouseId)
+end)
+
 local function GetDecorType(Decor)
-    if Decor.Type then return Decor.Type end
-    local Item = Config.DecorByModel[Decor.Model]
-    return Item and Item.Type or 'furniture'
+    local Item = GetDecorItem(Decor.Model)
+    if Item and (Item.Type == 'crate' or Item.Type == 'wardrobe') then return Item.Type end
+    return Decor.Type or Item and Item.Type or 'furniture'
 end
 
 -- // Surface colours (runtime texture replaces, local to this client) \\ --
@@ -196,6 +214,34 @@ local function ApplyDecorDoor(DecorId)
     SetEntityRotation(S.Entity, S.Rot.x, S.Rot.y, S.Rot.z + (Open and 90.0 or 0.0), 2, true)
 end
 
+-- // Storage crates (one stash each) + wardrobes \\ --
+
+local function OpenCrate(HouseId, DecorId)
+    local House = Config.Houses[HouseId]
+    if not House then return end
+
+    local IsLockdown = House.Owned and (exports['fw-cityhall']:IsLockdownActive("housing-" .. House.Owner) or exports['fw-cityhall']:IsLockdownActive("housing-" .. House.DbId))
+    local PlayerData = FW.Functions.GetPlayerData()
+    if IsLockdown and PlayerData.job.name ~= "police" and PlayerData.job.name ~= "judge" then
+        return FW.Functions.Notify("This house is in lockdown!", "error")
+    end
+
+    local StashCfg = (Config.MLOHouses[House.Mlo] or {}).Stash or {}
+    TriggerEvent("fw-misc:Client:PlaySound", 'general.stashOpen')
+    FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Stash', ('housing-%s-%s'):format(House.Name, DecorId), StashCfg.Slots or 30, StashCfg.Weight or 750)
+end
+
+local function StorageOptions(HouseId, DecorId, Type)
+    local function Access() return HasMloAccess(HouseId, 'Stash') end
+    if Type == 'crate' then
+        return { { label = 'Open crate', canInteract = Access, action = function() OpenCrate(HouseId, DecorId) end } }
+    end
+    return {
+        { label = 'Wardrobe', canInteract = Access, action = function() TriggerEvent('fw-clothes:Client:OpenOutfits', true) end },
+        { label = 'Sleep', canInteract = Access, action = function() TriggerServerEvent('fw-apartments:Server:Logout') end },
+    }
+end
+
 local function DespawnDecor(DecorId)
     local S = Spawned[DecorId]
     if not S then return end
@@ -246,6 +292,15 @@ local function SpawnDecor(HouseId, Decor, Generation)
             },
         })
         ApplyDecorDoor(DecorId)
+    elseif Type == 'crate' or Type == 'wardrobe' then
+        local Min, Max = GetModelDimensions(Hash)
+        Spawned[Decor.Id].InteractId = exports['interact']:AddLocalEntityInteraction({
+            entity = Obj,
+            offset = vector3((Min.x + Max.x) / 2, (Min.y + Max.y) / 2, (Min.z + Max.z) / 2),
+            distance = 3.0,
+            interactDst = 1.6,
+            options = StorageOptions(HouseId, Decor.Id, Type),
+        })
     end
 end
 
@@ -283,65 +338,29 @@ local function UnloadDecor()
     Spawned = {}
 end
 
--- // Stash + wardrobe \\ --
-
-local function ClearInteriorInteractions()
-    for _, Id in ipairs(InteriorInteractions) do exports['interact']:RemoveInteraction(Id) end
-    InteriorInteractions = {}
-end
-
-local function OpenStash(HouseId)
-    local House = Config.Houses[HouseId]
-    if not House then return end
-
-    local IsLockdown = House.Owned and (exports['fw-cityhall']:IsLockdownActive("housing-" .. House.Owner) or exports['fw-cityhall']:IsLockdownActive("housing-" .. House.DbId))
-    local PlayerData = FW.Functions.GetPlayerData()
-    if IsLockdown and PlayerData.job.name ~= "police" and PlayerData.job.name ~= "judge" then
-        return FW.Functions.Notify("This house is in lockdown!", "error")
-    end
-
-    local StashCfg = (Config.MLOHouses[House.Mlo] or {}).Stash or {}
-    TriggerEvent("fw-misc:Client:PlaySound", 'general.stashOpen')
-    FW.TriggerServer('fw-inventory:Server:OpenInventory', 'Stash', 'housing-' .. House.Name, StashCfg.Slots or 30, StashCfg.Weight or 750)
-end
-
-local function CreateInteriorInteractions(HouseId)
-    ClearInteriorInteractions()
-    local House = Config.Houses[HouseId]
-    if not House or not House.Locations then return end
-
-    local function Access() return HasMloAccess(HouseId, 'Stash') end
-
-    if House.Locations.Stash then
-        local C = House.Locations.Stash
-        InteriorInteractions[#InteriorInteractions + 1] = exports['interact']:AddInteraction({
-            name = 'fw-housing:stash:' .. HouseId,
-            coords = vector3(C.x, C.y, C.z), distance = 4.0, interactDst = 1.5,
-            options = { { label = 'Stash', canInteract = Access, action = function() OpenStash(HouseId) end } },
-        })
-    end
-
-    if House.Locations.Wardrobe then
-        local C = House.Locations.Wardrobe
-        InteriorInteractions[#InteriorInteractions + 1] = exports['interact']:AddInteraction({
-            name = 'fw-housing:wardrobe:' .. HouseId,
-            coords = vector3(C.x, C.y, C.z), distance = 4.0, interactDst = 1.5,
-            options = {
-                { label = 'Wardrobe', canInteract = Access, action = function() TriggerEvent('fw-clothes:Client:OpenOutfits', true) end },
-                { label = 'Sleep', canInteract = Access, action = function() TriggerServerEvent('fw-apartments:Server:Logout') end },
-            },
-        })
-    end
-end
-
 -- // Entering / leaving the zone \\ --
 
-local function LeaveCurrent()
+-- Furniture stays for UnloadDelay seconds after leaving, so walking out the door doesn't make it vanish.
+local Pending = nil -- { HouseId, Token } of a scheduled unload
+
+local function UnloadNow()
+    if Pending then ClearSurfaces(Config.Houses[Pending.HouseId]) end
+    Pending = nil
+    UnloadDecor()
+end
+
+local function LeaveCurrent(Immediate)
     if InsideHouseId then
-        ClearSurfaces(Config.Houses[InsideHouseId])
-        UnloadDecor()
-        ClearInteriorInteractions()
         SetMloCurrentHouse(nil)
+        local Token = {}
+        Pending = { HouseId = InsideHouseId, Token = Token }
+        if Immediate then
+            UnloadNow()
+        else
+            SetTimeout((Config.Decorate.UnloadDelay or 5) * 1000, function()
+                if Pending and Pending.Token == Token and not InsideHouseId then UnloadNow() end
+            end)
+        end
     end
     InsideHouseId = nil
 end
@@ -354,14 +373,15 @@ local function RefreshInside()
     if not HouseId then return end -- houses not loaded yet, the watchdog below retries
     if InsideHouseId == HouseId then return end
 
-    LeaveCurrent()
+    LeaveCurrent(true)
+    if Pending and Pending.HouseId ~= HouseId then UnloadNow() end
+    Pending = nil
     InsideHouseId = HouseId
     SetMloCurrentHouse(Config.Houses[HouseId])
 
     DecorDoorOpen[HouseId] = FW.SendCallback("fw-housing:Server:Decor:GetDoorStates", HouseId) or {}
     if InsideHouseId ~= HouseId then return end -- left while waiting on the server
 
-    CreateInteriorInteractions(HouseId)
     ApplySurfaces(Config.Houses[HouseId])
     SyncDecor(HouseId)
 end
@@ -380,7 +400,7 @@ end
 RegisterNetEvent("fw-housing:Client:SyncHouse")
 AddEventHandler("fw-housing:Client:SyncHouse", function(HouseId, Data)
     if Data == nil then
-        if InsideHouseId == HouseId then LeaveCurrent() end
+        if InsideHouseId == HouseId then LeaveCurrent(true) end
         return
     end
 
@@ -388,7 +408,6 @@ AddEventHandler("fw-housing:Client:SyncHouse", function(HouseId, Data)
 
     if InsideHouseId == HouseId then
         SetMloCurrentHouse(Data)
-        CreateInteriorInteractions(HouseId)
         ApplySurfaces(Data)
         SyncDecor(HouseId)
     elseif InsideKey == Data.Mlo then

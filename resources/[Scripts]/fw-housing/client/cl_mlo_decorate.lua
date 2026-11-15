@@ -251,6 +251,16 @@ local function Funds()
     return Have, Price
 end
 
+local function MaxCrates() return (Config.MLOHouses[Ed.House.Mlo].Stash or {}).Crates or 0 end
+
+local function CrateCount()
+    local N = 0
+    for _, O in pairs(Ed.Items) do
+        if not O.Removed and O.Model == Config.Storage.Crate then N = N + 1 end
+    end
+    return N
+end
+
 Push = function()
     local Placed, Max = Count()
     local Multi = 0
@@ -260,11 +270,23 @@ Push = function()
         Link = Ed.Link, Shop = Ed.Shop, Placing = Ed.Placing ~= nil, Multi = Multi, MaxSelect = Cfg.MaxSelect, List = {} }
     if Cfg.ChargeMoney and Ed.Balance then Data.Have, Data.Need = Funds() end
 
+    local Crates, Wardrobes, Walls = 0, 0, 0
+    for _, O in pairs(Ed.Items) do
+        if not O.Removed then
+            local Item = GetDecorItem(O.Model) or {}
+            Crates = Crates + (Item.Type == 'crate' and 1 or 0)
+            Wardrobes = Wardrobes + (Item.Type == 'wardrobe' and 1 or 0)
+            Walls = Walls + ((O.Wall or Item.Category == 'Custom Walls') and 1 or 0)
+        end
+    end
+    Data.Stats = { Crates = Crates, MaxCrates = MaxCrates(), Wardrobes = Wardrobes, Walls = Walls }
+
     local It = Sel()
     if Valid(It) then
         local Pos, Rot = Transform(It)
         Data.Sel = { Key = It.Key, Model = It.Model, Label = GetItemLabel(It.Model), Pos = { x = Pos.x, y = Pos.y, z = Pos.z },
-            Rot = { x = Rot.x, y = Rot.y, z = Rot.z }, Wall = It.Wall, Tint = It.Tint or 0, New = It.Id == nil }
+            Rot = { x = Rot.x, y = Rot.y, z = Rot.z }, Wall = It.Wall, Tint = It.Tint or 0, New = It.Id == nil,
+            Tintable = It.Wall ~= nil or (GetDecorItem(It.Model) or {}).Tint == true }
     end
     local Cam = GetCamCoord(Ed.Cam)
     for Key, O in pairs(Ed.Items) do
@@ -309,6 +331,9 @@ local function StartPlacing(Model, Wall, Rot, Tint)
     if not Ed.Shop then return end
     local Placed, Max = Count()
     if Placed >= Max then return Warn('Object Limit: This house is full, remove something first.') end
+    if Model == Config.Storage.Crate and CrateCount() >= MaxCrates() then
+        return Warn(('Storage Limit: This house can have %d storage crates.'):format(MaxCrates()))
+    end
 
     local Origin, Dir = CursorRay()
     local Hit, Coords = Cast(Origin, Dir)
@@ -514,7 +539,16 @@ local Catalog, Entities, SentEntities = nil, nil, false
 local function BuildCatalog()
     if Catalog then return Catalog end
     Catalog = {}
-    if IsModelInCdimage(GetHashKey('fw_wall_100x100')) then Catalog[1] = { M = 'fw_wall', L = 'Wall (resizable)', C = 'Build', W = true } end
+    local Txd = Config.CustomWalls.Txd
+    for _, W in ipairs(Config.CustomWalls.List) do
+        if IsModelInCdimage(GetHashKey(W.Model)) then
+            Catalog[#Catalog + 1] = { M = W.Model, L = W.Label, C = 'Custom Walls', T = true, A = W.W / W.H, I = ('https://nui-img/%s/fw_cw_%s'):format(Txd, W.Material) }
+        end
+    end
+    if IsModelInCdimage(GetHashKey('fw_wall_100x100')) then Catalog[#Catalog + 1] = { M = 'fw_wall', L = 'Wall (resizable)', C = 'Build', W = true, T = true } end
+    for _, Model in ipairs({ Config.Storage.Crate, Config.Storage.Wardrobe }) do
+        if IsModelInCdimage(GetHashKey(Model)) then Catalog[#Catalog + 1] = { M = Model, L = GetItemLabel(Model), C = 'Storage' } end
+    end
     for _, Cat in ipairs(Config.DecorCatalog) do
         for _, Item in ipairs(Cat.items) do
             if IsModelInCdimage(GetHashKey(Item.model)) then Catalog[#Catalog + 1] = { M = Item.model, L = GetItemLabel(Item.model), C = Cat.category } end
@@ -630,6 +664,7 @@ end
 function CloseMloEditor()
     if not Ed then return end
     SetScreenOwned(false)
+    SetStreamedTextureDictAsNoLongerNeeded(Config.CustomWalls.Txd)
     CancelPlacing()
     if Ed.Dirty then Discard() end
     for _, It in pairs(Ed.Items) do Outline(It, false) end
@@ -671,6 +706,7 @@ function OpenMloDecorateMenu()
     FreezeEntityPosition(PlayerPedId(), true)
     SetMloDecorPaused(true)
     SetScreenOwned(true)
+    RequestStreamedTextureDict(Config.CustomWalls.Txd, false) -- thumbnails (nui-img) of the custom walls
 
     Ed = { HouseId = HouseId, House = Config.Houses[HouseId], Cam = Cam, Adv = false, Axis = 'z', RotInc = Cfg.RotInc or 2,
         GridInc = Cfg.GridInc or 3, Grid = false, Link = false, Shop = true, Typing = false }
@@ -680,7 +716,7 @@ function OpenMloDecorateMenu()
 
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(true)
-    SendNUIMessage({ Action = 'Open', Data = { Catalog = BuildCatalog(), Groups = Cfg.Groups, Thumb = Cfg.Thumbnails, Address = Ed.House.Adress, Colors = Config.SurfaceColors,
+    SendNUIMessage({ Action = 'Open', Data = { Catalog = BuildCatalog(), Groups = Cfg.Groups, Thumb = Cfg.Thumbnails, Address = Ed.House.Adress, Colors = Config.CustomWalls.TintColors,
         Entities = not SentEntities and BuildEntities() or nil } })
     SentEntities = true
     Push()

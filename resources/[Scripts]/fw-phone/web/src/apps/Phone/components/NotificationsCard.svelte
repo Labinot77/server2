@@ -163,160 +163,73 @@
 </div>
 
 <style>
+    /* Codera banner */
     .phone-notification {
-        width: calc(100% - 2.96vh);
-        height: 100%;
-        padding: 0.8vh 1vh;
-        border-radius: 1.6vh;
+        width: calc(100% - 1.34vh);
+        padding: 0.76vh 1vh;
+        border-radius: 1.35vh;
         color: white;
-        max-width: 20.8vw;
         cursor: pointer;
-        margin-bottom: 0.7vh;
-        opacity: 1;
-        transform: translateY(0);
-        background-color: rgba(38, 38, 43, 0.9);
+        margin-bottom: 0.5vh;
+        font-family: Poppins, Inter, sans-serif;
+        background: rgba(34, 36, 40, 0.9);
         backdrop-filter: blur(1.5vh);
-        box-shadow: 0 0.6vh 1.6vh rgba(0, 0, 0, 0.35);
+        border: 0.08vh solid rgba(255, 255, 255, 0.07);
+        box-shadow: 0 0.67vh 1.85vh rgba(0, 0, 0, 0.45);
     }
 
-    .phone-notification-in {
-        animation: PhoneNotifFadeIn;
-        animation-duration: 0.5s;
-        animation-iteration-count: 1;
-        animation-fill-mode: forwards;
+    .phone-notification-in { animation: PhoneNotifIn 0.35s cubic-bezier(0.2, 0.9, 0.2, 1) forwards; }
+    .phone-notification-out { animation: PhoneNotifOut 0.3s forwards; }
+
+    .phone-notification p { margin: 0; line-height: 1.3; }
+
+    .phone-notification-title { display: flex; align-items: center; gap: 0.9vh; }
+
+    .phone-notification-title > .icon {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 2.4vh;
+        height: 2.4vh;
+        border-radius: 0.7vh;
+        font-size: 1.15vh;
     }
 
-    .phone-notification-out {
-        animation: PhoneNotifFadeOut;
-        animation-duration: 0.5s;
-        animation-iteration-count: 1;
-        animation-fill-mode: forwards;
-    }
+    .phone-notification-title > .app { flex: 1; min-width: 0; }
 
-    .phone-notification p {
-        margin: 0;
-        font-size: 1.3vh;
-        font-family: "Roboto";
-        font-weight: 400;
-        line-height: 1.43;
-        letter-spacing: 0.0017136vh;
-    }
-
-    .phone-notification > .phone-notification-title {
-        display: flex;
-        align-items: center;
-    }
-
-    .phone-notification > .phone-notification-title > .icon {
-        position: relative;
-        border-radius: 0.6vh;
-        width: 2.3vh;
-        height: 2.3vh;
-        margin-right: 0.4vw;
-        background-color: rgb(144, 202, 249);
-        text-align: center;
-    }
-
-    .phone-notification > .phone-notification-title > .icon > i {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 1.2vh;
-        text-shadow: -0.1vh -0.1vh 0.1vh rgba(0, 0, 0, 0.3),
-            0.1vh 0.1vh 0.1vh rgba(0, 0, 0, 0.3),
-            0.1vh -0.1vh 0.1vh rgba(0, 0, 0, 0.3),
-            -0.1vh 0.1vh 0.1vh rgba(0, 0, 0, 0.3);
-    }
-
-    .phone-notification > .phone-notification-title > .app {
-        flex: 1 1;
+    .phone-notification-title > .app > p {
+        font-size: 1.14vh;
         font-weight: 600;
-        overflow: hidden;
-    }
-
-    .phone-notification > .phone-notification-title > .app > p {
-        font-size: 1.2vh;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .phone-notification-title > p { font-size: 0.9vh; color: #c6cad1; }
+
+    .phone-notification-message { display: flex; margin: 0.3vh 0 0 3.3vh; }
+    .phone-notification-message > .text { flex: 1; min-width: 0; }
+
+    .phone-notification-message > .text > p {
+        font-size: 1.01vh;
+        color: #c6cad1;
         white-space: nowrap;
-        padding-right: 0.4vw;
-    }
-
-    .phone-notification > .phone-notification-title > p {
-        font-size: 1vh;
-    }
-
-    .phone-notification > .phone-notification-message {
-        margin-top: 0.37vh;
-        display: flex;
-    }
-
-    .phone-notification > .phone-notification-message > .text {
-        flex: 1 1;
-        padding-right: 0.4vw;
-    }
-
-    .phone-notification > .phone-notification-message > .text > p {
-        font-size: 1.1vh;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 1;
         overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .phone-notification > .phone-notification-message > .actions {
-        display: flex;
-        align-items: center;
+    .phone-notification-message > .actions { display: flex; align-items: center; gap: 0.5vh; }
+    .phone-notification-action { font-size: 1.6vh; }
+    .action-accept { color: var(--phone-green); }
+    .action-reject { color: var(--phone-red); }
+
+    @keyframes PhoneNotifIn {
+        from { opacity: 0; transform: translateY(-1.35vh) scale(0.96); }
+        to { opacity: 1; transform: none; }
     }
 
-    .phone-notification
-        > .phone-notification-message
-        > .actions
-        > .phone-notification-action {
-        font-size: 1.5vh;
-        margin: 0 0.3vh;
-    }
-
-    .phone-notification
-        > .phone-notification-message
-        > .actions
-        > .action-accept {
-        color: var(--phone-green);
-    }
-
-    .phone-notification
-        > .phone-notification-message
-        > .actions
-        > .action-reject {
-        color: #ffa726;
-    }
-
-    @keyframes PhoneNotifFadeIn {
-        0% {
-            opacity: 0;
-            transform: translateY(-9.25vh);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes PhoneNotifFadeOut {
-        0% {
-            opacity: 1;
-            transform: translateY(0);
-            height: 5.5vh;
-            max-height: 5.5vh;
-        }
-
-        to {
-            opacity: 0;
-            transform: translateY(-9.25vh);
-            height: 0;
-            max-height: 0;
-        }
+    @keyframes PhoneNotifOut {
+        from { opacity: 1; max-height: 6vh; }
+        to { opacity: 0; transform: translateY(-1vh) scale(0.97); max-height: 0; padding: 0; margin: 0; }
     }
 </style>

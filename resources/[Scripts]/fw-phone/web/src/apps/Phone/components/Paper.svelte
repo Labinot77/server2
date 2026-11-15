@@ -130,7 +130,8 @@
         position: relative;
         padding: 1vh 1.1vh;
         margin-bottom: 0.8vh;
-        border-radius: var(--phone-radius);
+        border-radius: 1.5vh;
+        border: 0.08vh solid var(--phone-line);
         background: var(--phone-card);
         color: white;
         transition: background 150ms;
@@ -165,7 +166,7 @@
         height: 3.6vh;
         margin-right: 1vh;
         border-radius: 1vh;
-        background: linear-gradient(160deg, #3b8cff, #1f5fd1);
+        background: var(--phone-accent);
         font-size: 1.6vh;
         box-shadow: inset 0 0.1vh 0 rgba(255, 255, 255, 0.2);
     }

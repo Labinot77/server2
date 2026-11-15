@@ -25,13 +25,7 @@ AddEventHandler("fw-housing:Server:SetInteractLocation", function(HouseId, Inter
         if Interaction == "Garage" then
             SetMloGarage(Source, HouseId)
         elseif Interaction == "Stash" or Interaction == "Wardrobe" then
-            local PedCoords = GetEntityCoords(GetPlayerPed(Source))
-            if not ValidateMloInterior(HouseId, PedCoords) then
-                return TriggerClientEvent('FW:Notify', Source, "You have to be inside the house.", "error")
-            end
-            Config.Houses[HouseId].Locations[Interaction] = PedCoords
-            TriggerClientEvent("fw-housing:Client:SyncHouse", -1, HouseId, Config.Houses[HouseId])
-            SaveHouse(HouseId)
+            TriggerClientEvent('FW:Notify', Source, "Place a storage crate or wardrobe in decorate mode instead.", "error")
         else
             TriggerClientEvent('FW:Notify', Source, "This house uses its real doors.", "error")
         end
