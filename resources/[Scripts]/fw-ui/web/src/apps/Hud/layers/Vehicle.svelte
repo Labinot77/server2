@@ -26,6 +26,7 @@
     $: SpeedPercent = Math.min(100, (Speed / ($VehicleData.MaxSpeed || 240)) * 100);
     $: Fuel = Math.min(100, Math.max(0, $VehicleData.Fuel || 0));
     $: LowFuel = Fuel <= 20;
+    $: Nitrous = Math.min(100, Math.max(0, $VehicleData.Nitrous || 0));
 
     $: Digits = [...String(Speed).padStart(3, "0")].map((Char, Index) => ({
         Char,
@@ -60,6 +61,13 @@
         {/if}
 
 <div class="speedometer" use:Layout={"vehicle"}>
+            {#if Nitrous > 0}
+                <div class="nitrous">
+                    <i class="fas fa-meteor"></i>
+                    <div class="nitrous-bar"><div class="nitrous-fill" style:width="{Nitrous}%"></div></div>
+                </div>
+            {/if}
+
             <svg class="gauges" viewBox="0 0 200 200">
                 <defs>
                     <linearGradient id="speedometer-bg-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -207,6 +215,36 @@
         fill: none;
         stroke-width: 6;
         transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+    }
+
+    /* nitrous bar, centered above the dial (dial centre sits at 29% of the box) */
+    .nitrous {
+        position: absolute;
+        top: -1.9vh;
+        left: 29%;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.57vh;
+        transform: translateX(-50%);
+        color: #e43f5a;
+        font-size: 1.14vh;
+        filter: drop-shadow(0 0.16vh 0.4vh rgba(0, 0, 0, 0.6));
+    }
+
+    .nitrous-bar {
+        width: 8.5vh;
+        height: 0.57vh;
+        overflow: hidden;
+        border: 0.08vh solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: rgba(30, 30, 30, 0.9);
+    }
+
+    .nitrous-fill {
+        height: 100%;
+        background: #e43f5a;
+        transition: width 0.3s ease;
     }
 
     .center {

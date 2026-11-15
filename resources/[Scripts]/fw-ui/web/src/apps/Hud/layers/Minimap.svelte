@@ -269,7 +269,7 @@
     </defs>
 </svg>
 
-<div class="compass" use:Layout={"compass"} style:display={(Visible || $LayoutEditing) ? "flex" : "none"}>
+<div class="compass" class:compass--hidden={!(Visible || $LayoutEditing)} use:Layout={"compass"}>
     {#if $MyPreferences['Compass.Show']}
         <div class="compass__degree"><span>{Math.round(RenderedHeading) % 360}</span>&deg;</div>
     {/if}
@@ -317,6 +317,17 @@
         right: 1vw;
         width: 14.5vw;
         pointer-events: none;
+        display: flex;
+        /* Reveal from the middle out to both sides; hide by collapsing back to the middle. */
+        clip-path: inset(-50% -25%);
+        transition: clip-path 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease, visibility 0s;
+    }
+
+    .compass--hidden {
+        clip-path: inset(-50% 50%);
+        opacity: 0;
+        visibility: hidden;
+        transition: clip-path 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s 0.3s;
     }
 
     .compass__degree {

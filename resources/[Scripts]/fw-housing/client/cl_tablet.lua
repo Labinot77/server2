@@ -1,9 +1,9 @@
--- House tablet: fw-dui desktop on the house's tablet (Config.Storage.Tablet, fixed spot from /housecreator) with the
--- "House" app (html/house.html, server/sv_tablet.lua). Players nearby see the screen too (mirror, balances hidden).
+-- House tablet: the House app (html/house.html, server/sv_tablet.lua) full screen on the house's tablet
+-- (Config.Storage.Tablet, fixed spot from /housecreator). Players nearby see the screen too (mirror, balances hidden).
 -- The tablet in use is swapped to a screen copy (_dui_01 / _dui_02): cl_mlo.lua respawns our local prop for fw-dui.
 local FW = exports['fw-core']:GetCoreObject()
 local DUI = exports['fw-dui']
-local SCREEN, APP = 'house_tablet', 'house'
+local SCREEN = 'house_tablet'
 local Tablet = { Open = false, HouseId = nil }
 
 function IsHouseTabletOpen() return Tablet.Open end
@@ -15,7 +15,7 @@ local function Send(Action, Data)
         for K, V in pairs(Data) do Mirror[K] = V end
         Mirror.Accounts = {}
     end
-    DUI:SendApp(SCREEN, APP, Action, Data, Mirror)
+    DUI:Send(SCREEN, Action, Data, Mirror)
 end
 
 local function Refresh()
@@ -42,14 +42,14 @@ function OpenHouseTablet(HouseId, Entity)
             Tablet.Open, Tablet.HouseId = false, nil
             return FW.Functions.Notify(Result == 'full' and "Both tablet screens nearby are in use, try again in a moment." or "The tablet couldn't be loaded.", "error")
         end
-        DUI:SetApps(SCREEN, { { id = APP, label = 'House', icon = 'fas fa-home', color = 'linear-gradient(160deg, #9be15d, #4f8a2b)',
-            width = Config.HouseApp.Window.Width, height = Config.HouseApp.Window.Height,
-            url = ('nui://%s/html/house.html'):format(GetCurrentResourceName()) } }, APP)
-        Send('init', { resource = GetCurrentResourceName() })
+        Send('init', { resource = GetCurrentResourceName(), viewport = DUI:GetViewport(Config.Storage.Tablet) })
         DUI:Focus(SCREEN, { Mouse = true })
         Refresh()
     end)
 end
+
+-- Calibration: % grid over the whole page, set fw-dui Config.Models[tablet].Viewport to the part you can see.
+RegisterCommand('tabletgrid', function() if Tablet.Open then Send('grid', {}) end end)
 
 -- Leaving the zone / house gone: put it down.
 CreateThread(function()
@@ -62,7 +62,7 @@ end)
 -- // fw-dui \\ --
 
 local function RegisterScreen()
-    DUI:RegisterScreen(SCREEN, { Models = { Config.Storage.Tablet }, Distance = 8.0, Mirror = true, MirrorKeys = true, Desktop = true })
+    DUI:RegisterScreen(SCREEN, { Url = ('nui://%s/html/house.html'):format(GetCurrentResourceName()), Models = { Config.Storage.Tablet }, Distance = 8.0, Mirror = true, MirrorKeys = true })
 end
 CreateThread(function() if GetResourceState('fw-dui') == 'started' then RegisterScreen() end end)
 AddEventHandler('onClientResourceStart', function(Resource) if Resource == 'fw-dui' then RegisterScreen() end end)

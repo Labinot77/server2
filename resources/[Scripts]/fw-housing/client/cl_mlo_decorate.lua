@@ -577,7 +577,8 @@ local function BuildCatalog()
     local Txd = Config.CustomWalls.Txd
     for _, W in ipairs(Config.CustomWalls.List) do
         if IsModelInCdimage(GetHashKey(W.Model)) then
-            Catalog[#Catalog + 1] = { M = W.Model, L = W.Label, C = 'Custom Walls', T = true, A = W.W / W.H, I = ('https://nui-img/%s/fw_cw_%s'):format(Txd, W.Material) }
+            local Ho = W.Hole and { x = (W.Hole.X + W.W / 2 - W.Hole.W / 2) / W.W, y = 1 - (W.Hole.Z + W.Hole.H) / W.H, w = W.Hole.W / W.W, h = W.Hole.H / W.H } -- opening, fractions of the panel
+            Catalog[#Catalog + 1] = { M = W.Model, L = W.Label, C = 'Custom Walls', T = true, A = W.W / W.H, Ho = Ho, I = ('https://nui-img/%s/fw_cw_%s'):format(Txd, W.Material) }
         end
     end
     if IsModelInCdimage(GetHashKey('fw_wall_100x100')) then Catalog[#Catalog + 1] = { M = 'fw_wall', L = 'Wall (resizable)', C = 'Build', W = true, T = true } end

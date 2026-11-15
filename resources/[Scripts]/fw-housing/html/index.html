@@ -82,7 +82,8 @@ body { display: none; width: 100vw; height: 100vh; overflow: hidden; color: #fff
 .tile.on { border-color: #fff; }
 .thumb { width: 100%; height: 3.9vh; display: flex; align-items: center; justify-content: center; }
 .thumb img { max-width: 80%; max-height: 100%; }
-.thumb .panel { background-size: 2.6vh 2.6vh; box-shadow: 0 .1vh .3vh rgba(0, 0, 0, .5); }
+.thumb .panel { position: relative; background-size: 2.6vh 2.6vh; box-shadow: 0 .1vh .3vh rgba(0, 0, 0, .5); }
+.thumb .panel b { position: absolute; background: var(--tile); }
 .thumb i { font-size: 1.8vh; color: rgba(255, 255, 255, .3); font-style: normal; }
 .tile span { width: 100%; text-align: center; font: 600 1.15vh 'Barlow Semi Condensed', sans-serif; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bucket { position: absolute; top: .75vh; right: .65vh; width: 1.75vh; height: 1.75vh; background: rgba(26, 46, 51, .95); display: flex; align-items: center; justify-content: center; }
@@ -201,7 +202,8 @@ function items() {
 function thumbHtml(i) {
     if (i.I) { // custom wall: texture swatch shaped like the panel
         const w = i.A >= 1 ? Math.min(7.6, 3.9 * i.A) : 3.9 * i.A, h = i.A >= 1 ? w / i.A : 3.9;
-        return `<div class="panel" style="width:${w}vh;height:${h}vh;background-image:url(${i.I})"></div>`;
+        const o = i.Ho ? `<b style="left:${i.Ho.x * 100}%;top:${i.Ho.y * 100}%;width:${i.Ho.w * 100}%;height:${i.Ho.h * 100}%"></b>` : '';
+        return `<div class="panel" style="width:${w}vh;height:${h}vh;background-image:url(${i.I})">${o}</div>`;
     }
     if (i.W || !thumb) return '<i>▦</i>';
     return `<img src="${thumb.replace('%s', i.M)}" loading="lazy" onerror="this.outerHTML='<i>▦</i>'">`;

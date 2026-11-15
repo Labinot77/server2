@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root { --bg: rgba(16, 18, 22, .88); --line: rgba(255, 255, 255, .08); --text: #e8eaed; --dim: #8b9099; --accent: #95ef77; --bad: #eb5050; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font: 13px/1.4 'Segoe UI', Roboto, sans-serif; color: var(--text); overflow: hidden; user-select: none; display: none; height: 100vh; }
+body.open { display: block; }
+.ui { position: absolute; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(6px); }
+button { white-space: nowrap; font: inherit; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; cursor: pointer; }
+button:hover { background: rgba(255,255,255,.12); }
+button.on { background: var(--accent); color: #111; border-color: var(--accent); }
+button:disabled { opacity: .35; pointer-events: none; }
+input[type=text], input[type=number] { font: inherit; color: var(--text); background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 100%; }
+input:focus { outline: 1px solid var(--accent); }
+input[type=checkbox] { accent-color: var(--accent); }
+
+#bar { top: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px; align-items: center; }
+#bar .sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+#bar .tool { display: flex; flex-direction: column; align-items: center; min-width: 74px; padding: 6px 8px; }
+#bar .tool small { font-size: 10px; opacity: .6; }
+
+#panel { top: 16px; right: 16px; width: 300px; max-height: calc(100vh - 32px); overflow-y: auto; padding: 4px 0; }
+#panel::-webkit-scrollbar { width: 6px; } #panel::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+section { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+section:last-child { border-bottom: 0; }
+h3 { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+label { display: block; color: var(--dim); font-size: 11px; margin: 8px 0 4px; }
+.row { display: flex; gap: 6px; align-items: center; }
+.row > * { flex: 1; }
+.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.swatches div { aspect-ratio: 1; border-radius: 5px; cursor: pointer; border: 2px solid transparent; }
+.swatches div.on { border-color: var(--accent); }
+.list div { display: flex; justify-content: space-between; padding: 7px 9px; border-radius: 6px; cursor: pointer; }
+.list div:hover { background: rgba(255,255,255,.06); }
+.list div.on { background: rgba(149,239,119,.15); color: var(--accent); }
+.list small { color: var(--dim); }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper span { flex: 1; text-align: center; font-weight: 600; }
+.item { background: rgba(255,255,255,.04); border-radius: 7px; padding: 8px; margin-top: 6px; }
+.item .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.item select { font: inherit; color: var(--text); background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 6px; padding: 4px; width: 100%; }
+.check { display: flex; gap: 6px; align-items: center; color: var(--text); font-size: 12px; margin: 6px 0 0; cursor: pointer; }
+.x { padding: 2px 8px; color: var(--bad); }
+.muted { color: var(--dim); font-size: 12px; }
+.danger { color: var(--bad); width: 100%; margin-top: 10px; }
+
+#hint { left: 16px; bottom: 16px; padding: 10px 14px; max-width: 560px; }
+#hint b { color: var(--accent); font-weight: 600; }
+#hint .keys { color: var(--dim); font-size: 12px; margin-top: 4px; }
+#toast { left: 50%; bottom: 24px; transform: translateX(-50%); padding: 9px 16px; display: none; }
+#dialog { inset: 0; margin: auto; width: 320px; height: fit-content; padding: 18px; display: none; text-align: center; }
+#dialog p { margin-bottom: 14px; }
+#dialog .row { margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="bar" class="ui">
+  <button class="tool" data-t="select">Select<small>1</small></button>
+  <button class="tool" data-t="wall">Wall<small>2</small></button>
+  <button class="tool" data-t="door">Door<small>3</small></button>
+  <button class="tool" data-t="window">Window<small>4</small></button>
+  <button class="tool" data-t="collision">Collision<small>5</small></button>
+  <span class="sep"></span>
+  <button data-k="grid" title="G">Grid</button>
+  <button data-k="ortho" title="O">Snap angle</button>
+  <button data-k="top" title="T">Top view</button>
+  <span class="sep"></span>
+  <button data-k="undo" title="Ctrl+Z">Undo</button>
+  <button data-k="redo" title="Ctrl+Y">Redo</button>
+  <button data-k="save" title="Ctrl+S" id="save">Save</button>
+</div>
+
+<div id="panel" class="ui">
+  <section>
+    <h3>Shell</h3>
+    <input type="text" id="label" maxlength="64">
+    <label>Wall colour</label><div class="swatches" id="tint"></div>
+    <label>Frame colour</label><div class="swatches" id="frame"></div>
+  </section>
+  <section>
+    <h3>Floor</h3>
+    <div class="stepper"><button data-k="floordown" title="Page Down">−</button><span id="floor"></span><button data-k="floorup" title="Page Up">+</button></div>
+    <button data-k="floorpick" style="width:100%;margin-top:6px" title="F">Pick floor under cursor (F)</button>
+  </section>
+  <section id="opts"></section>
+  <section id="sel"></section>
+</div>
+
+<div id="hint" class="ui"><div id="hintTool"></div><div class="keys">WASD move · Q / E down / up · Shift faster · right drag look · wheel zoom · Esc close</div></div>
+<div id="toast" class="ui"></div>
+<div id="dialog" class="ui">
+  <p>Close the builder?</p>
+  <button id="dSave" style="width:100%">Save &amp; close</button>
+  <div class="row"><button id="dDiscard">Discard changes</button><button id="dCancel">Keep building</button></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const post = (n, d = {}) => fetch(`https://${GetParentResourceName()}/b/${n}`, { method: 'POST', body: JSON.stringify(d) }).then(r => r.json()).catch(() => ({}));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let S = {}, Cfg = {}, open = false, look = null, lookAcc = { dx: 0, dy: 0 }, toastT;
+
+const HINTS = {
+  select: '<b>Select</b> · click a wall · drag its ends to resize · drag the middle to move · Del deletes',
+  wall: '<b>Wall</b> · click to start, click to place (keeps going) · click the first point to close the room · right click / Esc stops',
+  door: '<b>Door</b> · pick a door on the right · click on a wall to cut the hole',
+  window: '<b>Window</b> · pick a size on the right · click on a wall · see out from inside, bulletproof',
+  collision: '<b>Collision</b> · click a prop, fence or door to remove its collision · static map collision can\'t be removed: use <b>Pass-through</b> on a door',
+};
+
+function swatches(el, key) {
+  el.innerHTML = Cfg.Colors.map((c, i) => `<div style="background:${c}" data-i="${i}"></div>`).join('');
+  el.onclick = e => e.target.dataset.i && post('set', { K: key, V: +e.target.dataset.i });
+}
+
+function renderOpts() {
+  const T = S.Tool, el = $('#opts');
+  el.onclick = null;
+  if (T === 'wall') {
+    el.innerHTML = `<h3>Wall</h3><label>Height of new walls</label>
+      <div class="stepper"><button data-h="-0.25">−</button><span>${S.Height.toFixed(2)} m</span><button data-h="0.25">+</button></div>
+      <p class="muted" style="margin-top:8px">${S.Walls} walls · snaps to the grid and to wall ends</p>`;
+    el.querySelectorAll('[data-h]').forEach(b => b.onclick = () => post('set', { K: 'Height', V: S.Height + +b.dataset.h }));
+  } else if (T === 'door' || T === 'window') {
+    const list = T === 'door' ? Cfg.Doors : Cfg.Windows, cur = T === 'door' ? S.Door : S.Window;
+    el.innerHTML = `<h3>${T === 'door' ? 'Door' : 'Window'} type</h3><div class="list">${list.map((d, i) =>
+      `<div class="${i + 1 === cur ? 'on' : ''}" data-i="${i + 1}"><span>${esc(d.Label)}</span><small>${esc(d.Size || '')}</small></div>`).join('')}</div>`;
+    el.querySelector('.list').onclick = e => { const d = e.target.closest('[data-i]'); d && post('set', { K: T === 'door' ? 'Door' : 'Window', V: +d.dataset.i }); };
+  } else if (T === 'collision') {
+    el.innerHTML = `<h3>Removed collisions (${S.Removed.length})</h3>` + (S.Removed.length ? S.Removed.map((r, i) =>
+      `<div class="item"><div class="head"><span>${esc(r.Name || r.Model)}</span><button class="x" data-i="${i + 1}" data-k="Delete">✕</button></div>
+       <label class="check"><input type="checkbox" data-i="${i + 1}" data-k="Hide" ${r.Hide ? 'checked' : ''}> Hide the prop too</label></div>`).join('')
+      : '<p class="muted">Nothing yet. Red markers show removed collisions in the world.</p>');
+    el.onclick = e => { const t = e.target.closest('[data-k]'); t && post('removed', { I: +t.dataset.i, K: t.dataset.k }); };
+  } else {
+    el.innerHTML = `<h3>Select</h3><p class="muted">${S.Walls} walls. Click one to edit it.</p>`;
+  }
+}
+
+function renderSel() {
+  const W = S.Sel, el = $('#sel');
+  el.style.display = W ? '' : 'none';
+  if (!W) return;
+  const doorOpts = m => Cfg.Doors.map((d, i) => `<option value="${i + 1}" ${d.Model === m ? 'selected' : ''}>${esc(d.Label)}</option>`).join('');
+  el.innerHTML = `<h3>Wall ${W.Index}</h3>
+    <div class="row"><div><label>Length</label><input type="number" step="0.25" id="wL" value="${W.L}"></div>
+    <div><label>Height</label><input type="number" step="0.25" id="wH" value="${W.H}"></div>
+    <div><label>Rotation</label><input type="number" step="15" id="wR" value="${Math.round(W.Heading * 10) / 10}"></div></div>
+    ${W.Holes.map((h, i) => `<div class="item"><div class="head"><span>${h.Type === 'door' ? 'Door' : 'Window'} · ${h.W} x ${h.H} m</span>
+      <button class="x" data-i="${i + 1}" data-k="Remove">✕</button></div>
+      ${h.Type === 'door' ? `<select data-i="${i + 1}">${doorOpts(h.Model)}</select>
+      <label class="check"><input type="checkbox" data-i="${i + 1}" data-k="Flip" ${h.Flip ? 'checked' : ''}> Hinge on the other side</label>
+      <label class="check"><input type="checkbox" data-i="${i + 1}" data-k="Passage" ${h.Passage ? 'checked' : ''}> Pass-through (E walks through walls you can't remove)</label>` : ''}
+    </div>`).join('')}
+    <button class="danger" data-k="delete">Delete wall (Del)</button>`;
+  const send = () => post('wall', { L: +$('#wL').value, H: +$('#wH').value, Heading: +$('#wR').value });
+  el.querySelectorAll('input[type=number]').forEach(i => i.onchange = send);
+  el.querySelectorAll('select').forEach(s => s.onchange = () => post('hole', { I: +s.dataset.i, K: 'Model', V: +s.value }));
+  el.querySelectorAll('[data-i][data-k]').forEach(c => c.onclick = () => post('hole', { I: +c.dataset.i, K: c.dataset.k }));
+}
+
+function render() {
+  document.querySelectorAll('#bar .tool').forEach(b => b.classList.toggle('on', b.dataset.t === S.Tool));
+  for (const k of ['grid', 'ortho', 'top']) $(`[data-k=${k}]`).classList.toggle('on', !!S[k[0].toUpperCase() + k.slice(1)]);
+  $('[data-k=undo]').disabled = !S.Undo; $('[data-k=redo]').disabled = !S.Redo;
+  $('#save').textContent = S.Dirty ? 'Save •' : 'Save';
+  if (document.activeElement !== $('#label')) $('#label').value = S.Label;
+  $('#tint').querySelectorAll('div').forEach((d, i) => d.classList.toggle('on', i === S.Tint));
+  $('#frame').querySelectorAll('div').forEach((d, i) => d.classList.toggle('on', i === S.FrameTint));
+  $('#floor').textContent = `Z ${S.Floor.toFixed(2)}`;
+  $('#hintTool').innerHTML = HINTS[S.Tool];
+  if (!document.activeElement || !$('#panel').contains(document.activeElement) || document.activeElement === $('#label')) { renderOpts(); renderSel(); }
+}
+
+function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => el.style.display = 'none', 2500); }
+const dialog = on => $('#dialog').style.display = on ? 'block' : 'none';
+const key = K => post('key', { K }).then(r => r && r.Close && dialog(true));
+
+window.addEventListener('message', ({ data: m }) => {
+  if (m.Action === 'Open') { Cfg = m.Data; swatches($('#tint'), 'Tint'); swatches($('#frame'), 'FrameTint'); open = true; document.body.classList.add('open'); }
+  else if (m.Action === 'Close') { open = false; dialog(false); document.body.classList.remove('open'); }
+  else if (m.Action === 'State') { S = m.Data; render(); }
+  else if (m.Action === 'Warn') toast(m.Text);
+});
+
+$('#bar').onclick = e => { const b = e.target.closest('button'); if (!b) return; b.dataset.t ? post('tool', { T: b.dataset.t }) : key(b.dataset.k); };
+$('#panel').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (b && !b.dataset.i) key(b.dataset.k); });
+$('#label').onchange = e => post('set', { K: 'Label', V: e.target.value });
+document.addEventListener('focusin', e => e.target.matches('input[type=text],input[type=number]') && post('typing', { State: true }));
+document.addEventListener('focusout', e => e.target.matches('input[type=text],input[type=number]') && post('typing', { State: false }));
+$('#dSave').onclick = () => post('close', { Save: true });
+$('#dDiscard').onclick = () => post('close', { Save: false });
+$('#dCancel').onclick = () => dialog(false);
+
+// World mouse: left = tool, right drag = look, right click = stop / deselect.
+const onUi = e => e.target.closest('.ui');
+addEventListener('mousedown', e => {
+  if (!open || onUi(e)) return;
+  if (document.activeElement) document.activeElement.blur();
+  if (e.button === 2) look = { moved: 0 }; else if (e.button === 0) post('down');
+});
+addEventListener('mousemove', e => { if (look) { lookAcc.dx += e.movementX; lookAcc.dy += e.movementY; look.moved += Math.abs(e.movementX) + Math.abs(e.movementY); } });
+addEventListener('mouseup', e => {
+  if (!open) return;
+  if (e.button === 0) post('up');
+  if (e.button === 2 && look) { if (look.moved < 4) key('cancel'); look = null; }
+});
+addEventListener('wheel', e => open && !onUi(e) && post('wheel', { d: Math.sign(e.deltaY) }));
+addEventListener('contextmenu', e => e.preventDefault());
+(function tick() { if (lookAcc.dx || lookAcc.dy) { post('look', lookAcc); lookAcc = { dx: 0, dy: 0 }; } requestAnimationFrame(tick); })();
+
+const KEYS = { 1: 'select', 2: 'wall', 3: 'door', 4: 'window', 5: 'collision' };
+const SHORT = { g: 'grid', o: 'ortho', t: 'top', f: 'floorpick', pageup: 'floorup', pagedown: 'floordown', delete: 'delete', escape: 'cancel' };
+addEventListener('keydown', e => {
+  if (!open) return;
+  if (e.target.matches('input')) { if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); return; }
+  const k = e.key.toLowerCase();
+  if (e.ctrlKey && ['z', 'y', 's'].includes(k)) { e.preventDefault(); return key({ z: 'undo', y: 'redo', s: 'save' }[k]); }
+  if ($('#dialog').style.display === 'block') { if (k === 'escape') dialog(false); return; }
+  if (KEYS[k]) post('tool', { T: KEYS[k] }); else if (SHORT[k]) key(SHORT[k]);
+});
+</script>
+</body>
+</html>

@@ -41,6 +41,8 @@ Config.LoadEstimate = 1500
       Texture      = screen texture to replace (Dict = its .ytd, defaults to the model / copy name)
       RenderTarget = named render target (script_rt_<name>) instead of a texture
       Resolution   = DUI page size, keep the screen's aspect ratio
+      Viewport     = optional { X, Y, W, H } in % of the page: the part the screen's UVs show. The cursor stays
+                     inside it and pages can read it (exports GetViewport) to lay out there.
       Camera       = optional { Offset, LookAt, Fov, Transition }
       Specular     = the screen's specular map (same .ytd), replaced with flat black while the page shows (no glare)
       Idle         = true / { Texture, Dict }: props nobody uses show one shared idle page on the ORIGINAL model's
@@ -73,10 +75,11 @@ Config.Models = {
         Camera = { Offset = vector3(0.0, -1.05, 0.45), LookAt = vector3(0.0, 0.0, 0.42), Fov = 45.0, Transition = 600 },
     },
     ['sf_prop_sf_tablet_01a'] = { -- house tablet (fw-housing, House app)
-        Variants = { 'sf_prop_sf_tablet_01a_dui_01', 'sf_prop_sf_tablet_01a_dui_02' }, Texture = 'prop_arena_tablet_drone_screen_d', Resolution = { 1280, 800 }, Idle = true,
-        Camera = { Offset = vector3(-0.002, -0.402, 0.004), LookAt = vector3(-0.003, 0.000, -0.001), Fov = 29.0, Transition = 600 },
-},
-        ['ch_prop_casino_keypad_02'] = {
+        Variants = { 'sf_prop_sf_tablet_01a_dui_01', 'sf_prop_sf_tablet_01a_dui_02' }, Texture = 'prop_arena_tablet_drone_screen_d', Resolution = { 1280, 527 }, Idle = true,
+        Viewport = { 8.4, 0.6, 84.0, 99.4 }, -- tune with /tabletgrid
+        Camera = { Offset = vector3(0.050, -0.413, 0.011), LookAt = vector3(0.004, 0.000, 0.002), Fov = 45.0, Transition = 600 },
+        },
+    ['ch_prop_casino_keypad_02'] = {
         Variants = { 'ch_prop_casino_keypad_02_dui_01', 'ch_prop_casino_keypad_02_dui_02' }, Texture = 'prop_ld_keypad_01b_screen_dui_01',Resolution = { 512, 256 },
         Camera = { Offset = vector3(0.0, -0.4, 0.02), LookAt = vector3(0.0, 0.0, 0.02), Fov = 35.0, Transition = 500 },
     },

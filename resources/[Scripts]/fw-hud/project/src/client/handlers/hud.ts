@@ -5,8 +5,16 @@ import { CurrentBuffs } from "./buffs";
 import { IsHudBlocked } from "./blockers";
 
 let HudWanted = true;
-const SyncHudVisibility = () => SendUIMessage("Hud", "SetVisibility", HudWanted && !IsHudBlocked());
+let Paused = false;
+const SyncHudVisibility = () => SendUIMessage("Hud", "SetVisibility", HudWanted && !Paused && !IsHudBlocked());
 on("fw-hud:Client:OnBlockersChanged", SyncHudVisibility);
+
+// Hide the player HUD while the pause menu (Escape) is open.
+setTick(() => {
+    if (IsPauseMenuActive() == Paused) return;
+    Paused = !Paused;
+    SyncHudVisibility();
+});
 
 export const SetHudVisibleState = (Visible: boolean) => {
     HudWanted = Visible;

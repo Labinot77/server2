@@ -6,10 +6,24 @@
 /* Measured on a 1120px wide window: 1rem = 10px there, everything scales with the window. */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap');
 :root { --green: #8fd14f; --green-dark: rgba(70, 105, 35, .45); --grey: #a9a9a9; --card: rgba(36, 36, 36, .88); --line: rgba(255, 255, 255, .1); }
-html { font-size: calc(100vw / 112); }
+/* --vx/--vy/--vw/--vh: the part of the page the tablet screen shows, in % (fw-dui Viewport) */
+html { font-size: calc(var(--vw, 100) * 1vw / 112); cursor: none; background: #151515; }
+#grid { position: fixed; inset: 0; z-index: 98; pointer-events: none; font: 700 14px monospace; color: #ff0; background-image: linear-gradient(90deg, rgba(255,0,0,.8) 2px, transparent 2px), linear-gradient(rgba(255,0,0,.8) 2px, transparent 2px); background-size: 5vw 5vh; }
+#grid span { position: absolute; }
+#cursor { position: fixed; left: 0; top: 0; width: 2.4rem; height: 2.4rem; z-index: 99; pointer-events: none; }
+#lock { position: absolute; inset: 0; z-index: 50; background: #151515; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6rem; }
+#lock svg { width: 9rem; height: 9rem; fill: var(--green); } #lock b { font: 400 4rem 'Oswald', sans-serif; } #lock span { color: var(--grey); font-size: 1.3rem; }
+/* dropdowns (native <select> popups don't render on a DUI) */
+.dd { position: relative; cursor: pointer; }
+.dd .val { padding-right: 2.4rem; font: 500 1.25rem 'Poppins', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd .list { position: absolute; left: -1rem; right: -1rem; top: calc(100% + 1rem); z-index: 10; background: #1d1f1b; border: .15rem solid var(--green); border-radius: .4rem; max-height: 22rem; overflow-y: auto; display: none; }
+.dd.open .list { display: block; }
+.dd .list div { padding: 1rem 1.2rem; font: 500 1.2rem 'Poppins', sans-serif; }
+.dd .list div:hover, .dd .list div.on { background: var(--green-dark); }
+.dd.disabled { cursor: default; opacity: .55; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { width: 100vw; height: 100vh; overflow: hidden; color: #fff; background: #151515; font: 600 1.2rem 'Poppins', sans-serif; user-select: none; }
-body.embedded, body.embedded * { cursor: none !important; }
+body { position: fixed; left: calc(var(--vx, 0) * 1vw); top: calc(var(--vy, 0) * 1vh); width: calc(var(--vw, 100) * 1vw); height: calc(var(--vh, 100) * 1vh); overflow: hidden; color: #fff; background: #151515; font: 600 1.2rem 'Poppins', sans-serif; user-select: none; }
+body, body * { cursor: none !important; }
 h1, h2, h3, .big { font-family: 'Oswald', sans-serif; font-weight: 400; }
 .hidden { display: none !important; }
 .scroll { overflow-y: auto; } .scroll::-webkit-scrollbar { width: .3rem; } .scroll::-webkit-scrollbar-thumb { background: var(--green); }
@@ -76,9 +90,7 @@ h1, h2, h3, .big { font-family: 'Oswald', sans-serif; font-weight: 400; }
 .panel p { font-size: 1.15rem; line-height: 1.8rem; margin-bottom: 1.6rem; }
 fieldset { border: .15rem solid var(--green); border-radius: .4rem; padding: 0 .9rem .9rem; position: relative; }
 legend { font-size: .9rem; color: var(--green); padding: 0 .3rem; }
-select { width: 100%; background: transparent; border: 0; color: #fff; font: 500 1.25rem 'Poppins', sans-serif; outline: none; appearance: none; padding-top: .2rem; }
-select option { background: #222; }
-fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; border: .45rem solid transparent; border-top-color: #ddd; }
+fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; border: .45rem solid transparent; border-top-color: #ddd; pointer-events: none; }
 
 /* // access \\ */
 .titlebar { display: flex; align-items: center; justify-content: space-between; }
@@ -90,7 +102,7 @@ fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; b
 .perm i { width: 1.4rem; height: 1.4rem; border: .15rem solid var(--green); border-radius: .3rem; display: inline-block; }
 .perm.on i { background: var(--green); box-shadow: inset 0 0 0 .25rem #222; }
 .empty { color: var(--grey); font-weight: 400; padding: 1.2rem 0 .4rem; }
-#modal { position: fixed; inset: 0; z-index: 5; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; }
+#modal { position: absolute; inset: 0; z-index: 5; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; }
 #modal .box { width: 40rem; background: rgba(28, 30, 26, .97); border: .15rem solid rgba(143, 209, 79, .6); border-radius: .6rem; padding: 1.6rem 1.6rem 1.4rem; }
 #modal h3 { font: 500 1.6rem 'Oswald', sans-serif; margin-bottom: 1.6rem; }
 #modal p { font: 500 1.05rem 'Oswald', sans-serif; letter-spacing: .02rem; color: #e6e6e6; }
@@ -143,7 +155,7 @@ fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; b
             <div class="panel"><div class="due"><div><span class="label">Due Date</span><b id="due"></b></div><div><span class="label">Amount</span><b id="amount"></b></div></div></div>
             <h3>Account Used For Auto-Withdrawal</h3>
             <div class="panel"><p>This will automatically be paid on the due date if the account has sufficient balance.</p>
-                <fieldset><legend>Bank Account</legend><select id="account"></select></fieldset></div>
+                <fieldset><legend>Bank Account</legend><div class="dd" id="account"></div></fieldset></div>
         </div>
     </div>
 </div>
@@ -165,6 +177,8 @@ fieldset::after { content: ''; position: absolute; right: 1.2rem; top: 1.3rem; b
 </div>
 
 <div id="toast"></div>
+<div id="lock"><svg viewBox="0 0 24 24"><path d="M12 3l10 9h-3v9h-5v-6h-4v6H5v-9H2z"/></svg><b>House</b><span>Use the tablet to manage your house</span></div>
+<svg id="cursor" viewBox="0 0 24 24"><path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="white" stroke="#0b0d10" stroke-width="1.4" stroke-linejoin="round"/></svg>
 
 <script src="nui://fw-dui/html/keys.js"></script>
 <script>
@@ -172,7 +186,24 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const money = n => '$' + Math.round(n || 0).toLocaleString('en-US');
 const date = t => { const d = new Date(t * 1000); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
-if (window.parent !== window) document.body.classList.add('embedded');
+addEventListener('mousemove', e => $('cursor').style.transform = `translate(${e.clientX - 3}px, ${e.clientY - 2}px)`);
+
+// Dropdown: el = .dd, options = [{ value, label }], onPick(value)
+function dropdown(el, options, value, onPick, disabled) {
+    const cur = options.find(o => o.value === value) || options[0] || { label: '' };
+    el.className = 'dd' + (disabled ? ' disabled' : '');
+    el.innerHTML = `<div class="val">${esc(cur.label)}</div><div class="list">`
+        + options.map((o, i) => `<div data-i="${i}" class="${o.value === cur.value ? 'on' : ''}">${esc(o.label)}</div>`).join('') + '</div>';
+    el.onclick = e => {
+        if (disabled) return;
+        const item = e.target.closest('[data-i]');
+        document.querySelectorAll('.dd.open').forEach(d => d !== el && d.classList.remove('open'));
+        if (item) { el.classList.remove('open'); const o = options[+item.dataset.i]; if (o.value !== cur.value) onPick(o.value); }
+        else el.classList.toggle('open');
+        e.stopPropagation();
+    };
+}
+addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open')));
 
 let D = null, tab = 'home', resource = 'fw-housing', toastTimer = 0;
 const post = (action, data = {}) => fetch(`https://${resource}/house`, { method: 'POST', body: JSON.stringify({ Action: action, ...data }) }).catch(() => {});
@@ -248,9 +279,8 @@ function renderMaintenance() {
         + D.History.map(h => `<div class="row"><span>${esc(h.Name)}</span><span>${esc(h.Cid)}</span><span>${money(h.Amount)}</span><span>${date(h.Date)}</span><span style="color:${h.Status === 'Paid' ? 'var(--green)' : '#e2455a'}">${esc(h.Status)}</span></div>`).join('');
     $('due').textContent = date(D.Fee.Due);
     $('amount').textContent = money(D.Fee.Amount);
-    const sel = $('account');
-    sel.disabled = !D.IsOwner;
-    sel.innerHTML = D.IsOwner ? D.Accounts.map(a => `<option value="${esc(a.Id)}" ${a.Id === D.Fee.Account ? 'selected' : ''}>${esc(a.Label)} (${esc(a.Id)}) - ${money(a.Balance)}</option>`).join('') : '<option>Only the owner can see this</option>';
+    const accounts = D.IsOwner ? D.Accounts.map(a => ({ value: a.Id, label: `${a.Label} (${a.Id}) - ${money(a.Balance)}` })) : [{ value: '', label: 'Only the owner can see this' }];
+    dropdown($('account'), accounts, D.Fee.Account, v => act('account', { Account: v }), !D.IsOwner);
 }
 
 function renderAccess() {
@@ -269,18 +299,17 @@ function renderSettings() {
         + D.Palette.map(c => `<div class="${D.Colors[s] === c ? 'on' : ''}" style="background:${c}" onclick="act('color',{Surface:'${s}',Hex:'${c}'})"></div>`).join('') + '</div>';
     const html = ['Walls', 'Floor', 'Ceiling'].map(s => `<h4>${surf[s]}</h4>` + (D.Surfaces.includes(s) ? dots(s) : '<div class="note">This house has no recolourable ' + s.toLowerCase() + '.</div>')).join('<div class="sep"></div>');
     const locked = !D.Upgrades.timecycle;
-    $('settings-box').innerHTML = html + `<div class="sep"></div><h4>Timecycle</h4><fieldset><select id="tc" ${locked || !D.IsOwner ? 'disabled' : ''}>`
-        + D.Timecycles.map(t => `<option value="${esc(t.Id)}" ${t.Id === D.Timecycle ? 'selected' : ''}>${esc(t.Label)}</option>`).join('') + '</select></fieldset>'
+    $('settings-box').innerHTML = html + '<div class="sep"></div><h4>Timecycle</h4><fieldset><legend>Type</legend><div class="dd" id="tc"></div></fieldset>'
         + (locked ? '<div class="req">Requires Timecycle Changer Upgrade</div>' : '');
-    $('tc').onchange = e => act('timecycle', { Id: e.target.value });
+    dropdown($('tc'), D.Timecycles.map(t => ({ value: t.Id, label: t.Label })), D.Timecycle, v => act('timecycle', { Id: v }), locked || !D.IsOwner);
 }
 
 function render() {
+    $('lock').classList.toggle('hidden', !!D);
     if (!D) return;
     renderHome(); renderUpgrades(); renderMaintenance(); renderAccess(); renderSettings();
 }
 
-$('account').onchange = e => act('account', { Account: e.target.value });
 function showModal() { $('cid').value = ''; $('modal').classList.remove('hidden'); $('cid').focus(); }
 function hideModal() { $('modal').classList.add('hidden'); }
 function addKey() { const v = $('cid').value.trim(); if (v) { act('addkey', { Cid: v }); hideModal(); } }
@@ -290,7 +319,20 @@ window.addEventListener('message', e => {
     let m = e.data;
     if (typeof m === 'string') { try { m = JSON.parse(m); } catch { return; } }
     if (!m || !m.action) return;
-    if (m.action === 'init') { resource = m.data.resource || resource; setTab('home'); }
+    if (m.action === 'init') {
+        resource = m.data.resource || resource;
+        const v = m.data.viewport, st = document.documentElement.style;
+        if (v) ['--vx', '--vy', '--vw', '--vh'].forEach((k, i) => st.setProperty(k, v[i]));
+        setTab('home');
+    }
+    if (m.action === 'grid') { // calibration: labels every 10% of the page
+        let g = $('grid');
+        if (g) return g.remove();
+        g = document.createElement('div'); g.id = 'grid';
+        for (let i = 0; i <= 100; i += 10) g.innerHTML += `<span style="left:${i}vw;top:1vh">${i}</span><span style="top:${i}vh;left:1vw">${i}</span>`;
+        document.documentElement.append(g);
+    }
+    else if (m.action === 'close') { D = null; render(); }
     else if (m.action === 'data') { D = m.data; render(); }
     else if (m.action === 'toast') toast(m.data.text, m.data.ok);
     else if (m.action === 'tab') setTab(m.data);

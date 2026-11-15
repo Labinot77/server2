@@ -1,5 +1,6 @@
 # fw-housing custom walls - one click build for Blender + Sollumz.
-# 8 materials x 5 sizes = 40 wall panels (fw_cw_<material>_<size>), each with collision and a colour (tint) palette.
+# 8 materials x 7 sizes = 56 wall panels (fw_cw_<material>_<size>, incl. a door and a window frame), each with
+# collision and a colour (tint) palette.
 # Textures are generated here (tileable, 512 px per metre), nothing else is needed.
 #
 # 1. Open Blender, File > Save As > save a .blend in an empty folder.
@@ -15,7 +16,9 @@ import numpy as np
 RESOURCE, TXD = 'fw-custom-walls', 'fw_custom_walls'
 THICK = 0.10   # m
 PX = 512       # texture pixels per metre (textures repeat every metre)
-SIZES = [('xs', 0.5, 0.5), ('s', 1.0, 1.0), ('m', 1.0, 2.5), ('l', 2.0, 2.5), ('xl', 3.0, 3.0)]
+# (id, width, height, opening) - opening = (centre x, bottom, width, height) in metres, None = solid panel
+SIZES = [('xs', 0.5, 0.5, None), ('s', 1.0, 1.0, None), ('m', 1.0, 2.5, None), ('l', 2.0, 2.5, None), ('xl', 3.0, 3.0, None),
+         ('door', 1.5, 2.5, (0.0, 0.0, 1.0, 2.15)), ('window', 1.5, 2.5, (0.0, 0.9, 1.0, 1.1))]
 MATERIALS = ['plaster', 'woodlight', 'wooddark', 'tile', 'brick', 'brickred', 'stone', 'marble']
 TINTS = ['#FFFFFF', '#EADDC4', '#CDB891', '#B5B5B5', '#6E6E6E', '#2B2B2B', '#9CAF88', '#2F4B37',
          '#9EC5E0', '#2E4A7D', '#B5583B', '#E3B5B0', '#D4A63A', '#8A6239', '#5A3D26', '#7A2633']
@@ -255,17 +258,34 @@ for m in MATERIALS:
                 node.interpolation = 'Closest'
     materials[m] = mat
 
-# Panels: origin bottom centre, UVs in metres (texture repeats every metre)
-panels = []
-for mi, m in enumerate(MATERIALS):
-    for si, (sid, W, H) in enumerate(SIZES):
-        name = f'fw_cw_{m}_{sid}'
-        T = THICK / 2
-        bm = bmesh.new()
-        v = [bm.verts.new(c) for c in [(-W/2, -T, 0), (W/2, -T, 0), (W/2, T, 0), (-W/2, T, 0),
-                                       (-W/2, -T, H), (W/2, -T, H), (W/2, T, H), (-W/2, T, H)]]
+def solid_parts(W, H, Hole):
+    """Solid parts of a panel as boxes (x0, x1, z0, z1): the whole panel, or the parts around the opening."""
+    if not Hole:
+        return [(-W / 2, W / 2, 0.0, H)]
+    cx, z, w, h = Hole
+    x0, x1 = cx - w / 2, cx + w / 2
+    parts = [(-W / 2, x0, 0.0, H), (x1, W / 2, 0.0, H), (x0, x1, z + h, H)]
+    if z > 0:
+        parts.append((x0, x1, 0.0, z))
+    return [b for b in parts if b[1] - b[0] > 1e-4 and b[3] - b[2] > 1e-4]
+
+
+def add_boxes(bm, boxes):
+    T = THICK / 2
+    for x0, x1, z0, z1 in boxes:
+        v = [bm.verts.new(c) for c in [(x0, -T, z0), (x1, -T, z0), (x1, T, z0), (x0, T, z0),
+                                       (x0, -T, z1), (x1, -T, z1), (x1, T, z1), (x0, T, z1)]]
         for f in [(0, 1, 5, 4), (2, 3, 7, 6), (1, 2, 6, 5), (3, 0, 4, 7), (4, 5, 6, 7), (3, 2, 1, 0)]:
             bm.faces.new([v[i] for i in f])
+
+
+# Panels: origin bottom centre, UVs in metres (texture repeats every metre, continuous around openings)
+panels = []
+for mi, m in enumerate(MATERIALS):
+    for si, (sid, W, H, Hole) in enumerate(SIZES):
+        name = f'fw_cw_{m}_{sid}'
+        bm = bmesh.new()
+        add_boxes(bm, solid_parts(W, H, Hole))
         uv = bm.loops.layers.uv.new('UVMap')
         for face in bm.faces:
             n = face.normal
@@ -280,28 +300,26 @@ for mi, m in enumerate(MATERIALS):
         obj.location = (si * 4.0, mi * 2.0, 0)
         scene.collection.objects.link(obj)
         mat_ops.post_create_shader_update_object(obj, materials[m])
-        panels.append((name, obj, W, H))
+        panels.append((name, obj, W, H, Hole))
 
 bpy.ops.object.select_all(action='DESELECT')
-for _, obj, _, _ in panels:
+for _, obj, *_ in panels:
     obj.select_set(True)
 bpy.context.view_layer.objects.active = panels[0][1]
 scene.create_seperate_drawables = True
 scene.auto_create_embedded_col = False
 bpy.ops.sollumz.converttodrawable()
-drawables = [bpy.data.objects[name] for name, _, _, _ in panels]
+drawables = [bpy.data.objects[p[0]] for p in panels]
 
-# Collision: Composite > Geometry (panel-sized box) in drawable space, vanilla prop flags
+# Collision: Composite > Geometry (the same solid boxes, so you walk through openings) in drawable space, vanilla prop flags
 concrete = next(i for i, c in enumerate(colmats.collisionmats) if c.name == 'CONCRETE')
 col_mat = colmats.create_collision_material_from_index(concrete)
-for d, (_, _, W, H) in zip(drawables, panels):
+for d, (_, _, W, H, Hole) in zip(drawables, panels):
     composite = helper.create_empty_object(SollumType.BOUND_COMPOSITE, d.name + '.col')
     composite.parent = d
     geom = helper.create_blender_object(SollumType.BOUND_GEOMETRY, d.name + '.geom')
     bm = bmesh.new()
-    bmesh.ops.create_cube(bm, size=1.0)
-    for vert in bm.verts:
-        vert.co = (vert.co.x * W, vert.co.y * THICK, (vert.co.z + 0.5) * H)
+    add_boxes(bm, solid_parts(W, H, Hole))
     bm.to_mesh(geom.data)
     bm.free()
     geom.data.materials.append(col_mat)

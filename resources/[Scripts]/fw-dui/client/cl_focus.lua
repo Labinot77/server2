@@ -64,7 +64,7 @@ local function SetHud(Focused)
     if Config.OnFocus then Config.OnFocus(Focused) end
 end
 
-local function Clamp(V) return math.max(0.0, math.min(100.0, V)) end
+local function Clamp(V, Min, Size) return math.max(Min, math.min(Min + Size, V)) end
 
 local function SetInteractDisabled(Disabled)
     if GetResourceState('interact') == 'started' then exports['interact']:Disable(Disabled) end
@@ -115,7 +115,8 @@ local function Focus(Name, Options)
         RenderScriptCams(true, true, Transition, true, true)
     end
 
-    local F = { S = S, Cam = Cam, Transition = Transition, X = Options.X or 50.0, Y = Options.Y or 50.0, Options = Options, Closeable = true }
+    local VP = S.Model.Viewport or { 0.0, 0.0, 100.0, 100.0 }
+    local F = { S = S, Cam = Cam, Transition = Transition, X = Options.X or VP[1] + VP[3] / 2, Y = Options.Y or VP[2] + VP[4] / 2, Options = Options, Closeable = true }
     Focused = F
     MirrorStart(S)
 
@@ -143,8 +144,8 @@ local function Focus(Name, Options)
                 break
             end
 
-            F.X = Clamp(F.X + GetDisabledControlNormal(0, 1) * Sensitivity)
-            F.Y = Clamp(F.Y + GetDisabledControlNormal(0, 2) * Sensitivity)
+            F.X = Clamp(F.X + GetDisabledControlNormal(0, 1) * Sensitivity, VP[1], VP[3])
+            F.Y = Clamp(F.Y + GetDisabledControlNormal(0, 2) * Sensitivity, VP[2], VP[4])
 
             local Key = ('%.1f:%.1f'):format(F.X, F.Y)
             if Key ~= Last then

@@ -148,22 +148,6 @@ export const Hud: Array<HudType> = [
         Buffed: false, IsEnhancement: false
     },
     {
-        Id: 'Nitrous',
-        Show: false,
-        Color: '#e43f5a', Icon: 'meteor',
-        Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: true,
-        Buffed: false, IsEnhancement: false
-    },
-    {
-        Id: 'Harness',
-        Show: false,
-        Color: '#dd4dfa', Icon: 'user-slash',
-        Value: 0.0, ShowDanger: false,
-        AutoHide: true, AutoShow: true,
-        Buffed: false, IsEnhancement: false
-    },
-    {
         Id: 'PursuitMode',
         Show: false,
         Color: '#ff4a68', Icon: 'tachometer-alt',

@@ -13,6 +13,8 @@ Config.WelcomeVehicles = {
 }
 
 Config.HideCoords = vector3(2844.64, -1465.4, 13.4)
+-- Blurred city view behind the title screen / main menu
+Config.MenuCam = vector4(805.0, -905.0, 85.0, 78.0)
 Config.CamCoords = vector4(2850.52, -1445.4, 14.5, 324.0)
 Config.PedCoords = {
     vector3(2852.155, -1439.16, 13.92243),

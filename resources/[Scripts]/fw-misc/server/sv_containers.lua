@@ -21,13 +21,18 @@ Citizen.CreateThread(function()
 
     local Containers = {}
     for k, v in pairs(Result) do
-        Containers[v.id] = {
-            ContainerId = v.containerid,
-            Owner = v.owner,
-            Pin = v.pincode,
-            HackDate = v.hack_date,
-            Coords = json.decode(v.coords),
-        }
+        local Coords = json.decode(v.coords)
+        if Coords then
+            Containers[v.id] = {
+                ContainerId = v.containerid,
+                Owner = v.owner,
+                Pin = v.pincode,
+                HackDate = v.hack_date,
+                Coords = Coords,
+            }
+        else
+            print(("^3[fw-misc] Container '%s' (id %s) has invalid coords JSON, skipping.^7"):format(v.containerid, v.id))
+        end
     end
 
     Config.Containers = Containers

@@ -63,7 +63,6 @@ Config.Storage = { Crate = 'm23_1_prop_m31_roostercrate_02a', Wardrobe = 'v_res_
 
 -- House app (tablet). Upgrades are bought once per house from the owner's bank account.
 Config.HouseApp = {
-    Window = { Width = 72, Height = 66 }, -- app window on the tablet desktop, % of the screen
     Keyholders = 5,               -- max keyholders, +5 with the Keyholder upgrade
     StorageBonus = { Slots = 20, Weight = 500 }, -- extra per crate with the Storage upgrade
     Fee = { Percent = 0.25, Days = 7 }, -- maintenance: % of the house price every X days, auto-withdrawn
@@ -151,10 +150,12 @@ Config.CustomWalls = {
         { Id = 'brick', Label = 'Brick Wall' }, { Id = 'brickred', Label = 'Brick Wall B' },
         { Id = 'stone', Label = 'Stone Wall' }, { Id = 'marble', Label = 'White Marble Wall' },
     },
-    Sizes = { -- metres, 10 cm thick
+    Sizes = { -- metres, 10 cm thick. Hole = opening { X = centre, Z = bottom, W, H } (no collision there)
         { Id = 'xs', Label = 'XS', W = 0.5, H = 0.5 }, { Id = 's', Label = 'Small', W = 1.0, H = 1.0 },
         { Id = 'm', Label = 'Medium', W = 1.0, H = 2.5 }, { Id = 'l', Label = 'Large', W = 2.0, H = 2.5 },
         { Id = 'xl', Label = 'XL', W = 3.0, H = 3.0 },
+        { Id = 'door', Label = 'Door Frame', W = 1.5, H = 2.5, Hole = { X = 0.0, Z = 0.0, W = 1.0, H = 2.15 } },
+        { Id = 'window', Label = 'Window Frame', W = 1.5, H = 2.5, Hole = { X = 0.0, Z = 0.9, W = 1.0, H = 1.1 } },
     },
 }
 
@@ -171,7 +172,7 @@ Config.CustomWalls.List = {} -- { { Model, Label, Material, W, H } } in catalog 
 for _, M in ipairs(Config.CustomWalls.Materials) do
     for _, S in ipairs(Config.CustomWalls.Sizes) do
         local Model = ('fw_cw_%s_%s'):format(M.Id, S.Id)
-        Config.CustomWalls.List[#Config.CustomWalls.List + 1] = { Model = Model, Label = M.Label .. ' ' .. S.Label, Material = M.Id, W = S.W, H = S.H }
+        Config.CustomWalls.List[#Config.CustomWalls.List + 1] = { Model = Model, Label = M.Label .. ' ' .. S.Label, Material = M.Id, W = S.W, H = S.H, Hole = S.Hole }
         Config.DecorByModel[Model] = { Type = 'furniture', Category = 'Custom Walls', Tint = true }
     end
 end

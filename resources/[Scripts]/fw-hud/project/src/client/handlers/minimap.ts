@@ -13,7 +13,7 @@ let MinimapVisible = false;
 let WatchEquipped = false; // PD watch in the inventory BODY slot (fw-inventory).
 let LastSentVisible: boolean | null = null;
 
-const MinimapWanted = () => (MinimapVisible || WatchEquipped) && !IsHudBlocked() && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
+const MinimapWanted = () => (MinimapVisible || WatchEquipped) && !IsPauseMenuActive() && !IsHudBlocked() && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
 
 on("fw-hud:Client:SetWatchMinimap", (Equipped: boolean) => {
     WatchEquipped = !!Equipped;
@@ -43,7 +43,8 @@ on("fw-hud:Client:OnBlockersChanged", () => UpdateMinimapVisibility());
 let NextPosition = 0;
 setTick(() => {
     DisplayRadar(false);
-    if (!LastSentVisible || IsPauseMenuActive()) return;
+    UpdateMinimapVisibility(); // deduped; animates the map out/in when the pause menu opens/closes
+    if (!LastSentVisible) return;
 
     const Now = GetGameTimer();
     if (Now < NextPosition) return;

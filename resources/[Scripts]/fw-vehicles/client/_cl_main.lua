@@ -147,6 +147,18 @@ function GetBoneDistanceFromVehicle(EntityType, BoneName)
     return 99999.0
 end
 
+function IsVehicleFlipped(vehicle)
+    if not DoesEntityExist(vehicle) or not IsEntityAVehicle(vehicle) then
+        return false
+    end
+
+    local roll = GetEntityRoll(vehicle)
+
+    return roll > 90.0 or roll < -90.0
+end
+exports('IsVehicleFlipped', IsVehicleFlipped)
+
+
 function IsWearingHandshoes()
     local armIndex = GetPedDrawableVariation(PlayerPedId(), 3)
     local model = GetEntityModel(PlayerPedId())
