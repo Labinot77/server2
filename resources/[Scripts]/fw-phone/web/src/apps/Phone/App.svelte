@@ -26,6 +26,24 @@
     let CurrentWeather = "EXTRASUNNY";
     let CurrentLocation = "Los Santos";
     let UnreadApps = {};
+    let Unfold = false, Morph = false;
+
+    const ToggleFold = () => {
+        if (IsBurnerCurrent || Morph) return;
+        Morph = true;
+        setTimeout(() => {
+            Unfold = !Unfold;
+            Settings.update(S => ({ ...S, Unfold }));
+            SendEvent("Settings/Set", { Key: "Unfold", Value: Unfold });
+            SendEvent("Phone/Fold", { Open: Unfold });
+        }, 160);
+        setTimeout(() => Morph = false, 440);
+    };
+
+    // Typing in any field switches the hand animation to texting.
+    const IsField = El => El?.isContentEditable || ["INPUT", "TEXTAREA"].includes(El?.tagName);
+    const OnFocus = e => PhoneVisible && IsField(e.target) && SendEvent("Phone/InputFocus", { Focused: true });
+    const OnBlur = () => setTimeout(() => PhoneVisible && !IsField(document.activeElement) && SendEvent("Phone/InputFocus", { Focused: false }), 50);
 
     const SetCurrentApp = (App) => {
         CurrentApp = App;
@@ -121,6 +139,7 @@
         CurrentWeather = Data.Weather;
         CurrentLocation = Data.Location || CurrentLocation;
         Settings.set(Data.Settings || {});
+        Unfold = !Data.IsBurner && !!$Settings.Unfold;
         PhoneBackground.set($Settings.Background || DefaultBackground);
         HasVpn.set(Data.HasVPN);
         HasRacingUsb.set(Data.HasRacingUsb);
@@ -172,7 +191,7 @@
 
     const GoBack = () => $InputModal.Visible ? InputModal.set({ Visible: false }) : GoHome();
     const Select = () => [...document.querySelectorAll(":hover")].pop()?.click();
-    const Keys = { y: GoHome, u: ToggleSound, Enter: Select, Backspace: GoBack };
+    const Keys = { y: GoHome, u: ToggleSound, t: ToggleFold, Enter: Select, Backspace: GoBack };
 
     const OnKeyDown = (e) => {
         const El = document.activeElement;
@@ -188,13 +207,13 @@
     });
 </script>
 
-<svelte:window on:keydown={OnKeyDown} />
+<svelte:window on:keydown={OnKeyDown} on:focusin={OnFocus} on:focusout={OnBlur} />
 
-<div class="phone-wrapper">
+<div class="phone-wrapper" class:morph={Morph}>
     {#if PhoneVisible}
-        <div transition:fade={{ duration: 250 }} class="phone-hints" style={IsBurnerCurrent ? "right: 58vh" : ""}>
-            {#each Hotkeys as [Key, Label]}
-                <div><kbd class:wide={Key.length > 1}>{Key}</kbd><span>{Label}</span></div>
+        <div transition:fade={{ duration: 250 }} class="phone-hints" style="right: {IsBurnerCurrent ? 61 : Unfold ? 50.8 : 33}vh">
+            {#each Hotkeys.filter(([Key]) => Key != "T" || !IsBurnerCurrent) as [Key, Label]}
+                <div><kbd class:wide={Key.length > 1}>{Key}</kbd><span>{Key == "T" && Unfold ? "Fold" : Label}</span></div>
             {/each}
         </div>
     {/if}
@@ -202,6 +221,7 @@
     {#each [false, true] as Burner}
         <Container
             isBurner={Burner}
+            unfold={!Burner && Unfold}
             class={Burner
                 ? `phone-container ${PhoneVisible && IsBurnerCurrent ? "phone-visible" : "phone-hidden"}`
                 : `phone-container ${IsEnvBrowser() ? "phone-debug" : ""} ${PhoneVisible && !IsBurnerCurrent ? "phone-visible" : $Notifications.length > 0 ? "phone-half" : "phone-hidden"}`}
@@ -256,7 +276,7 @@
                     </div>
                 </div>
 
-                <div on:keyup on:click={GoHome} class="phone-homebar"><i /></div>
+                <div on:keyup on:click={GoHome} class="phone-homebar" class:dark={CurrentApp == "bank"}><i /></div>
             {/if}
         </Container>
     {/each}
@@ -449,6 +469,17 @@
     .phone-statusbar-icons > span, .click { cursor: pointer; display: flex; }
     .dim { opacity: 0.45; }
 
+    /* Fold / unfold */
+    .phone-home, :global(.phone-app-wrapper) { transition: opacity 0.15s; }
+    .morph .phone-home, .morph :global(.phone-app-wrapper) { opacity: 0; }
+    .phone-hints { transition: right 0.6s cubic-bezier(0.65, 0, 0.35, 1); }
+    :global(.unfold) .phone-home { padding-top: 4vh; }
+    :global(.unfold) .phone-clock { font-size: 6.07vh; }
+    :global(.unfold) .phone-zone { width: auto; margin: 0.1vh -1.5vh 1.7vh; justify-content: center; border-radius: 0; transform: none; background: rgba(0, 0, 0, 0.28); }
+    :global(.unfold) .phone-grid { grid-template-columns: repeat(5, 7.17vh); justify-content: center; gap: 1.26vh 0; max-height: 30vh; }
+    :global(.unfold) .phone-dock { width: 16vh; }
+    :global(.unfold) .phone-dock-app { width: 2.87vh; height: 2.87vh; }
+
     /* Home indicator */
     .phone-homebar {
         position: absolute;
@@ -462,6 +493,8 @@
         z-index: 250;
         cursor: pointer;
     }
+
+    .phone-homebar.dark > i { background: #1b1f24; }
 
     .phone-homebar > i {
         width: 9.95vh;

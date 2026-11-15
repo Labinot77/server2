@@ -47,4 +47,4 @@ export const BurnerApps = [
     { Id: "messages", Label: "Messages", Icon: "comment", Tile: "teal" },
 ];
 
-export const Hotkeys = [["U", "Notifications"], ["Y", "Home"], ["↵", "Select"], ["←", "Back"], ["ESC", "Close"]];
+export const Hotkeys = [["U", "Notifications"], ["T", "Unfold"], ["Y", "Home"], ["↵", "Select"], ["←", "Back"], ["ESC", "Close"]];

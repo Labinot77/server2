@@ -3,10 +3,11 @@
     import Notifications from "./Notifications.svelte";
 
     export let isBurner = false;
+    export let unfold = false;
     export let backgroundOverride = false;
 </script>
 
-<div {...$$restProps} class="phone-container {$$restProps.class}">
+<div {...$$restProps} class="phone-container {$$restProps.class}" class:unfold>
     <Frame {backgroundOverride}>
         {#if !isBurner}<Notifications />{/if}
         <slot />
@@ -14,12 +15,17 @@
 </div>
 
 <style>
+    /* Codera proportions: 357x735 folded, 568x680 unfolded */
     .phone-container {
+        --pw: 30.1vh;
+        --ph: 61.97vh;
         position: absolute;
         bottom: -70vh;
         right: 0;
         transition: bottom 800ms ease;
     }
+
+    .phone-container.unfold { --pw: 47.89vh; --ph: 57.33vh; }
 
     :global(.phone-container.phone-debug) {
         top: 85%;
@@ -28,5 +34,5 @@
     }
 
     :global(.phone-container.phone-visible) { bottom: 0; }
-    :global(.phone-container.phone-half) { bottom: -51vh; transition: none; }
+    :global(.phone-container.phone-half) { bottom: calc(11vh - var(--ph)); transition: none; }
 </style>

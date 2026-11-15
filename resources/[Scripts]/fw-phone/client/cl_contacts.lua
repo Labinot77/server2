@@ -21,36 +21,9 @@ RegisterNetEvent("fw-phone:Client:SetCallData")
 AddEventHandler("fw-phone:Client:SetCallData", function(Data)
     CallData = Data
 
-    Citizen.CreateThread(function()
-        if CallData == nil or not CallData.Dialing then
-            return
-        end
-
-        local AnimDict, AnimName = "cellphone@", "cellphone_text_to_call"
-        if exports['fw-hud']:GetPreferenceById('Phone.Animation') == "Linkeroor" then
-            AnimDict, AnimName = "yoinks@musclephone", "musclephone_clip"
-        end
-
-        RequestAnimDict(AnimDict)
-        while not HasAnimDictLoaded(AnimDict) do
-            Citizen.Wait(4)
-        end
-
-        while CallData and CallData.Dialing ~= nil do
-            if not IsPhoneOpen and ((GetPlayerServerId(PlayerId()) == CallData.Target and not CallData.Dialing) or GetPlayerServerId(PlayerId()) ~= CallData.Target) then
-                if not IsEntityPlayingAnim(PlayerPedId(), AnimDict, AnimName, 3) then
-                    TaskPlayAnim(PlayerPedId(), AnimDict, AnimName, 3.0, -1, -1, 50, 0, false, false, false)
-                end
-            end
-
-            Citizen.Wait(500)
-        end
-
-        if not IsPhoneOpen then
-            StopAnimTask(PlayerPedId(), AnimDict, AnimName, 1.0)
-            exports['fw-assets']:RemoveProp()
-        end
-    end)
+    -- Caller holds the phone up while dialing; the receiver only once answered.
+    local Me = GetPlayerServerId(PlayerId())
+    SetPhoneState('call', CallData ~= nil and CallData.Dialing ~= nil and (Me ~= CallData.Target or not CallData.Dialing))
 end)
 
 RegisterNetEvent('fw-phone:Client:Contacts:SetVoice')
