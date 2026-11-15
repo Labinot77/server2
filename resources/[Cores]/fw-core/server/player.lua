@@ -1,6 +1,17 @@
 FW.Players = {}
 FW.Player = {}
 
+-- Cash is the 'cash' inventory item; money.cash mirrors the total carried.
+local function CashInInventory(Inventory)
+    local Total = 0
+    for _, v in pairs(Inventory or {}) do
+        if v and v.Item == 'cash' then Total = Total + v.Amount end
+    end
+    return Total
+end
+
+local function RoundCash(Amount) return math.floor(Amount + 0.5) end
+
 FW.Player.Login = function(Source, IsCharNew, CitizenId, newData)
     if Source ~= nil then
         if IsCharNew then
@@ -161,8 +172,27 @@ FW.Player.CheckPlayerData = function(source, PlayerData)
 
     -- // Position \\ --
     PlayerData.position = PlayerData.position ~= nil and PlayerData.position or {}
+
+    -- // Cash \ --
+    -- Old money-table cash is moved into the inventory once; 'pendingcash' keeps it safe until that worked.
+    local PendingCash = PlayerData.metadata.pendingcash or 0
+    if not PlayerData.metadata.cashitem then
+        PendingCash = PendingCash + RoundCash(PlayerData.money.cash)
+        PlayerData.metadata.cashitem = true
+    end
+    PlayerData.metadata.pendingcash = PendingCash
+    PlayerData.money.cash = CashInInventory(PlayerData.inventory)
+
     FW.Player.CreatePlayer(PlayerData)
     FW.Commands.Refresh(source)
+
+    if PendingCash > 0 then
+        local Player = FW.Players[source]
+        if Player.Functions.AddItem('cash', PendingCash) then
+            Player.PlayerData.metadata.pendingcash = 0
+            Player.Functions.Save()
+        end
+    end
 end
 
 FW.Player.CreatePlayer = function(PlayerData)
@@ -250,9 +280,14 @@ FW.Player.CreatePlayer = function(PlayerData)
         local moneytype = moneytype:lower()
         local amount = tonumber(amount)
         if amount < 0 then return end
+        if moneytype == 'cash' then amount = RoundCash(amount) end
         if self.PlayerData.money[moneytype] ~= nil then
-            self.PlayerData.money[moneytype] = self.PlayerData.money[moneytype]+amount
-            self.Functions.UpdatePlayerData(false)
+            if moneytype == 'cash' then
+                if amount > 0 and not self.Functions.AddItem('cash', amount) then return false end
+            else
+                self.PlayerData.money[moneytype] = self.PlayerData.money[moneytype]+amount
+                self.Functions.UpdatePlayerData(false)
+            end
 
             TriggerEvent("fw-logs:Server:Log", 'money', "Added Money [" .. (GetInvokingResource() or "Unknown Resource") .. "]", ("User: [%s] - %s - %s\nType: %s\nAmount: %s"):format(self.PlayerData.source, self.PlayerData.citizenid, self.PlayerData.charinfo.firstname .. " " .. self.PlayerData.charinfo.lastname, moneytype, amount), "green")
 
@@ -269,14 +304,19 @@ FW.Player.CreatePlayer = function(PlayerData)
         local moneytype = moneytype:lower()
         local amount = tonumber(amount)
         if amount == nil or amount < 0 then return end
+        if moneytype == 'cash' then amount = RoundCash(amount) end
         if self.PlayerData.money[moneytype] ~= nil then
             for _, mtype in pairs(FW.Config.Money.DontAllowMinus) do
                 if mtype == moneytype then
                     if self.PlayerData.money[moneytype] - amount < 0 then return false end
                 end
             end
-            self.PlayerData.money[moneytype] = self.PlayerData.money[moneytype] - amount
-            self.Functions.UpdatePlayerData(false)
+            if moneytype == 'cash' then
+                if amount > 0 and not self.Functions.RemoveItemByName('cash', amount) then return false end
+            else
+                self.PlayerData.money[moneytype] = self.PlayerData.money[moneytype] - amount
+                self.Functions.UpdatePlayerData(false)
+            end
 
             TriggerEvent("fw-logs:Server:Log", 'money', "Removed Money [" .. (GetInvokingResource() or "Unknown Resource") .. "]", ("User: [%s] - %s - %s\nType: %s\nAmount: %s"):format(self.PlayerData.source, self.PlayerData.citizenid, self.PlayerData.charinfo.firstname .. " " .. self.PlayerData.charinfo.lastname, moneytype, exports['fw-businesses']:NumberWithCommas(amount)), "red")
 
@@ -294,8 +334,14 @@ FW.Player.CreatePlayer = function(PlayerData)
         local amount = tonumber(amount)
         if amount < 0 then return end
         if self.PlayerData.money[moneytype] ~= nil then
-            self.PlayerData.money[moneytype] = amount
-            self.Functions.UpdatePlayerData(false)
+            if moneytype == 'cash' then
+                local Diff = RoundCash(amount) - self.PlayerData.money.cash
+                if Diff > 0 and not self.Functions.AddItem('cash', Diff) then return false end
+                if Diff < 0 and not self.Functions.RemoveItemByName('cash', -Diff) then return false end
+            else
+                self.PlayerData.money[moneytype] = amount
+                self.Functions.UpdatePlayerData(false)
+            end
             TriggerEvent("fw-logs:Server:Log", 'setmoney', "Money Set by [" .. (GetInvokingResource() or "Unknown Resource") .. "]", ("User: [%s] - %s - %s\nAmount: %s\nReason: 5s"):format(self.PlayerData.source, self.PlayerData.citizenid, self.PlayerData.charinfo.firstname .. " " .. self.PlayerData.charinfo.lastname, amount, reason))
             return true
         end
@@ -349,13 +395,15 @@ FW.Player.CreatePlayer = function(PlayerData)
     end
 
     self.Functions.RefreshInventory = function()
-        self.PlayerData.inventory = exports['fw-inventory']:GetInventoryItems('ply-' .. self.PlayerData.citizenid)        
+        self.PlayerData.inventory = exports['fw-inventory']:GetInventoryItems('ply-' .. self.PlayerData.citizenid)
+        self.PlayerData.money.cash = CashInInventory(self.PlayerData.inventory)
         self.Functions.UpdatePlayerData(false)
         TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
     end
 
     self.Functions.RefreshInvSlot = function(Slot)
         self.PlayerData.inventory[Slot] = exports['fw-inventory']:GetInventoryItemBySlot('ply-' .. self.PlayerData.citizenid, Slot)
+        self.PlayerData.money.cash = CashInInventory(self.PlayerData.inventory)
         self.Functions.UpdatePlayerData(false)
         TriggerClientEvent("fw-inventory:Client:Cock", self.PlayerData.source)
     end

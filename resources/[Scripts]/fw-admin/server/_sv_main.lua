@@ -205,22 +205,6 @@ AddEventHandler('fw-admin:Server:Fling:Player', function(Target)
     end
 end)
 
-RegisterNetEvent('Admin:RequestMoney')
-AddEventHandler('Admin:RequestMoney', function(Result)
-    if not IsPlayerAdmin(source) then print(source .. " probeerde een admin optie te executen, maar hij is geen admin... Cheaterrrrrrr") return end
-
-    local TPlayer = FW.Functions.GetPlayer(tonumber(Result.player))
-    if TPlayer == nil then return end
-
-    if Result.action == 'give' then
-        TPlayer.Functions.AddMoney(Result.type, tonumber(Result.amount))
-        TriggerClientEvent('FW:Notify', source, GetPlayerName(Result.player) .. " ontvangt €" .. Result.amount .. " " .. Result.type .. '!', "success")
-    else
-        TPlayer.Functions.SetMoney(Result.type, tonumber(Result.amount))
-        TriggerClientEvent('FW:Notify', source, "Geld van " .. GetPlayerName(Result.player) .. " gezet naar €" .. Result.amount .. " " .. Result.type .. '!', "success")
-    end
-end)
-
 RegisterNetEvent('Admin:Wipe:Inventory')
 AddEventHandler('Admin:Wipe:Inventory', function(Result)
     if not IsPlayerAdmin(source) then print(source .. " probeerde een admin optie te executen, maar hij is geen admin... Cheaterrrrrrr") return end

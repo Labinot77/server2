@@ -175,13 +175,7 @@ end, function(Source, Slot, Amount, Coords, Heading, Thrown)
     local ToSlot = FindFreeDropSlot(DropId)
     if not ToSlot then return Player.Functions.Notify("Hier ligt al te veel.", "error") end
 
-    local Result = exports['ghmattimysql']:executeSync("UPDATE player_inventories SET `slot` = @ToSlot, `inventory` = @ToInv WHERE `inventory` = @FromInv AND `slot` = @FromSlot AND `item_name` = @Item LIMIT " .. Amount, {
-        ['@ToSlot'] = ToSlot,
-        ['@ToInv'] = DropName,
-        ['@FromInv'] = InvName,
-        ['@FromSlot'] = Slot,
-        ['@Item'] = Item.Item,
-    })
+    local Result = MoveItemRows(InvName, Slot, DropName, ToSlot, Item.Item, Amount)
     if not Result or Result.affectedRows == 0 then return end
 
     Config.Drops[DropId].Props = Config.Drops[DropId].Props or {}

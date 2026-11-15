@@ -403,13 +403,7 @@ end, function(Source, Type, Data)
             end
         else
             ProcessingPlayers[Player.PlayerData.citizenid] = true
-            local Result = exports['ghmattimysql']:executeSync("UPDATE player_inventories SET `slot` = @ToSlot, inventory = @ToInv WHERE `slot` = @FromSlot AND `inventory` = @FromInv AND `item_name` = @Item LIMIT " .. Data.Amount, {
-                ['@ToSlot'] = Data.ToSlot,
-                ['@ToInv'] = Data.ToInv,
-                ['@FromSlot'] = Data.FromSlot,
-                ['@FromInv'] = Data.FromInv,
-                ['@Item'] = Data.FromItem
-            })
+            local Result = MoveItemRows(Data.FromInv, Data.FromSlot, Data.ToInv, Data.ToSlot, Data.FromItem, Data.Amount)
             do
                 do
                     TriggerEvent("fw-logs:Server:Log", 'moveitem', "Item Moved", ("User: [%s] - %s - %s %s\nItem: %s [%s]\nInventory: %s [%s] -> %s [%s]"):format(Player.PlayerData.source, Player.PlayerData.citizenid, Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname, Data.FromItem, Data.Amount, Data.FromInv, Data.FromSlot, Data.ToInv, Data.ToSlot), "blue")

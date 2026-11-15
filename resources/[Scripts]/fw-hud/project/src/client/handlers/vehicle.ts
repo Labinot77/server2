@@ -1,6 +1,6 @@
 import { Thread } from "../../shared/classes/thread";
 import { Delay, SendUIMessage, exp } from "../../shared/utils";
-import { FW } from "../client";
+import { FW, LoggedIn } from "../client";
 import { StartCompass, StopCompass } from "./compass";
 import { SetHudVisibleState } from "./hud";
 import { SetMinimapVisible } from "./minimap";
@@ -41,7 +41,7 @@ const IsLocked = (Vehicle: number): boolean => {
 const SyncVehicleVisibility = () => SendUIMessage("Hud", "SetVehicleVisibility", {Visible: VehicleHudState && !IsVehicleHudBlocked()});
 on("fw-hud:Client:OnBlockersChanged", SyncVehicleVisibility);
 
-const HideVehicleHud = () => {
+export const HideVehicleHud = () => {
     const WasInHeliCam = exp['fw-police'].IsInHeliCam();
 
     VehicleHudState = false;
@@ -68,7 +68,7 @@ VehicleThread.addHook('active', () => {
     const Ped = PlayerPedId();
     const Vehicle = GetVehiclePedIsIn(Ped, false);
 
-    if (Vehicle == 0 || IsPauseMenuActive() || exp['fw-police'].IsInHeliCam()) {
+    if (!LoggedIn || Vehicle == 0 || IsPauseMenuActive() || exp['fw-police'].IsInHeliCam()) {
         if (VehicleHudState) HideVehicleHud();
         return;
     };

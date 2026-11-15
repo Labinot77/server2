@@ -1,12 +1,12 @@
 import { Hud } from "../../shared/config";
 import { exp, SendUIMessage } from "../../shared/utils";
-import { FW } from "../client";
+import { FW, LoggedIn } from "../client";
 import { CurrentBuffs } from "./buffs";
 import { IsHudBlocked } from "./blockers";
 
 let HudWanted = true;
 let Paused = false;
-const SyncHudVisibility = () => SendUIMessage("Hud", "SetVisibility", HudWanted && !Paused && !IsHudBlocked());
+export const SyncHudVisibility = () => SendUIMessage("Hud", "SetVisibility", LoggedIn && HudWanted && !Paused && !IsHudBlocked());
 on("fw-hud:Client:OnBlockersChanged", SyncHudVisibility);
 
 // Hide the player HUD while the pause menu (Escape) is open.

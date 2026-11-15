@@ -150,45 +150,6 @@ Config.AdminMenus = {
     },
     {
         Category = 'player',
-        Id = 'giveMoney',
-        Name = 'Spawn Money',
-        Event = 'Admin:RequestMoney',
-        EventType = "Server",
-        Collapse = true,
-        Options = {
-            {
-                Id = 'player',
-                Name = 'Target (Not Required):',
-                Type = 'input-choice',
-            },
-            {
-                Id = 'type',
-                Name = 'Money Type',
-                Type = 'input-choice',
-                Choices = {
-                    { Val = 'cash', Text = 'Cash' },
-                    -- { Val = 'bank', Text = 'Bank' },
-                }
-            },
-            {
-                Id = 'amount',
-                Name = 'Amount',
-                Type = 'input-text',
-                InputType = 'number',
-            },
-            {
-                Id = 'action',
-                Name = 'Action',
-                Type = 'input-choice',
-                Choices = {
-                    { Val = 'give', Text = 'Add Money' },
-                    { Val = 'set', Text = 'Set Money' },
-                }
-            },
-        },
-    },
-    {
-        Category = 'player',
         Id = 'wipeInventory',
         Name = 'Clear Inventory',
         Event = 'Admin:Wipe:Inventory',

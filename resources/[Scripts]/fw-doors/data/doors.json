@@ -1,850 +1,854 @@
 {
-    "doors": [
-        {
-            "Model": 1181020301,
-            "IsLockpickable": false,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "MIRR_8462",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 66.91,
-                "y": -470.04,
-                "x": 1137.34
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 1608375261,
-            "IsLockpickable": false,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "STRAW_4442",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.62,
-                "y": -1676.56,
-                "x": -35.48
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 647538810,
-            "IsLockpickable": false,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "RANCHO_387",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 17.26,
-                "y": -2023.24,
-                "x": 203.08
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1454127503,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_6024",
-            "IsGate": true,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 32.64,
-                "y": -1673.2,
-                "x": -17.67
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1705512110,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_4945",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.63,
-                "y": -1672.39,
-                "x": -25.82
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 1860476036,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Mosley's Dealership"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_3907",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.63,
-                "y": -1658.9,
-                "x": -9.38
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1902126086,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_7823",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.63,
-                "y": -1665.31,
-                "x": -1.74
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1902126086,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_143",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.63,
-                "y": -1667.11,
-                "x": -25.06
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1918617751,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_3524",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.62,
-                "y": -1665.33,
-                "x": -28.77
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1918617751,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_3328",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.62,
-                "y": -1671.17,
-                "x": -32.05
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1918617751,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_8188",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.62,
-                "y": -1674.09,
-                "x": -37.42
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -2132033016,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [
-                "STRAW_7946_2"
-            ],
-            "Info": "STRAW_7946_1",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.62,
-                "y": -1673.5,
-                "x": -41.4
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 126078790,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [
-                "STRAW_7946_1"
-            ],
-            "Info": "STRAW_7946_2",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.62,
-                "y": -1675.11,
-                "x": -39.48
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1195691870,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [
-                "STRAW_1089_2"
-            ],
-            "Info": "STRAW_1089_1",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.84,
-                "y": -1662.91,
-                "x": -44.05
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 1018181770,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [
-                "STRAW_1089_1"
-            ],
-            "Info": "STRAW_1089_2",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.84,
-                "y": -1660.77,
-                "x": -42.25
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 2086311126,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_6257",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.64,
-                "y": -1650.04,
-                "x": -17.33
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 2086311126,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_4940",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.64,
-                "y": -1648.66,
-                "x": -16.17
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 971671477,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_6747",
-            "IsGate": true,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 30.68,
-                "y": -1647.54,
-                "x": -30.89
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 2091333641,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_1051",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.63,
-                "y": -1662.23,
-                "x": 0.84
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 2091333641,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "Hayes Repairs"
-                ]
-            },
-            "Connected": [],
-            "Info": "STRAW_2564",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.63,
-                "y": -1666.21,
-                "x": 5.58
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_113_2"
-            ],
-            "Info": "DTVINE_113_1",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 214.16,
-                "x": 232.61
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_113_1"
-            ],
-            "Info": "DTVINE_113_2",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 216.52,
-                "x": 231.51
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_2069_2"
-            ],
-            "Info": "DTVINE_2069_1",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 215.25,
-                "x": 259.98
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_2069_1"
-            ],
-            "Info": "DTVINE_2069_2",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 212.81,
-                "x": 259.09
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_7132_2"
-            ],
-            "Info": "DTVINE_7132_1",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 204.1,
-                "x": 258.2
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 110411286,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [
-                "DTVINE_7132_1"
-            ],
-            "Info": "DTVINE_7132_2",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 106.4,
-                "y": 203.21,
-                "x": 260.64
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 1956494919,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "DTVINE_5790",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 110.43,
-                "y": 206.15,
-                "x": 256.62
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 964838196,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "DTVINE_7505",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 110.43,
-                "y": 210.45,
-                "x": 260.86
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 964838196,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "DTVINE_2864",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 110.43,
-                "y": 215.06,
-                "x": 262.54
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -1735710,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [
-                    "police"
-                ],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": []
-            },
-            "Connected": [],
-            "Info": "DTVINE_757",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 101.92,
-                "y": 246.11,
-                "x": 255.66
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 1621985020,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "The Brick House"
-                ]
-            },
-            "Connected": [],
-            "Info": "DAVIS_6609",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.53,
-                "y": -1711.61,
-                "x": 154.24
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 860826688,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "The Brick House"
-                ]
-            },
-            "Connected": [],
-            "Info": "DAVIS_1532",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 1,
-            "Coords": {
-                "z": 29.53,
-                "y": -1715.24,
-                "x": 154.72
-            },
-            "Disabled": false
-        },
-        {
-            "Model": -2068754685,
-            "IsLockpickable": true,
-            "Access": {
-                "Job": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Business": [
-                    "The Brick House"
-                ]
-            },
-            "Connected": [],
-            "Info": "DAVIS_4751",
-            "IsGate": false,
-            "CanDetcord": true,
-            "Locked": 0,
-            "Coords": {
-                "z": 29.53,
-                "y": -1720.91,
-                "x": 143.88
-            },
-            "Disabled": false
-        },
-        {
-            "Model": 840067804,
-            "IsLockpickable": true,
-            "Access": {
-                "Business": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Job": [
-                    "police"
-                ]
-            },
-            "Connected": [
-                "DELSOL_4248_2"
-            ],
-            "Info": "DELSOL_4248_1",
-            "IsGate": false,
-            "Coords": {
-                "z": 6.34,
-                "y": -1222.8,
-                "x": -819.39
-            },
-            "Disabled": false,
-            "CanDetcord": true,
-            "Locked": 0
-        },
-        {
-            "Model": 2117013970,
-            "IsLockpickable": true,
-            "Access": {
-                "Business": [],
-                "Gangs": [],
-                "CitizenId": [],
-                "Job": [
-                    "police"
-                ]
-            },
-            "Connected": [
-                "DELSOL_4248_1"
-            ],
-            "Info": "DELSOL_4248_2",
-            "IsGate": false,
-            "Coords": {
-                "z": 6.34,
-                "y": -1226.39,
-                "x": -822.41
-            },
-            "Disabled": false,
-            "CanDetcord": true,
-            "Locked": 0
-        }
-    ],
     "overrides": {
         "HOUSE_test_Back_1": {
             "Disabled": true
         },
         "HOUSE_test_Front_1": {
+            "CanDetcord": true,
             "IsGate": false,
-            "CanDetcord": false,
             "Access": {
                 "Job": [],
+                "CitizenId": [
+                    "2000",
+                    "2001",
+                    "2002"
+                ],
                 "Gangs": [],
-                "CitizenId": [],
                 "Business": []
             },
-            "IsLockpickable": false,
-            "Locked": 1
+            "Locked": 1,
+            "IsLockpickable": false
         }
-    }
+    },
+    "doors": [
+        {
+            "IsLockpickable": false,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "MIRR_8462",
+            "Model": 1181020301,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -470.04,
+                "x": 1137.34,
+                "z": 66.91
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": false,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "STRAW_4442",
+            "Model": 1608375261,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1676.56,
+                "x": -35.48,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": false,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "RANCHO_387",
+            "Model": 647538810,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -2023.24,
+                "x": 203.08,
+                "z": 17.26
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": true,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_6024",
+            "Model": -1454127503,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1673.2,
+                "x": -17.67,
+                "z": 32.64
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_4945",
+            "Model": -1705512110,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1672.39,
+                "x": -25.82,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Mosley's Dealership"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_3907",
+            "Model": 1860476036,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1658.9,
+                "x": -9.38,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_7823",
+            "Model": -1902126086,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1665.31,
+                "x": -1.74,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_143",
+            "Model": -1902126086,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1667.11,
+                "x": -25.06,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_3524",
+            "Model": -1918617751,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1665.33,
+                "x": -28.77,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_3328",
+            "Model": -1918617751,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1671.17,
+                "x": -32.05,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_8188",
+            "Model": -1918617751,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1674.09,
+                "x": -37.42,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_7946_1",
+            "Model": -2132033016,
+            "CanDetcord": true,
+            "Connected": [
+                "STRAW_7946_2"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": -1673.5,
+                "x": -41.4,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_7946_2",
+            "Model": 126078790,
+            "CanDetcord": true,
+            "Connected": [
+                "STRAW_7946_1"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": -1675.11,
+                "x": -39.48,
+                "z": 29.62
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_1089_1",
+            "Model": -1195691870,
+            "CanDetcord": true,
+            "Connected": [
+                "STRAW_1089_2"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": -1662.91,
+                "x": -44.05,
+                "z": 29.84
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_1089_2",
+            "Model": 1018181770,
+            "CanDetcord": true,
+            "Connected": [
+                "STRAW_1089_1"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": -1660.77,
+                "x": -42.25,
+                "z": 29.84
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_6257",
+            "Model": 2086311126,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1650.04,
+                "x": -17.33,
+                "z": 29.64
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_4940",
+            "Model": 2086311126,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1648.66,
+                "x": -16.17,
+                "z": 29.64
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": true,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_6747",
+            "Model": 971671477,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1647.54,
+                "x": -30.89,
+                "z": 30.68
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_1051",
+            "Model": 2091333641,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1662.23,
+                "x": 0.84,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "Hayes Repairs"
+                ],
+                "Gangs": []
+            },
+            "Info": "STRAW_2564",
+            "Model": 2091333641,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1666.21,
+                "x": 5.58,
+                "z": 29.63
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_113_1",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_113_2"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 214.16,
+                "x": 232.61,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_113_2",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_113_1"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 216.52,
+                "x": 231.51,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_2069_1",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_2069_2"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 215.25,
+                "x": 259.98,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_2069_2",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_2069_1"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 212.81,
+                "x": 259.09,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_7132_1",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_7132_2"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 204.1,
+                "x": 258.2,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_7132_2",
+            "Model": 110411286,
+            "CanDetcord": true,
+            "Connected": [
+                "DTVINE_7132_1"
+            ],
+            "Locked": 0,
+            "Coords": {
+                "y": 203.21,
+                "x": 260.64,
+                "z": 106.4
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_5790",
+            "Model": 1956494919,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": 206.15,
+                "x": 256.62,
+                "z": 110.43
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_7505",
+            "Model": 964838196,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": 210.45,
+                "x": 260.86,
+                "z": 110.43
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_2864",
+            "Model": 964838196,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": 215.06,
+                "x": 262.54,
+                "z": 110.43
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [
+                    "police"
+                ],
+                "CitizenId": [],
+                "Business": [],
+                "Gangs": []
+            },
+            "Info": "DTVINE_757",
+            "Model": -1735710,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": 246.11,
+                "x": 255.66,
+                "z": 101.92
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "The Brick House"
+                ],
+                "Gangs": []
+            },
+            "Info": "DAVIS_6609",
+            "Model": 1621985020,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1711.61,
+                "x": 154.24,
+                "z": 29.53
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "The Brick House"
+                ],
+                "Gangs": []
+            },
+            "Info": "DAVIS_1532",
+            "Model": 860826688,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 1,
+            "Coords": {
+                "y": -1715.24,
+                "x": 154.72,
+                "z": 29.53
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Job": [],
+                "CitizenId": [],
+                "Business": [
+                    "The Brick House"
+                ],
+                "Gangs": []
+            },
+            "Info": "DAVIS_4751",
+            "Model": -2068754685,
+            "CanDetcord": true,
+            "Connected": [],
+            "Locked": 0,
+            "Coords": {
+                "y": -1720.91,
+                "x": 143.88,
+                "z": 29.53
+            },
+            "Disabled": false
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
+            "Info": "DELSOL_4248_1",
+            "Model": 840067804,
+            "CanDetcord": true,
+            "Connected": [
+                "DELSOL_4248_2"
+            ],
+            "Disabled": false,
+            "Coords": {
+                "y": -1222.8,
+                "x": -819.39,
+                "z": 6.34
+            },
+            "Locked": 0
+        },
+        {
+            "IsLockpickable": true,
+            "IsGate": false,
+            "Access": {
+                "Business": [],
+                "CitizenId": [],
+                "Job": [
+                    "police"
+                ],
+                "Gangs": []
+            },
+            "Info": "DELSOL_4248_2",
+            "Model": 2117013970,
+            "CanDetcord": true,
+            "Connected": [
+                "DELSOL_4248_1"
+            ],
+            "Disabled": false,
+            "Coords": {
+                "y": -1226.39,
+                "x": -822.41,
+                "z": 6.34
+            },
+            "Locked": 0
+        }
+    ]
 }

@@ -205,7 +205,7 @@ exports("FindPlayerSlot", FindPlayerSlot)
 function GetInventoryItems(InvName)
     local Promise = promise:new()
 
-    exports['ghmattimysql']:execute("SELECT count(item_name) as amount, item_name, custom_type, id, info, slot, MIN(createdate) as createdate FROM `player_inventories` WHERE `inventory` = @InvName group by slot", {
+    exports['ghmattimysql']:execute("SELECT " .. AmountSql .. " as amount, item_name, custom_type, id, info, slot, MIN(createdate) as createdate FROM `player_inventories` WHERE `inventory` = @InvName group by slot", {
         ['@InvName'] = InvName
     }, function(Result)
         local Retval = {[0] = false}
@@ -248,7 +248,7 @@ end
 exports("GetInventoryItemsUnproccessed", GetInventoryItemsUnproccessed)
 
 function GetInventoryItemBySlot(InvName, Slot)
-    local Result = exports['ghmattimysql']:executeSync("SELECT count(item_name) as amount, item_name, custom_type, id, info, slot, MIN(createdate) as createdate FROM `player_inventories` WHERE `inventory` = @InvName AND `slot` = @Slot", {
+    local Result = exports['ghmattimysql']:executeSync("SELECT " .. AmountSql .. " as amount, item_name, custom_type, id, info, slot, MIN(createdate) as createdate FROM `player_inventories` WHERE `inventory` = @InvName AND `slot` = @Slot", {
         ['@InvName'] = InvName,
         ['@Slot'] = Slot
     })
@@ -313,6 +313,7 @@ function AddItemToInventory(InvName, Item, Amount, Slot, Info, CustomType)
     if CustomType and #CustomType > 0 and (Shared.CustomTypes[Item] == nil or Shared.CustomTypes[Item][CustomType] == nil) then return end
     if not CustomType then CustomType = "" end
     if not Amount or Amount <= 0 then Amount = 1 end
+    Amount = math.floor(Amount)
     if not Slot then Slot = FindSlot(InvName, Item, CustomType) end
     if not Info then Info = GenerateItemInfo(InvName, Item, CustomType) end
 
@@ -358,22 +359,20 @@ function AddItemToInventory(InvName, Item, Amount, Slot, Info, CustomType)
         end
     end
 
-    local Items = "(@Inventory, @Item, @CustomType, @Slot, @Info, @CreateDate)"
-    if Amount > 1 then
-        for i = 2, Amount, 1 do
-            Items = Items .. ', (@Inventory, @Item, @CustomType, @Slot, @Info, @CreateDate)'
-        end
+    local Result
+    if Item == CashItem then
+        Result = { affectedRows = AddCashToSlot(InvName, Slot, Amount) and 1 or 0 }
+    else
+        local Items = "(@Inventory, @Item, @CustomType, @Slot, @Info, @CreateDate)" .. string.rep(', (@Inventory, @Item, @CustomType, @Slot, @Info, @CreateDate)', Amount - 1)
+        Result = exports['ghmattimysql']:executeSync('INSERT INTO player_inventories (inventory, item_name, custom_type, slot, info, createdate) VALUES ' .. Items, {
+            ['@Inventory'] = InvName,
+            ['@Item'] = Item,
+            ['@CustomType'] = CustomType,
+            ['@Slot'] = Slot,
+            ['@Info'] = json.encode(Info),
+            ['@CreateDate'] = os.time() * 1000,
+        })
     end
-
-    local Result = exports['ghmattimysql']:executeSync('INSERT INTO player_inventories (inventory, item_name, custom_type, slot, info, createdate) VALUES ' .. Items, {
-        ['@Inventory'] = InvName,
-        ['@Item'] = Item,
-        ['@CustomType'] = CustomType,
-        ['@Amount'] = Amount,
-        ['@Slot'] = Slot,
-        ['@Info'] = json.encode(Info),
-        ['@CreateDate'] = os.time() * 1000,
-    })
 
     -- Ground items are rendered per slot, push the new state to everyone.
     if InvName:sub(1, 5) == 'Drop-' then
@@ -423,12 +422,17 @@ function RemoveItemFromInventory(InvName, Item, Amount, Slot, CustomType)
     end
     if not Slot then return end
 
-    local Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Amount, {
-        ['@Inventory'] = InvName,
-        ['@Item'] = Item,
-        ['@CustomType'] = CustomType,
-        ['@Slot'] = Slot,
-    })
+    local Result
+    if Item == CashItem then
+        Result = { affectedRows = TakeCashFromSlot(InvName, Slot, math.floor(Amount)) }
+    else
+        Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Amount, {
+            ['@Inventory'] = InvName,
+            ['@Item'] = Item,
+            ['@CustomType'] = CustomType,
+            ['@Slot'] = Slot,
+        })
+    end
 
     if string.startsWith(InvName, 'ply-') then
         local Target = FW.Functions.GetPlayerByCitizenId(InvName:sub(5))
@@ -450,7 +454,7 @@ function RemoveItemFromInventoryByName(InvName, Item, Amount, CustomType)
     if not Amount or Amount <= 0 then Amount = 1 end
 
     -- Take from the slot that was just used first, then the remaining stacks in slot order.
-    local Stacks = exports['ghmattimysql']:executeSync("SELECT `slot`, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType GROUP BY `slot`", {
+    local Stacks = exports['ghmattimysql']:executeSync("SELECT `slot`, " .. AmountSql .. " AS amount FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType GROUP BY `slot`", {
         ['@Inventory'] = InvName, ['@Item'] = Item, ['@CustomType'] = CustomType,
     }) or {}
     local Preferred = GetPreferredSlot(InvName, Item, CustomType)
@@ -462,8 +466,8 @@ function RemoveItemFromInventoryByName(InvName, Item, Amount, CustomType)
     local Removed, Slots = 0, {}
     for _, Stack in ipairs(Stacks) do
         if Removed >= Amount then break end
-        local Take = math.min(Amount - Removed, Stack.amount)
-        local Result = exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Take, {
+        local Take = math.floor(math.min(Amount - Removed, Stack.amount))
+        local Result = Item == CashItem and { affectedRows = TakeCashFromSlot(InvName, Stack.slot, Take) } or exports['ghmattimysql']:executeSync("DELETE FROM player_inventories WHERE inventory = @Inventory AND item_name = @Item AND custom_type = @CustomType AND slot = @Slot LIMIT " .. Take, {
             ['@Inventory'] = InvName, ['@Item'] = Item, ['@CustomType'] = CustomType, ['@Slot'] = Stack.slot,
         })
         if Result.affectedRows > 0 then
@@ -609,7 +613,7 @@ exports("SetInventoryName", SetInventoryName)
 --  Shared inventories: check a move against what's really in the database
 -- ============================================================================
 local function SlotStacks(InvName, Slot)
-    return exports['ghmattimysql']:executeSync("SELECT item_name, custom_type, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inv AND slot = @Slot GROUP BY item_name, custom_type", {
+    return exports['ghmattimysql']:executeSync("SELECT item_name, custom_type, " .. AmountSql .. " AS amount FROM player_inventories WHERE inventory = @Inv AND slot = @Slot GROUP BY item_name, custom_type", {
         ['@Inv'] = InvName, ['@Slot'] = Slot,
     }) or {}
 end
@@ -620,7 +624,7 @@ end
 
 local function InventoryWeight(InvName)
     local Total = 0
-    for _, Row in ipairs(exports['ghmattimysql']:executeSync("SELECT item_name, COUNT(*) AS amount FROM player_inventories WHERE inventory = @Inv GROUP BY item_name", { ['@Inv'] = InvName }) or {}) do
+    for _, Row in ipairs(exports['ghmattimysql']:executeSync("SELECT item_name, " .. AmountSql .. " AS amount FROM player_inventories WHERE inventory = @Inv GROUP BY item_name", { ['@Inv'] = InvName }) or {}) do
         Total = Total + ItemsWeight(Row.item_name, Row.amount)
     end
     return Total

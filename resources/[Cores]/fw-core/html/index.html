@@ -1,37 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>Server Loadscreen</title>
-    <meta name="referrer" content="no-referrer">
-    <link rel="stylesheet" href="main.css">
-
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" integrity="sha512-xi/RZRIF/S0hJ+yJJYuZ5yk6/8pCiRlEXZzoguSMl+vk2i3m6UjUO/WcZ11blRL/O+rnj94JRGwt/CHbc9+6EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
-
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <video width="100%" height="100%" class="video" autoplay>
-        <source src="" type="video/webm">
-    </video>
-    
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var video = document.querySelector(".video");
-            var source = document.querySelector("source");
+    <div class="bg"><span></span><span></span><span></span></div>
+    <div class="scan"></div>
 
-            var currentDate = new Date();
-            var currentMonth = currentDate.getMonth();
+    <header>
+        <img src="logo.png" alt="">
+        <div class="brand"><b>Costa RP</b><small>ROLEPLAY COMMUNITY</small></div>
+    </header>
 
-            if (currentMonth === 11) { // December (months are 0-based, so December is 11)
-                source.src = "./loadingscreen-xmas.webm";
-            } else {
-                source.src = "./loadingscreen.webm";
-            }
+    <img class="logo" src="logo.png" alt="">
 
-            video.load(); // Load the new source
-            setTimeout(() => {
-                video.play();
-            }, 100);
-        });
-    </script>
+    <div class="hint"><kbd>ESC</kbd>CANCEL</div>
+
+    <footer>
+        <span id="status">PREPARING DOWNLOAD</span>
+        <span><b id="pct">0%</b><small>1.0.0</small></span>
+        <i id="fill"></i>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>

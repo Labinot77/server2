@@ -60,13 +60,7 @@ end, function(Source, TargetSource, Slot, Amount)
     })
     if not Valid then return Notify(Player, Reason or "Dat kan niet.") end
 
-    local Result = exports['ghmattimysql']:executeSync("UPDATE player_inventories SET `slot` = @ToSlot, `inventory` = @ToInv WHERE `inventory` = @FromInv AND `slot` = @FromSlot AND `item_name` = @Item LIMIT " .. Amount, {
-        ['@ToSlot'] = ToSlot,
-        ['@ToInv'] = TheirInv,
-        ['@FromInv'] = MyInv,
-        ['@FromSlot'] = Slot,
-        ['@Item'] = Item.Item,
-    })
+    local Result = MoveItemRows(MyInv, Slot, TheirInv, ToSlot, Item.Item, Amount)
     if not Result or Result.affectedRows == 0 then return end
 
     TriggerEvent("fw-logs:Server:Log", 'moveitem', "Item Given", ("User: [%s] - %s - %s %s\nItem: %s [%s]\nTo: [%s] - %s - %s %s [%s]"):format(

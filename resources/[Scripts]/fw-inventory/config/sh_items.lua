@@ -1498,6 +1498,21 @@ Shared.Items["electronickit"] = {
     InsertInto = {},
 }
 
+Shared.Items["cash"] = {
+    Name = "cash",
+    Label = "Cash",
+    Image = "cash.png",
+    Description = "Contant geld.",
+    Weapon = false, Illegal = false,
+    Metal = false, NonStack = false, HasProp = false,
+    IsBag = false, Weight = 0.001,
+    Price = 0,
+    Craft = {},
+    DecayRate = 0.0,
+    FullDecay = false,
+    InsertInto = {},
+}
+
 Shared.Items["markedbills"] = {
     Name = "markedbills",
     Label = "Inked Geld",

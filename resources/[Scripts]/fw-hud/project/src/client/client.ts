@@ -7,12 +7,13 @@ import './handlers/preferences'
 import './handlers/buffs'
 import './handlers/vehicle'
 import './handlers/binds'
-import { InitiateHud } from "./handlers/hud";
+import { InitiateHud, SyncHudVisibility } from "./handlers/hud";
+import { HideVehicleHud } from "./handlers/vehicle";
 import { GetPreferences, LoadPreferences } from "./handlers/preferences";
 import { StartCompass } from "./handlers/compass";
 
 import './handlers/minimap'
-import { ForceMinimapSync } from "./handlers/minimap";
+import { ForceMinimapSync, UpdateMinimapVisibility } from "./handlers/minimap";
 import { InitiatePlayer } from "./handlers/player";
 
 import './handlers/main'
@@ -29,6 +30,8 @@ onNet("FW:Client:OnPlayerLoaded", () => {
     InitiateHud();
     InitiatePlayer();    
     SyncHudSettings();           // add
+    SyncHudVisibility();
+    UpdateMinimapVisibility();
 
     if (exp['fw-inventory'].HasEnoughOfItem("pdwatch", 1)) {
         StartCompass();
@@ -52,6 +55,10 @@ ResetSafezone();             // add
 onNet("FW:Client:OnPlayerUnload", () => {
     LoggedIn = false;
     SendUIMessage("Hud", "SetHudComponents", []);
+    // Hide everything (status, minimap, compass, speedometer, chat) until a character is loaded again.
+    HideVehicleHud();
+    SyncHudVisibility();
+    UpdateMinimapVisibility();
 });
 
 onNet("fw-hud:Client:ShowCash", () => {
@@ -66,4 +73,9 @@ onNet("fw-hud:Client:MoneyChange", (Amount: number, IsPositive: boolean) => {
     });
 });
 
-setImmediate(LoadPreferences);
+setImmediate(() => {
+    LoadPreferences();
+    // fw-hud restarted while a character is loaded.
+    LoggedIn = !!FW.Functions.GetPlayerData()?.citizenid;
+    SyncHudVisibility();
+});

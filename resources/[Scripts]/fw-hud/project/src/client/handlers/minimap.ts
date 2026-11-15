@@ -2,6 +2,7 @@ import { Config, Minimap } from "../../shared/config";
 import { Delay, SendUIMessage } from "../../shared/utils";
 import { GetHudSetting } from "./settings";
 import { IsHudBlocked } from "./blockers";
+import { LoggedIn } from "../client";
 
 // The engine radar is hidden; the UI draws the map, blips and GPS route itself (fw-ui Hud/layers/Minimap.svelte).
 
@@ -13,7 +14,7 @@ let MinimapVisible = false;
 let WatchEquipped = false; // PD watch in the inventory BODY slot (fw-inventory).
 let LastSentVisible: boolean | null = null;
 
-const MinimapWanted = () => (MinimapVisible || WatchEquipped) && !IsPauseMenuActive() && !IsHudBlocked() && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
+const MinimapWanted = () => LoggedIn && (MinimapVisible || WatchEquipped) && !IsPauseMenuActive() && !IsHudBlocked() && !Config.MyPreferences["BlackBars.Show"] && GetHudSetting("map", "showMinimap", true);
 
 on("fw-hud:Client:SetWatchMinimap", (Equipped: boolean) => {
     WatchEquipped = !!Equipped;

@@ -1,0 +1,66 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    background: #1d5560;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic; color: #fff; user-select: none;
+}
+
+/* Soft glowing blobs */
+.bg span {
+    position: absolute; width: 55vw; height: 55vw; border-radius: 50%;
+    background: radial-gradient(circle, #4fc8cc 0%, transparent 65%);
+    filter: blur(40px); opacity: .8;
+    animation: drift 14s ease-in-out infinite alternate;
+}
+.bg span:nth-child(1) { top: -20vw; left: -15vw; }
+.bg span:nth-child(2) { top: 5vw; right: -20vw; animation-delay: -5s; }
+.bg span:nth-child(3) { bottom: -30vw; left: 20vw; animation-delay: -9s; }
+
+@keyframes drift { to { transform: translate(4vw, 3vw) scale(1.1); } }
+
+/* Scanlines */
+.scan {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(transparent 0 2px, rgba(0,0,0,.08) 2px 4px);
+}
+
+header {
+    position: absolute; top: 2.5vh; right: 2.5vw;
+    display: flex; align-items: center; gap: 14px;
+}
+header img { height: 46px; opacity: .85; }
+.brand { border-left: 1px solid rgba(255,255,255,.4); padding-left: 14px; line-height: 1; }
+.brand b { font-size: 30px; display: block; }
+.brand small { font-size: 11px; letter-spacing: 3px; opacity: .7; }
+
+.logo {
+    position: absolute; top: 45%; left: 50%;
+    width: 18vw; transform: translate(-50%, -50%);
+    opacity: .45; animation: pulse 3s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .65; } }
+
+.hint {
+    position: absolute; left: 2vw; bottom: 8vh;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: rgba(0,0,0,.55);
+    font-size: 15px; font-weight: 800;
+}
+kbd {
+    background: #fff; color: #000; padding: 1px 5px;
+    font: 800 12px 'Barlow Condensed', sans-serif;
+}
+
+footer {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4.2vh;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 1vw; background: #fff; color: #111;
+    font-size: 22px; font-weight: 800;
+}
+footer small { font-size: 13px; font-weight: 700; margin-left: 10px; opacity: .8; }
+#fill {
+    position: absolute; left: 0; top: 0; height: 3px; width: 0;
+    background: #2fa9b0; transition: width .3s;
+}
